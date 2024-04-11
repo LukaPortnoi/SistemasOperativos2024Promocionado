@@ -3,6 +3,10 @@
 		"debug.onTaskErrors": "abort",
 		"files.associations": {
 			"*.h": "c",
+			"array": "c",
+			"string_view": "c",
+			"initializer_list": "c",
+			"utility": "c"
 		},
 		"C_Cpp.errorSquiggles": "disabled",
 	},
