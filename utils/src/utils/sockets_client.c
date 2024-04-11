@@ -1,4 +1,4 @@
-#include "./sockets_cliente.h"
+#include "./sockets_client.h"
 
 void *serializar_paquete(t_paquete *paquete, int bytes)
 {

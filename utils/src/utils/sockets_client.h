@@ -1,5 +1,5 @@
-#ifndef SOCKETS_CLIENTE_H_
-#define SOCKETS_CLIENTE_H_
+#ifndef SOCKETS_CLIENT_H_
+#define SOCKETS_CLIENT_H_
 
 #include<stdio.h>
 #include<stdlib.h>
@@ -10,11 +10,13 @@
 #include<string.h>
 #include<commons/log.h>
 
-typedef enum
+#include "sockets_common.h"
+
+/*typedef enum
 {
 	MENSAJE,
 	PAQUETE
-}op_code;
+}op_code;*/
 
 typedef struct
 {

@@ -11,13 +11,15 @@
 #include<string.h>
 #include<assert.h>
 
+#include "sockets_common.h"
+
 #define PUERTO "4444"
 
-typedef enum
+/*typedef enum
 {
 	MENSAJE,
 	PAQUETE
-}op_code;
+}op_code;*/
 
 extern t_log* logger;
 
