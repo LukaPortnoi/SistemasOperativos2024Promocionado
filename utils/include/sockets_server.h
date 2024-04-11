@@ -13,7 +13,7 @@
 
 #include "sockets_common.h"
 
-#define PUERTO "4444"
+#define PUERTO "8002"
 
 /*typedef enum
 {
