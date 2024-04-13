@@ -11,18 +11,6 @@ char *algoritmo_tlb;
 t_log *logger;
 t_config *config;
 
-void inicializar_config(){
-    logger = iniciar_logger("cpu.log", "CPU");
-	config = iniciar_config("./cpu.config", "CPU");
-
-    ip_memoria = config_get_string_value(config, "IP_MEMORIA");
-    puerto_memoria = config_get_string_value(config, "PUERTO_MEMORIA");
-    puerto_escucha_dispatch = config_get_string_value(config, "PUERTO_ESCUCHA_DISPATCH");
-    puerto_escucha_interrupt = config_get_string_value(config, "PUERTO_ESCUCHA_INTERRUPT");
-    cantidad_entradas_tlb = config_get_string_value(config, "CANTIDAD_ENTRADAS_TLB");
-    algoritmo_tlb = config_get_string_value(config, "ALGORITMO_TLB");
-}
-
 
 int main(int argc, char* argv[]) 
 {
@@ -42,5 +30,19 @@ int main(int argc, char* argv[])
 
 	terminar_programa(conexion, logger, config);
 }
+
+void inicializar_config(void){
+    logger = iniciar_logger("cpu.log", "CPU");
+	config = iniciar_config("./cpu.config", "CPU");
+
+    ip_memoria = config_get_string_value(config, "IP_MEMORIA");
+    puerto_memoria = config_get_string_value(config, "PUERTO_MEMORIA");
+    puerto_escucha_dispatch = config_get_string_value(config, "PUERTO_ESCUCHA_DISPATCH");
+    puerto_escucha_interrupt = config_get_string_value(config, "PUERTO_ESCUCHA_INTERRUPT");
+    cantidad_entradas_tlb = config_get_string_value(config, "CANTIDAD_ENTRADAS_TLB");
+    algoritmo_tlb = config_get_string_value(config, "ALGORITMO_TLB");
+}
+
+
 
 
