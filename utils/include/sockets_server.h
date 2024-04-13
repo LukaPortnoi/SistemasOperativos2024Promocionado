@@ -11,7 +11,7 @@
 #include<string.h>
 #include<assert.h>
 
-#include "sockets_common.h"
+#include "./sockets_common.h"
 
 #define PUERTO "8002"
 
