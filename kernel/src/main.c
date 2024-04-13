@@ -23,10 +23,10 @@ int main()
 
 	log_info(logger, "Iniciando Kernel...");
 
-/*	conexion_memoria = crear_conexion(ip_memoria, puerto_memoria);
+	conexion_memoria = crear_conexion(ip_memoria, puerto_memoria);
 	enviar_mensaje("Mensaje de Kernel para memoria", conexion_memoria);
 	paquete(conexion_memoria, logger);
-*/
+
 	conexion_cpu = crear_conexion(ip_cpu, puerto_cpu_dispatch); //aqui vamos a planificar la ejecucion de procesos
 	enviar_mensaje("Mensaje de Kernel para CPU", conexion_cpu);
 	paquete(conexion_cpu, logger);
