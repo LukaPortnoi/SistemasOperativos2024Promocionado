@@ -14,8 +14,8 @@
 #include "../../utils/include/sockets_client.h"
 #include "../../utils/include/sockets_utils.h"
 
-t_log *iniciar_logger(void);
-t_config *iniciar_config(void);
+t_log *iniciar_logger(char *file_name, char *name);
+t_config *iniciar_config(char *file_name, char *name);
 void paquete(int conexion, t_log *logger);
 void terminar_programa(int conexion, t_log *logger, t_config *config);
 

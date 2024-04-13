@@ -11,7 +11,21 @@ char *algoritmo_tlb;
 t_log *logger;
 t_config *config;
 
-int main(int argc, char* argv[]) {
+void inicializar_config(){
+    logger = iniciar_logger("cpu.log", "CPU");
+	config = iniciar_config("./cpu.config", "CPU");
+
+    ip_memoria = config_get_string_value(config, "IP_MEMORIA");
+    puerto_memoria = config_get_string_value(config, "PUERTO_MEMORIA");
+    puerto_escucha_dispatch = config_get_string_value(config, "PUERTO_ESCUCHA_DISPATCH");
+    puerto_escucha_interrupt = config_get_string_value(config, "PUERTO_ESCUCHA_INTERRUPT");
+    cantidad_entradas_tlb = config_get_string_value(config, "CANTIDAD_ENTRADAS_TLB");
+    algoritmo_tlb = config_get_string_value(config, "ALGORITMO_TLB");
+}
+
+
+int main(int argc, char* argv[]) 
+{
    inicializar_config();
 
 	// Loggeamos el valor de config
@@ -29,40 +43,4 @@ int main(int argc, char* argv[]) {
 	terminar_programa(conexion, logger, config);
 }
 
-t_config *iniciar_config_c(void)
-{
-	t_config *nuevo_config;
-	nuevo_config = config_create("./cpu.config");
-	if (nuevo_config == NULL)
-	{
-		printf("No se pudo leer la config CPU\n");
-		exit(2);
-	};
-	return nuevo_config;
-}
-
-t_log *iniciar_logger_c(void)
-{
-	t_log *nuevo_logger;
-	nuevo_logger = log_create("cpu.log", "CPU", 1, LOG_LEVEL_INFO);
-	if (nuevo_logger == NULL)
-	{
-		printf("No se pudo crear el logger CPU\n");
-		exit(1);
-	};
-	return nuevo_logger;
-}
-
-
-void inicializar_config(){
-    logger = iniciar_logger_c();
-	config = iniciar_config_c();
-
-    ip_memoria = config_get_string_value(config, "IP_MEMORIA");
-    puerto_memoria = config_get_string_value(config, "PUERTO_MEMORIA");
-    puerto_escucha_dispatch = config_get_string_value(config, "PUERTO_ESCUCHA_DISPATCH");
-    puerto_escucha_interrupt = config_get_string_value(config, "PUERTO_ESCUCHA_INTERRUPT");
-    cantidad_entradas_tlb = config_get_string_value(config, "CANTIDAD_ENTRADAS_TLB");
-    algoritmo_tlb = config_get_string_value(config, "ALGORITMO_TLB");
-}
 

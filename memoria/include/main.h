@@ -10,7 +10,6 @@
 #include <readline/readline.h>
 
 #include "../../utils/include/hello.h"
-#include "../../utils/include/sockets_server.h"
 #include "../../utils/include/sockets_client.h"
 
 void iterator(char* value);
