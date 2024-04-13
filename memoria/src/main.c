@@ -10,8 +10,6 @@ int main(void)
 {
 	inicializar_config();
 	
-	logger_memoria = log_create("log.log", "Servidor", 1, LOG_LEVEL_DEBUG);
-
 	int server_fd = iniciar_servidor(logger_memoria, "MEMORIA", ip_memoria, puerto_escucha_memoria);
 	log_info(logger_memoria, "Memoria listo para recibir al cliente");
 
@@ -20,6 +18,7 @@ int main(void)
 }
 
 void inicializar_config(void){
+	logger_memoria = iniciar_logger("memoria.log", "Servidor Memoria");
 	config_memoria = iniciar_config("./memoria.config","MEMORIA");
 	puerto_escucha_memoria = config_get_string_value(config_memoria,"PUERTO_ESCUCHA");
 	ip_memoria = config_get_string_value(config_memoria,"IP_MEMORIA");
