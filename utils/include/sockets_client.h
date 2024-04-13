@@ -9,6 +9,7 @@
 #include<netdb.h>
 #include<string.h>
 #include<commons/log.h>
+#include<commons/config.h>
 
 #include "./sockets_common.h"
 
