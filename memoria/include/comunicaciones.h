@@ -13,7 +13,4 @@
 #include "../../utils/include/sockets_client.h"
 #include "../../utils/include/sockets_server.h"
 
-int procesar_conexion(int server_fd);
-void iterator(char* value);
-
 #endif

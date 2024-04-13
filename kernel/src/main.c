@@ -1,6 +1,7 @@
 #include "../include/main.h"
 
 int conexion_memoria;
+int conexion_cpu;
 char *puerto_escucha;
 char *ip_memoria;
 char *puerto_memoria;
@@ -21,13 +22,18 @@ int main()
 	inicializar_config();
 
 	log_info(logger, "Iniciando Kernel...");
-	
+
 	conexion_memoria = crear_conexion(ip_memoria, puerto_memoria);
 	enviar_mensaje("Mensaje de Kernel para memoria", conexion_memoria);
 	paquete(conexion_memoria, logger);
 
+	/*conexion_cpu = crear_conexion(ip_cpu, puerto_cpu_dispatch); //aqui vamos a planificar la ejecucion de procesos
+	enviar_mensaje("Mensaje de Kernel para CPU", conexion_cpu);
+	paquete(conexion_cpu, logger);*/
 
 
+
+	log_info(logger, "Se cerrara la conexion");
 	terminar_programa(conexion_memoria, logger, config);
 }
 
