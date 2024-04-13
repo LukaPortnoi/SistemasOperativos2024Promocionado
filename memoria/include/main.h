@@ -11,6 +11,7 @@
 
 #include "../../utils/include/hello.h"
 #include "../../utils/include/sockets_client.h"
+#include "../../utils/include/sockets_server.h"
 
 void iterator(char* value);
 
