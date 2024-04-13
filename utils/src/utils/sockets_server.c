@@ -1,36 +1,50 @@
 #include "../include/sockets_server.h"
 
-t_log *logger;
+t_log* logger_recibido;
 
-int iniciar_servidor(void)
+int iniciar_servidor(t_log *logger, const char *name, char *ip, char *puerto)
 {
+    logger_recibido = logger;
 	int socket_servidor;
+    struct addrinfo hints, *servinfo;
 
-	struct addrinfo hints, *servinfo, *p;
 
-	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = AF_UNSPEC;
-	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_flags = AI_PASSIVE;
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_flags = AI_PASSIVE;
 
-	getaddrinfo(NULL, PUERTO, &hints, &servinfo);
 
-	// Creamos el socket de escucha del servidor
-	socket_servidor = socket(servinfo->ai_family, servinfo->ai_socktype, servinfo->ai_protocol);
+    getaddrinfo(ip, puerto, &hints, &servinfo);
 
-	// Asociamos el socket a un puerto
-	bind(socket_servidor, servinfo->ai_addr, servinfo->ai_addrlen);
+    bool conecto = false;
 
-	// Escuchamos las conexiones entrantes
-	listen(socket_servidor, SOMAXCONN);
+    for (struct addrinfo *p = servinfo; p != NULL; p = p->ai_next){
+        socket_servidor = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
+        if (socket_servidor == -1) 
+            continue;
 
-	freeaddrinfo(servinfo);
-	log_trace(logger, "Listo para escuchar a mi cliente");
-
-	return socket_servidor;
+        if (bind(socket_servidor, p->ai_addr, p->ai_addrlen) == -1)
+        {
+            close(socket_servidor);
+            continue;
+        }
+        conecto = true;
+        break;
+    }
+	if (!conecto)
+    {
+        free(servinfo);
+        return 0;
+    }
+    listen(socket_servidor, SOMAXCONN); 
+    log_info(logger, "Servidor escuchando en %s:%s (%s)", ip, puerto, name);
+	
+    freeaddrinfo(servinfo); 
+    return socket_servidor;
 }
 
-int esperar_cliente(int socket_servidor)
+int esperar_cliente(int socket_servidor, t_log *logger)
 {
 	// Aceptamos un nuevo cliente
 	int socket_cliente = accept(socket_servidor, NULL, NULL);
@@ -39,9 +53,9 @@ int esperar_cliente(int socket_servidor)
 	return socket_cliente;
 }
 
-int procesar_conexion(int server_fd){
+int procesar_conexion(int server_fd, t_log *logger){
 
-    int cliente_fd = esperar_cliente(server_fd);
+    int cliente_fd = esperar_cliente(server_fd, logger);
 
 	t_list *lista;
 	while (1)
@@ -50,7 +64,7 @@ int procesar_conexion(int server_fd){
 		switch (cod_op)
 		{
 		case MENSAJE:
-			recibir_mensaje(cliente_fd);
+			recibir_mensaje(cliente_fd, logger);
 			break;
 		case PAQUETE:
 			lista = recibir_paquete(cliente_fd);
@@ -70,7 +84,7 @@ int procesar_conexion(int server_fd){
 
 void iterator(char *value)
 {
-	log_info(logger, "%s", value);
+	log_info(logger_recibido, "%s", value);
 }
 
 int recibir_operacion(int socket_cliente)
@@ -96,7 +110,7 @@ void *recibir_buffer(int *size, int socket_cliente)
 	return buffer;
 }
 
-void recibir_mensaje(int socket_cliente)
+void recibir_mensaje(int socket_cliente, t_log *logger)
 {
 	int size;
 	char *buffer = recibir_buffer(&size, socket_cliente);

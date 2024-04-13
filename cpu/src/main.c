@@ -14,18 +14,12 @@ t_config *config;
 
 int main(int argc, char* argv[]) 
 {
-   inicializar_config();
+    inicializar_config();
 
-	// Loggeamos el valor de config
 	log_info(logger, "Iniciando CPU...");
-
-	// Creamos una conexión hacia el servidor
+	
 	conexion = crear_conexion(ip_memoria, puerto_memoria);
-
-	// Enviamos al servidor el valor de CLAVE como mensaje
 	enviar_mensaje("Mensaje de CPU para memoria", conexion);
-
-	// Armamos y enviamos el paquete
 	paquete(conexion, logger);
 
 	terminar_programa(conexion, logger, config);
