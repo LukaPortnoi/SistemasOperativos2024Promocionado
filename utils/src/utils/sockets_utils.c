@@ -1,24 +1,24 @@
 #include "../include/sockets_utils.h"
 
-t_log *iniciar_logger(void)
+t_log *iniciar_logger(char *file_name, char *name)
 {
 	t_log *nuevo_logger;
-	nuevo_logger = log_create("kernel.log", "KERNEL", 1, LOG_LEVEL_INFO);
+	nuevo_logger = log_create(file_name, name, 1, LOG_LEVEL_INFO);
 	if (nuevo_logger == NULL)
 	{
-		printf("No se pudo crear el logger kernel\n");
+		printf("No se pudo crear el logger %s\n", name);
 		exit(1);
 	};
 	return nuevo_logger;
 }
 
-t_config *iniciar_config(void)
+t_config *iniciar_config(char *file_name, char *name)
 {
 	t_config *nuevo_config;
-	nuevo_config = config_create("./kernel.config");
+	nuevo_config = config_create(file_name);
 	if (nuevo_config == NULL)
 	{
-		printf("No se pudo leer la config kernel\n");
+		printf("No se pudo leer la config %s\n", name);
 		exit(2);
 	};
 	return nuevo_config;
