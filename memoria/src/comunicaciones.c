@@ -1,16 +1,8 @@
-#include "../include/main.h"
+#include "../include/comunicaciones.h"
 
-int main(void)
-{
-	logger = log_create("log.log", "Servidor", 1, LOG_LEVEL_DEBUG);
+int procesar_conexion(int server_fd){
 
-	int server_fd = iniciar_servidor();
-	log_info(logger, "Memoria listo para recibir al cliente");
-
-	procesar_conexion(server_fd);
-
-	/* TODO EN PROCESAR CONEXION
-	int cliente_fd = esperar_cliente(server_fd);
+    int cliente_fd = esperar_cliente(server_fd);
 
 	t_list *lista;
 	while (1)
@@ -35,12 +27,9 @@ int main(void)
 		}
 	}
 	return EXIT_SUCCESS;
-	*/
 }
 
-/*
 void iterator(char *value)
 {
 	log_info(logger, "%s", value);
 }
-*/
