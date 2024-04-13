@@ -1,6 +1,6 @@
 #include "../include/main.h"
 
-int conexion;
+int conexion_memoria;
 char *puerto_escucha;
 char *ip_memoria;
 char *puerto_memoria;
@@ -20,19 +20,15 @@ int main()
 {
 	inicializar_config();
 
-	// Loggeamos el valor de config
 	log_info(logger, "Iniciando Kernel...");
+	
+	conexion_memoria = crear_conexion(ip_memoria, puerto_memoria);
+	enviar_mensaje("Mensaje de Kernel para memoria", conexion_memoria);
+	paquete(conexion_memoria, logger);
 
-	// Creamos una conexión hacia el servidor
-	conexion = crear_conexion(ip_memoria, puerto_memoria);
 
-	// Enviamos al servidor el valor de CLAVE como mensaje
-	enviar_mensaje("Mensaje de Kernel para memoria", conexion);
 
-	// Armamos y enviamos el paquete
-	paquete(conexion, logger);
-
-	terminar_programa(conexion, logger, config);
+	terminar_programa(conexion_memoria, logger, config);
 }
 
 void inicializar_config(void)
