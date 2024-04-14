@@ -31,8 +31,6 @@ int main()
 	enviar_mensaje("Mensaje de Kernel para CPU", conexion_cpu);
 	paquete(conexion_cpu, logger);
 
-
-
 	log_info(logger, "Se cerrara la conexion");
 	terminar_programa(conexion_cpu, logger, config);
 }
