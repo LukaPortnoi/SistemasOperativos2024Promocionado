@@ -13,4 +13,6 @@
 #include "../../utils/include/sockets_server.h"
 #include "../../utils/include/sockets_client.h"
 
+void inicializar_config(void);
+
 #endif
