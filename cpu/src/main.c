@@ -23,10 +23,13 @@ int main(int argc, char* argv[])
 	enviar_mensaje("Mensaje de CPU para memoria", conexion);
 	paquete(conexion, logger_CPU);
 */
-    int server_fd = iniciar_servidor(logger_CPU, "CPU", ip_cpu, puerto_escucha_dispatch);
+    int server_dispatch = iniciar_servidor(logger_CPU, "CPU", ip_cpu, puerto_escucha_dispatch);
 	log_info(logger_CPU, "CPU listo para recibir al cliente");
+	procesar_conexion(server_dispatch, logger_CPU);
 
-	procesar_conexion(server_fd, logger_CPU);
+    /*int server_interrupt = iniciar_servidor(logger_CPU, "CPU", ip_cpu, puerto_escucha_interrupt);
+	log_info(logger_CPU, "CPU listo para recibir al cliente");
+	procesar_conexion(server_interrupt, logger_CPU);*/
 
 
 	//terminar_programa(conexion, logger_CPU, config);
