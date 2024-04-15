@@ -13,8 +13,6 @@
 
 #include "./sockets_common.h"
 
-#define PUERTO "8002"
-
 /*typedef enum
 {
 	MENSAJE,

@@ -1,47 +1,46 @@
 #include "../include/sockets_server.h"
 
-t_log* logger_recibido;
+t_log *logger_recibido;
 
 int iniciar_servidor(t_log *logger, const char *name, char *ip, char *puerto)
 {
-    logger_recibido = logger;
+	logger_recibido = logger;
 	int socket_servidor;
-    struct addrinfo hints, *servinfo;
+	struct addrinfo hints, *servinfo;
 
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_flags = AI_PASSIVE;
 
-    memset(&hints, 0, sizeof(hints));
-    hints.ai_family = AF_UNSPEC;
-    hints.ai_socktype = SOCK_STREAM;
-    hints.ai_flags = AI_PASSIVE;
+	getaddrinfo(ip, puerto, &hints, &servinfo);
 
+	bool conecto = false;
 
-    getaddrinfo(ip, puerto, &hints, &servinfo);
+	for (struct addrinfo *p = servinfo; p != NULL; p = p->ai_next)
+	{
+		socket_servidor = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
+		if (socket_servidor == -1)
+			continue;
 
-    bool conecto = false;
-
-    for (struct addrinfo *p = servinfo; p != NULL; p = p->ai_next){
-        socket_servidor = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
-        if (socket_servidor == -1) 
-            continue;
-
-        if (bind(socket_servidor, p->ai_addr, p->ai_addrlen) == -1)
-        {
-            close(socket_servidor);
-            continue;
-        }
-        conecto = true;
-        break;
-    }
+		if (bind(socket_servidor, p->ai_addr, p->ai_addrlen) == -1)
+		{
+			close(socket_servidor);
+			continue;
+		}
+		conecto = true;
+		break;
+	}
 	if (!conecto)
-    {
-        free(servinfo);
-        return 0;
-    }
-    listen(socket_servidor, SOMAXCONN); 
-    log_info(logger, "Servidor escuchando en %s:%s (%s)", ip, puerto, name);
-	
-    freeaddrinfo(servinfo); 
-    return socket_servidor;
+	{
+		free(servinfo);
+		return 0;
+	}
+	listen(socket_servidor, SOMAXCONN);
+	log_info(logger, "Servidor escuchando en %s:%s (%s)", ip, puerto, name);
+
+	freeaddrinfo(servinfo);
+	return socket_servidor;
 }
 
 int esperar_cliente(int socket_servidor, t_log *logger)
@@ -53,9 +52,10 @@ int esperar_cliente(int socket_servidor, t_log *logger)
 	return socket_cliente;
 }
 
-int procesar_conexion(int server_fd, t_log *logger){
+int procesar_conexion(int server_fd, t_log *logger)
+{
 
-    int cliente_fd = esperar_cliente(server_fd, logger);
+	int cliente_fd = esperar_cliente(server_fd, logger);
 
 	t_list *lista;
 	while (1)
