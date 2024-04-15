@@ -14,5 +14,6 @@
 #include "../../utils/include/sockets_client.h"
 #include "../../utils/include/sockets_utils.h"
 
+int procesar_conexion_io(int server_fd, t_log *logger);
 
 #endif

@@ -50,6 +50,7 @@ void inicializar_config(void)
 	logger_kernel = iniciar_logger("kernel.log", "KERNEL");
 	config_kernel = iniciar_config("./kernel.config", "KERNEL");
 
+	//liberar los get_array_value
 	puerto_escucha = config_get_string_value(config_kernel, "PUERTO_ESCUCHA");
 	ip_memoria = config_get_string_value(config_kernel, "IP_MEMORIA");
 	puerto_memoria = config_get_string_value(config_kernel, "PUERTO_MEMORIA");

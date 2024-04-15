@@ -1,6 +1,6 @@
 #include "../include/main.h"
 
-int conexion;
+int conexion_cpu_memoria;
 char *ip_memoria;
 char *ip_cpu;
 char *puerto_memoria;
@@ -19,10 +19,10 @@ int main(int argc, char* argv[])
 
 	log_info(logger_CPU, "Iniciando CPU...");
 	
-/*	conexion = crear_conexion(ip_memoria, puerto_memoria);
+    conexion_cpu_memoria = crear_conexion(ip_memoria, puerto_memoria);
 	enviar_mensaje("Mensaje de CPU para memoria", conexion);
 	paquete(conexion, logger_CPU);
-*/
+
     int server_dispatch = iniciar_servidor(logger_CPU, "CPU", ip_cpu, puerto_escucha_dispatch);
 	log_info(logger_CPU, "CPU listo para recibir al cliente");
 	procesar_conexion(server_dispatch, logger_CPU);
