@@ -22,7 +22,7 @@ static void procesar_conexion(void *void_args)
 
 		if (recv(cliente_socket, &cop, sizeof(op_code), 0) != sizeof(op_code))
 		{
-			log_info(logger, "DISCONNECT!");
+			log_info(logger, "Se desconecto el cliente!\n");
 			return;
 		}
 
@@ -39,12 +39,12 @@ static void procesar_conexion(void *void_args)
 
 		// Errores
 		case -1:
-			log_error(logger, "Cliente desconectado de %s...", server_name);
-			return;
+			log_error(logger, "Cliente desconectado de %s... con cop -1", server_name);
+			break;  //hay un return, voy a probar un break
 		default:
 			log_error(logger, "Algo anduvo mal en el server de %s", server_name);
 			log_info(logger, "Cop: %d", cop);
-			return;
+			break;  //hay un return, voy a probar un break
 		}
 	}
 
