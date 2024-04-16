@@ -33,7 +33,7 @@ static void procesar_conexion(void *void_args)
 			break;
 		case PAQUETE:
 			lista = recibir_paquete(cliente_socket);
-			log_info(logger, "Me llegaron los siguientes valores:\n");
+			log_info(logger, "Me llegaron los siguientes valores:");
 			list_iterate(lista, (void *)iterator);
 			break;
 

@@ -19,20 +19,21 @@ int main(int argc, char* argv[])
 
 	log_info(logger_CPU, "Iniciando CPU...");
 	
-    conexion_cpu_memoria = crear_conexion(ip_memoria, puerto_memoria);
+    /*conexion_cpu_memoria = crear_conexion(ip_memoria, puerto_memoria);
 	enviar_mensaje("Mensaje de CPU para memoria", conexion_cpu_memoria);
-	paquete(conexion_cpu_memoria, logger_CPU);
+	paquete(conexion_cpu_memoria, logger_CPU);*/
 
-    /*int server_dispatch = iniciar_servidor(logger_CPU, "CPU", ip_cpu, puerto_escucha_dispatch);
-	log_info(logger_CPU, "CPU listo para recibir al cliente");
-	procesar_conexion(server_dispatch, logger_CPU);*/
+    int fd_socket_CPU = iniciar_servidor(logger_CPU, "CPU", ip_cpu, puerto_escucha_dispatch);
+	log_info(logger_CPU, "CPU listo para recibir al cliente en DISPATCH");
+	
+    while(server_escuchar(logger_CPU, "CPU", fd_socket_CPU));
 
     /*int server_interrupt = iniciar_servidor(logger_CPU, "CPU", ip_cpu, puerto_escucha_interrupt);
 	log_info(logger_CPU, "CPU listo para recibir al cliente");
 	procesar_conexion(server_interrupt, logger_CPU);*/
 
 
-	terminar_programa(conexion_cpu_memoria, logger_CPU, config);
+	terminar_programa(fd_socket_CPU, logger_CPU, config);
 }
 
 void inicializar_config(void){

@@ -16,6 +16,5 @@
 #include "./comunicaciones.h"
 
 void inicializar_config(void);
-void iterator(char* value);
 
 #endif

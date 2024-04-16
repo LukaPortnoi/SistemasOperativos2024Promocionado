@@ -7,12 +7,15 @@
 #include <commons/log.h>
 #include <commons/string.h>
 #include <commons/config.h>
+#include <stdint.h>
+#include <string.h>
+#include <pthread.h>
+#include <inttypes.h>
 #include <readline/readline.h>
 
 #include "../../utils/include/hello.h"
 #include "../../utils/include/sockets_client.h"
 #include "../../utils/include/sockets_server.h"
 
-int procesar_conexion_kernel(int server_fd, t_log *logger);
-
+int server_escuchar(t_log *logger, char *server_name, int server_socket);
 #endif
