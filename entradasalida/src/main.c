@@ -22,15 +22,15 @@ int main(int argc, char *argv[])
 
     log_info(logger_input_output, "Iniciando Entradas/Salidas...");
 
-    conexion_memoria = crear_conexion(ip_memoria, puerto_memoria);
+    /*conexion_memoria = crear_conexion(ip_memoria, puerto_memoria);
     enviar_mensaje("Mensaje de I/O para memoria", conexion_memoria);
-    paquete(conexion_memoria, logger_input_output);
+    paquete(conexion_memoria, logger_input_output);*/
 
     conexion_kernel = crear_conexion(ip_kernel, puerto_kernel);
     enviar_mensaje("Mensaje de I/O para Kernel", conexion_kernel);
     paquete(conexion_kernel, logger_input_output);
 
-    terminar_programa(conexion_memoria, logger_input_output, config_input_output);
+    terminar_programa(conexion_kernel, logger_input_output, config_input_output);
 }
 
 void inicializar_config(void)

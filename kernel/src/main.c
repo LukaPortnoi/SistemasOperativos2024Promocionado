@@ -30,20 +30,22 @@ int main()
 	enviar_mensaje("Mensaje de Kernel para memoria", conexion_memoria);
 	paquete(conexion_memoria, logger_kernel);*/
 
-	conexion_cpu_dispatch = crear_conexion(ip_cpu, puerto_cpu_dispatch); //aqui vamos a planificar la ejecucion de procesos
+	/*conexion_cpu_dispatch = crear_conexion(ip_cpu, puerto_cpu_dispatch); //aqui vamos a planificar la ejecucion de procesos
 	enviar_mensaje("Mensaje de Kernel para CPU", conexion_cpu_dispatch);
-	paquete(conexion_cpu_dispatch, logger_kernel);
+	paquete(conexion_cpu_dispatch, logger_kernel);*/
 
-	/*int server_escucha_kernel = iniciar_servidor(logger_kernel, "KERNEL", ip_kernel, puerto_escucha);
+	int server_escucha_kernel = iniciar_servidor(logger_kernel, "KERNEL", ip_kernel, puerto_escucha);
 	log_info(logger_kernel, "Kernel listo para recibir al cliente");
-	procesar_conexion(server_escucha_kernel, logger_kernel);*/
+	
+	while(server_escuchar(logger_kernel, "CPU", server_escucha_kernel));
+
 
 	/*conexion_cpu_interrupt = crear_conexion(ip_cpu, puerto_cpu_interrupt); //aqui vamos a planificar la ejecucion de procesos
 	enviar_mensaje("Mensaje de Kernel para CPU", conexion_cpu_interrupt);
 	paquete(conexion_cpu_interrupt, logger_kernel);*/
 
 	//log_info(logger_kernel, "Se cerrara la conexion");
-	terminar_programa(conexion_cpu_dispatch, logger_kernel, config_kernel);
+	terminar_programa(server_escucha_kernel, logger_kernel, config_kernel);
 }
 
 void inicializar_config(void)
