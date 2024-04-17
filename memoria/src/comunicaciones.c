@@ -15,12 +15,12 @@ static void procesar_conexion(void *void_args)
 	char *server_name = args->server_name;
 	free(args);
 
-	op_code cop;
+	t_handshake cop;
 	t_list *lista;
 	while (cliente_socket != -1)
 	{
 
-		if (recv(cliente_socket, &cop, sizeof(op_code), 0) != sizeof(op_code))
+		if (recv(cliente_socket, &cop, sizeof(t_handshake), 0) != sizeof(t_handshake))
 		{
 			log_info(logger, "Se desconecto el cliente!\n");
 			return;
@@ -35,6 +35,11 @@ static void procesar_conexion(void *void_args)
 			lista = recibir_paquete(cliente_socket);
 			log_info(logger, "Me llegaron los siguientes valores:");
 			list_iterate(lista, (void *)iterator);
+			break;
+
+		case HANDSHAKE_cpu:
+			recibir_mensaje(cliente_socket, logger);
+			log_info(logger, "Este deberia ser el canal mediante el cual nos comunicamos con la CPU");
 			break;
 
 		// Errores
