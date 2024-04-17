@@ -19,9 +19,9 @@ int main(int argc, char* argv[])
 
 	log_info(logger_CPU, "Iniciando CPU...");
 	
-    /*conexion_cpu_memoria = crear_conexion(ip_memoria, puerto_memoria);
+    conexion_cpu_memoria = crear_conexion(ip_memoria, puerto_memoria);
 	enviar_mensaje("Mensaje de CPU para memoria", conexion_cpu_memoria);
-	paquete(conexion_cpu_memoria, logger_CPU);*/
+	paquete(conexion_cpu_memoria, logger_CPU);
 
     int fd_socket_CPU = iniciar_servidor(logger_CPU, "CPU", ip_cpu, puerto_escucha_dispatch);
 	log_info(logger_CPU, "CPU listo para recibir al cliente en DISPATCH");
