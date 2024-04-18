@@ -18,5 +18,6 @@
 #include "../../utils/include/sockets_server.h"
 
 int server_escuchar(t_log *logger, char *server_name, int server_socket);
+void enviar_con_handshake(int socket_cliente, char* mensaje);
 
 #endif

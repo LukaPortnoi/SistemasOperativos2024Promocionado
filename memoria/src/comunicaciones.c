@@ -42,6 +42,15 @@ static void procesar_conexion(void *void_args)
 			log_info(logger, "Este deberia ser el canal mediante el cual nos comunicamos con la CPU");
 			break;
 
+		case HANDSHAKE_kernel:
+			recibir_mensaje(cliente_socket, logger);
+			log_info(logger, "Este deberia ser el canal mediante el cual nos comunicamos con el KERNEL");
+			break;
+
+		case HANDSHAKE_in_out:
+			recibir_mensaje(cliente_socket, logger);
+			log_info(logger, "Este deberia ser el canal mediante el cual nos comunicamos con el I/O");
+			break;
 		// Errores
 		case -1:
 			log_error(logger, "Cliente desconectado de %s... con cop -1", server_name);

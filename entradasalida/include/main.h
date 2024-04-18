@@ -15,5 +15,6 @@
 #include "../../utils/include/sockets_utils.h"
 
 void inicializar_config(void);
+void enviar_con_handshake(int socket_cliente, char* mensaje);
 
 #endif

@@ -27,11 +27,13 @@ int main()
 	log_info(logger_kernel, "Iniciando Kernel...");
 
 	conexion_memoria = crear_conexion(ip_memoria, puerto_memoria);
-	enviar_mensaje("Mensaje de Kernel para memoria", conexion_memoria);
+	//enviar_mensaje("Mensaje de Kernel para memoria", conexion_memoria);
+	enviar_con_handshake(conexion_memoria, "Hola desde KERNEL con handshake");
 	paquete(conexion_memoria, logger_kernel);
 
 	conexion_cpu_dispatch = crear_conexion(ip_cpu, puerto_cpu_dispatch); //aqui vamos a planificar la ejecucion de procesos
-	enviar_mensaje("Mensaje de Kernel para CPU", conexion_cpu_dispatch);
+	//enviar_mensaje("Mensaje de Kernel para CPU", conexion_cpu_dispatch);
+	enviar_con_handshake(conexion_cpu_dispatch, "Hola desde KERNEL con handshake");
 	paquete(conexion_cpu_dispatch, logger_kernel);
 
 	int server_escucha_kernel = iniciar_servidor(logger_kernel, "KERNEL", ip_kernel, puerto_escucha);
@@ -46,6 +48,8 @@ int main()
 
 	//log_info(logger_kernel, "Se cerrara la conexion");
 	terminar_programa(server_escucha_kernel, logger_kernel, config_kernel);
+	terminar_programa(conexion_memoria, logger_kernel, config_kernel);
+	terminar_programa(conexion_cpu_dispatch, logger_kernel, config_kernel);
 }
 
 void inicializar_config(void)
@@ -67,5 +71,4 @@ void inicializar_config(void)
 	grado_multiprogramacion = config_get_int_value(config_kernel, "GRADO_MULTIPROGRAMACION");
 	ip_kernel = config_get_string_value(config_kernel, "IP_KERNEL");
 }
-
 

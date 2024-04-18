@@ -36,6 +36,12 @@ static void procesar_conexion(void *void_args)
 			log_info(logger, "Me llegaron los siguientes valores:");
 			list_iterate(lista, (void *)iterator);
 			break;
+		
+		case HANDSHAKE_kernel:
+		recibir_mensaje(cliente_socket, logger);
+		log_info(logger, "Este deberia ser el canal mediante el cual nos comunicamos con el KERNEL");
+		break;
+
 
 		// Errores
 		case -1:
@@ -70,7 +76,7 @@ int server_escuchar(t_log *logger, char *server_name, int server_socket)
 	return 0;
 }
 
-void enviar_con_handshake(int numero, int socket_cliente, char* mensaje){
+void enviar_con_handshake(int socket_cliente, char* mensaje){
 
 	t_paquete_handshake *paquete = malloc(sizeof(t_paquete_handshake));
 	

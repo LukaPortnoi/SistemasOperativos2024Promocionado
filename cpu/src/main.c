@@ -20,8 +20,8 @@ int main(int argc, char* argv[])
 	log_info(logger_CPU, "Iniciando CPU...");
 	
     conexion_cpu_memoria = crear_conexion(ip_memoria, puerto_memoria);
-	enviar_mensaje("Mensaje de CPU para memoria", conexion_cpu_memoria);
-	enviar_con_handshake(1, conexion_cpu_memoria, "Hola desde CPU con handshake");
+	//enviar_mensaje("Mensaje de CPU para memoria", conexion_cpu_memoria);
+	enviar_con_handshake(conexion_cpu_memoria, "Hola desde CPU con handshake");
     paquete(conexion_cpu_memoria, logger_CPU);
 
     int fd_socket_CPU = iniciar_servidor(logger_CPU, "CPU", ip_cpu, puerto_escucha_dispatch);
@@ -35,6 +35,9 @@ int main(int argc, char* argv[])
 
 
 	terminar_programa(fd_socket_CPU, logger_CPU, config);
+    terminar_programa(conexion_cpu_memoria, logger_CPU, config);
+    /*terminar_programa(server_interrupt, logger_CPU, config);*/
+
 }
 
 void inicializar_config(void){
