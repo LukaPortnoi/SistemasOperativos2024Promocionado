@@ -12,6 +12,6 @@
     HANDSHAKE_ok_continue,
     MENSAJE,
     PAQUETE
-} t_handshake;
+} op_cod;
 
 #endif // SOCKETS_COMMON_H_

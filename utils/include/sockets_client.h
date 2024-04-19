@@ -13,12 +13,6 @@
 
 #include "./sockets_common.h"
 
-/*typedef enum
-{
-	MENSAJE,
-	PAQUETE
-}op_code;*/
-
 typedef struct
 {
 	int size;
@@ -27,12 +21,12 @@ typedef struct
 
 typedef struct
 {
-	t_handshake codigo_operacion;
+	op_cod codigo_operacion;
 	t_buffer* buffer;
 } t_paquete;
 
 typedef struct{
-	t_handshake codigo_operacion;
+	op_cod codigo_operacion;
 	t_buffer* buffer;
 }t_paquete_handshake;
 

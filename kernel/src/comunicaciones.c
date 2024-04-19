@@ -15,12 +15,12 @@ static void procesar_conexion(void *void_args)
 	char *server_name = args->server_name;
 	free(args);
 
-	t_handshake cop;
+	cod_op cop;
 	t_list *lista;
 	while (cliente_socket != -1)
 	{
 
-		if (recv(cliente_socket, &cop, sizeof(t_handshake), 0) != sizeof(t_handshake))
+		if (recv(cliente_socket, &cop, sizeof(cod_op), 0) != sizeof(cod_op))
 		{
 			log_info(logger, "Se desconecto el cliente!\n");
 			return;

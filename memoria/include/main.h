@@ -15,6 +15,16 @@
 #include "../../utils/include/sockets_utils.h"
 #include "./comunicaciones.h"
 
+t_log* LOGGER_MEMORIA;
+t_config* CONFIG_MEMORIA;
+char* PUERTO_ESCUCHA_MEMORIA;
+char* IP_MEMORIA;
+int TAM_MEMORIA;
+int TAM_PAGINA;
+char *PATH_INSTRUCCIONES;
+int RETARDO_RESPUESTA;
+int CLIENTE_CPU, CLIENTE_KERNEL, CLIENTE_IN_OU;
+
 void inicializar_config(void);
 
 #endif

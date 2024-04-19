@@ -1,74 +1,47 @@
 #include "../include/main.h"
 
-int conexion_memoria;
-int conexion_cpu_dispatch;
-int conexion_cpu_interrupt;
-char *puerto_escucha;
-char *ip_memoria;
-char *puerto_memoria;
-char *ip_cpu;
-char *puerto_cpu_dispatch;
-char *puerto_cpu_interrupt;
-char *algoritmo_planificacion;
-char *quantum;
-char **recursos;
-char **instancias_recursos;
-int grado_multiprogramacion;
-
-char *ip_kernel;
-
-t_log *logger_kernel;
-t_config *config_kernel;
-
 int main()
 {
 	inicializar_config();
+	log_info(LOGGER_KERNEL, "Iniciando Kernel...");
 
-	log_info(logger_kernel, "Iniciando Kernel...");
+	//server KERNEL
+	int fd_kernel = iniciar_servidor(LOGGER_KERNEL, "KERNEL", IP_KERNEL, PUERTO_ESCUCHA);
+	log_info(LOGGER_KERNEL, "Kernel listo para recibir clientes");
 
-	conexion_memoria = crear_conexion(ip_memoria, puerto_memoria);
-	//enviar_mensaje("Mensaje de Kernel para memoria", conexion_memoria);
-	enviar_con_handshake(conexion_memoria, "Hola desde KERNEL con handshake");
-	paquete(conexion_memoria, logger_kernel);
+	//conexion como cliente a MEMORIA
+	int fd_kernel_memoria = crear_conexion(IP_MEMORIA, PUERTO_MEMORIA);
+	//enviar_mensaje("Mensaje de Kernel para memoria", CONEXION_MEMORIA);
+	enviar_con_handshake(fd_kernel_memoria, "Hola desde KERNEL con handshake");
+	paquete(fd_kernel_memoria, LOGGER_KERNEL);
 
-	conexion_cpu_dispatch = crear_conexion(ip_cpu, puerto_cpu_dispatch); //aqui vamos a planificar la ejecucion de procesos
-	//enviar_mensaje("Mensaje de Kernel para CPU", conexion_cpu_dispatch);
-	enviar_con_handshake(conexion_cpu_dispatch, "Hola desde KERNEL con handshake");
-	paquete(conexion_cpu_dispatch, logger_kernel);
-
-	int server_escucha_kernel = iniciar_servidor(logger_kernel, "KERNEL", ip_kernel, puerto_escucha);
-	log_info(logger_kernel, "Kernel listo para recibir al cliente");
+	//conexion como cliente a CPU DISPATCH
+	int fd_kernel_cpu_dispatch = crear_conexion(IP_CPU, PUERTO_CPU_DISPATCH); //aqui vamos a planificar la ejecucion de procesos
+	//enviar_mensaje("Mensaje de Kernel para CPU", CONEXION_CPU_DISPATCH);
+	enviar_con_handshake(fd_kernel_cpu_dispatch, "Hola desde KERNEL con handshake");
+	paquete(fd_kernel_cpu_dispatch, LOGGER_KERNEL);
 	
-	while(server_escuchar(logger_kernel, "CPU", server_escucha_kernel));
+	while (server_escuchar(LOGGER_KERNEL, "KERNEL", fd_kernel));
 
-
-	/*conexion_cpu_interrupt = crear_conexion(ip_cpu, puerto_cpu_interrupt); //aqui vamos a planificar la ejecucion de procesos
-	enviar_mensaje("Mensaje de Kernel para CPU", conexion_cpu_interrupt);
-	paquete(conexion_cpu_interrupt, logger_kernel);*/
-
-	//log_info(logger_kernel, "Se cerrara la conexion");
-	terminar_programa(server_escucha_kernel, logger_kernel, config_kernel);
-	terminar_programa(conexion_memoria, logger_kernel, config_kernel);
-	terminar_programa(conexion_cpu_dispatch, logger_kernel, config_kernel);
+	terminar_programa(fd_kernel, LOGGER_KERNEL, CONFIG_KERNEL);
+	terminar_programa(fd_kernel_memoria, LOGGER_KERNEL, CONFIG_KERNEL);
+	terminar_programa(fd_kernel_cpu_dispatch, LOGGER_KERNEL, CONFIG_KERNEL);
 }
 
 void inicializar_config(void)
 {
-	logger_kernel = iniciar_logger("kernel.log", "KERNEL");
-	config_kernel = iniciar_config("./kernel.config", "KERNEL");
-
-	//liberar los get_array_value
-	puerto_escucha = config_get_string_value(config_kernel, "PUERTO_ESCUCHA");
-	ip_memoria = config_get_string_value(config_kernel, "IP_MEMORIA");
-	puerto_memoria = config_get_string_value(config_kernel, "PUERTO_MEMORIA");
-	ip_cpu = config_get_string_value(config_kernel, "IP_CPU");
-	puerto_cpu_dispatch = config_get_string_value(config_kernel, "PUERTO_CPU_DISPATCH");
-	puerto_cpu_interrupt = config_get_string_value(config_kernel, "PUERTO_CPU_INTERRUPT");
-	algoritmo_planificacion = config_get_string_value(config_kernel, "ALGORITMO_PLANIFICACION");
-	quantum = config_get_string_value(config_kernel, "QUANTUM");
-	recursos = config_get_array_value(config_kernel, "RECURSOS");
-	instancias_recursos = config_get_array_value(config_kernel, "INSTANCIAS_RECURSOS");
-	grado_multiprogramacion = config_get_int_value(config_kernel, "GRADO_MULTIPROGRAMACION");
-	ip_kernel = config_get_string_value(config_kernel, "IP_KERNEL");
+	LOGGER_KERNEL = iniciar_logger("kernel.log", "KERNEL");
+	CONFIG_KERNEL = iniciar_config("./kernel.config", "KERNEL"); //liberar los get_array_value
+	PUERTO_ESCUCHA = config_get_string_value(CONFIG_KERNEL, "PUERTO_ESCUCHA");
+	IP_MEMORIA = config_get_string_value(CONFIG_KERNEL, "IP_MEMORIA");
+	PUERTO_MEMORIA = config_get_string_value(CONFIG_KERNEL, "PUERTO_MEMORIA");
+	IP_CPU = config_get_string_value(CONFIG_KERNEL, "IP_CPU");
+	PUERTO_CPU_DISPATCH = config_get_string_value(CONFIG_KERNEL, "PUERTO_CPU_DISPATCH");
+	PUERTO_CPU_INTERRUPT = config_get_string_value(CONFIG_KERNEL, "PUERTO_CPU_INTERRUPT");
+	ALGORITMO_PLANIFICACION = config_get_string_value(CONFIG_KERNEL, "ALGORITMO_PLANIFICACION");
+	QUANTUM = config_get_string_value(CONFIG_KERNEL, "QUANTUM");
+	RECURSOS = config_get_array_value(CONFIG_KERNEL, "RECURSOS");
+	INSTANCIAS_RECURSOS = config_get_array_value(CONFIG_KERNEL, "INSTANCIAS_RECURSOS");
+	GRADO_MULTIPROGRAMACION = config_get_int_value(CONFIG_KERNEL, "GRADO_MULTIPROGRAMACION");
+	IP_KERNEL = config_get_string_value(CONFIG_KERNEL, "IP_KERNEL");
 }
-

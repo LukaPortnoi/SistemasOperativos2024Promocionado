@@ -1,58 +1,39 @@
 #include "../include/main.h"
 
-int conexion_cpu_memoria;
-char *ip_memoria;
-char *ip_cpu;
-char *puerto_memoria;
-char *puerto_escucha_dispatch;
-char *puerto_escucha_interrupt;
-char *cantidad_entradas_tlb;
-char *algoritmo_tlb;
-
-t_log *logger_CPU;
-t_config *config;
-
-
 int main(int argc, char* argv[]) 
 {
     inicializar_config();
+    log_info(LOGGER_CPU, "Iniciando CPU...");
 
-	log_info(logger_CPU, "Iniciando CPU...");
-	
-    conexion_cpu_memoria = crear_conexion(ip_memoria, puerto_memoria);
-	//enviar_mensaje("Mensaje de CPU para memoria", conexion_cpu_memoria);
-	enviar_con_handshake(conexion_cpu_memoria, "Hola desde CPU con handshake");
-    paquete(conexion_cpu_memoria, logger_CPU);
+    //server CPU DISPATCH
+    int fd_cpu_dispatch = iniciar_servidor(LOGGER_CPU, "CPU - DISPATCH", IP_CPU, PUERTO_ESCUCHA_DISPATCH);
+    log_info(LOGGER_CPU, "CPU listo para recibir cliente en DISPATCH");
 
-    int fd_socket_CPU = iniciar_servidor(logger_CPU, "CPU", ip_cpu, puerto_escucha_dispatch);
-	log_info(logger_CPU, "CPU listo para recibir al cliente en DISPATCH");
-	
-    while(server_escuchar(logger_CPU, "CPU", fd_socket_CPU));
+    //server CPU INTERRUPT
+    int fd_cpu_interrupt = iniciar_servidor(LOGGER_CPU, "CPU - INTERRUPT", IP_CPU, PUERTO_ESCUCHA_INTERRUPT);
+    log_info(LOGGER_CPU, "CPU listo para recibir cliente en INTERRUPT");
+    
+    //conexion como cliente a MEMORIA
+    int fd_cpu_memoria = crear_conexion(IP_MEMORIA, PUERTO_MEMORIA);
+    //enviar_mensaje("Mensaje de CPU para memoria", CONEXION_CPU_MEMORIA);
+    enviar_con_handshake(fd_cpu_memoria, "Hola desde CPU con handshake");
+    paquete(fd_cpu_memoria, LOGGER_CPU);
+    
+    while(server_escuchar(LOGGER_CPU, "CPU", fd_cpu_dispatch));
+    while(server_escuchar(LOGGER_CPU, "CPU", fd_cpu_interrupt));
 
-    /*int server_interrupt = iniciar_servidor(logger_CPU, "CPU", ip_cpu, puerto_escucha_interrupt);
-	log_info(logger_CPU, "CPU listo para recibir al cliente");
-	procesar_conexion(server_interrupt, logger_CPU);*/
-
-
-	terminar_programa(fd_socket_CPU, logger_CPU, config);
-    terminar_programa(conexion_cpu_memoria, logger_CPU, config);
-    /*terminar_programa(server_interrupt, logger_CPU, config);*/
-
+    terminar_programa(fd_cpu_dispatch, LOGGER_CPU, CONFIG);
+    terminar_programa(fd_cpu_interrupt, LOGGER_CPU, CONFIG);
 }
 
-void inicializar_config(void){
-    logger_CPU = iniciar_logger("cpu.log", "CPU");
-	config = iniciar_config("./cpu.config", "CPU");
-
-    ip_memoria = config_get_string_value(config, "IP_MEMORIA");
-    ip_cpu = config_get_string_value(config, "IP_CPU");
-    puerto_memoria = config_get_string_value(config, "PUERTO_MEMORIA");
-    puerto_escucha_dispatch = config_get_string_value(config, "PUERTO_ESCUCHA_DISPATCH");
-    puerto_escucha_interrupt = config_get_string_value(config, "PUERTO_ESCUCHA_INTERRUPT");
-    cantidad_entradas_tlb = config_get_string_value(config, "CANTIDAD_ENTRADAS_TLB");
-    algoritmo_tlb = config_get_string_value(config, "ALGORITMO_TLB");
+void inicializar_config(){
+    LOGGER_CPU = iniciar_logger("cpu.log", "CPU");
+    CONFIG = iniciar_config("./cpu.config", "CPU");
+    IP_MEMORIA = config_get_string_value(CONFIG, "IP_MEMORIA");
+    IP_CPU = config_get_string_value(CONFIG, "IP_CPU");
+    PUERTO_MEMORIA = config_get_string_value(CONFIG, "PUERTO_MEMORIA");
+    PUERTO_ESCUCHA_DISPATCH = config_get_string_value(CONFIG, "PUERTO_ESCUCHA_DISPATCH");
+    PUERTO_ESCUCHA_INTERRUPT = config_get_string_value(CONFIG, "PUERTO_ESCUCHA_INTERRUPT");
+    CANTIDAD_ENTRADAS_TLB = config_get_string_value(CONFIG, "CANTIDAD_ENTRADAS_TLB");
+    ALGORITMO_TLB = config_get_string_value(CONFIG, "ALGORITMO_TLB");
 }
-
-
-
-

@@ -13,18 +13,12 @@
 
 #include "./sockets_common.h"
 
-/*typedef enum
-{
-	MENSAJE,
-	PAQUETE
-}op_code;*/
-
 extern t_log* logger;
 
 void* recibir_buffer(int*, int);
 
 int iniciar_servidor(t_log *logger, const char *name, char *ip, char *puerto);
-int esperar_cliente(int, t_log *logger);
+int esperar_cliente(int, t_log *logger, char* name);
 void iterator(char* value);
 t_list* recibir_paquete(int);
 void recibir_mensaje(int, t_log *logger);
