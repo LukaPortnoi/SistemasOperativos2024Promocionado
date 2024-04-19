@@ -15,12 +15,12 @@ static void procesar_conexion(void *void_args)
 	char *server_name = args->server_name;
 	free(args);
 
-	op_code cop;
+	t_handshake cop;
 	t_list *lista;
 	while (cliente_socket != -1)
 	{
 
-		if (recv(cliente_socket, &cop, sizeof(op_code), 0) != sizeof(op_code))
+		if (recv(cliente_socket, &cop, sizeof(t_handshake), 0) != sizeof(t_handshake))
 		{
 			log_info(logger, "Se desconecto el cliente!\n");
 			return;
@@ -36,6 +36,12 @@ static void procesar_conexion(void *void_args)
 			log_info(logger, "Me llegaron los siguientes valores:");
 			list_iterate(lista, (void *)iterator);
 			break;
+
+		case HANDSHAKE_in_out:
+			recibir_mensaje(cliente_socket, logger);
+			log_info(logger, "Este deberia ser el canal mediante el cual nos comunicamos con el I/O");
+			break;
+		
 
 		// Errores
 		case -1:
@@ -68,4 +74,24 @@ int server_escuchar(t_log *logger, char *server_name, int server_socket)
 		return 1;
 	}
 	return 0;
+}
+
+void enviar_con_handshake(int socket_cliente, char* mensaje){
+
+	t_paquete_handshake *paquete = malloc(sizeof(t_paquete_handshake));
+	
+	paquete->codigo_operacion = HANDSHAKE_kernel;
+	paquete->buffer = malloc(sizeof(t_buffer));
+	paquete->buffer->size = strlen(mensaje) + 1;
+	paquete->buffer->stream = malloc(paquete->buffer->size);
+	memcpy(paquete->buffer->stream, mensaje, paquete->buffer->size);
+
+	int bytes = paquete->buffer->size + 2 * sizeof(int);
+
+	void *a_enviar = serializar_paquete(paquete, bytes);
+
+	send(socket_cliente, a_enviar, bytes, 0);
+
+	free(a_enviar);
+	eliminar_paquete(paquete);
 }

@@ -27,16 +27,22 @@ typedef struct
 
 typedef struct
 {
-	op_code codigo_operacion;
+	t_handshake codigo_operacion;
 	t_buffer* buffer;
 } t_paquete;
 
+typedef struct{
+	t_handshake codigo_operacion;
+	t_buffer* buffer;
+}t_paquete_handshake;
+
 int crear_conexion(char* ip, char* puerto);
 void enviar_mensaje(char* mensaje, int socket_cliente);
-t_paquete* crear_paquete(void);
-void agregar_a_paquete(t_paquete* paquete, void* valor, int tamanio);
-void enviar_paquete(t_paquete* paquete, int socket_cliente);
+t_paquete_handshake* crear_paquete(void);
+void agregar_a_paquete(t_paquete_handshake* paquete, void* valor, int tamanio);
+void enviar_paquete(t_paquete_handshake* paquete, int socket_cliente);
+void *serializar_paquete(t_paquete_handshake *paquete, int bytes);
 void liberar_conexion(int socket_cliente);
-void eliminar_paquete(t_paquete* paquete);
+void eliminar_paquete(t_paquete_handshake* paquete);
 
 #endif
