@@ -1,37 +1,28 @@
 #include "../include/main.h"
 
-t_log* logger_memoria;
-t_config* config_memoria;
-char* puerto_escucha_memoria;
-char* ip_memoria;
-int tam_memoria;
-int tam_pagina;
-char *path_instrucciones;
-int retardo_respuesta;
-int cliente_cpu, cliente_kernel, cliente_in_ou;
-
 int main(void)
 {
 	inicializar_config();
-	
-	int fd_socket_memoria = iniciar_servidor(logger_memoria, "MEMORIA", ip_memoria, puerto_escucha_memoria);
-	log_info(logger_memoria, "Memoria listo para recibir al cliente");
 
-	while(server_escuchar(logger_memoria, "MEMORIA", fd_socket_memoria));
+	int fd_memoria = iniciar_servidor(LOGGER_MEMORIA, "MEMORIA", IP_MEMORIA, PUERTO_ESCUCHA_MEMORIA);
+	log_info(LOGGER_MEMORIA, "Memoria listo para recibir clientes");
 
-	terminar_programa(fd_socket_memoria, logger_memoria, config_memoria);
-	
+	while (server_escuchar(LOGGER_MEMORIA, "MEMORIA", fd_memoria));
+
+	terminar_programa(fd_memoria, LOGGER_MEMORIA, CONFIG_MEMORIA);
+
 	return 0;
 }
 
-void inicializar_config(void){
-	logger_memoria = iniciar_logger("memoria.log", "Servidor Memoria");
-	config_memoria = iniciar_config("./memoria.config","MEMORIA");
-	
-	puerto_escucha_memoria = config_get_string_value(config_memoria,"PUERTO_ESCUCHA");
-	tam_memoria = config_get_int_value(config_memoria,"TAM_MEMORIA");
-	tam_pagina = config_get_int_value(config_memoria,"TAM_PAGINA");
-	path_instrucciones = config_get_string_value(config_memoria,"PATH_INSTRUCCIONES");
-	retardo_respuesta = config_get_int_value(config_memoria,"RETARDO_RESPUESTA");
-	ip_memoria = config_get_string_value(config_memoria,"IP_MEMORIA");
+void inicializar_config()
+{
+	LOGGER_MEMORIA = iniciar_logger("memoria.log", "Servidor Memoria");
+	CONFIG_MEMORIA = iniciar_config("./memoria.config", "MEMORIA");
+
+	PUERTO_ESCUCHA_MEMORIA = config_get_string_value(CONFIG_MEMORIA, "PUERTO_ESCUCHA");
+	TAM_MEMORIA = config_get_int_value(CONFIG_MEMORIA, "TAM_MEMORIA");
+	TAM_PAGINA = config_get_int_value(CONFIG_MEMORIA, "TAM_PAGINA");
+	PATH_INSTRUCCIONES = config_get_string_value(CONFIG_MEMORIA, "PATH_INSTRUCCIONES");
+	RETARDO_RESPUESTA = config_get_int_value(CONFIG_MEMORIA, "RETARDO_RESPUESTA");
+	IP_MEMORIA = config_get_string_value(CONFIG_MEMORIA, "IP_MEMORIA");
 }

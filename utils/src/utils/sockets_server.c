@@ -52,8 +52,6 @@ int esperar_cliente(int socket_servidor, t_log *logger)
 	return socket_cliente;
 }
 
-
-
 void iterator(char *value)
 {
 	log_info(logger_recibido, "%s", value);

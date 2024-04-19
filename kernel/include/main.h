@@ -15,7 +15,22 @@
 #include "../../utils/include/sockets_utils.h"
 #include "./comunicaciones.h"
 
+char *PUERTO_ESCUCHA;
+char *IP_MEMORIA;
+char *PUERTO_MEMORIA;
+char *IP_CPU;
+char *PUERTO_CPU_DISPATCH;
+char *PUERTO_CPU_INTERRUPT;
+char *ALGORITMO_PLANIFICACION;
+char *QUANTUM;
+char **RECURSOS;
+char **INSTANCIAS_RECURSOS;
+int GRADO_MULTIPROGRAMACION;
+char *IP_KERNEL;
+
+t_log *LOGGER_KERNEL;
+t_config *CONFIG_KERNEL;
+
 void inicializar_config(void);
-void paquete(int conexion, t_log *logger);
 
 #endif
