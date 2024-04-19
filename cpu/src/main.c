@@ -1,21 +1,51 @@
 #include "../include/main.h"
 
-int conexion;
+int conexion_cpu_memoria;
 char *ip_memoria;
+char *ip_cpu;
 char *puerto_memoria;
 char *puerto_escucha_dispatch;
 char *puerto_escucha_interrupt;
 char *cantidad_entradas_tlb;
 char *algoritmo_tlb;
 
-t_log *logger;
+t_log *logger_CPU;
 t_config *config;
 
-void inicializar_config(){
-    logger = iniciar_logger("cpu.log", "CPU");
+
+int main(int argc, char* argv[]) 
+{
+    inicializar_config();
+
+	log_info(logger_CPU, "Iniciando CPU...");
+	
+    conexion_cpu_memoria = crear_conexion(ip_memoria, puerto_memoria);
+	//enviar_mensaje("Mensaje de CPU para memoria", conexion_cpu_memoria);
+	enviar_con_handshake(conexion_cpu_memoria, "Hola desde CPU con handshake");
+    paquete(conexion_cpu_memoria, logger_CPU);
+
+    int fd_socket_CPU = iniciar_servidor(logger_CPU, "CPU", ip_cpu, puerto_escucha_dispatch);
+	log_info(logger_CPU, "CPU listo para recibir al cliente en DISPATCH");
+	
+    while(server_escuchar(logger_CPU, "CPU", fd_socket_CPU));
+
+    /*int server_interrupt = iniciar_servidor(logger_CPU, "CPU", ip_cpu, puerto_escucha_interrupt);
+	log_info(logger_CPU, "CPU listo para recibir al cliente");
+	procesar_conexion(server_interrupt, logger_CPU);*/
+
+
+	terminar_programa(fd_socket_CPU, logger_CPU, config);
+    terminar_programa(conexion_cpu_memoria, logger_CPU, config);
+    /*terminar_programa(server_interrupt, logger_CPU, config);*/
+
+}
+
+void inicializar_config(void){
+    logger_CPU = iniciar_logger("cpu.log", "CPU");
 	config = iniciar_config("./cpu.config", "CPU");
 
     ip_memoria = config_get_string_value(config, "IP_MEMORIA");
+    ip_cpu = config_get_string_value(config, "IP_CPU");
     puerto_memoria = config_get_string_value(config, "PUERTO_MEMORIA");
     puerto_escucha_dispatch = config_get_string_value(config, "PUERTO_ESCUCHA_DISPATCH");
     puerto_escucha_interrupt = config_get_string_value(config, "PUERTO_ESCUCHA_INTERRUPT");
@@ -24,23 +54,5 @@ void inicializar_config(){
 }
 
 
-int main(int argc, char* argv[]) 
-{
-   inicializar_config();
-
-	// Loggeamos el valor de config
-	log_info(logger, "Iniciando CPU...");
-
-	// Creamos una conexión hacia el servidor
-	conexion = crear_conexion(ip_memoria, puerto_memoria);
-
-	// Enviamos al servidor el valor de CLAVE como mensaje
-	enviar_mensaje("Mensaje de CPU para memoria", conexion);
-
-	// Armamos y enviamos el paquete
-	paquete(conexion, logger);
-
-	terminar_programa(conexion, logger, config);
-}
 
 

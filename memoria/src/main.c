@@ -1,39 +1,37 @@
 #include "../include/main.h"
 
+t_log* logger_memoria;
+t_config* config_memoria;
+char* puerto_escucha_memoria;
+char* ip_memoria;
+int tam_memoria;
+int tam_pagina;
+char *path_instrucciones;
+int retardo_respuesta;
+int cliente_cpu, cliente_kernel, cliente_in_ou;
+
 int main(void)
 {
-	logger = log_create("log.log", "Servidor", 1, LOG_LEVEL_DEBUG);
+	inicializar_config();
+	
+	int fd_socket_memoria = iniciar_servidor(logger_memoria, "MEMORIA", ip_memoria, puerto_escucha_memoria);
+	log_info(logger_memoria, "Memoria listo para recibir al cliente");
 
-	int server_fd = iniciar_servidor();
-	log_info(logger, "Memoria listo para recibir al cliente");
-	int cliente_fd = esperar_cliente(server_fd);
+	while(server_escuchar(logger_memoria, "MEMORIA", fd_socket_memoria));
 
-	t_list *lista;
-	while (1)
-	{
-		int cod_op = recibir_operacion(cliente_fd);
-		switch (cod_op)
-		{
-		case MENSAJE:
-			recibir_mensaje(cliente_fd);
-			break;
-		case PAQUETE:
-			lista = recibir_paquete(cliente_fd);
-			log_info(logger, "Me llegaron los siguientes valores:\n");
-			list_iterate(lista, (void *)iterator);
-			break;
-		case -1:
-			log_error(logger, "el cliente se desconecto. Terminando servidor");
-			return EXIT_FAILURE;
-		default:
-			log_warning(logger, "Operacion desconocida. No quieras meter la pata");
-			break;
-		}
-	}
-	return EXIT_SUCCESS;
+	terminar_programa(fd_socket_memoria, logger_memoria, config_memoria);
+	
+	return 0;
 }
 
-void iterator(char *value)
-{
-	log_info(logger, "%s", value);
+void inicializar_config(void){
+	logger_memoria = iniciar_logger("memoria.log", "Servidor Memoria");
+	config_memoria = iniciar_config("./memoria.config","MEMORIA");
+	
+	puerto_escucha_memoria = config_get_string_value(config_memoria,"PUERTO_ESCUCHA");
+	tam_memoria = config_get_int_value(config_memoria,"TAM_MEMORIA");
+	tam_pagina = config_get_int_value(config_memoria,"TAM_PAGINA");
+	path_instrucciones = config_get_string_value(config_memoria,"PATH_INSTRUCCIONES");
+	retardo_respuesta = config_get_int_value(config_memoria,"RETARDO_RESPUESTA");
+	ip_memoria = config_get_string_value(config_memoria,"IP_MEMORIA");
 }

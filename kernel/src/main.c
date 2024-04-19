@@ -1,6 +1,8 @@
 #include "../include/main.h"
 
-int conexion;
+int conexion_memoria;
+int conexion_cpu_dispatch;
+int conexion_cpu_interrupt;
 char *puerto_escucha;
 char *ip_memoria;
 char *puerto_memoria;
@@ -13,43 +15,60 @@ char **recursos;
 char **instancias_recursos;
 int grado_multiprogramacion;
 
-t_log *logger;
-t_config *config;
+char *ip_kernel;
 
-void inicializar_config()
-{
-	logger = iniciar_logger("kernel.log", "KERNEL");
-	config = iniciar_config("./kernel.config", "KERNEL");
-
-	puerto_escucha = config_get_string_value(config, "PUERTO_ESCUCHA");
-	ip_memoria = config_get_string_value(config, "IP_MEMORIA");
-	puerto_memoria = config_get_string_value(config, "PUERTO_MEMORIA");
-	ip_cpu = config_get_string_value(config, "IP_CPU");
-	puerto_cpu_dispatch = config_get_string_value(config, "PUERTO_CPU_DISPATCH");
-	puerto_cpu_interrupt = config_get_string_value(config, "PUERTO_CPU_INTERRUPT");
-	algoritmo_planificacion = config_get_string_value(config, "ALGORITMO_PLANIFICACION");
-	quantum = config_get_string_value(config, "QUANTUM");
-	recursos = config_get_array_value(config, "RECURSOS");
-	instancias_recursos = config_get_array_value(config, "INSTANCIAS_RECURSOS");
-	grado_multiprogramacion = config_get_int_value(config, "GRADO_MULTIPROGRAMACION");
-}
+t_log *logger_kernel;
+t_config *config_kernel;
 
 int main()
 {
 	inicializar_config();
 
-	// Loggeamos el valor de config
-	log_info(logger, "Iniciando Kernel...");
+	log_info(logger_kernel, "Iniciando Kernel...");
 
-	// Creamos una conexión hacia el servidor
-	conexion = crear_conexion(ip_memoria, puerto_memoria);
+	conexion_memoria = crear_conexion(ip_memoria, puerto_memoria);
+	//enviar_mensaje("Mensaje de Kernel para memoria", conexion_memoria);
+	enviar_con_handshake(conexion_memoria, "Hola desde KERNEL con handshake");
+	paquete(conexion_memoria, logger_kernel);
 
-	// Enviamos al servidor el valor de CLAVE como mensaje
-	enviar_mensaje("Mensaje de Kernel para memoria", conexion);
+	conexion_cpu_dispatch = crear_conexion(ip_cpu, puerto_cpu_dispatch); //aqui vamos a planificar la ejecucion de procesos
+	//enviar_mensaje("Mensaje de Kernel para CPU", conexion_cpu_dispatch);
+	enviar_con_handshake(conexion_cpu_dispatch, "Hola desde KERNEL con handshake");
+	paquete(conexion_cpu_dispatch, logger_kernel);
 
-	// Armamos y enviamos el paquete
-	paquete(conexion, logger);
+	int server_escucha_kernel = iniciar_servidor(logger_kernel, "KERNEL", ip_kernel, puerto_escucha);
+	log_info(logger_kernel, "Kernel listo para recibir al cliente");
+	
+	while(server_escuchar(logger_kernel, "CPU", server_escucha_kernel));
 
-	terminar_programa(conexion, logger, config);
+
+	/*conexion_cpu_interrupt = crear_conexion(ip_cpu, puerto_cpu_interrupt); //aqui vamos a planificar la ejecucion de procesos
+	enviar_mensaje("Mensaje de Kernel para CPU", conexion_cpu_interrupt);
+	paquete(conexion_cpu_interrupt, logger_kernel);*/
+
+	//log_info(logger_kernel, "Se cerrara la conexion");
+	terminar_programa(server_escucha_kernel, logger_kernel, config_kernel);
+	terminar_programa(conexion_memoria, logger_kernel, config_kernel);
+	terminar_programa(conexion_cpu_dispatch, logger_kernel, config_kernel);
+}
+
+void inicializar_config(void)
+{
+	logger_kernel = iniciar_logger("kernel.log", "KERNEL");
+	config_kernel = iniciar_config("./kernel.config", "KERNEL");
+
+	//liberar los get_array_value
+	puerto_escucha = config_get_string_value(config_kernel, "PUERTO_ESCUCHA");
+	ip_memoria = config_get_string_value(config_kernel, "IP_MEMORIA");
+	puerto_memoria = config_get_string_value(config_kernel, "PUERTO_MEMORIA");
+	ip_cpu = config_get_string_value(config_kernel, "IP_CPU");
+	puerto_cpu_dispatch = config_get_string_value(config_kernel, "PUERTO_CPU_DISPATCH");
+	puerto_cpu_interrupt = config_get_string_value(config_kernel, "PUERTO_CPU_INTERRUPT");
+	algoritmo_planificacion = config_get_string_value(config_kernel, "ALGORITMO_PLANIFICACION");
+	quantum = config_get_string_value(config_kernel, "QUANTUM");
+	recursos = config_get_array_value(config_kernel, "RECURSOS");
+	instancias_recursos = config_get_array_value(config_kernel, "INSTANCIAS_RECURSOS");
+	grado_multiprogramacion = config_get_int_value(config_kernel, "GRADO_MULTIPROGRAMACION");
+	ip_kernel = config_get_string_value(config_kernel, "IP_KERNEL");
 }
 
