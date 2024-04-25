@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <pthread.h>
 
 #include <commons/log.h>
 #include <commons/string.h>
@@ -14,6 +15,10 @@
 #include "../../utils/include/sockets_client.h"
 #include "../../utils/include/sockets_utils.h"
 #include "./comunicaciones.h"
+#include "./consola.h"
+
+t_log *LOGGER_KERNEL;
+t_config *CONFIG_KERNEL;
 
 char *PUERTO_ESCUCHA;
 char *IP_MEMORIA;
@@ -28,8 +33,9 @@ char **INSTANCIAS_RECURSOS;
 int GRADO_MULTIPROGRAMACION;
 char *IP_KERNEL;
 
-t_log *LOGGER_KERNEL;
-t_config *CONFIG_KERNEL;
+int id_PID;
+
+pthread_mutex_t mutex_pid;
 
 void inicializar_config(void);
 
