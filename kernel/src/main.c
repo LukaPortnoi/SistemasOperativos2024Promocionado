@@ -11,21 +11,15 @@ int main()
 
 	//conexion como cliente a MEMORIA
 	int fd_kernel_memoria = crear_conexion(IP_MEMORIA, PUERTO_MEMORIA);
-	//enviar_mensaje("Mensaje de Kernel para memoria", CONEXION_MEMORIA);
-	enviar_con_handshake(fd_kernel_memoria, "Hola desde KERNEL con handshake");
-	paquete(fd_kernel_memoria, LOGGER_KERNEL);
+	enviar_mensaje("Mensaje de Kernel para memoria", fd_kernel_memoria);
 
 	//conexion como cliente a CPU DISPATCH
 	int fd_kernel_cpu_dispatch = crear_conexion(IP_CPU, PUERTO_CPU_DISPATCH); //aqui vamos a planificar la ejecucion de procesos
-	//enviar_mensaje("Mensaje de Kernel para CPU", CONEXION_CPU_DISPATCH);
-	enviar_con_handshake(fd_kernel_cpu_dispatch, "Hola desde KERNEL con handshake");
-	paquete(fd_kernel_cpu_dispatch, LOGGER_KERNEL);
+	enviar_mensaje("Mensaje de Kernel para CPU", fd_kernel_cpu_dispatch);
 	
 	while (server_escuchar(LOGGER_KERNEL, "KERNEL", fd_kernel));
 
 	terminar_programa(fd_kernel, LOGGER_KERNEL, CONFIG_KERNEL);
-	terminar_programa(fd_kernel_memoria, LOGGER_KERNEL, CONFIG_KERNEL);
-	terminar_programa(fd_kernel_cpu_dispatch, LOGGER_KERNEL, CONFIG_KERNEL);
 }
 
 void inicializar_config(void)

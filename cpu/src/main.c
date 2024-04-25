@@ -15,9 +15,7 @@ int main(int argc, char* argv[])
     
     //conexion como cliente a MEMORIA
     int fd_cpu_memoria = crear_conexion(IP_MEMORIA, PUERTO_MEMORIA);
-    //enviar_mensaje("Mensaje de CPU para memoria", CONEXION_CPU_MEMORIA);
-    enviar_con_handshake(fd_cpu_memoria, "Hola desde CPU con handshake");
-    paquete(fd_cpu_memoria, LOGGER_CPU);
+    enviar_mensaje("Mensaje de CPU para memoria", fd_cpu_memoria);
     
     while(server_escuchar(LOGGER_CPU, "CPU", fd_cpu_dispatch));
     while(server_escuchar(LOGGER_CPU, "CPU", fd_cpu_interrupt));

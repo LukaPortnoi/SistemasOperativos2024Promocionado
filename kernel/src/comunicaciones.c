@@ -15,12 +15,12 @@ static void procesar_conexion(void *void_args)
 	char *server_name = args->server_name;
 	free(args);
 
-	cod_op cop;
+	op_cod cop;
 	t_list *lista;
 	while (cliente_socket != -1)
 	{
 
-		if (recv(cliente_socket, &cop, sizeof(cod_op), 0) != sizeof(cod_op))
+		if (recv(cliente_socket, &cop, sizeof(op_cod), 0) != sizeof(op_cod))
 		{
 			log_info(logger, "Se desconecto el cliente!\n");
 			return;
@@ -74,24 +74,4 @@ int server_escuchar(t_log *logger, char *server_name, int server_socket)
 		return 1;
 	}
 	return 0;
-}
-
-void enviar_con_handshake(int socket_cliente, char* mensaje){
-
-	t_paquete_handshake *paquete = malloc(sizeof(t_paquete_handshake));
-	
-	paquete->codigo_operacion = HANDSHAKE_kernel;
-	paquete->buffer = malloc(sizeof(t_buffer));
-	paquete->buffer->size = strlen(mensaje) + 1;
-	paquete->buffer->stream = malloc(paquete->buffer->size);
-	memcpy(paquete->buffer->stream, mensaje, paquete->buffer->size);
-
-	int bytes = paquete->buffer->size + 2 * sizeof(int);
-
-	void *a_enviar = serializar_paquete(paquete, bytes);
-
-	send(socket_cliente, a_enviar, bytes, 0);
-
-	free(a_enviar);
-	eliminar_paquete(paquete);
 }
