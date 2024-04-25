@@ -7,7 +7,7 @@ typedef struct
 	char *server_name;
 } t_procesar_conexion_args;
 
-static void procesar_conexion(void *void_args)
+static void procesar_conexion_memoria(void *void_args)
 {
 	t_procesar_conexion_args *args = (t_procesar_conexion_args *)void_args;
 	t_log *logger = args->log;
@@ -37,21 +37,33 @@ static void procesar_conexion(void *void_args)
 			list_iterate(lista, (void *)iterator);
 			break;
 
+		// -------------------
+		// -- CPU - MEMORIA --
+		// -------------------
 		case HANDSHAKE_cpu:
 			recibir_mensaje(cliente_socket, logger);
 			log_info(logger, "Este deberia ser el canal mediante el cual nos comunicamos con la CPU");
 			break;
 
+		// ----------------------
+		// -- KERNEL - MEMORIA --
+		// ----------------------
 		case HANDSHAKE_kernel:
 			recibir_mensaje(cliente_socket, logger);
 			log_info(logger, "Este deberia ser el canal mediante el cual nos comunicamos con el KERNEL");
 			break;
 
+		// -------------------
+		// -- I/O - MEMORIA --
+		// -------------------
 		case HANDSHAKE_in_out:
 			recibir_mensaje(cliente_socket, logger);
 			log_info(logger, "Este deberia ser el canal mediante el cual nos comunicamos con el I/O");
 			break;
-		// Errores
+
+		// ---------------
+		// -- ERRORES --
+		// ---------------
 		case -1:
 			log_error(logger, "Cliente desconectado de %s... con cop -1", server_name);
 			break;  //hay un return, voy a probar un break
@@ -77,7 +89,7 @@ int server_escuchar(t_log *logger, char *server_name, int server_socket)
 		args->log = logger;
 		args->fd = cliente_socket;
 		args->server_name = server_name;
-		pthread_create(&hilo, NULL, (void *)procesar_conexion, (void *)args);
+		pthread_create(&hilo, NULL, (void *)procesar_conexion_memoria, (void *)args);
 		pthread_detach(hilo);
 		return 1;
 	}
