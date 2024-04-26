@@ -1,5 +1,5 @@
-#ifndef PLANIFICACION_H_
-#define PLANIFICACION_H_
+#ifndef PLANIFICADOR_H_
+#define PLANIFICADOR_H_
 
 
 #include <stdio.h>

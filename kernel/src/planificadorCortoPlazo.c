@@ -1,4 +1,6 @@
 #include "../include/planificador.h"
+#include "../include/main.h"
+
 
 void iniciar_planificador_corto_plazo()
 {
@@ -14,7 +16,7 @@ void planificador_corto_plazo()
         sem_wait(&semProcesoListo);
         //log_debug(logger_kernel, "Planificador corto plazo notificado proceso listo");
         //int conexionDispatch = crear_conexion(ip_cpu, puerto_cpu, logger_kernel);
-        if (!strcmp(ALGORITMO_PLANIFICACION, "VRR")) { 
+        if (!strcmp(ALGORITMO_PLANIFICACION, "RR")) { //cambiamos en el config
             ordenarPorRR();
         }
         t_pcb* pcb = sacar_pcb_cola_listos();

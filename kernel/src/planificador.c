@@ -1,5 +1,4 @@
-#include <planificador.h>
-
+#include "../include/planificador.h"
 
 t_list *colaNuevos;
 t_list *colaListos;
@@ -20,7 +19,7 @@ static pthread_mutex_t procesoMutex;
 static pthread_mutex_t procesosEnSistemaMutex;
 static pthread_mutex_t puedeIniciarCompactacionMutex;
 
-void iniciarlizar_listas_y_semaforos() 
+void iniciar_listas_y_semaforos() 
 {
     colaNuevos = list_create();
     colaListos = list_create();

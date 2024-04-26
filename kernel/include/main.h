@@ -40,5 +40,7 @@ pthread_mutex_t mutex_pid;
 
 void inicializar_config(void);
 int asignar_pid(void);
+void iniciar_listas_y_semaforos(void);
+
 
 #endif
