@@ -19,7 +19,7 @@ void inicializar_registros(t_pcb* pcb)
 
 // ------------------------------------------------------ Funciones PCB
 
-t_pcb* crear_pcb(u_int32_t pid, t_estado_proceso estado, int quantum)
+t_pcb* crear_pcb(uint32_t pid, t_estado_proceso estado, int quantum)
 {
     t_pcb* pcb = malloc(sizeof(t_pcb));
     pcb->pid = pid;
@@ -102,12 +102,12 @@ void enviar_pcb(t_pcb* pcb, int socket_cliente)
     eliminar_paquete(paquete);
 }
 
-t_pcb* recibir_pcb(int socket_cliente)
+/*t_pcb* recibir_pcb(int socket_cliente) //ver tipos, habra que hacer un nuevo recibir paquete de tipo t_paquete o pasar el pcb como una lista
 {
     t_paquete* paquete = recibir_paquete(socket_cliente);
     t_pcb* pcb = deserializar_pcb(paquete);
     eliminar_paquete(paquete);
 
     return pcb;
-}
+}*/
 

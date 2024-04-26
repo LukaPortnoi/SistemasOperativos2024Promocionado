@@ -11,7 +11,8 @@
     HANDSHAKE_in_out,
     HANDSHAKE_ok_continue,
     MENSAJE,
-    PAQUETE
+    PAQUETE,
+    PCB
 } op_cod;
 
 #endif // SOCKETS_COMMON_H_

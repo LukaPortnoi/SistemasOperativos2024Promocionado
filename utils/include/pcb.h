@@ -45,11 +45,15 @@ typedef struct
 } t_pcb;
 
 
-typedef struct {
+/*typedef struct {
     t_recurso *archivo;
     char* nombre_archivo;
     int puntero;
 } t_archivo_abierto; //ver
+
+typedef struct {
+    char** recursos;
+} t_recurso;*/
 
 // ------------------------------------------------------ Inicializar Registros
 
@@ -57,13 +61,13 @@ void inicializar_registros(t_pcb* pcb);
 
 // ------------------------------------------------------ Funciones PCB
 
-t_pcb* crear_pcb(u_int32_t pid, int quantum);
+t_pcb* crear_pcb(u_int32_t pid, t_estado_proceso estado, int quantum);
 void destruir_pcb(t_pcb* pcb);
 
 // ------------------------------------------------------ Funciones de Serialización
 
-void* serializar_pcb(t_pcb* pcb, int* size);
-t_pcb* deserializar_pcb(void* stream, int size);
+void serializar_pcb(t_pcb* pcb, t_paquete* paquete);
+t_pcb* deserializar_pcb(t_paquete* paquete);
 
 // ------------------------------------------------------ Funciones de Envío y Recepción
 

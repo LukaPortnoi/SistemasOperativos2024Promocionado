@@ -9,7 +9,7 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <commons/string.h>
-#include "..\utils\include\pcb.h"
+#include "../../utils/include/pcb.h"
 
 void iniciar_planificador_corto_plazo(void);
 void planificador_corto_plazo(void);

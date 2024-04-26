@@ -39,6 +39,6 @@ int id_PID;
 pthread_mutex_t mutex_pid;
 
 void inicializar_config(void);
-void asignar_pid(void);
+int asignar_pid(void);
 
 #endif

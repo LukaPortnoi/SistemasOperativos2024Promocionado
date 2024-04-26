@@ -12,7 +12,7 @@ void planificador_corto_plazo()
     // TODO: Implementar planificador de corto plazo
 }
 
-void planificar_proceso(t_pcb* pcb)
+/*void planificar_proceso(t_pcb* pcb) //que le llegue el ALGORITMO DE PLANIFICACION, no me lo reconoce
 {
     if (string_equals_ignore_case(ALGORITMO_PLANIFICACION, "FIFO"))
     {
@@ -26,7 +26,7 @@ void planificar_proceso(t_pcb* pcb)
     {
         planificar_proceso_vrr(pcb);
     }
-}
+}*/
 
 void planificar_proceso_fifo(t_pcb* pcb){}
 void planificar_proceso_rr(t_pcb* pcb){}
