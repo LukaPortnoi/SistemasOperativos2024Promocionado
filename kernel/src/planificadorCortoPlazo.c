@@ -9,6 +9,20 @@ void iniciar_planificador_corto_plazo()
 
 void planificador_corto_plazo()
 {
+     log_debug(logger_kernel, "Inicia Planificador Corto Plazo");
+    while (1) {
+        sem_wait(&semProcesoListo);
+        //log_debug(logger_kernel, "Planificador corto plazo notificado proceso listo");
+        //int conexionDispatch = crear_conexion(ip_cpu, puerto_cpu, logger_kernel);
+        if (!strcmp(ALGORITMO_PLANIFICACION, "VRR")) { 
+            ordenarPorRR();
+        }
+        t_pcb* pcb = sacar_pcb_cola_listos();
+        if ((pcb->llegada_a_listo != NULL)){
+        temporal_destroy(pcb->llegada_a_listo); 
+        }
+        ejecutar_PCB(pcb);
+    }
     // TODO: Implementar planificador de corto plazo
 }
 
@@ -27,6 +41,18 @@ void planificador_corto_plazo()
         planificar_proceso_vrr(pcb);
     }
 }*/
+
+
+void ejecutar_PCB(t_pcb* pcb)
+{
+    int conexionDispatch = crear_conexion(IP_CPU, PUERTO_CPU_DISPATCH, LOGGER_KERNEL);
+
+    meter_pcb_en_ejecucion(pcb);
+    enviar_pcb(pcb, conexionDispatch, logger_kernel);
+    log_info(logger_kernel, "El PCB con ID %d se envio a  CPU", pcb->pid);
+    recibir_pcb_de_CPU(conexionDispatch); 
+    close(conexionDispatch);
+}
 
 void planificar_proceso_fifo(t_pcb* pcb){}
 void planificar_proceso_rr(t_pcb* pcb){}

@@ -10,7 +10,10 @@
 #include <pthread.h>
 #include <commons/string.h>
 #include "../../utils/include/pcb.h"
+#include "./main.h"
 
+
+void iniciar_listas_y_semaforos(void);
 void iniciar_planificador_corto_plazo(void);
 void planificador_corto_plazo(void);
 void planificar_proceso(t_pcb* pcb);

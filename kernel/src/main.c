@@ -1,4 +1,8 @@
 #include "../include/main.h"
+#include "../include/planificador.h"
+
+
+sem_t semProcesoListo;
 
 int main()
 {
@@ -20,7 +24,14 @@ int main()
 	int fd_kernel_cpu_dispatch = crear_conexion(IP_CPU, PUERTO_CPU_DISPATCH); // aqui vamos a planificar la ejecucion de procesos
 	enviar_mensaje("Mensaje de Kernel para CPU", fd_kernel_cpu_dispatch);
 
+
+	iniciar_listas_y_semaforos();
+
 	id_PID = 1;
+
+	
+	inicializar_pcb();
+	
 	iniciar_consola_interactiva(LOGGER_KERNEL);
 
 	while (server_escuchar(LOGGER_KERNEL, "KERNEL", fd_kernel));
@@ -58,4 +69,20 @@ int asignar_pid()
 	pthread_mutex_unlock(&mutex_pid);
 
 	return valor_pid;
+}
+
+
+void inicializar_pcb(void* conexion)
+{
+
+	int pid_pcb = int asignar_pid;
+    //bool exit = false;
+    //intptr_t conexionConsola = (intptr_t) conexion;
+    //t_paquete* paquete = get_paquete(conexionConsola, logger_kernel); 
+    t_pcb* pcb = crear_pcb(pid_pcb, LISTO, QUANTUM); 
+    //t_procesoMemoria* procesoDeMemoria = solicitarCreacionDeProcesoEnMemoria(pcb->pid);
+	
+    log_info(logger_kernel, "Se crea el proceso %d en NEW", pcb->pid);
+    agregar_pcb_cola_nuevos(pcb);
+    //destruir_paquete(paquete);
 }
