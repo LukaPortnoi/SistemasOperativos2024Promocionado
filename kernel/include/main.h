@@ -16,6 +16,7 @@
 #include "../../utils/include/sockets_utils.h"
 #include "./comunicaciones.h"
 #include "./consola.h"
+#include "./planificador.h"
 
 t_log *LOGGER_KERNEL;
 t_config *CONFIG_KERNEL;

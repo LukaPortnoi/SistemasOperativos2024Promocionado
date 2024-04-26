@@ -5,6 +5,9 @@ int main()
 	inicializar_config();
 	log_info(LOGGER_KERNEL, "Iniciando Kernel...");
 
+	// iniciar_planificador_corto_plazo();
+	// iniciar_planificador_largo_plazo();
+
 	// server KERNEL
 	int fd_kernel = iniciar_servidor(LOGGER_KERNEL, "KERNEL", IP_KERNEL, PUERTO_ESCUCHA);
 	log_info(LOGGER_KERNEL, "Kernel listo para recibir clientes");
@@ -23,6 +26,7 @@ int main()
 	while (server_escuchar(LOGGER_KERNEL, "KERNEL", fd_kernel));
 
 	log_info(LOGGER_KERNEL, "Finalizando Kernel...");
+
 	terminar_programa(fd_kernel, LOGGER_KERNEL, CONFIG_KERNEL);
 }
 
