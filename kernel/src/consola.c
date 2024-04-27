@@ -1,7 +1,8 @@
 #include "../include/consola.h"
 
 void iniciar_consola_interactiva()
-{
+{   
+    log_trace(LOGGER_KERNEL, "<CONSOLA INTERACTIVA>");
     char *leido;
     leido = readline("> ");
 

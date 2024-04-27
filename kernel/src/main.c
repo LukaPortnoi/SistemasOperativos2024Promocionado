@@ -16,6 +16,8 @@ char **INSTANCIAS_RECURSOS;
 int GRADO_MULTIPROGRAMACION;
 char *IP_KERNEL;
 
+int fd_kernel;
+
 int PID_GLOBAL = 1;
 
 pthread_mutex_t mutex_pid;
@@ -31,8 +33,8 @@ int main()
 	iniciar_planificador_corto_plazo();
 	iniciar_planificador_largo_plazo();
 
-	// server KERNEL
-	int fd_kernel = iniciar_servidor(LOGGER_KERNEL, "KERNEL", IP_KERNEL, PUERTO_ESCUCHA);
+	// inicar server KERNEL
+	fd_kernel = iniciar_servidor(LOGGER_KERNEL, "KERNEL", IP_KERNEL, PUERTO_ESCUCHA);
 	log_info(LOGGER_KERNEL, "Kernel listo para recibir clientes");
 
 	// conexion como cliente a MEMORIA

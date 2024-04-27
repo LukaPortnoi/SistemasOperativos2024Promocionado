@@ -17,5 +17,6 @@
 
 void inicializar_config(void);
 void iniciar_conexiones();
+void escuchar_interrupt();
 
 #endif

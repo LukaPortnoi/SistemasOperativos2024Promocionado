@@ -15,6 +15,8 @@ int fd_cpu_dispatch;
 int fd_cpu_interrupt;
 int fd_cpu_memoria;
 
+pthread_t hilo_interrupt;
+
 op_cod cod_op;
 
 int main()
@@ -23,11 +25,9 @@ int main()
     log_info(LOGGER_CPU, "Iniciando CPU...");
 
     iniciar_conexiones();
-
-    while (server_escuchar(LOGGER_CPU, "CPU_DISPATCH", fd_cpu_dispatch)){}
-    while (server_escuchar(LOGGER_CPU, "CPU_INTERRUPT", fd_cpu_interrupt)){}
     
-
+    while (server_escuchar(LOGGER_CPU, "CPU_DISPATCH", fd_cpu_dispatch));
+    
     /*while (1)
     {
         cod_op = recibir_operacion(fd_cpu_dispatch);
@@ -63,16 +63,25 @@ void inicializar_config()
 void iniciar_conexiones()
 {
     // server CPU DISPATCH
-    fd_cpu_dispatch = iniciar_servidor(LOGGER_CPU, "CPU - DISPATCH", IP_CPU, PUERTO_ESCUCHA_DISPATCH);
+    fd_cpu_dispatch = iniciar_servidor(LOGGER_CPU, "CPU_DISPATCH", IP_CPU, PUERTO_ESCUCHA_DISPATCH);
     log_info(LOGGER_CPU, "CPU listo para recibir cliente en DISPATCH");
 
     // server CPU INTERRUPT
-    fd_cpu_interrupt = iniciar_servidor(LOGGER_CPU, "CPU - INTERRUPT", IP_CPU, PUERTO_ESCUCHA_INTERRUPT);
+    fd_cpu_interrupt = iniciar_servidor(LOGGER_CPU, "CPU_INTERRUPT", IP_CPU, PUERTO_ESCUCHA_INTERRUPT);
     log_info(LOGGER_CPU, "CPU listo para recibir cliente en INTERRUPT");
 
     // conexion como cliente a MEMORIA
     fd_cpu_memoria = crear_conexion(IP_MEMORIA, PUERTO_MEMORIA);
     enviar_mensaje("Mensaje de CPU para memoria", fd_cpu_memoria);
+
+    // hilo para escuchar interrupciones
+    pthread_create(&hilo_interrupt, NULL, (void *)escuchar_interrupt, NULL);
+    pthread_detach(hilo_interrupt);
+}
+
+void escuchar_interrupt()
+{
+    while (server_escuchar(LOGGER_CPU, "CPU_INTERRUPT", fd_cpu_interrupt));
 }
 
 /*void *recibir_interrupt(void *arg)
@@ -112,4 +121,4 @@ void iniciar_conexiones()
     }
 
     return NULL;
-}*/
+} */
