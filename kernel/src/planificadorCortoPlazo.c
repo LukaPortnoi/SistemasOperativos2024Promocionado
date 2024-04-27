@@ -17,13 +17,13 @@ void planificador_corto_plazo()
         //log_debug(logger_kernel, "Planificador corto plazo notificado proceso listo");
         //int conexionDispatch = crear_conexion(ip_cpu, puerto_cpu, logger_kernel);
         if (!strcmp(ALGORITMO_PLANIFICACION, "RR")) { //cambiamos en el config
-            ordenarPorRR();
+ //            ordenarPorFIFO(); ojo no esta hecho el de RR hacerlo!
         }
-        t_pcb* pcb = sacar_pcb_cola_listos();
+/*         t_pcb* pcb = sacar_pcb_cola_listos();           //esto no anda
         if ((pcb->llegada_a_listo != NULL)){
         temporal_destroy(pcb->llegada_a_listo); 
         }
-        ejecutar_PCB(pcb);
+        ejecutar_PCB(pcb); */
     }
     // TODO: Implementar planificador de corto plazo
 }

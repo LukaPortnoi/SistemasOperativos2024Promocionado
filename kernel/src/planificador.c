@@ -6,8 +6,9 @@ t_list *colaBloqueados;
 t_pcb *pcbAEjecutar;
 t_list *colaTerminados;
 t_list *procesosEnSistema; 
-
-
+t_list *colaBloqueadosFileSystem;
+t_list *colaBloqueadosRecursos;
+t_list *tabla_global_archivos_abiertos;
 
 static pthread_mutex_t procesosNuevosMutex;
 static pthread_mutex_t procesosListosMutex;
@@ -60,9 +61,9 @@ char* estado_to_string(t_estado_proceso estado)
         return "EJECUTANDO";        
     case BLOQUEADO:
         return "BLOQUEADO";
-    case TERMINADO:
+    case FINALIZADO:
         return "TERMINADO";
-    case SEG_FAULT:
+    case ERROR:
         return "EJECUTANDO";
     default:
         return "ERROR";
@@ -87,7 +88,7 @@ void resume_all_timers()
     }
 }
 
-void ordenarPorRR(t_pcb* proceso)
+void ordenarPorFIFO(t_pcb* proceso)
 {
     pthread_mutex_lock(&procesosListosMutex);
     stop_all_timers();
@@ -181,28 +182,3 @@ t_pcb* sacar_pcb_de_cola_nuevo()
 // ------------------------------------------------------------------------------------------
 // -- En ejecucion --
 // ------------------------------------------------------------------------------------------
-
-void meter_pcb_en_ejecucion(t_pcb* proceso) 
-{
-    pthread_mutex_lock(&procesoAEjecutarMutex);
-    pcbAEjecutar = proceso;
-    cambiar_estado_pcb(proceso, EJECUTANDO);
-    agregar_pcb_en_cola_procesos_en_sistema(proceso);
-    pthread_mutex_unlock(&procesoAEjecutarMutex);
-}
-
-
-t_pcb* sacar_pcb_de_ejecucion(int64_t tiempoEjecucion) 
-{
-    pthread_mutex_lock(&procesoAEjecutarMutex);
-    t_pcb* proceso = pcbAEjecutar;
-    proceso;
-    pcbAEjecutar = NULL;
-    if (!strcmp(algoritmo_planificacion, "HRRN")) { 
-            actualizarEstimadoRafaga(proceso, tiempoEjecucion); // Para HRRN
-        }
-    sacar_pcb_cola_procesos_en_sistema(proceso);
-    pthread_mutex_unlock(&procesoAEjecutarMutex);
-    
-  return proceso;
-}

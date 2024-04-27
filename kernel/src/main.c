@@ -8,8 +8,10 @@ int main()
 	inicializar_config();
 	log_info(LOGGER_KERNEL, "Iniciando Kernel...");
 
-	// iniciar_planificador_corto_plazo();
-	// iniciar_planificador_largo_plazo();
+	iniciar_listas_y_semaforos();
+	inicializar_pcb();
+	iniciar_planificador_corto_plazo();
+	iniciar_planificador_largo_plazo();
 
 	// server KERNEL
 	int fd_kernel = iniciar_servidor(LOGGER_KERNEL, "KERNEL", IP_KERNEL, PUERTO_ESCUCHA);
@@ -24,17 +26,9 @@ int main()
 	enviar_mensaje("Mensaje de Kernel para CPU", fd_kernel_cpu_dispatch);
 
 	iniciar_consola_interactiva(LOGGER_KERNEL);
-	iniciar_listas_y_semaforos();
-	inicializar_pcb();
-	iniciar_planificador_corto_plazo();
 
 
 	id_PID = 1;
-
-	
-	
-	
-	
 
 	while (server_escuchar(LOGGER_KERNEL, "KERNEL", fd_kernel));
 
@@ -77,7 +71,7 @@ int asignar_pid()
 void inicializar_pcb(void* conexion)
 {
 
-	int pid_pcb = int asignar_pid;
+	int pid_pcb = asignar_pid();
     //bool exit = false;
     //intptr_t conexionConsola = (intptr_t) conexion;
     //t_paquete* paquete = get_paquete(conexionConsola, logger_kernel); 
