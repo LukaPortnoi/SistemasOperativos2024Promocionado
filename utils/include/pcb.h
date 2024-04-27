@@ -33,7 +33,6 @@ typedef struct
     uint32_t program_counter;
     uint8_t ax, bx, cx, dx;
     uint32_t eax, ebx, ecx, edx, si, di;
-
 } t_registros;
 
 typedef struct
@@ -63,10 +62,11 @@ void inicializar_registros(t_pcb* pcb);
 
 t_pcb* crear_pcb(u_int32_t pid, t_estado_proceso estado, int quantum);
 void destruir_pcb(t_pcb* pcb);
+int asignar_pid(void);
 
 // ------------------------------------------------------ Funciones de Serialización
 
-void serializar_pcb(t_pcb* pcb, t_paquete* paquete);
+t_buffer* crear_buffer_pcb(t_pcb* pcb);
 t_pcb* deserializar_pcb(t_paquete* paquete);
 
 // ------------------------------------------------------ Funciones de Envío y Recepción

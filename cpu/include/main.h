@@ -15,18 +15,7 @@
 #include "../../utils/include/sockets_utils.h"
 #include "./comunicaciones.h"
 
-char *IP_MEMORIA;
-char *IP_CPU;
-char *PUERTO_MEMORIA;
-char *PUERTO_ESCUCHA_DISPATCH;
-char *PUERTO_ESCUCHA_INTERRUPT;
-char *CANTIDAD_ENTRADAS_TLB;
-char *ALGORITMO_TLB;
-
-t_log *LOGGER_CPU;
-t_config *CONFIG;
-
 void inicializar_config(void);
-void paquete(int conexion, t_log *logger);
+void iniciar_conexiones();
 
 #endif

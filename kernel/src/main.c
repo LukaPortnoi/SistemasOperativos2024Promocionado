@@ -1,14 +1,33 @@
 #include "../include/main.h"
 
+t_log *LOGGER_KERNEL;
+t_config *CONFIG_KERNEL;
 
-sem_t semProcesoListo;
+char *PUERTO_ESCUCHA;
+char *IP_MEMORIA;
+char *PUERTO_MEMORIA;
+char *IP_CPU;
+char *PUERTO_CPU_DISPATCH;
+char *PUERTO_CPU_INTERRUPT;
+char *ALGORITMO_PLANIFICACION;
+char *QUANTUM;
+char **RECURSOS;
+char **INSTANCIAS_RECURSOS;
+int GRADO_MULTIPROGRAMACION;
+char *IP_KERNEL;
+
+int PID_GLOBAL = 1;
+
+pthread_mutex_t mutex_pid;
+
+// sem_t semProcesoListo;
 
 int main()
 {
 	inicializar_config();
 	log_info(LOGGER_KERNEL, "Iniciando Kernel...");
 
-	iniciar_listas_y_semaforos();
+	// iniciar_listas_y_semaforos();
 	iniciar_planificador_corto_plazo();
 	iniciar_planificador_largo_plazo();
 
@@ -22,12 +41,13 @@ int main()
 
 	// conexion como cliente a CPU DISPATCH
 	int fd_kernel_cpu_dispatch = crear_conexion(IP_CPU, PUERTO_CPU_DISPATCH); // aqui vamos a planificar la ejecucion de procesos
-	enviar_mensaje("Mensaje de Kernel para CPU", fd_kernel_cpu_dispatch);
+	enviar_mensaje("Mensaje de Kernel para CPU DISPATCH", fd_kernel_cpu_dispatch);
+
+	// conexion como cliente a CPU INTERRUPT
+	int fd_kernel_cpu_interrupt = crear_conexion(IP_CPU, PUERTO_CPU_INTERRUPT); // aqui vamos a planificar la interrupcion de procesos
+	enviar_mensaje("Mensaje de Kernel para CPU INTERRUPT", fd_kernel_cpu_interrupt);
 
 	iniciar_consola_interactiva(LOGGER_KERNEL);
-
-
-	id_PID = 1;
 
 	while (server_escuchar(LOGGER_KERNEL, "KERNEL", fd_kernel));
 
@@ -52,16 +72,4 @@ void inicializar_config(void)
 	INSTANCIAS_RECURSOS = config_get_array_value(CONFIG_KERNEL, "INSTANCIAS_RECURSOS");
 	GRADO_MULTIPROGRAMACION = config_get_int_value(CONFIG_KERNEL, "GRADO_MULTIPROGRAMACION");
 	IP_KERNEL = config_get_string_value(CONFIG_KERNEL, "IP_KERNEL");
-}
-
-int asignar_pid()
-{
-	int valor_pid;
-
-	pthread_mutex_lock(&mutex_pid);
-	valor_pid = id_PID;
-	id_PID++;
-	pthread_mutex_unlock(&mutex_pid);
-
-	return valor_pid;
 }

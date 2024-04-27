@@ -25,6 +25,8 @@ static void procesar_conexion_cpu(void *void_args)
 			return;
 		}
 
+		log_info(logger, "Procesando conexion en %s server", server_name);
+
 		switch (cop)
 		{
 		case MENSAJE:

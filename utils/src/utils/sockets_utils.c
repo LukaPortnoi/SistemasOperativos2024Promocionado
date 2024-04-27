@@ -40,8 +40,9 @@ void leer_consola(t_log *logger)
 	free(leido);
 }
 
-void paquete(int conexion, t_log *logger)
+/*void paquete(int conexion, t_log *logger)		//DESHABILITADO PORQUE NO SE USA Y CREAR_PAQUETE() NO ESTÁ DEFINIDO
 {
+	
 	char *leido;
 	t_paquete *paquete = crear_paquete();
 
@@ -56,7 +57,7 @@ void paquete(int conexion, t_log *logger)
 	enviar_paquete(paquete, conexion);
 
 	eliminar_paquete(paquete);
-}
+}*/
 
 void terminar_programa(int conexion, t_log *logger, t_config *config)
 {

@@ -109,3 +109,19 @@ t_list *recibir_paquete(int socket_cliente)
 	free(buffer);
 	return valores;
 }
+
+t_paquete *recibir_paqueteTOP(int socket_cliente)
+{
+    t_paquete *paquete = malloc(sizeof(t_paquete));
+    paquete->buffer = malloc(sizeof(t_buffer));
+    paquete->buffer->stream = NULL;
+    paquete->buffer->size = 0;
+    paquete->codigo_operacion = 0;
+
+	recv(socket_cliente, &(paquete->codigo_operacion), sizeof(int), MSG_WAITALL);
+	recv(socket_cliente, &(paquete->buffer->size), sizeof(int), MSG_WAITALL);
+	paquete->buffer->stream = malloc(paquete->buffer->size);
+	recv(socket_cliente, paquete->buffer->stream, paquete->buffer->size, MSG_WAITALL);
+
+    return paquete;
+}

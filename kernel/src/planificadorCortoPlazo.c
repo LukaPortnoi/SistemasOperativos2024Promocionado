@@ -2,7 +2,7 @@
 
 void iniciar_planificador_corto_plazo()
 {
-    log_debug(logger_kernel, "Inicia Planificador Corto Plazo");
+    log_debug(LOGGER_KERNEL, "Inicia Planificador Corto Plazo");
     pthread_t hilo_corto_plazo, hilo_quantum;
 
     pthread_create(&hilo_corto_plazo, NULL, (void *)ejecutar_PCB, NULL);
@@ -28,16 +28,16 @@ void iniciar_planificador_corto_plazo()
 }*/
 
 
-void ejecutar_PCB(t_pcb* pcb)
-{
-    int conexionDispatch = crear_conexion(IP_CPU, PUERTO_CPU_DISPATCH, LOGGER_KERNEL);
+void ejecutar_PCB(t_pcb* pcb){}
+/*{
+    int conexionDispatch = crear_conexion(IP_CPU, PUERTO_CPU_DISPATCH);
 
     meter_pcb_en_ejecucion(pcb);
-    enviar_pcb(pcb, conexionDispatch, logger_kernel);
-    log_info(logger_kernel, "El PCB con ID %d se envio a  CPU", pcb->pid);
+    enviar_pcb(pcb, conexionDispatch);
+    log_info(LOGGER_KERNEL, "El PCB con ID %d se envio a  CPU", pcb->pid);
     recibir_pcb_de_CPU(conexionDispatch); 
     close(conexionDispatch);
-}
+}*/
 
 void interrupcion_quantum(){}
 /* {

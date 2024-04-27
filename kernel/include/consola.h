@@ -13,10 +13,12 @@
 #include "../../utils/include/sockets_server.h"
 #include "../../utils/include/sockets_client.h"
 #include "../../utils/include/sockets_utils.h"
+#include "../../utils/include/pcb.h"
 #include "./comunicaciones.h"
+#include "./gestor.h"
 
-void iniciar_consola_interactiva(t_log *logger);
+void iniciar_consola_interactiva();
 bool validar_comando(char *comando);
-void ejecutar_comando(char *comando, t_log *logger);
+void ejecutar_comando(char *comando);
 
 #endif /* CONSOLA_H_ */
