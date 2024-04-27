@@ -9,7 +9,6 @@ int main()
 	log_info(LOGGER_KERNEL, "Iniciando Kernel...");
 
 	iniciar_listas_y_semaforos();
-	inicializar_pcb();
 	iniciar_planificador_corto_plazo();
 	iniciar_planificador_largo_plazo();
 
@@ -65,20 +64,4 @@ int asignar_pid()
 	pthread_mutex_unlock(&mutex_pid);
 
 	return valor_pid;
-}
-
-
-void inicializar_pcb(void* conexion)
-{
-
-	int pid_pcb = asignar_pid();
-    //bool exit = false;
-    //intptr_t conexionConsola = (intptr_t) conexion;
-    //t_paquete* paquete = get_paquete(conexionConsola, logger_kernel); 
-    t_pcb* pcb = crear_pcb(pid_pcb, NUEVO, QUANTUM); 
-    //t_procesoMemoria* procesoDeMemoria = solicitarCreacionDeProcesoEnMemoria(pcb->pid);
-	
-    log_info(logger_kernel, "Se crea el proceso %d en NEW", pcb->pid);
-    agregar_pcb_cola_nuevos(pcb);
-    //destruir_paquete(paquete);
 }

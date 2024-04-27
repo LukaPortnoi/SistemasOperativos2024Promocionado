@@ -1,31 +1,14 @@
 #include "../include/planificador.h"
-#include "../include/main.h"
-
 
 void iniciar_planificador_corto_plazo()
 {
-    pthread_t hilo_planificador;
-    pthread_create(&hilo_planificador, NULL, (void*)planificador_corto_plazo, NULL);
-    pthread_detach(hilo_planificador);
-}
+    log_debug(logger_kernel, "Inicia Planificador Corto Plazo");
+    pthread_t hilo_corto_plazo, hilo_quantum;
 
-void planificador_corto_plazo()
-{
-     log_debug(logger_kernel, "Inicia Planificador Corto Plazo");
-    while (1) {
-        sem_wait(&semProcesoListo);
-        //log_debug(logger_kernel, "Planificador corto plazo notificado proceso listo");
-        //int conexionDispatch = crear_conexion(ip_cpu, puerto_cpu, logger_kernel);
-        if (!strcmp(ALGORITMO_PLANIFICACION, "RR")) { //cambiamos en el config
- //            ordenarPorFIFO(); ojo no esta hecho el de RR hacerlo!
-        }
-/*         t_pcb* pcb = sacar_pcb_cola_listos();           //esto no anda
-        if ((pcb->llegada_a_listo != NULL)){
-        temporal_destroy(pcb->llegada_a_listo); 
-        }
-        ejecutar_PCB(pcb); */
-    }
-    // TODO: Implementar planificador de corto plazo
+    pthread_create(&hilo_corto_plazo, NULL, (void *)ejecutar_PCB, NULL);
+    pthread_detach(hilo_corto_plazo);
+    pthread_create(&hilo_quantum, NULL, (void *)interrupcion_quantum, NULL);
+    pthread_detach(hilo_quantum);
 }
 
 /*void planificar_proceso(t_pcb* pcb) //que le llegue el ALGORITMO DE PLANIFICACION, no me lo reconoce
@@ -55,6 +38,19 @@ void ejecutar_PCB(t_pcb* pcb)
     recibir_pcb_de_CPU(conexionDispatch); 
     close(conexionDispatch);
 }
+
+void interrupcion_quantum(){}
+/* {
+    while (1)
+    {
+        sleep(QUANTUM);
+        if (pcb_en_ejecucion != NULL)
+        {
+            log_info(logger_kernel, "Se interrumpio el proceso con ID %d por fin de quantum", pcb_en_ejecucion->pid);
+            enviar_pcb_a_ready(pcb_en_ejecucion);
+        }
+    }
+} */
 
 void planificar_proceso_fifo(t_pcb* pcb){}
 void planificar_proceso_rr(t_pcb* pcb){}

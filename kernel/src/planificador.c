@@ -10,17 +10,16 @@ t_list *colaBloqueadosFileSystem;
 t_list *colaBloqueadosRecursos;
 t_list *tabla_global_archivos_abiertos;
 
-static pthread_mutex_t procesosNuevosMutex;
-static pthread_mutex_t procesosListosMutex;
-static pthread_mutex_t procesosBloqueadosMutex;
-static pthread_mutex_t procesosBloqueadosFileSystemMutex;
-static pthread_mutex_t procesoAEjecutarMutex;
-static pthread_mutex_t procesosTerminadosMutex;
-static pthread_mutex_t procesoMutex;
-static pthread_mutex_t procesosEnSistemaMutex;
-static pthread_mutex_t puedeIniciarCompactacionMutex;
+pthread_mutex_t procesosNuevosMutex;
+pthread_mutex_t procesosListosMutex;
+pthread_mutex_t procesosBloqueadosMutex;
+pthread_mutex_t procesosBloqueadosFileSystemMutex;
+pthread_mutex_t procesoAEjecutarMutex;
+pthread_mutex_t procesosTerminadosMutex;
+pthread_mutex_t procesoMutex;
+pthread_mutex_t puedeIniciarCompactacionMutex;
 
-void iniciar_listas_y_semaforos() 
+/* void iniciar_listas_y_semaforos() 
 {
     colaNuevos = list_create();
     colaListos = list_create();
@@ -47,7 +46,7 @@ void iniciar_listas_y_semaforos()
     sem_init(&semMultiprogramacion, 0, grado_multiprogramacion);
     sem_init(&semProcesoNuevo, 0, 0);
     sem_init(&semProcesoListo, 0, 0);
-}
+} */
 
 char* estado_to_string(t_estado_proceso estado)
 {
@@ -80,105 +79,11 @@ void cambiar_estado_pcb(t_pcb* pcb, t_estado_proceso estado)
     pthread_mutex_unlock(&procesoMutex);
 }
 
-void resume_all_timers()
-{
-    for(int i = 0; i < list_size(colaListos); i++){
-        t_pcb* pcb = list_get(colaListos, i);
-        temporal_resume(pcb->llegada_a_listo);
-    }
-}
-
-void ordenarPorFIFO(t_pcb* proceso)
-{
+void ordenarPorFIFO(t_pcb* proceso){
     pthread_mutex_lock(&procesosListosMutex);
-    stop_all_timers();
-    list_add(colaListos, proceso)
-    list_sort(colaListos, (void *)agregar_pcb_en_cola_listos);
-    resume_all_timers();
+    list_add(colaListos, proceso);
+    list_sort(colaListos, (void*)compararPorFIFO);
     pthread_mutex_unlock(&procesosListosMutex);
 }
 
-
-
-// ------------------------------------------------------------------------------------------
-// -- Cola LISTOS --
-// ------------------------------------------------------------------------------------------
-
-void loggear_cola_listos()
-{
-    char * stringLog = string_new();
-    for(int i = 0; i < list_size(colaListos); i++){
-        t_pcb* pcbReady = list_get(colaListos, i);
-        char* pid = string_itoa(pcbReady->pid);
-        string_append(&stringLog, pid);
-        string_append(&stringLog, " ");
-    }
-    log_info(logger_kernel, "Cola Ready %s: [ %s]", ALGORITMO_PLANIFICACION, stringLog);
-}
-
-t_pcb* sacar_pcb_cola_listos() 
-{
-    pthread_mutex_lock(&procesosListosMutex);
-    t_pcb* proceso = list_remove(colaListos, 0);
-    temporal_stop(proceso->llegada_a_listo);
-    sacar_pcb_cola_procesos_en_sistema(proceso);  
-    pthread_mutex_unlock(&procesosListosMutex); 
-    return proceso;
-}
-
-
-void agregar_pcb_en_cola_listos(t_pcb* proceso) 
-{
-    pthread_mutex_lock(&procesosListosMutex);
-    list_add(colaListos, proceso); 
-    cambiar_estado_pcb(proceso, LISTO);
-    loggear_cola_listos();
-    agregar_pcb_en_cola_procesos_en_sistema(proceso);  
-    pthread_mutex_unlock(&procesosListosMutex);
-    //sem_post(&semProcesoListo);
-}
-
-void sacar_pcb_cola_procesos_en_sistema(t_pcb* proceso)
-{
-    pthread_mutex_lock(&procesosEnSistemaMutex);
-    list_remove_element(procesosEnSistema, proceso);
-    pthread_mutex_unlock(&procesosEnSistemaMutex);
-    return;
-}
-
-
-void agregar_pcb_en_cola_procesos_en_sistema(t_pcb* proceso) 
-{
-    pthread_mutex_lock(&procesosEnSistemaMutex);
-    list_add(procesosEnSistema, proceso); 
-    pthread_mutex_unlock(&procesosEnSistemaMutex);
-}
-
-
-// ------------------------------------------------------------------------------------------
-// -- Cola NUEVOS --
-// ------------------------------------------------------------------------------------------
-
-void agregar_pcb_cola_nuevos(t_pcb* proceso) 
-{
-    pthread_mutex_lock(&procesosNuevosMutex);
-    list_add(colaNuevos, proceso);
-    agregar_pcb_en_cola_procesos_en_sistema(proceso);
-    pthread_mutex_unlock(&procesosNuevosMutex);
-    sem_post(&semProcesoNuevo);
-}
-
-
-t_pcb* sacar_pcb_de_cola_nuevo() 
-{
-    pthread_mutex_lock(&procesosNuevosMutex);
-    t_pcb* proceso = list_remove(colaNuevos, 0);
-    sacar_pcb_cola_procesos_en_sistema(proceso);
-    pthread_mutex_unlock(&procesosNuevosMutex);
-    return proceso;
-}
-
-
-// ------------------------------------------------------------------------------------------
-// -- En ejecucion --
-// ------------------------------------------------------------------------------------------
+void compararPorFIFO(t_pcb* proceso1, t_pcb* proceso2){}
