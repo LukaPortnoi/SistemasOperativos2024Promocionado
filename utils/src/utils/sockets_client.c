@@ -65,11 +65,11 @@ void crear_buffer(t_paquete *paquete)
 	paquete->buffer->stream = NULL;
 }
 
-t_paquete *crear_paquete(void)
+t_paquete *crear_paquete(t_buffer *buffer, op_cod codigo_operacion)
 {
 	t_paquete *paquete = malloc(sizeof(t_paquete));
-	paquete->codigo_operacion = PAQUETE;
-	crear_buffer(paquete);
+	paquete->codigo_operacion = codigo_operacion;
+	paquete->buffer = buffer;
 	return paquete;
 }
 

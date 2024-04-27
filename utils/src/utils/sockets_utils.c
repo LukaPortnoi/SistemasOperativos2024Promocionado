@@ -3,7 +3,7 @@
 t_log *iniciar_logger(char *file_name, char *name)
 {
 	t_log *nuevo_logger;
-	nuevo_logger = log_create(file_name, name, 1, LOG_LEVEL_INFO);
+	nuevo_logger = log_create(file_name, name, 1, LOG_LEVEL_TRACE);
 	if (nuevo_logger == NULL)
 	{
 		printf("No se pudo crear el logger %s\n", name);
@@ -40,8 +40,9 @@ void leer_consola(t_log *logger)
 	free(leido);
 }
 
-void paquete(int conexion, t_log *logger)
+/*void paquete(int conexion, t_log *logger)		//DESHABILITADO PORQUE NO SE USA Y CREAR_PAQUETE() NO ESTÁ DEFINIDO
 {
+	
 	char *leido;
 	t_paquete *paquete = crear_paquete();
 
@@ -56,7 +57,7 @@ void paquete(int conexion, t_log *logger)
 	enviar_paquete(paquete, conexion);
 
 	eliminar_paquete(paquete);
-}
+}*/
 
 void terminar_programa(int conexion, t_log *logger, t_config *config)
 {

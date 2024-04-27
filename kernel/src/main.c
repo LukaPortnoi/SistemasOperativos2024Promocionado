@@ -1,23 +1,59 @@
 #include "../include/main.h"
 
+t_log *LOGGER_KERNEL;
+t_config *CONFIG_KERNEL;
+
+char *PUERTO_ESCUCHA;
+char *IP_MEMORIA;
+char *PUERTO_MEMORIA;
+char *IP_CPU;
+char *PUERTO_CPU_DISPATCH;
+char *PUERTO_CPU_INTERRUPT;
+char *ALGORITMO_PLANIFICACION;
+char *QUANTUM;
+char **RECURSOS;
+char **INSTANCIAS_RECURSOS;
+int GRADO_MULTIPROGRAMACION;
+char *IP_KERNEL;
+
+int fd_kernel;
+
+int PID_GLOBAL = 1;
+
+pthread_mutex_t mutex_pid;
+
+// sem_t semProcesoListo;
+
 int main()
 {
 	inicializar_config();
 	log_info(LOGGER_KERNEL, "Iniciando Kernel...");
 
-	//server KERNEL
-	int fd_kernel = iniciar_servidor(LOGGER_KERNEL, "KERNEL", IP_KERNEL, PUERTO_ESCUCHA);
+	// iniciar_listas_y_semaforos();
+	iniciar_planificador_corto_plazo();
+	iniciar_planificador_largo_plazo();
+
+	// inicar server KERNEL
+	fd_kernel = iniciar_servidor(LOGGER_KERNEL, "KERNEL", IP_KERNEL, PUERTO_ESCUCHA);
 	log_info(LOGGER_KERNEL, "Kernel listo para recibir clientes");
 
-	//conexion como cliente a MEMORIA
+	// conexion como cliente a MEMORIA
 	int fd_kernel_memoria = crear_conexion(IP_MEMORIA, PUERTO_MEMORIA);
 	enviar_mensaje("Mensaje de Kernel para memoria", fd_kernel_memoria);
 
-	//conexion como cliente a CPU DISPATCH
-	int fd_kernel_cpu_dispatch = crear_conexion(IP_CPU, PUERTO_CPU_DISPATCH); //aqui vamos a planificar la ejecucion de procesos
-	enviar_mensaje("Mensaje de Kernel para CPU", fd_kernel_cpu_dispatch);
-	
+	// conexion como cliente a CPU DISPATCH
+	int fd_kernel_cpu_dispatch = crear_conexion(IP_CPU, PUERTO_CPU_DISPATCH); // aqui vamos a planificar la ejecucion de procesos
+	enviar_mensaje("Mensaje de Kernel para CPU DISPATCH", fd_kernel_cpu_dispatch);
+
+	// conexion como cliente a CPU INTERRUPT
+	int fd_kernel_cpu_interrupt = crear_conexion(IP_CPU, PUERTO_CPU_INTERRUPT); // aqui vamos a planificar la interrupcion de procesos
+	enviar_mensaje("Mensaje de Kernel para CPU INTERRUPT", fd_kernel_cpu_interrupt);
+
+	iniciar_consola_interactiva(LOGGER_KERNEL);
+
 	while (server_escuchar(LOGGER_KERNEL, "KERNEL", fd_kernel));
+
+	log_info(LOGGER_KERNEL, "Finalizando Kernel...");
 
 	terminar_programa(fd_kernel, LOGGER_KERNEL, CONFIG_KERNEL);
 }
@@ -25,7 +61,7 @@ int main()
 void inicializar_config(void)
 {
 	LOGGER_KERNEL = iniciar_logger("kernel.log", "KERNEL");
-	CONFIG_KERNEL = iniciar_config("./kernel.config", "KERNEL"); //liberar los get_array_value
+	CONFIG_KERNEL = iniciar_config("./kernel.config", "KERNEL"); // liberar los get_array_value
 	PUERTO_ESCUCHA = config_get_string_value(CONFIG_KERNEL, "PUERTO_ESCUCHA");
 	IP_MEMORIA = config_get_string_value(CONFIG_KERNEL, "IP_MEMORIA");
 	PUERTO_MEMORIA = config_get_string_value(CONFIG_KERNEL, "PUERTO_MEMORIA");
