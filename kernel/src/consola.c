@@ -76,7 +76,7 @@ void ejecutar_comando(char *comando)
     else if (strcmp(comando_separado[0], "INICIAR_PROCESO") == 0)
     {
         log_info(LOGGER_KERNEL, "Iniciando proceso desde %s...", comando_separado[1]);
-        // iniciar_proceso(comando_separado[1]);
+        iniciar_proceso(comando_separado[1]);
     }
     else if (strcmp(comando_separado[0], "FINALIZAR_PROCESO") == 0)
     {
@@ -141,8 +141,9 @@ void ejecutar_comando(char *comando)
     fclose(script);
 }*/
 
-/*void iniciar_proceso(char *path_proceso)
-{
-    t_pcb *pcb = crear_pcb();
-    meter_pcb_en_nuevos(pcb);
-}*/
+void iniciar_proceso(char *path_proceso)
+{   
+    int pid_nuevo = asignar_pid();
+    enviar_proceso_a_memoria(pid_nuevo, path_proceso);
+    t_pcb *pcb = crear_pcb(pid_nuevo, NEW, QUANTUM);
+}

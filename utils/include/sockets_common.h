@@ -12,7 +12,10 @@
     HANDSHAKE_ok_continue,
     MENSAJE,
     PAQUETE,
-    PCB
+    PCB,
+    INICIALIZAR_PROCESO,
+    FINALIZAR_PROCESO,
+    CONTEXTO
 } op_cod;
 
 #endif // SOCKETS_COMMON_H_

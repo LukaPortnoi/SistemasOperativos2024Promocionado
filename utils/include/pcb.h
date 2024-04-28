@@ -15,8 +15,9 @@
 #include "sockets_client.h"
 #include "sockets_server.h"
 #include "sockets_utils.h"
+#include "instrucciones.h"
 #include <commons/temporal.h>
-
+#include "instrucciones.h"
 
 typedef enum
 {
@@ -37,12 +38,22 @@ typedef struct
 
 typedef struct
 {
-	u_int32_t pid;
+	int pid;
 	t_estado_proceso estado;
 	t_registros registros;
     int quantum;
+    //t_contexto_ejecucion *contexto_ejecucion;
 } t_pcb;
 
+
+typedef struct
+{
+    int pid;
+    int program_counter;
+    t_registros *registros;
+    t_instruccion *instruccion_ejecutada;
+    nombre_instruccion codigo_ultima_instru;
+} t_contexto_ejecucion;
 
 /*typedef struct {
     t_recurso *archivo;
@@ -60,7 +71,7 @@ void inicializar_registros(t_pcb* pcb);
 
 // ------------------------------------------------------ Funciones PCB
 
-t_pcb* crear_pcb(u_int32_t pid, t_estado_proceso estado, int quantum);
+t_pcb* crear_pcb(int pid, t_estado_proceso estado, int quantum);
 void destruir_pcb(t_pcb* pcb);
 int asignar_pid(void);
 
@@ -73,5 +84,7 @@ t_pcb* deserializar_pcb(t_paquete* paquete);
 
 void enviar_pcb(t_pcb* pcb, int socket_cliente);
 t_pcb* recibir_pcb(int socket_cliente);
+
+
 
 #endif

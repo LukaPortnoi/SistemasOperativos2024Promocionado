@@ -65,14 +65,6 @@ void crear_buffer(t_paquete *paquete)
 	paquete->buffer->stream = NULL;
 }
 
-t_paquete *crear_paquete(t_buffer *buffer, op_cod codigo_operacion)
-{
-	t_paquete *paquete = malloc(sizeof(t_paquete));
-	paquete->codigo_operacion = codigo_operacion;
-	paquete->buffer = buffer;
-	return paquete;
-}
-
 void agregar_a_paquete(t_paquete *paquete, void *valor, int tamanio)
 {
 	paquete->buffer->stream = realloc(paquete->buffer->stream, paquete->buffer->size + tamanio + sizeof(int));

@@ -14,8 +14,10 @@
 #include "../../utils/include/sockets_client.h"
 #include "../../utils/include/sockets_utils.h"
 #include "../../utils/include/pcb.h"
+
 #include "./comunicaciones.h"
 #include "./gestor.h"
+#include "./planificador.h"
 
 void iniciar_consola_interactiva();
 bool validar_comando(char *comando);

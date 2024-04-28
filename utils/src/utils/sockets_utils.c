@@ -24,40 +24,34 @@ t_config *iniciar_config(char *file_name, char *name)
 	return nuevo_config;
 }
 
-void leer_consola(t_log *logger)
+t_paquete *crear_paquete_con_codigo_de_operacion(op_cod codigo)
 {
-	char *leido;
-
-	leido = readline("> ");
-
-	while (strcmp(leido, ""))
-	{
-		log_info(logger, "Se ingresó: %s", leido);
-		free(leido);
-		leido = readline("> ");
-	}
-
-	free(leido);
+	t_paquete *paquete = malloc(sizeof(t_paquete));
+	paquete->codigo_operacion = codigo;
+	crear_buffer(paquete);
+	return paquete;
 }
 
-/*void paquete(int conexion, t_log *logger)		//DESHABILITADO PORQUE NO SE USA Y CREAR_PAQUETE() NO ESTÁ DEFINIDO
+void serializar_nuevo(t_paquete *paquete, int pid, int size, char *path)
 {
-	
-	char *leido;
-	t_paquete *paquete = crear_paquete();
+    paquete->buffer->size += sizeof(uint32_t) * 3 +  strlen(path) + 1;
 
-	leido = readline("> ");
-	while (strcmp(leido, ""))
-	{
-		log_info(logger, "Se ingresó: %s", leido);
-		agregar_a_paquete(paquete, leido, strlen(leido) + 1);
-		free(leido);
-		leido = readline("> ");
-	}
-	enviar_paquete(paquete, conexion);
+    paquete->buffer->stream = malloc(paquete->buffer->size);
 
-	eliminar_paquete(paquete);
-}*/
+    int desplazamiento = 0;
+
+    memcpy(paquete->buffer->stream + desplazamiento, &(pid), sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+    memcpy(paquete->buffer->stream + desplazamiento, &(size), sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+    uint32_t long_path = strlen(path) + 1;
+    memcpy(paquete->buffer->stream + desplazamiento, &(long_path), sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+    memcpy(paquete->buffer->stream + desplazamiento, path, long_path);
+}
 
 void terminar_programa(int conexion, t_log *logger, t_config *config)
 {

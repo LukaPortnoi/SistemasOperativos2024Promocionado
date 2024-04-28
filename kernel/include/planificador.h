@@ -8,11 +8,16 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <commons/string.h>
+#include <commons/collections/queue.h>
 #include <semaphore.h>
+#include "../../utils/include/sockets_client.h"
+#include "../../utils/include/sockets_utils.h"
+#include "../../utils/include/sockets_common.h"
 #include "../../utils/include/pcb.h"
 #include "./gestor.h"
 
-void iniciar_listas_y_semaforos(void);
+
+void iniciar_colas_y_semaforos(void);
 int asignar_pid();
 void ejecutar_PCB(t_pcb* pcb);
 void meter_pcb_en_ejecucion(t_pcb* pcb);
@@ -20,6 +25,7 @@ void sacar_pcb_ejecucion(void);
 
 t_pcb* sacar_pcb_cola_listos(void);
 
+// planificador corto plazo
 void iniciar_planificador_corto_plazo(void);
 void interrupcion_quantum(void);
 void planificar_proceso(t_pcb* pcb);
@@ -27,6 +33,7 @@ void planificar_proceso_fifo(t_pcb* pcb);
 void planificar_proceso_rr(t_pcb* pcb);
 void planificar_proceso_vrr(t_pcb* pcb);
 
+// planificador largo plazo
 void iniciar_planificador_largo_plazo(void);
 void grado_multiprogamacion(void);
 

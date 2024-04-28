@@ -1,5 +1,7 @@
 #include "../include/main.h"
 
+t_contexto_ejecucion *contexto_actual;
+
 char *IP_MEMORIA;
 char *IP_CPU;
 char *PUERTO_MEMORIA;
@@ -25,9 +27,9 @@ int main()
     log_info(LOGGER_CPU, "Iniciando CPU...");
 
     iniciar_conexiones();
-    
+
     while (server_escuchar(LOGGER_CPU, "CPU_DISPATCH", fd_cpu_dispatch));
-    
+
     /*while (1)
     {
         cod_op = recibir_operacion(fd_cpu_dispatch);
@@ -44,7 +46,7 @@ int main()
     }*/
 
     terminar_programa(fd_cpu_dispatch, LOGGER_CPU, CONFIG);
-    //terminar_programa(fd_cpu_interrupt, LOGGER_CPU, CONFIG);
+    // terminar_programa(fd_cpu_interrupt, LOGGER_CPU, CONFIG);
 }
 
 void inicializar_config()
@@ -81,9 +83,44 @@ void iniciar_conexiones()
 
 void escuchar_interrupt()
 {
-    while (server_escuchar(LOGGER_CPU, "CPU_INTERRUPT", fd_cpu_interrupt));
+    while (server_escuchar(LOGGER_CPU, "CPU_INTERRUPT", fd_cpu_interrupt))
+        ;
 }
 
+while (1)
+{
+
+    codigo_operacion = recibir_operacion(fd_cpu_dispatch);
+
+    switch (codigo_operacion)
+    {
+    case CONTEXTO:
+        contexto_actual = recibir_contexto(fd_cpu_dispatch);
+        contexto_actual->codigo_ultima_instru = -1;
+
+        while (!es_syscall() && !hay_interrupciones() && !page_fault && contexto_actual != NULL)
+        {
+            ejecutar_ciclo_instruccion();
+        }
+        //obtener_motivo_desalojo();
+        enviar_contexto(fd_cpu_dispatch, contexto_actual);
+
+        contexto_actual = NULL;
+
+       // pthread_mutex_lock(&mutex_interrupt);
+        //limpiar_interrupciones();
+       // pthread_mutex_unlock(&mutex_interrupt);
+        // liberar_contexto(contexto_actual);
+
+        break;
+    default:
+        log_error(cpu_logger_info, "El codigo que me llego es %d", codigo_operacion);
+        log_warning(cpu_logger_info, "Operacion desconocida \n");
+        finalizar_cpu();
+        abort();
+        break;
+    }
+}
 /*void *recibir_interrupt(void *arg)
 {
     while (1)
@@ -122,3 +159,109 @@ void escuchar_interrupt()
 
     return NULL;
 } */
+
+void ejecutar_ciclo_instruccion()
+{
+    t_instruccion *instruccion = fetch(contexto_actual->pid, contexto_actual->program_counter);
+    decode(instruccion);
+    if (!page_fault)
+        contexto_actual->program_counter++;
+}
+
+t_instruccion *fetch(int pid, int pc)
+{
+    // TODO -- chequear que en los casos de instruccion con memoria logica puede dar PAGE FAULT y no hay que aumentar el pc (restarlo dentro del decode en esos casos)
+    ask_instruccion_pid_pc(pid, pc, socket_memoria);
+
+    op_code codigo_op = recibir_operacion(socket_memoria);
+
+    t_instruccion *instruccion;
+
+    if (codigo_op == INSTRUCCION)
+    {
+        instruccion = deserializar_instruccion(socket_memoria);
+        contexto_actual->instruccion_ejecutada = instruccion;
+    }
+    else
+    {
+        log_warning(cpu_logger_info, "Operación desconocida. No se pudo recibir la instruccion de memoria.");
+        abort();
+    }
+
+    log_info(cpu_logger_info, "PID: %d - FETCH - Program Counter: %d", pid, pc);
+
+    return instruccion;
+}
+
+void decode(t_instruccion *instruccion)
+{
+    char *param1 = string_new();
+    char *param2 = string_new();
+    if (instruccion->parametro1 != NULL)
+    {
+        strcpy(param1, instruccion->parametro1);
+    }
+    if (instruccion->parametro2 != NULL)
+    {
+        strcpy(param2, instruccion->parametro2);
+    }
+    log_info(cpu_logger_info, "PID: %d - Ejecutando: %s - Parametros: %s - %s", contexto_actual->pid, cod_inst_to_str(instruccion->codigo), param1, param2);
+
+    switch (instruccion->codigo)
+    {
+    case SET:
+        _set(instruccion->parametro1, instruccion->parametro2);
+        break;
+    case SUM:
+        _sum(instruccion->parametro1, instruccion->parametro2);
+        break;
+    case SUB:
+        _sub(instruccion->parametro1, instruccion->parametro2);
+        break;
+    case JNZ:
+        _jnz(instruccion->parametro1, instruccion->parametro2);
+        break;
+    case SLEEP:
+        _sleep();
+        break;
+    case WAIT:
+        _wait();
+        break;
+    case SIGNAL:
+        _signal();
+        break;
+    case MOV_IN:
+        _mov_in(instruccion->parametro1, instruccion->parametro2);
+        break;
+    case MOV_OUT:
+        _mov_out(instruccion->parametro1, instruccion->parametro2);
+        break;
+    case F_OPEN:
+        _f_open(instruccion->parametro1, instruccion->parametro2);
+        break;
+    case F_CLOSE:
+        _f_close(instruccion->parametro1);
+        break;
+    case F_SEEK:
+        _f_seek(instruccion->parametro1, instruccion->parametro2);
+        break;
+    case F_READ:
+        _f_read(instruccion->parametro1, instruccion->parametro2);
+        break;
+    case F_WRITE:
+        _f_write(instruccion->parametro1, instruccion->parametro2);
+        break;
+    case F_TRUNCATE:
+        _f_truncate(instruccion->parametro1, instruccion->parametro2);
+        break;
+    case EXIT:
+        __exit(contexto_actual);
+        break;
+    default:
+        log_error(cpu_logger_info, "Instruccion no reconocida");
+        break;
+    }
+
+    // free(param1);
+    // free(param2);
+}

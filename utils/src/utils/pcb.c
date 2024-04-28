@@ -1,6 +1,6 @@
 #include "../include/pcb.h"
 
-// ------------------------------------------------------ Inicializar Registros
+// Inicializar Registros
 
 void inicializar_registros(t_pcb *pcb)
 {
@@ -17,9 +17,9 @@ void inicializar_registros(t_pcb *pcb)
     pcb->registros.di = 0;
 }
 
-// ------------------------------------------------------ Funciones PCB
+// Funciones PCB
 
-t_pcb *crear_pcb(uint32_t pid, t_estado_proceso estado, int quantum)
+t_pcb *crear_pcb(int pid, t_estado_proceso estado, int quantum)
 {
     t_pcb *pcb = malloc(sizeof(t_pcb));
     pcb->pid = pid;
@@ -34,18 +34,18 @@ void destruir_pcb(t_pcb *pcb)
     free(pcb);
 }
 
-// ------------------------------------------------------ Funciones Serializacion
+// Funciones Serializacion
 
 t_buffer *crear_buffer_pcb(t_pcb *pcb)
 {
     t_buffer *buffer = malloc(sizeof(t_buffer));
-    buffer->size = sizeof(u_int32_t) + sizeof(t_estado_proceso) + sizeof(uint32_t) + 4 * sizeof(uint8_t) + 4 * sizeof(uint32_t) + 2 * sizeof(int);
+    buffer->size = sizeof(int) + sizeof(t_estado_proceso) + sizeof(uint32_t) + 4 * sizeof(uint8_t) + 4 * sizeof(uint32_t) + 2 * sizeof(int);
 
     void *stream = malloc(buffer->size);
-    
+
     int offset = 0;
-    memcpy(stream + offset, &(pcb->pid), sizeof(u_int32_t));
-    offset += sizeof(u_int32_t);
+    memcpy(stream + offset, &(pcb->pid), sizeof(int));
+    offset += sizeof(int);
     memcpy(stream + offset, &(pcb->estado), sizeof(t_estado_proceso));
     offset += sizeof(t_estado_proceso);
     memcpy(stream + offset, &(pcb->registros.program_counter), sizeof(uint32_t));
@@ -82,11 +82,11 @@ t_pcb *deserializar_pcb(t_paquete *paquete)
     t_pcb *pcb = malloc(sizeof(t_pcb));
 
     void *stream = paquete->buffer->stream;
-    int presize  = paquete->buffer->size;
+    int presize = paquete->buffer->size;
 
-    memcpy(&(pcb->pid), stream, sizeof(u_int32_t));
-    stream += sizeof(u_int32_t);
-    presize -= sizeof(u_int32_t);
+    memcpy(&(pcb->pid), stream, sizeof(int));
+    stream += sizeof(int);
+    presize -= sizeof(int);
     memcpy(&(pcb->estado), stream, sizeof(t_estado_proceso));
     stream += sizeof(t_estado_proceso);
     presize -= sizeof(t_estado_proceso);
@@ -129,16 +129,15 @@ t_pcb *deserializar_pcb(t_paquete *paquete)
 
     memcpy(paquete->buffer->stream, stream, presize);
     paquete->buffer->size = presize;
-    
+
     return pcb;
 }
 
-// ------------------------------------------------------ Funciones de Envio y Recepcion
+// Funciones de Envio y Recepcion
 
 void enviar_pcb(t_pcb *pcb, int socket_cliente)
 {
-    t_buffer *buffer = crear_buffer_pcb(pcb);
-    t_paquete *paquete = crear_paquete(buffer, PCB);
+    t_paquete *paquete = crear_paquete_con_codigo_de_operacion(PCB);
     enviar_paquete(paquete, socket_cliente);
     eliminar_paquete(paquete);
 }
