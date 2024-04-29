@@ -52,7 +52,8 @@ void _jnz(char *registro, char *instruccion)
 void _sleep()
 {
     contexto_actual->codigo_ultima_instru = SLEEP;
-    contexto_actual->motivo_desalojado = SYSCALL;
+    // NO TIENE TIPO MOTIVO_DESALOJADOOOOOOOOOOOOOOOOOOOOO
+    //contexto_actual->motivo_desalojado = SYSCALL;
 }
 
 // Esta instrucción solicita al Kernel que se asigne una instancia del recurso indicado por parámetro.
@@ -60,7 +61,7 @@ void _wait()
 {
     // solicitar al kernel asignar recurso
     contexto_actual->codigo_ultima_instru = WAIT;
-    contexto_actual->motivo_desalojado = SYSCALL;
+    //contexto_actual->motivo_desalojado = SYSCALL;
 }
 
 //  Esta instrucción solicita al Kernel que se libere una instancia del recurso indicado por parámetro.
@@ -68,7 +69,7 @@ void _signal()
 {
     // solicitar al kernel liberar recurso
     contexto_actual->codigo_ultima_instru = SIGNAL;
-    contexto_actual->motivo_desalojado = SYSCALL;
+   // contexto_actual->motivo_desalojado = SYSCALL;
 }
 
 // Lee el valor de memoria correspondiente a la Dirección Lógica y lo almacena en el Registro.
@@ -77,7 +78,7 @@ void _mov_in(char *registro, char *direc_logica)
     uint32_t *regis = malloc(sizeof(uint32_t));
     regis = get_registry(registro);
 
-    uint32_t valor = obtener_valor_dir(str_to_uint32(direc_logica));
+    uint32_t valor = 0 //obtener_valor_dir(str_to_uint32(direc_logica)); NO EXISTEEEEEEEEE
     if (valor != -1)
     {
         *(regis) = valor;
@@ -93,7 +94,7 @@ void _mov_out(char *direc_logica, char *registro)
 {
     uint32_t regis = *(get_registry(registro));
 
-    escribir_memoria(str_to_uint32(direc_logica), regis);
+   // escribir_memoria(str_to_uint32(direc_logica), regis); ???????????????????
 
     // TODO: solo cambiar si no es page fault
     contexto_actual->codigo_ultima_instru = MOV_OUT;
@@ -104,21 +105,21 @@ void _mov_out(char *direc_logica, char *registro)
 void _f_open(char *nombre_archivo, char *modo_apertura)
 {
     contexto_actual->codigo_ultima_instru = F_OPEN;
-    contexto_actual->motivo_desalojado = SYSCALL;
+   // contexto_actual->motivo_desalojado = SYSCALL;
 }
 
 // Solicita al kernel que cierre el archivo pasado por parámetro.
 void _f_close(char *nombre_archivo)
 {
     contexto_actual->codigo_ultima_instru = F_CLOSE;
-    contexto_actual->motivo_desalojado = SYSCALL;
+   // contexto_actual->motivo_desalojado = SYSCALL;
 }
 
 // Solicita al kernel actualizar el puntero del archivo a la posición pasada por parámetro.
 void _f_seek(char *nombre_archivo, char *posicion)
 {
     contexto_actual->codigo_ultima_instru = F_SEEK;
-    contexto_actual->motivo_desalojado = SYSCALL;
+   // contexto_actual->motivo_desalojado = SYSCALL;
 }
 
 // Solicita al Kernel que se lea del archivo indicado y
@@ -128,7 +129,7 @@ void _f_read(char *nombre_archivo, char *direc_logica)
     traducir_dl_fs(direc_logica);
 
     contexto_actual->codigo_ultima_instru = F_READ;
-    contexto_actual->motivo_desalojado = SYSCALL;
+   // contexto_actual->motivo_desalojado = SYSCALL;
 }
 
 // Solicita al Kernel que se escriba en el archivo indicado l
@@ -138,14 +139,14 @@ void _f_write(char *nombre_archivo, char *direc_logica)
     traducir_dl_fs(direc_logica);
 
     contexto_actual->codigo_ultima_instru = F_WRITE;
-    contexto_actual->motivo_desalojado = SYSCALL;
+   // contexto_actual->motivo_desalojado = SYSCALL;
 }
 
 //  Solicita al Kernel que se modifique el tamaño del archivo al indicado por parámetro.
 void _f_truncate(char *nombre_archivo, char *tamanio)
 {
     contexto_actual->codigo_ultima_instru = F_TRUNCATE;
-    contexto_actual->motivo_desalojado = SYSCALL;
+    //contexto_actual->motivo_desalojado = SYSCALL;
 }
 
 // representa la syscall de finalización del proceso.
@@ -164,7 +165,7 @@ void traducir_dl_fs(char *dl)
     }
     else
     {
-        char *df_string = string_itoa(df);
+        char *df_string = atoi(df);
         contexto_actual->instruccion_ejecutada->longitud_parametro2 = strlen(df_string) + 1;
         contexto_actual->instruccion_ejecutada->parametro2 = strdup(df_string);
     }

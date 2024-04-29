@@ -9,20 +9,21 @@
 #include <commons/string.h>
 #include <commons/config.h>
 #include <readline/readline.h>
+#include <pthread.h>
 #include <commons/collections/queue.h>
 #include <semaphore.h>
 
-#include "../../utils/include/hello.h"
 #include "../../utils/include/sockets_server.h"
 #include "../../utils/include/sockets_client.h"
 #include "../../utils/include/sockets_utils.h"
+
+#include "./gestor.h"
 #include "./comunicaciones.h"
 #include "./consola.h"
 #include "./planificador.h"
-#include "./gestor.h"
 
-void inicializar_config(void);
+
+void inicializar_config();
 void iniciar_conexiones();
-void iniciar_listas_y_semaforos(void);
 
 #endif // MAIN_H_

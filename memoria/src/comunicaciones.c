@@ -7,6 +7,8 @@ typedef struct
 	char *server_name;
 } t_procesar_conexion_args;
 
+int MAX_PATH_LENGTH = 100;
+
 static void procesar_conexion_memoria(void *void_args)
 {
 	t_procesar_conexion_args *args = (t_procesar_conexion_args *)void_args;
@@ -36,6 +38,18 @@ static void procesar_conexion_memoria(void *void_args)
 			log_info(logger, "Me llegaron los siguientes valores:");
 			list_iterate(lista, (void *)iterator);
 			break;
+
+		// --------------------------------
+		// -- INICIALIZAR_PROCESO ---------
+		// --------------------------------
+
+		case INICIALIZAR_PROCESO:
+			int pid_nuevo;
+    		char *path_proceso = malloc(MAX_PATH_LENGTH);
+
+    		// DESERIALIZAR PAQUETE CON PID Y PATH
+    		extraer_de_paquete(paquete, &pid_nuevo, sizeof(int));
+    		extraer_de_paquete(paquete, path_proceso, MAX_PATH_LENGTH);
 
 		// -------------------
 		// -- CPU - MEMORIA --
@@ -94,4 +108,19 @@ int server_escuchar(t_log *logger, char *server_name, int server_socket)
 		return 1;
 	}
 	return 0;
+}
+
+void extraer_de_paquete(t_paquete *paquete, void *destino, int size)
+{
+    if (paquete->buffer->size < size)
+    {
+        // Manejar error
+		log_error(logger, "No se puede extraer %d bytes de un paquete de %d bytes", size, paquete->buffer->size);
+		return;
+    }
+
+    memcpy(destino, paquete->buffer->stream, size);
+
+    paquete->buffer->size -= size;
+    memmove(paquete->buffer->stream, paquete->buffer->stream + size, paquete->buffer->size);
 }

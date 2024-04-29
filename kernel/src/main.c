@@ -23,43 +23,16 @@ int fd_kernel_cpu_interrupt;
 
 int PID_GLOBAL = 1;
 
-pthread_mutex_t procesosNuevosMutex;
-pthread_mutex_t procesosListosMutex;
-pthread_mutex_t procesosBloqueadosMutex;
-pthread_mutex_t procesoAEjecutarMutex;
-pthread_mutex_t procesosFinalizadosMutex;
-pthread_mutex_t procesoMutex;
-pthread_mutex_t procesosEnSistemaMutex;
-pthread_mutex_t mutex_pid;
-
-sem_t semMultiprogramacion;
-sem_t semNuevo;
-sem_t semExit;
-sem_t semListos_Ready;
-sem_t semReady;
-sem_t semExec;
-sem_t semDetener;
-sem_t semBloqueado;
-sem_t semFinalizado;
-
-t_queue *colaNuevos;
-t_queue *colaListos;
-t_queue *colaBloqueados;
-t_queue *colaTerminados;
-t_queue *procesosEnSistema;
-
 int main()
 {
 	inicializar_config();
 	log_info(LOGGER_KERNEL, "Iniciando Kernel...");
-
-	iniciar_colas_y_semaforos();
-	iniciar_planificador_corto_plazo();
-	iniciar_planificador_largo_plazo();
-
 	iniciar_conexiones();
+	iniciar_colas_y_semaforos();
+	iniciar_planificador_largo_plazo();
+	iniciar_planificador_corto_plazo();
 
-	iniciar_consola_interactiva(LOGGER_KERNEL);
+	iniciar_consola_interactiva();
 
 	while (server_escuchar(LOGGER_KERNEL, "KERNEL", fd_kernel));
 
@@ -68,7 +41,7 @@ int main()
 	terminar_programa(fd_kernel, LOGGER_KERNEL, CONFIG_KERNEL);
 }
 
-void inicializar_config(void)
+void inicializar_config()
 {
 	LOGGER_KERNEL = iniciar_logger("kernel.log", "KERNEL");
 	CONFIG_KERNEL = iniciar_config("./kernel.config", "KERNEL"); // liberar los get_array_value

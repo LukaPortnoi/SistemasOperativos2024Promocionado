@@ -9,7 +9,6 @@
 #include <commons/config.h>
 #include <readline/readline.h>
 
-#include "../../utils/include/hello.h"
 #include "../../utils/include/sockets_server.h"
 #include "../../utils/include/sockets_client.h"
 #include "../../utils/include/sockets_utils.h"
@@ -19,7 +18,12 @@
 #include "./comunicaciones.h"
 
 void inicializar_config(void);
-void iniciar_conexiones();
-void escuchar_interrupt();
+void iniciar_conexiones(void);
+void escuchar_interrupt(void);
+t_instruccion *fetch(int pid, int pc);
+void decode(t_instruccion *instruccion);
+void pedir_instruccion_memoria(int pid, int pc, int socket);
+t_instruccion *deserializar_instruccion(int socket);
+void finalizar_cpu(void);
 
 #endif

@@ -1,12 +1,5 @@
 #include "../include/tlb.h"
 
-struct
-{
-    int *paginas;
-    int *marcos;
-    int pid;
-} tlb;
-
 int *cola_fifo;
 t_list *lista_lru;
 int cant_entradas;

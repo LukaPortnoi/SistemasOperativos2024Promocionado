@@ -1,6 +1,7 @@
 #ifndef GESTOR_H_
 #define GESTOR_H_
 
+#include <pthread.h>
 #include <commons/collections/queue.h>
 #include <semaphore.h>
 
@@ -27,7 +28,7 @@ extern int fd_kernel_cpu_interrupt;
 
 extern int PID_GLOBAL;
 
-extern sem_t semMultiprogramacion;
+/* extern sem_t semMultiprogramacion;
 extern sem_t semNuevo;
 extern sem_t semExit;
 extern sem_t semListos_Ready;
@@ -35,21 +36,23 @@ extern sem_t semReady;
 extern sem_t semExec;
 extern sem_t semDetener;
 extern sem_t semBloqueado;
-extern sem_t semFinalizado;
+extern sem_t semFinalizado; */
 
-extern t_queue *colaNuevos;
-extern t_queue *colaListos;
-extern t_queue *colaBloqueados;
-extern t_queue *colaTerminados;
 extern t_queue *procesosEnSistema;
 
-extern pthread_mutex_t procesosNuevosMutex;
-extern pthread_mutex_t procesosListosMutex;
-extern pthread_mutex_t procesosBloqueadosMutex;
-extern pthread_mutex_t procesoAEjecutarMutex;
-extern pthread_mutex_t procesosFinalizadosMutex;
-extern pthread_mutex_t procesoMutex;
-extern pthread_mutex_t procesosEnSistemaMutex;
+/* extern pthread_mutex_t procesoMutex;
+extern pthread_mutex_t procesosEnSistemaMutex; */
 extern pthread_mutex_t mutex_pid;
+
+typedef struct
+{
+    t_queue *cola;
+    pthread_mutex_t *mutex;
+} t_squeue;
+
+extern t_squeue *squeue_new;
+extern t_squeue *squeue_ready;
+extern t_squeue *squeue_block;
+extern t_squeue *squeue_exit;  
 
 #endif /* GESTOR_H_ */

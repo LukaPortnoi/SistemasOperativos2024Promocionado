@@ -13,10 +13,12 @@
 #include <inttypes.h>
 #include <readline/readline.h>
 
-#include "../../utils/include/hello.h"
 #include "../../utils/include/sockets_client.h"
 #include "../../utils/include/sockets_server.h"
 
+void procesar_conexion_kern
+
 int server_escuchar(t_log *logger, char *server_name, int server_socket);
+static void procesar_conexion_kernel(void *void_args);
 
 #endif

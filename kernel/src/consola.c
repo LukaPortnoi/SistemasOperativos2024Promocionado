@@ -109,7 +109,7 @@ void ejecutar_comando(char *comando)
     else if (strcmp(comando_separado[0], "PROCESO_ESTADO") == 0)
     {
         log_info(LOGGER_KERNEL, "Estado del proceso %s...", comando_separado[1]);
-        mostrar_listado_estados_procesos(comando_separado[1]);
+        mostrar_listado_estados_procesos();
     }
 
     string_array_destroy(comando_separado);
@@ -151,40 +151,52 @@ void ejecutar_script(char *path_script)
 
 void iniciar_proceso(char *path_proceso)
 {
-    int pid_nuevo = asignar_pid();
-    enviar_proceso_a_memoria(pid_nuevo, path_proceso);
-    t_pcb *pcb = crear_pcb(pid_nuevo, NUEVO, QUANTUM);
+    t_pcb *pcb = crear_proceso();
+
+    // chequear si hay multiprogramacion disponible
+    // chequear_multiprogramacion();
+
+    enviar_pcb_a_cpu(pcb);
+
+    // enviar proceso a memoria
+    enviar_proceso_a_memoria(pcb->pid, path_proceso);
 }
 
-void finalizar_proceso(char *pid_string) {
+void finalizar_proceso(char *pid_string)
+{
     int pid = atoi(pid_string);
 }
 
+void iniciar_planificacion() {}
 void detener_planificacion() {}
 
-void iniciar_planificacion() {}
-
-void cambiar_multiprogramacion(char *grado_multiprogramacion_string) {
+void cambiar_multiprogramacion(char *grado_multiprogramacion_string)
+{
     int numero = atoi(grado_multiprogramacion_string);
 }
 
-void mostrar_listado_estados_procesos() {
+void mostrar_listado_estados_procesos()
+{
     log_info(LOGGER_KERNEL, "Listado de procesos:");
-    mostrar_procesos_en_cola(colaNuevos, "Nuevos");
-    mostrar_procesos_en_cola(colaListos, "Listos");
-    mostrar_procesos_en_cola(colaBloqueados, "Bloqueados");
-    mostrar_procesos_en_cola(colaTerminados, "Terminados");
+    mostrar_procesos_en_cola(colaNuevos, "NEW");
+    mostrar_procesos_en_cola(colaListos, "READY");
+    mostrar_procesos_en_cola(colaBloqueados, "BLOCKED");
+    mostrar_procesos_en_cola(colaTerminados, "FINISHED");
 }
 
-void mostrar_procesos_en_cola(t_queue *cola, const char *nombre_cola) {
-    if (queue_is_empty(cola)) {
-        printf("No hay procesos en la cola %s\n", nombre_cola);
-    } else {
-        printf("Procesos en la cola %s:\n", nombre_cola);
-        while (!queue_is_empty(cola)) {
-            t_proceso *proceso = queue_pop(cola);
-            printf("PID: %d, Nombre: %s\n", proceso->pid, proceso->nombre);
-            // Reinsertamos el proceso en la cola para mantener su integridad
+void mostrar_procesos_en_cola(t_queue *cola, const char *nombre_cola)
+{
+    if (queue_is_empty(cola))
+    {
+        log_info(LOGGER_KERNEL, "No hay procesos en la cola %s", nombre_cola);
+    }
+    else
+    {
+        log_info(LOGGER_KERNEL, "Procesos en estado %s:", nombre_cola);
+        while (!queue_is_empty(cola))
+        {
+            t_pcb *proceso = queue_pop(cola);
+            log_info(LOGGER_KERNEL, "PID: %d - Estado: %s", proceso->pid, estado_to_string(proceso->estado));
             queue_push(cola, proceso);
         }
     }

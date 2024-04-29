@@ -22,10 +22,24 @@
 typedef enum
 {
     SET,
+    MOV_IN,
+    MOV_OUT,
     SUM,
     SUB,
     JNZ,
-    IO_GEN_SLEEP
+    RESIZE,
+    COPY_STRING,
+    WAIT,
+    SIGNIAL,
+    IO_GEN_SLEEP,
+    IO_STDIN_READ,
+    IO_STDOUT_WRITE,
+    IO_FS_CREATE,
+    IO_FS_DELETE,
+    IO_FS_TRUNCATE,
+    IO_FS_WRITE,
+    IO_FS_READ,
+    EXIT
 } nombre_instruccion;
 
 typedef struct
@@ -53,4 +67,4 @@ void serializar_contexto(t_paquete *paquete, t_contexto_ejecucion *ctx);
 
 t_contexto_ejecucion *recibir_contexto(int socket);
 
-#endif // CONTEXTO_H_ 
+#endif // CONTEXTO_H_

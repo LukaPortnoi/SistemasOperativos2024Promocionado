@@ -2,7 +2,6 @@
 
 void enviar_contexto(int socket, t_contexto_ejecucion *contexto_a_enviar)
 {
-
 	t_paquete *paquete = crear_paquete_con_codigo_de_operacion(CONTEXTO);
 	serializar_contexto(paquete, contexto_a_enviar);
 	enviar_paquete(paquete, socket);
@@ -20,8 +19,8 @@ void serializar_contexto(t_paquete *paquete, t_contexto_ejecucion *ctx)
 							ctx->instruccion_ejecutada->longitud_parametro2;
 							// sizeof(motivo_desalojo);
 
-							// printf("Size del stream a serializar: %d \n", paquete->buffer->size); // TODO - BORRAR LOG
-							paquete->buffer->stream = malloc(paquete->buffer->size);
+	// printf("Size del stream a serializar: %d \n", paquete->buffer->size); // TODO - BORRAR LOG
+	paquete->buffer->stream = malloc(paquete->buffer->size);
 
 	int desplazamiento = 0;
 

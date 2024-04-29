@@ -7,6 +7,24 @@ typedef struct
 	char *server_name;
 } t_procesar_conexion_args;
 
+int server_escuchar(t_log *logger, char *server_name, int server_socket)
+{
+	int cliente_socket = esperar_cliente(server_socket, logger);
+
+	if (cliente_socket != -1)
+	{
+		pthread_t hilo;
+		t_procesar_conexion_args *args = malloc(sizeof(t_procesar_conexion_args));
+		args->log = logger;
+		args->fd = cliente_socket;
+		args->server_name = server_name;
+		pthread_create(&hilo, NULL, (void *)procesar_conexion_kernel, (void *)args);
+		pthread_detach(hilo);
+		return 1;
+	}
+	return 0;
+}
+
 static void procesar_conexion_kernel(void *void_args)
 {
 	t_procesar_conexion_args *args = (t_procesar_conexion_args *)void_args;
@@ -59,22 +77,4 @@ static void procesar_conexion_kernel(void *void_args)
 
 	log_warning(logger, "El cliente se desconecto de %s server", server_name);
 	return;
-}
-
-int server_escuchar(t_log *logger, char *server_name, int server_socket)
-{
-	int cliente_socket = esperar_cliente(server_socket, logger);
-
-	if (cliente_socket != -1)
-	{
-		pthread_t hilo;
-		t_procesar_conexion_args *args = malloc(sizeof(t_procesar_conexion_args));
-		args->log = logger;
-		args->fd = cliente_socket;
-		args->server_name = server_name;
-		pthread_create(&hilo, NULL, (void *)procesar_conexion_kernel, (void *)args);
-		pthread_detach(hilo);
-		return 1;
-	}
-	return 0;
 }
