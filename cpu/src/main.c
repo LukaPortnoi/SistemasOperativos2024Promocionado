@@ -86,9 +86,8 @@ void escuchar_interrupt()
     while (server_escuchar(LOGGER_CPU, "CPU_INTERRUPT", fd_cpu_interrupt));
 }
 
-while (1) //el while esta suelto en el medio de la nada
+while (1) // el while esta suelto en el medio de la nada
 {
-
     codigo_operacion = recibir_operacion(fd_cpu_dispatch);
 
     switch (codigo_operacion)
@@ -97,18 +96,18 @@ while (1) //el while esta suelto en el medio de la nada
         contexto_actual = recibir_contexto(fd_cpu_dispatch);
         contexto_actual->codigo_ultima_instru = -1;
 
-        while (!es_syscall() && !hay_interrupciones() && !page_fault && contexto_actual != NULL) //page fault no existe
+        while (!es_syscall() && !hay_interrupciones() && !page_fault && contexto_actual != NULL) // page fault no existe
         {
             ejecutar_ciclo_instruccion();
         }
-        //obtener_motivo_desalojo();
+        // obtener_motivo_desalojo();
         enviar_contexto(fd_cpu_dispatch, contexto_actual);
 
         contexto_actual = NULL;
 
-       // pthread_mutex_lock(&mutex_interrupt);
-        //limpiar_interrupciones();
-       // pthread_mutex_unlock(&mutex_interrupt);
+        // pthread_mutex_lock(&mutex_interrupt);
+        // limpiar_interrupciones();
+        // pthread_mutex_unlock(&mutex_interrupt);
         // liberar_contexto(contexto_actual);
 
         break;
@@ -133,7 +132,7 @@ t_instruccion *fetch(int pid, int pc)
 {
     // TODO -- chequear que en los casos de instruccion con memoria logica puede dar PAGE FAULT y no hay que aumentar el pc (restarlo dentro del decode en esos casos)
 
-    pedir_instruccion_memoria(pid, pc, fd_cpu_memoria); 
+    pedir_instruccion_memoria(pid, pc, fd_cpu_memoria);
 
     op_cod codigo_op = recibir_operacion(fd_cpu_memoria);
 
@@ -141,7 +140,7 @@ t_instruccion *fetch(int pid, int pc)
 
     if (codigo_op == INSTRUCCION)
     {
-        instruccion = deserializar_instruccion(fd_cpu_memoria); 
+        instruccion = deserializar_instruccion(fd_cpu_memoria);
         contexto_actual->instruccion_ejecutada = instruccion;
     }
     else
@@ -155,7 +154,7 @@ t_instruccion *fetch(int pid, int pc)
     return instruccion;
 }
 
-void decode(t_instruccion *instruccion) //esto es el execute, no el decode
+void decode(t_instruccion *instruccion) // esto es el execute, no el decode
 {
     char *param1 = string_new();
     char *param2 = string_new();
@@ -228,17 +227,19 @@ void decode(t_instruccion *instruccion) //esto es el execute, no el decode
     // free(param2);
 }
 
-void pedir_instruccion_memoria(int pid, int pc, int socket){
+void pedir_instruccion_memoria(int pid, int pc, int socket)
+{
     t_paquete *paquete = crear_paquete_con_codigo_de_operacion(PEDIDO_INSTRUCCION);
     paquete->buffer->size += sizeof(int) * 2;
     paquete->buffer->stream = malloc(paquete->buffer->size);
     memcpy(paquete->buffer->stream, &(pid), sizeof(int));
     memcpy(paquete->buffer->stream + sizeof(int), &(pc), sizeof(int);)
-    enviar_paquete(paquete, socket);
+        enviar_paquete(paquete, socket);
     eliminar_paquete(paquete);
 }
 
-t_instruccion *deserializar_instruccion(int socket){
+t_instruccion *deserializar_instruccion(int socket)
+{
     int size;
     void *buffer;
 
@@ -267,5 +268,4 @@ t_instruccion *deserializar_instruccion(int socket){
     free(buffer);
 
     return instruccion_recibida;
-
 }

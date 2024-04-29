@@ -1,5 +1,5 @@
-#ifndef COMUNICACIONES_H_
-#define COMUNICACIONES_H_
+#ifndef INSTRUCCIONES_H_
+#define INSTRUCCIONES_H_
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -19,7 +19,6 @@
 #include "../../utils/include/pcb.h"
 #include "../../utils/include/instrucciones.h"
 
-
 int server_escuchar(t_log *logger, char *server_name, int server_socket);
 
-#endif
+#endif // INSTRUCCIONES_H_

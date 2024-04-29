@@ -1,5 +1,4 @@
-#include "../include/instrucciones.h"
-
+#include "../include/contexto.h"
 
 void enviar_contexto(int socket, t_contexto_ejecucion *contexto_a_enviar)
 {
@@ -18,12 +17,11 @@ void serializar_contexto(t_paquete *paquete, t_contexto_ejecucion *ctx)
 							sizeof(nombre_instruccion) +
 							sizeof(uint32_t) * 3 +
 							ctx->instruccion_ejecutada->longitud_parametro1 +
-							ctx->instruccion_ejecutada->longitud_parametro2 +
-							//sizeof(motivo_desalojo)
-                            ;
+							ctx->instruccion_ejecutada->longitud_parametro2;
+							// sizeof(motivo_desalojo);
 
-	// printf("Size del stream a serializar: %d \n", paquete->buffer->size); // TODO - BORRAR LOG
-	paquete->buffer->stream = malloc(paquete->buffer->size);
+							// printf("Size del stream a serializar: %d \n", paquete->buffer->size); // TODO - BORRAR LOG
+							paquete->buffer->stream = malloc(paquete->buffer->size);
 
 	int desplazamiento = 0;
 
@@ -51,7 +49,7 @@ void serializar_contexto(t_paquete *paquete, t_contexto_ejecucion *ctx)
 	memcpy(paquete->buffer->stream + desplazamiento, &(ctx->instruccion_ejecutada->longitud_parametro2), sizeof(uint32_t));
 	desplazamiento += sizeof(uint32_t);
 
-    memcpy(paquete->buffer->stream + desplazamiento, &(ctx->instruccion_ejecutada->pid), sizeof(uint32_t));
+	memcpy(paquete->buffer->stream + desplazamiento, &(ctx->instruccion_ejecutada->pid), sizeof(uint32_t));
 	desplazamiento += sizeof(uint32_t);
 
 	memcpy(paquete->buffer->stream + desplazamiento, ctx->instruccion_ejecutada->parametro1, ctx->instruccion_ejecutada->longitud_parametro1);
@@ -61,11 +59,11 @@ void serializar_contexto(t_paquete *paquete, t_contexto_ejecucion *ctx)
 	desplazamiento += ctx->instruccion_ejecutada->longitud_parametro2;
 
 	/*memcpy(paquete->buffer->stream + desplazamiento, &(ctx->codigo_ultima_instru), sizeof(nombre_instruccion));
-	desplazamiento += sizeof(nombre_instruccion); 
+	desplazamiento += sizeof(nombre_instruccion);
 
 	 memcpy(paquete->buffer->stream + desplazamiento, &(ctx->motivo_desalojado), sizeof(motivo_desalojo));
 	desplazamiento += sizeof(motivo_desalojo);*/
-}   
+}
 
 t_contexto_ejecucion *recibir_contexto(int socket)
 {
@@ -101,7 +99,7 @@ t_contexto_ejecucion *recibir_contexto(int socket)
 	offset += sizeof(uint32_t);
 	memcpy(&(contexto_recibido->instruccion_ejecutada->longitud_parametro2), buffer + offset, sizeof(uint32_t));
 	offset += sizeof(uint32_t);
-    memcpy(&(contexto_recibido->instruccion_ejecutada->pid), buffer + offset, sizeof(uint32_t));
+	memcpy(&(contexto_recibido->instruccion_ejecutada->pid), buffer + offset, sizeof(uint32_t));
 	offset += sizeof(uint32_t);
 
 	contexto_recibido->instruccion_ejecutada->parametro1 = malloc(contexto_recibido->instruccion_ejecutada->longitud_parametro1);
@@ -122,4 +120,3 @@ t_contexto_ejecucion *recibir_contexto(int socket)
 
 	return contexto_recibido;
 }
-

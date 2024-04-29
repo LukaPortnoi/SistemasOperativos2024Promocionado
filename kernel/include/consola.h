@@ -8,6 +8,7 @@
 #include <commons/string.h>
 #include <commons/config.h>
 #include <readline/readline.h>
+#include <readline/history.h>
 
 #include "../../utils/include/hello.h"
 #include "../../utils/include/sockets_server.h"
@@ -21,6 +22,14 @@
 
 void iniciar_consola_interactiva();
 bool validar_comando(char *comando);
+void ejecutar_script(char *path);
 void ejecutar_comando(char *comando);
+void iniciar_proceso(char *path_proceso);
+void finalizar_proceso(char *pid_string);
+void detener_planificacion(void);
+void iniciar_planificacion(void);
+void cambiar_multiprogramacion(char *grado_multiprogramacion_string);
+void mostrar_listado_estado_procesos(void); 
+
 
 #endif /* CONSOLA_H_ */

@@ -1,6 +1,9 @@
 #ifndef GESTOR_H_
 #define GESTOR_H_
 
+#include <commons/collections/queue.h>
+#include <semaphore.h>
+
 extern t_log *LOGGER_KERNEL;
 extern t_config *CONFIG_KERNEL;
 

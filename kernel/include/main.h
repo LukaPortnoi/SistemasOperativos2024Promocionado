@@ -9,6 +9,8 @@
 #include <commons/string.h>
 #include <commons/config.h>
 #include <readline/readline.h>
+#include <commons/collections/queue.h>
+#include <semaphore.h>
 
 #include "../../utils/include/hello.h"
 #include "../../utils/include/sockets_server.h"
@@ -20,7 +22,7 @@
 #include "./gestor.h"
 
 void inicializar_config(void);
+void iniciar_conexiones();
 void iniciar_listas_y_semaforos(void);
 
-
-#endif
+#endif // MAIN_H_

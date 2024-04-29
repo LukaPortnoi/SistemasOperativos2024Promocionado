@@ -1,5 +1,5 @@
-#ifndef TLB_H
-#define TLB_H
+#ifndef TLB_H_
+#define TLB_H_
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -8,7 +8,9 @@
 #include <commons/log.h>
 #include <commons/collections/list.h>
 
-typedef enum{
+typedef enum {
     LRU,
     FIFO
-}algoritmos_tlb;
+} algoritmos_tlb;
+
+#endif // TLB_H_
