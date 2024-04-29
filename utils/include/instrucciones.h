@@ -37,10 +37,10 @@ typedef struct
     uint32_t longitud_parametro2;
 } t_instruccion;
 
-void enviar_contexto(int socket, t_contexto_ejecucion *contexto_a_enviar)
+void enviar_contexto(int socket, t_contexto_ejecucion *contexto_a_enviar);
 
-    void serializar_contexto(t_paquete *paquete, t_contexto_ejecucion *ctx)
+void serializar_contexto(t_paquete *paquete, t_contexto_ejecucion *ctx);
 
-        t_contexto_ejecucion *recibir_contexto(int socket)
+t_contexto_ejecucion *recibir_contexto(int socket);
 
 #endif

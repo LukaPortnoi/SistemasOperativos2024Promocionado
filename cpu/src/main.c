@@ -83,11 +83,10 @@ void iniciar_conexiones()
 
 void escuchar_interrupt()
 {
-    while (server_escuchar(LOGGER_CPU, "CPU_INTERRUPT", fd_cpu_interrupt))
-        ;
+    while (server_escuchar(LOGGER_CPU, "CPU_INTERRUPT", fd_cpu_interrupt));
 }
 
-while (1)
+while (1) //el while esta suelto en el medio de la nada
 {
 
     codigo_operacion = recibir_operacion(fd_cpu_dispatch);
@@ -98,7 +97,7 @@ while (1)
         contexto_actual = recibir_contexto(fd_cpu_dispatch);
         contexto_actual->codigo_ultima_instru = -1;
 
-        while (!es_syscall() && !hay_interrupciones() && !page_fault && contexto_actual != NULL)
+        while (!es_syscall() && !hay_interrupciones() && !page_fault && contexto_actual != NULL) //page fault no existe
         {
             ejecutar_ciclo_instruccion();
         }
@@ -121,44 +120,6 @@ while (1)
         break;
     }
 }
-/*void *recibir_interrupt(void *arg)
-{
-    while (1)
-    {
-        codigo_operacion = recibir_operacion(conexion_kernel_interrupt);
-        if (codigo_operacion != INTERRUPCION)
-        {
-            finalizar_cpu();
-            abort();
-        }
-        t_interrupcion *interrupcion = recibir_interrupcion(conexion_kernel_interrupt);
-        if (contexto_actual != NULL)
-        {
-            switch (interrupcion->motivo_interrupcion)
-            {
-            case INTERRUPT_FIN_QUANTUM:
-                interrupciones[INTERRUPT_FIN_QUANTUM] = 1;
-                break;
-            case INTERRUPT_FIN_PROCESO:
-                if (!descartar_instruccion)
-                {
-                    interrupciones[INTERRUPT_FIN_PROCESO] = 1;
-                }
-                break;
-            case INTERRUPT_NUEVO_PROCESO:
-                interrupciones[INTERRUPT_NUEVO_PROCESO] = 1;
-                break;
-            default:
-                finalizar_cpu();
-                abort();
-                break;
-            }
-        }
-        free(interrupcion);
-    }
-
-    return NULL;
-} */
 
 void ejecutar_ciclo_instruccion()
 {
@@ -171,29 +132,30 @@ void ejecutar_ciclo_instruccion()
 t_instruccion *fetch(int pid, int pc)
 {
     // TODO -- chequear que en los casos de instruccion con memoria logica puede dar PAGE FAULT y no hay que aumentar el pc (restarlo dentro del decode en esos casos)
-    ask_instruccion_pid_pc(pid, pc, socket_memoria);
 
-    op_code codigo_op = recibir_operacion(socket_memoria);
+    pedir_instruccion_memoria(pid, pc, fd_cpu_memoria); 
+
+    op_cod codigo_op = recibir_operacion(fd_cpu_memoria);
 
     t_instruccion *instruccion;
 
     if (codigo_op == INSTRUCCION)
     {
-        instruccion = deserializar_instruccion(socket_memoria);
+        instruccion = deserializar_instruccion(fd_cpu_memoria); 
         contexto_actual->instruccion_ejecutada = instruccion;
     }
     else
     {
-        log_warning(cpu_logger_info, "Operación desconocida. No se pudo recibir la instruccion de memoria.");
+        log_warning(LOGGER_CPU, "Operación desconocida. No se pudo recibir la instruccion de memoria.");
         abort();
     }
 
-    log_info(cpu_logger_info, "PID: %d - FETCH - Program Counter: %d", pid, pc);
+    log_info(LOGGER_CPU, "PID: %d - FETCH - Program Counter: %d", pid, pc);
 
     return instruccion;
 }
 
-void decode(t_instruccion *instruccion)
+void decode(t_instruccion *instruccion) //esto es el execute, no el decode
 {
     char *param1 = string_new();
     char *param2 = string_new();
@@ -264,4 +226,46 @@ void decode(t_instruccion *instruccion)
 
     // free(param1);
     // free(param2);
+}
+
+void pedir_instruccion_memoria(int pid, int pc, int socket){
+    t_paquete *paquete = crear_paquete_con_codigo_de_operacion(PEDIDO_INSTRUCCION);
+    paquete->buffer->size += sizeof(int) * 2;
+    paquete->buffer->stream = malloc(paquete->buffer->size);
+    memcpy(paquete->buffer->stream, &(pid), sizeof(int));
+    memcpy(paquete->buffer->stream + sizeof(int), &(pc), sizeof(int);)
+    enviar_paquete(paquete, socket);
+    eliminar_paquete(paquete);
+}
+
+t_instruccion *deserializar_instruccion(int socket){
+    int size;
+    void *buffer;
+
+    buffer = recibir_buffer(&size, socket);
+
+    t_instruccion *instruccion_recibida = malloc(sizeof(t_instruccion));
+    int offset = 0;
+
+    memcpy(&(intruccion_recibida->codigo), buffer + offset, sizeof(nombre_instruccion));
+    offset += sizeof(nombre_instruccion);
+
+    memcpy(&(instruccion_recibida->longitud_parametro1), buffer + offset, sizeof(uint32_t));
+    offset += sizeof(uint32_t);
+
+    memcpy(&(instruccion_recibida->longitud_parametro2), buffer + offset, sizeof(uint32_t));
+    offset += sizeof(uint32_t);
+
+    instruccion_recibida->parametro1 = malloc(instruccion_recibida->longitud_parametro1);
+    memcpy(instruccion_recibida->parametro1, buffer + offset, instruccion_recibida->longitud_parametro1);
+    offset += instruccion_recibida->longitud_parametro1;
+
+    instruccion_recibida->parametro1 = malloc(instruccion_recibida->longitud_parametro2);
+    memcpy(instruccion_recibida->parametro2, buffer + offset, instruccion_recibida->longitud_parametro2);
+    offset += instruccion_recibida->longitud_parametro2;
+
+    free(buffer);
+
+    return instruccion_recibida;
+
 }

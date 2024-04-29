@@ -13,6 +13,7 @@
 #include "../../utils/include/sockets_server.h"
 #include "../../utils/include/sockets_client.h"
 #include "../../utils/include/sockets_utils.h"
+#include "../../utils/include/sockets_common.h"
 #include "../../utils/include/pcb.h"
 #include "./comunicaciones.h"
 
