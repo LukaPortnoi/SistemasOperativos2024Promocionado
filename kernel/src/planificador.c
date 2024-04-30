@@ -4,7 +4,7 @@ pthread_mutex_t procesoMutex;
 pthread_mutex_t procesosEnSistemaMutex;
 pthread_mutex_t mutex_pid;
 
-/* sem_t semMultiprogramacion;
+sem_t semMultiprogramacion;
 sem_t semNuevo;
 sem_t semExit;
 sem_t semListos_Ready;
@@ -12,7 +12,7 @@ sem_t semReady;
 sem_t semExec;
 sem_t semDetener;
 sem_t semBloqueado;
-sem_t semFinalizado; */
+sem_t semFinalizado;
 
 t_queue *procesosEnSistema;
 
@@ -149,11 +149,11 @@ void *squeue_peek(t_squeue *squeue)
 
 void iniciar_colas_y_semaforos()
 {
-    pthread_mutex_init(&procesosNuevosMutex, NULL);
+    /*pthread_mutex_init(&procesosNuevosMutex, NULL);
     pthread_mutex_init(&procesosListosMutex, NULL);
     pthread_mutex_init(&procesosBloqueadosMutex, NULL);
     pthread_mutex_init(&procesoAEjecutarMutex, NULL);
-    pthread_mutex_init(&procesosFinalizadosMutex, NULL);
+    pthread_mutex_init(&procesosFinalizadosMutex, NULL);*/
     pthread_mutex_init(&procesoMutex, NULL);
     pthread_mutex_init(&procesosEnSistemaMutex, NULL);
     pthread_mutex_init(&mutex_pid, NULL);
@@ -223,6 +223,7 @@ void cambiar_estado_pcb(t_pcb *pcb, t_estado_proceso estado)
 void recibir_pcb_CPU(int fd_cpu)
 {
     t_pcb *pcbDeCPU = recibir_pcb(fd_cpu);
+    pcbDeCPU->quantum = 2; //solo para que no me tire un warning
 
     // ACA HAY QUE VER QUE TIENE QUE HACER EL KERNEL CUANDO RECIBE EL PCB DE LA CPU
 }

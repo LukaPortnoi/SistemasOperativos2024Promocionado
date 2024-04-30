@@ -15,7 +15,7 @@ extern char *IP_CPU;
 extern char *PUERTO_CPU_DISPATCH;
 extern char *PUERTO_CPU_INTERRUPT;
 extern char *ALGORITMO_PLANIFICACION;
-extern char *QUANTUM;
+extern int   QUANTUM;
 extern char **RECURSOS;
 extern char **INSTANCIAS_RECURSOS;
 extern int GRADO_MULTIPROGRAMACION;

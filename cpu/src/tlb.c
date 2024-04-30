@@ -5,11 +5,11 @@ t_list *lista_lru;
 int cant_entradas;
 algoritmos_tlb algortimo;
 
-void iniciar_tlb(t_log *logger, char *cantidad_entradas_tlb, char *algoritmo_tlb)
-{
+void iniciar_tlb(t_log *logger, char *cantidad_entradas_tlb, char *algoritmo_tlb){}
+/*{
     log_info(logger, "Iniciando TLB");
     cant_entradas = cantidad_entradas_tlb;
-    algortimo = algoritmo_tlb;
+    //algortimo = algoritmo_tlb;
 
     if (algoritmo = FIFO)
         log_info(logger, "El algoritmo utilizado en la TLB es FIFO");
@@ -19,11 +19,11 @@ void iniciar_tlb(t_log *logger, char *cantidad_entradas_tlb, char *algoritmo_tlb
     cola_fifo = malloc(sizeof(int) * cant_entradas); // -> FIFO
     lista_lru = list_create();
 
-    tlb.paginas = (int *)malloc(sizeof(int) * cant_entradas);
-    tlb.marcos = (int *)malloc(sizeof(int) * cant_entradas);
+    //tlb.paginas = (int *)malloc(sizeof(int) * cant_entradas);
+    //tlb.marcos = (int *)malloc(sizeof(int) * cant_entradas);
 
     free_tlb();
-}
+}*/
 
 bool buscar_en_tlb(int direccion_logica, int *direccion_fisica, int tamanio_pagina)
 {
@@ -33,7 +33,7 @@ bool buscar_en_tlb(int direccion_logica, int *direccion_fisica, int tamanio_pagi
     int entrada = encontrar_pagina_tlb(pagina);
     if (entrada != -1)
     {
-        int marco = tlb.marcos[entrada];
+        int marco = 1; //tlb.marcos[entrada];
         *direccion_fisica = marco * 1000 + desplazamiento;
         agregar_a_lru(pagina);
         return true;
@@ -42,8 +42,8 @@ bool buscar_en_tlb(int direccion_logica, int *direccion_fisica, int tamanio_pagi
         return false;
 }
 
-void agregar_a_tlb(int entrada, int pagina, int marco)
-{
+void agregar_a_tlb(int entrada, int pagina, int marco){}
+/*{
     if (algoritmo = FIFO)
     { // -> Actualizo la cola del FIFO
         if (!tlb_esta_llena())
@@ -72,13 +72,13 @@ void agregar_a_tlb(int entrada, int pagina, int marco)
     }
     tlb.paginas[entrada] = pagina;
     tlb.marcos[entrada] = marco;
-}
+}*/
 
 int encontrar_pagina_tlb(int pagina)
 {
     for (int i = 0; i < cant_entradas; i++)
     {
-        if (tlb.paginas[i] == pagina)
+        if (true)//tlb.paginas[i] == pagina)
         {
             return i;
         }
@@ -86,15 +86,15 @@ int encontrar_pagina_tlb(int pagina)
     return -1;
 }
 
-void agregar_a_lru(int pagina)
-{
+void agregar_a_lru(int pagina){}
+/*{
     int *pagina_auxiliar = malloc(sizeof(int));
     *pagina_auxiliar = pagina;
     list_add(lista_lru, (void *)pagina_auxiliar);
-}
+}*/
 
-void free_tlb()
-{
+void free_tlb(){}
+/*{
     for (int i = 0; i < cant_entradas; i++)
     {
         tlb.paginas[i] = -1;
@@ -108,7 +108,7 @@ void free_tlb()
     {
         list_clean_and_destroyt_elements(lista_lru, (void *)limpiar_lru);
     }
-}
+}*/
 
 void limpiar_lru(int *puntero)
 {

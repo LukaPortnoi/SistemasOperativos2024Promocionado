@@ -9,7 +9,6 @@
 #include <commons/config.h>
 #include <readline/readline.h>
 
-#include "./hello.h"
 #include "./sockets_server.h"
 #include "./sockets_client.h"
 

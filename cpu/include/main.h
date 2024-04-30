@@ -14,7 +14,6 @@
 #include "../../utils/include/sockets_utils.h"
 #include "../../utils/include/sockets_common.h"
 #include "../../utils/include/pcb.h"
-#include "./contexto.h"
 #include "./comunicaciones.h"
 
 void inicializar_config(void);

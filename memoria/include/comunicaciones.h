@@ -17,5 +17,6 @@
 #include "../../utils/include/sockets_server.h"
 
 int server_escuchar(t_log *logger, char *server_name, int server_socket);
+void extraer_de_paquete(t_paquete *paquete, void *destino, int size);
 
 #endif

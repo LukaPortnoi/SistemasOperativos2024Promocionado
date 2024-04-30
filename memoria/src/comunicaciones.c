@@ -43,13 +43,13 @@ static void procesar_conexion_memoria(void *void_args)
 		// -- INICIALIZAR_PROCESO ---------
 		// --------------------------------
 
-		case INICIALIZAR_PROCESO:
+		/*case INICIALIZAR_PROCESO:
 			int pid_nuevo;
     		char *path_proceso = malloc(MAX_PATH_LENGTH);
 
     		// DESERIALIZAR PAQUETE CON PID Y PATH
-    		extraer_de_paquete(paquete, &pid_nuevo, sizeof(int));
-    		extraer_de_paquete(paquete, path_proceso, MAX_PATH_LENGTH);
+    		//extraer_de_paquete(paquete, &pid_nuevo, sizeof(int));
+    		//extraer_de_paquete(paquete, path_proceso, MAX_PATH_LENGTH);*/
 
 		// -------------------
 		// -- CPU - MEMORIA --
@@ -110,8 +110,8 @@ int server_escuchar(t_log *logger, char *server_name, int server_socket)
 	return 0;
 }
 
-void extraer_de_paquete(t_paquete *paquete, void *destino, int size)
-{
+void extraer_de_paquete(t_paquete *paquete, void *destino, int size){}
+/*{
     if (paquete->buffer->size < size)
     {
         // Manejar error
@@ -123,4 +123,4 @@ void extraer_de_paquete(t_paquete *paquete, void *destino, int size)
 
     paquete->buffer->size -= size;
     memmove(paquete->buffer->stream, paquete->buffer->stream + size, paquete->buffer->size);
-}
+}*/

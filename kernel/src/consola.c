@@ -156,7 +156,7 @@ void iniciar_proceso(char *path_proceso)
     // chequear si hay multiprogramacion disponible
     // chequear_multiprogramacion();
 
-    enviar_pcb_a_cpu(pcb);
+    //enviar_pcb_a_cpu(pcb);
 
     // enviar proceso a memoria
     enviar_proceso_a_memoria(pcb->pid, path_proceso);
@@ -164,7 +164,7 @@ void iniciar_proceso(char *path_proceso)
 
 void finalizar_proceso(char *pid_string)
 {
-    int pid = atoi(pid_string);
+    //int pid = atoi(pid_string);
 }
 
 void iniciar_planificacion() {}
@@ -172,16 +172,16 @@ void detener_planificacion() {}
 
 void cambiar_multiprogramacion(char *grado_multiprogramacion_string)
 {
-    int numero = atoi(grado_multiprogramacion_string);
+    //int numero = atoi(grado_multiprogramacion_string);
 }
 
 void mostrar_listado_estados_procesos()
 {
     log_info(LOGGER_KERNEL, "Listado de procesos:");
-    mostrar_procesos_en_cola(colaNuevos, "NEW");
-    mostrar_procesos_en_cola(colaListos, "READY");
-    mostrar_procesos_en_cola(colaBloqueados, "BLOCKED");
-    mostrar_procesos_en_cola(colaTerminados, "FINISHED");
+    //mostrar_procesos_en_cola(colaNuevos, "NEW");
+    //mostrar_procesos_en_cola(colaListos, "READY");
+    //mostrar_procesos_en_cola(colaBloqueados, "BLOCKED");
+    //mostrar_procesos_en_cola(colaTerminados, "FINISHED");
 }
 
 void mostrar_procesos_en_cola(t_queue *cola, const char *nombre_cola)
@@ -196,7 +196,7 @@ void mostrar_procesos_en_cola(t_queue *cola, const char *nombre_cola)
         while (!queue_is_empty(cola))
         {
             t_pcb *proceso = queue_pop(cola);
-            log_info(LOGGER_KERNEL, "PID: %d - Estado: %s", proceso->pid, estado_to_string(proceso->estado));
+            //log_info(LOGGER_KERNEL, "PID: %d - Estado: %s", proceso->pid, estado_to_string(proceso->estado));
             queue_push(cola, proceso);
         }
     }

@@ -9,6 +9,8 @@ char *PUERTO_MEMORIA;
 char *PATH_BASE_DIALFS;
 int BLOCK_SIZE;
 int BLOCK_COUNT;
+int fd_io_memoria;
+int fd_io_kernel;
 
 t_log *LOGGER_INPUT_OUTPUT;
 t_config *CONFIG_INPUT_OUTPUT;
@@ -41,10 +43,10 @@ void inicializar_config()
 void iniciar_conexiones()
 {
     //conexion como cliente a MEMORIA
-    int fd_io_memoria = crear_conexion(IP_MEMORIA, PUERTO_MEMORIA);
+    fd_io_memoria = crear_conexion(IP_MEMORIA, PUERTO_MEMORIA);
     enviar_mensaje("Mensaje de I/O para memoria", fd_io_memoria);
 
     //conexion como cliente a KERNEL
-    int fd_io_kernel = crear_conexion(IP_KERNEL, PUERTO_KERNEL);
+    fd_io_kernel = crear_conexion(IP_KERNEL, PUERTO_KERNEL);
     enviar_mensaje("Mensaje de I/O para KERNEL", fd_io_kernel);
 }

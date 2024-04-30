@@ -25,7 +25,7 @@ int server_escuchar(t_log *logger, char *server_name, int server_socket)
 	return 0;
 }
 
-static void procesar_conexion_kernel(void *void_args)
+void procesar_conexion_kernel(void *void_args)
 {
 	t_procesar_conexion_args *args = (t_procesar_conexion_args *)void_args;
 	t_log *logger = args->log;
