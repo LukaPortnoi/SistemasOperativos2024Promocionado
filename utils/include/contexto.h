@@ -17,30 +17,6 @@
 #include "sockets_client.h"
 #include "sockets_server.h"
 #include "sockets_utils.h"
-#include "pcb.h"
-
-typedef enum
-{
-    SET,
-    MOV_IN,
-    MOV_OUT,
-    SUM,
-    SUB,
-    JNZ,
-    RESIZE,
-    COPY_STRING,
-    WAIT,
-    SIGNIAL,
-    IO_GEN_SLEEP,
-    IO_STDIN_READ,
-    IO_STDOUT_WRITE,
-    IO_FS_CREATE,
-    IO_FS_DELETE,
-    IO_FS_TRUNCATE,
-    IO_FS_WRITE,
-    IO_FS_READ,
-    EXIT
-} nombre_instruccion;
 
 typedef struct
 {
@@ -54,11 +30,15 @@ typedef struct
 
 typedef struct
 {
-    int pid;
-    int program_counter;
+    uint32_t program_counter;
+    uint8_t ax, bx, cx, dx;
+    uint32_t eax, ebx, ecx, edx, si, di;
+} t_registros;
+
+typedef struct
+{
     t_registros *registros;
     t_instruccion *instruccion_ejecutada;
-    nombre_instruccion codigo_ultima_instru;
 } t_contexto_ejecucion;
 
 void enviar_contexto(int socket, t_contexto_ejecucion *contexto_a_enviar);

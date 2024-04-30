@@ -86,7 +86,7 @@ void escuchar_interrupt()
     while (server_escuchar(LOGGER_CPU, "CPU_INTERRUPT", fd_cpu_interrupt));
 }
 
-while (1) // el while esta suelto en el medio de la nada
+/*while (1) // el while esta suelto en el medio de la nada
 {
     codigo_operacion = recibir_operacion(fd_cpu_dispatch);
 
@@ -119,7 +119,7 @@ while (1) // el while esta suelto en el medio de la nada
         abort();
         break;
     }
-}
+}*/
 
 void ejecutar_ciclo_instruccion()
 {
@@ -134,8 +134,8 @@ t_instruccion *fetch(int pid, int pc)
     // TODO -- chequear que en los casos de instruccion con memoria logica puede dar PAGE FAULT y no hay que aumentar el pc (restarlo dentro del decode en esos casos)
 
 
-    //NO DESARROLLADA
-    //pedir_instruccion_memoria(pid, pc, fd_cpu_memoria);
+    
+    pedir_instruccion_memoria(pid, pc, fd_cpu_memoria);
 
     op_cod codigo_op = recibir_operacion(fd_cpu_memoria);
 
@@ -246,7 +246,7 @@ void pedir_instruccion_memoria(int pid, int pc, int socket)
     paquete->buffer->size += sizeof(int) * 2;
     paquete->buffer->stream = malloc(paquete->buffer->size);
     memcpy(paquete->buffer->stream, &(pid), sizeof(int));
-    memcpy(paquete->buffer->stream + sizeof(int), &(pc), sizeof(int);)
+    memcpy(paquete->buffer->stream + sizeof(int), &(pc), sizeof(int););
     enviar_paquete(paquete, socket);
     eliminar_paquete(paquete);
 }

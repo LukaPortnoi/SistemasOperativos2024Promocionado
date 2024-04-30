@@ -2,7 +2,7 @@
 
 // Inicializar Registros
 
-void inicializar_registros(t_pcb *pcb)
+void inicializar_contexto_y_registros(t_pcb *pcb)
 {
     pcb->registros.program_counter = 0;
     pcb->registros.ax = 0;
@@ -25,7 +25,7 @@ t_pcb *crear_pcb(int pid, t_estado_proceso estado, int quantum)
     pcb->pid = pid;
     pcb->estado = estado;
     pcb->quantum = quantum;
-    inicializar_registros(pcb);
+    inicializar_contexto_y_registros(pcb);
     return pcb;
 }
 
@@ -38,48 +38,31 @@ void destruir_pcb(t_pcb *pcb)
 
 t_buffer *crear_buffer_pcb(t_pcb *pcb)
 {
-    t_buffer *buffer = malloc(sizeof(t_buffer));
-    buffer->size = sizeof(int) + sizeof(t_estado_proceso) + sizeof(uint32_t) + 4 * sizeof(uint8_t) + 4 * sizeof(uint32_t) + 2 * sizeof(int);
+    buffer->size = sizeof(uint32_t) + sizeof(t_estado_proceso) + sizeof(int) + sizeof(t_contexto_ejecucion)
+                   + sizeof(t_registros) + sizeof(t_instruccion)
 
-    void *stream = malloc(buffer->size);
+    buffer->stream = malloc(buffer->size);
 
-    int offset = 0;
-    memcpy(stream + offset, &(pcb->pid), sizeof(int));
-    offset += sizeof(int);
-    memcpy(stream + offset, &(pcb->estado), sizeof(t_estado_proceso));
-    offset += sizeof(t_estado_proceso);
-    memcpy(stream + offset, &(pcb->registros.program_counter), sizeof(uint32_t));
-    offset += sizeof(uint32_t);
-    memcpy(stream + offset, &(pcb->registros.ax), sizeof(uint8_t));
-    offset += sizeof(uint8_t);
-    memcpy(stream + offset, &(pcb->registros.bx), sizeof(uint8_t));
-    offset += sizeof(uint8_t);
-    memcpy(stream + offset, &(pcb->registros.cx), sizeof(uint8_t));
-    offset += sizeof(uint8_t);
-    memcpy(stream + offset, &(pcb->registros.dx), sizeof(uint8_t));
-    offset += sizeof(uint8_t);
-    memcpy(stream + offset, &(pcb->registros.eax), sizeof(uint32_t));
-    offset += sizeof(uint32_t);
-    memcpy(stream + offset, &(pcb->registros.ebx), sizeof(uint32_t));
-    offset += sizeof(uint32_t);
-    memcpy(stream + offset, &(pcb->registros.ecx), sizeof(uint32_t));
-    offset += sizeof(uint32_t);
-    memcpy(stream + offset, &(pcb->registros.edx), sizeof(uint32_t));
-    offset += sizeof(uint32_t);
-    memcpy(stream + offset, &(pcb->registros.si), sizeof(uint32_t));
-    offset += sizeof(uint32_t);
-    memcpy(stream + offset, &(pcb->registros.di), sizeof(uint32_t));
-    offset += sizeof(uint32_t);
-    memcpy(stream + offset, &(pcb->quantum), sizeof(int));
+    int desplazamiento = 0;
 
-    buffer->stream = stream;
+    memcpy(buffer->stream + desplazamiento, &(pcb->pid), sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
 
+    memcpy(buffer->stream + desplazamiento, &(pcb->estado), sizeof(t_estado_proceso));
+    desplazamiento += sizeof(t_estado_proceso);
+
+    memcpy(buffer->stream + desplazamiento, &(pcb->quantum), sizeof(int));
+    desplazamiento += sizeof(int);
+
+    memcpy(buffer->stream + desplazamiento, pcb->contexto_ejecucion->registros, sizeof(t_registros));
+    desplazamiento += sizeof(t_registros);
+    
     return buffer;
 }
 
-t_pcb *deserializar_pcb(t_paquete *paquete)
+t_pcb *deserializar_pcb(t_paquete *paquete) //Hacerlo d nuevo con la estructura de t_pcb
 {
-    t_pcb *pcb = malloc(sizeof(t_pcb));
+    
 
     void *stream = paquete->buffer->stream;
     int presize = paquete->buffer->size;
@@ -129,7 +112,6 @@ t_pcb *deserializar_pcb(t_paquete *paquete)
 
     memcpy(paquete->buffer->stream, stream, presize);
     paquete->buffer->size = presize;
-
     return pcb;
 }
 

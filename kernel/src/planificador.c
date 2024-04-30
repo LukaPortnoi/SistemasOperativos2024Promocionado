@@ -52,14 +52,44 @@ void enviar_proceso_a_memoria(int pid_nuevo, char *path_proceso)
 {
     t_paquete *paquete_nuevo_proceso = crear_paquete_con_codigo_de_operacion(INICIALIZAR_PROCESO);
 
-    agregar_a_paquete(paquete_nuevo_proceso, &pid_nuevo, sizeof(int));
-    agregar_a_paquete(paquete_nuevo_proceso, path_proceso, strlen(path_proceso) + 1);
+    serializar_inicializar_proceso(paquete_nuevo_proceso, pid_nuevo, path_proceso);
 
     enviar_paquete(paquete_nuevo_proceso, fd_kernel_memoria);
 
     eliminar_paquete(paquete_nuevo_proceso);
     
     log_info(LOGGER_KERNEL, "Se envio el proceso con PID %d a MEMORIA", pid_nuevo);
+}
+
+void serializar_inicializar_proceso(t_paquete *paquete, int pid_nuevo, char *path_proceso)
+{
+    void *stream = malloc(sizeof(int) + strlen(path_proceso) + sizeof(int));
+    int offset = 0;
+
+    memcpy(stream + offset, &pid_nuevo, sizeof(int));
+    offset += sizeof(int);
+
+    memcpy(stream + offset, path_proceso, strlen(path_proceso) + 1);
+    offset += strlen(path_proceso) + 1;
+
+    paquete->buffer = stream;
+    paquete->buffer_size = sizeof(int) + strlen(path_proceso) + sizeof(int);
+
+    
+    // OTRA FORMA DE HACERLO
+    /*paquete->buffer->size += sizeof(uint32_t) * 3 + strlen(path_proceso) + 1;
+    paquete->buffer->stream = malloc(paquete->buffer->size);
+
+    int desplazamiento = 0;
+
+    memcpy(paquete->buffer->stream + desplazamiento, &(pid), sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+    uint32_t long_path = strlen(path_proceso) + 1;
+    memcpy(paquete->buffer->stream + desplazamiento, &(long_path), sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+    memcpy(paquete->buffer->stream + desplazamiento, path_proceso, long_path);*/
 }
 
 // PLANIFICADOR CORTO PLAZO

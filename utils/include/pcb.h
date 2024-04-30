@@ -17,6 +17,7 @@
 #include "sockets_client.h"
 #include "sockets_server.h"
 #include "sockets_utils.h"
+#include "contexto.h"
 
 typedef enum
 {
@@ -30,46 +31,28 @@ typedef enum
 
 typedef struct
 {
-    uint32_t program_counter;
-    uint8_t ax, bx, cx, dx;
-    uint32_t eax, ebx, ecx, edx, si, di;
-} t_registros;
-
-typedef struct
-{
-    int pid;
+    uint32_t pid;
     t_estado_proceso estado;
-    t_registros registros;
     int quantum;
-    // t_contexto_ejecucion *contexto_ejecucion;
+    t_contexto_ejecucion *contexto_ejecucion;
 } t_pcb;
 
-/*typedef struct {
-    t_recurso *archivo;
-    char* nombre_archivo;
-    int puntero;
-} t_archivo_abierto; //ver
+// Inicializar Registros y Contexto
 
-typedef struct {
-    char** recursos;
-} t_recurso;*/
+void inicializar_contexto_y_registros(t_pcb *pcb);
 
-// ------------------------------------------------------ Inicializar Registros
-
-void inicializar_registros(t_pcb *pcb);
-
-// ------------------------------------------------------ Funciones PCB
+// Funciones PCB
 
 t_pcb *crear_pcb(int pid, t_estado_proceso estado, int quantum);
 void destruir_pcb(t_pcb *pcb);
 int asignar_pid(void);
 
-// ------------------------------------------------------ Funciones de Serialización
+// Funciones de Serialización
 
 t_buffer *crear_buffer_pcb(t_pcb *pcb);
 t_pcb *deserializar_pcb(t_paquete *paquete);
 
-// ------------------------------------------------------ Funciones de Envío y Recepción
+// Funciones de Envío y Recepción
 
 void enviar_pcb(t_pcb *pcb, int socket_cliente);
 t_pcb *recibir_pcb(int socket_cliente);

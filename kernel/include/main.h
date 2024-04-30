@@ -25,5 +25,6 @@
 
 void inicializar_config();
 void iniciar_conexiones();
+void escuchar_kernel();
 
 #endif // MAIN_H_

@@ -44,7 +44,7 @@ void _jnz(char *registro, char *instruccion)
         // log_warning(cpu_logger_info, "El registro %s es igual a cero, no se actualiza el IP", registro);
     }
 
-    // free(regis);
+    free(regis);
 }
 
 // Syscall bloqueante. Devuelve el contexto_actual de Ejecución actualizado al Kernel

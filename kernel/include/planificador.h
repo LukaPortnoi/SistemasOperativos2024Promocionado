@@ -25,7 +25,9 @@
 void iniciar_planificador_largo_plazo(void);
 t_pcb *crear_proceso(void);
 void chequear_grado_de_multiprogramacion(void);
+
 void enviar_proceso_a_memoria(int pid_nuevo, char *path_proceso);
+void serializar_inicializar_proceso(t_paquete *paquete, int pid_nuevo, char *path_proceso);
 
 // PLANIFICADOR CORTO PLAZO
 void iniciar_planificador_corto_plazo(void);

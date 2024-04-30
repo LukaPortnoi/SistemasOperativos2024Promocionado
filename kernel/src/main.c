@@ -10,16 +10,18 @@ char *IP_CPU;
 char *PUERTO_CPU_DISPATCH;
 char *PUERTO_CPU_INTERRUPT;
 char *ALGORITMO_PLANIFICACION;
-int   QUANTUM;
+int QUANTUM;
 char **RECURSOS;
 char **INSTANCIAS_RECURSOS;
-int   GRADO_MULTIPROGRAMACION;
+int GRADO_MULTIPROGRAMACION;
 char *IP_KERNEL;
 
 int fd_kernel;
 int fd_kernel_memoria;
 int fd_kernel_cpu_dispatch;
 int fd_kernel_cpu_interrupt;
+
+pthread_t hilo_server_kernel;
 
 int PID_GLOBAL = 1;
 
@@ -33,8 +35,6 @@ int main()
 	iniciar_planificador_corto_plazo();
 
 	iniciar_consola_interactiva();
-
-	while (server_escuchar(LOGGER_KERNEL, "KERNEL", fd_kernel));
 
 	log_info(LOGGER_KERNEL, "Finalizando Kernel...");
 
@@ -70,10 +70,19 @@ void iniciar_conexiones()
 	enviar_mensaje("Mensaje de Kernel para memoria", fd_kernel_memoria);
 
 	// conexion como cliente a CPU DISPATCH
-	fd_kernel_cpu_dispatch = crear_conexion(IP_CPU, PUERTO_CPU_DISPATCH); // aqui vamos a planificar la ejecucion de procesos
+	fd_kernel_cpu_dispatch = crear_conexion(IP_CPU, PUERTO_CPU_DISPATCH); // planificar la ejecucion de procesos
 	enviar_mensaje("Mensaje de Kernel para CPU DISPATCH", fd_kernel_cpu_dispatch);
 
 	// conexion como cliente a CPU INTERRUPT
-	fd_kernel_cpu_interrupt = crear_conexion(IP_CPU, PUERTO_CPU_INTERRUPT); // aqui vamos a planificar la interrupcion de procesos
+	fd_kernel_cpu_interrupt = crear_conexion(IP_CPU, PUERTO_CPU_INTERRUPT); // planificar la interrupcion de procesos
 	enviar_mensaje("Mensaje de Kernel para CPU INTERRUPT", fd_kernel_cpu_interrupt);
+
+	// hilo servidor
+	pthread_create(&hilo_server_kernel, NULL, (void *)escuchar_kernel, NULL);
+	pthread_detach(hilo_server_kernel);
+}
+
+void escuchar_kernel()
+{
+	while (server_escuchar(LOGGER_KERNEL, "KERNEL", fd_kernel));
 }
