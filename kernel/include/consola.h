@@ -27,6 +27,8 @@ void ejecutar_script(char *path);
 
 void iniciar_proceso(char *path_proceso);
 void finalizar_proceso(char *pid_string);
+t_pcb *buscar_proceso_en_colas(int pid);
+t_pcb *buscar_proceso_en_cola(t_queue *cola, int pid);
 
 void iniciar_planificacion(void);
 void detener_planificacion(void);

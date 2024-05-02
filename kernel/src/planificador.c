@@ -128,6 +128,7 @@ void ejecutar_PCB(t_pcb *pcb)
     log_info(LOGGER_KERNEL, "El PCB con ID %d se envio a  CPU", pcb->pid);
 
     pcb = recibir_pcb_CPU(fd_kernel_cpu_dispatch);
+    pcb_ejecutandose = pcb;
 
     t_motivo_desalojo *motivo_desalojo = malloc(sizeof(t_motivo_desalojo));
     *motivo_desalojo = pcb->contexto_ejecucion->motivo_desalojo;

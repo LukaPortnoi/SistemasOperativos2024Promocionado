@@ -21,6 +21,7 @@ int fd_kernel_memoria;
 int fd_kernel_cpu_dispatch;
 int fd_kernel_cpu_interrupt;
 
+t_pcb *pcb_ejecutandose;
 pthread_t hilo_server_kernel;
 
 int PID_GLOBAL = 1;

@@ -162,7 +162,84 @@ void iniciar_proceso(char *path_proceso)
 
 void finalizar_proceso(char *pid_string)
 {
-  // int pid = atoi(pid_string);
+  int pid = atoi(pid_string);
+  
+if(pcb_ejecutandose != NULL && pcb_ejecutandose->pid == pid){
+    //debemos mandar una interrupcion a la cpu
+    t_interrupcion *interrupcion = malloc(sizeof(t_interrupcion));
+    interrupcion->motivo_interrupcion = INTERRUPCION_FINALIZACION;
+    interrupcion->pid = pid;
+    enviar_interrupcion(fd_kernel_cpu_interrupt, interrupcion);    
+  }
+
+  t_pcb *proceso = buscar_proceso_en_colas(pid);
+
+  if(proceso->estado == NEW){
+    squeue_remove(squeue_new, proceso);
+  }else if(proceso->estado == READY){
+    squeue_remove(squeue_ready, proceso);
+  }else if(proceso->estado == EXEC){
+    squeue_remove(squeue_exec, proceso);
+  }else if(proceso->estado == BLOCK){
+    squeue_remove(squeue_block, proceso);
+  }
+
+  squeue_push(squeue_exit, proceso);
+  cambiar_estado_pcb(proceso, FINALIZADO);
+  
+  sem_post(&semFinalizado);
+}
+
+t_pcb *buscar_proceso_en_colas(int pid) // TODO: revisar q no este haciendo cagadas
+{
+  t_pcb *proceso = NULL;
+
+  if (!queue_is_empty(squeue_new->cola))
+  {
+    proceso = buscar_proceso_en_cola(squeue_new, pid);
+  }
+
+  if (proceso == NULL && !queue_is_empty(squeue_ready->cola))
+  {
+    proceso = buscar_proceso_en_cola(squeue_ready, pid);
+  }
+
+  if (proceso == NULL && !queue_is_empty(squeue_exec->cola))
+  {
+    proceso = buscar_proceso_en_cola(squeue_exec, pid);
+  }
+
+  if (proceso == NULL && !queue_is_empty(squeue_block->cola))
+  {
+    proceso = buscar_proceso_en_cola(squeue_block, pid);
+  }
+
+  return proceso;
+}
+
+t_pcb *buscar_proceso_en_cola(t_squeue *squeue, int pid)
+{
+  t_pcb *proceso = NULL;
+  t_list *temp = list_create();
+
+  while (!queue_is_empty(squeue->cola))
+  {
+    t_pcb *proceso_actual = squeue_pop(squeue);
+    list_add(temp, proceso_actual);
+
+    if (proceso_actual->pid == pid)
+    {
+      proceso = proceso_actual;
+    }
+  }
+
+  for (int i = 0; i < list_size(temp); i++)
+  {
+    squeue_push(squeue, list_get(temp, i));
+  }
+
+  list_destroy(temp);
+  return proceso;
 }
 
 void iniciar_planificacion() {}
