@@ -52,6 +52,7 @@ typedef struct
 
 extern t_squeue *squeue_new;
 extern t_squeue *squeue_ready;
+extern t_squeue *squeue_exec;
 extern t_squeue *squeue_block;
 extern t_squeue *squeue_exit;  
 

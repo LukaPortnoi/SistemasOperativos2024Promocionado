@@ -18,6 +18,7 @@ t_queue *procesosEnSistema;
 
 t_squeue *squeue_new;
 t_squeue *squeue_ready;
+t_squeue *squeue_exec;
 t_squeue *squeue_block;
 t_squeue *squeue_exit;
 
@@ -97,12 +98,12 @@ void iniciar_planificador_corto_plazo()
 {
     log_debug(LOGGER_KERNEL, "Inicia Planificador Corto Plazo");
     pthread_t hilo_corto_plazo;
-    //    pthread_t hilo_quantum;
+    pthread_t hilo_quantum;
 
     pthread_create(&hilo_corto_plazo, NULL, (void *)planificar_PCB_cortoPlazo, NULL);
     pthread_detach(hilo_corto_plazo);
-    //    pthread_create(&hilo_quantum, NULL, (void *)interrupcion_quantum, NULL);
-    //    pthread_detach(hilo_quantum);
+    pthread_create(&hilo_quantum, NULL, (void *)interrupcion_quantum, NULL);
+    pthread_detach(hilo_quantum);
 }
 
 void planificar_PCB_cortoPlazo()
@@ -114,6 +115,7 @@ void planificar_PCB_cortoPlazo()
         if (pcb != NULL)
         {
             log_info(LOGGER_KERNEL, "Se planifica el PCB con PID %d", pcb->pid);
+            admitir_pcb(pcb);
             ejecutar_PCB(pcb);
         }
     }
@@ -121,16 +123,59 @@ void planificar_PCB_cortoPlazo()
 
 void ejecutar_PCB(t_pcb *pcb)
 {
-
+    log_info(LOGGER_KERNEL, "Le envio el PCB con PID %d a CPU", pcb->pid);
     enviar_pcb(pcb, fd_kernel_cpu_dispatch);
     log_info(LOGGER_KERNEL, "El PCB con ID %d se envio a  CPU", pcb->pid);
 
-    recibir_pcb_CPU(fd_kernel_cpu_dispatch);
+    pcb = recibir_pcb_CPU(fd_kernel_cpu_dispatch);
 
-    close(fd_kernel_cpu_dispatch);
+    t_motivo_desalojo *motivo_desalojo = malloc(sizeof(t_motivo_desalojo));
+    *motivo_desalojo = pcb->contexto_ejecucion->motivo_desalojo;
+    
+    switch (*motivo_desalojo) {
+    case INTERRUPCION_FIN_QUANTUM:
+        log_info(LOGGER_KERNEL, "El PCB con PID %d se desalojo por fin de quantum", pcb->pid);
+        cambiar_estado_pcb(pcb, LISTO);
+        squeue_push(squeue_ready, pcb);
+        break;
+    case INTERRUPCION_BLOQUEO:
+        log_info(LOGGER_KERNEL, "El PCB con PID %d se desalojo por bloqueo", pcb->pid);
+        cambiar_estado_pcb(pcb, BLOQUEADO);
+        squeue_push(squeue_block, pcb);
+        break;
+    case INTERRUPCION_FINALIZACION:
+        log_info(LOGGER_KERNEL, "El PCB con PID %d se desalojo por finalizacion", pcb->pid);
+        cambiar_estado_pcb(pcb, FINALIZADO);
+        squeue_push(squeue_exit, pcb);
+        break;
+    case INTERRUPCION_ERROR:
+        log_info(LOGGER_KERNEL, "El PCB con PID %d se desalojo por error", pcb->pid);
+        cambiar_estado_pcb(pcb, ERROR);
+        squeue_push(squeue_exit, pcb);
+        break;
+    default:
+        log_error(LOGGER_KERNEL, "El PCB con PID %d se desalojo por un motivo desconocido", pcb->pid);
+        break;
+}   
+
+    free(motivo_desalojo);
 }
 
-void interrupcion_quantum() {}
+void interrupcion_quantum() {
+    
+    t_interrupcion *interrupcion = malloc(sizeof(t_interrupcion));
+    interrupcion->motivo_interrupcion = INTERRUCION_FIN_QUANTUM;
+    interrupcion->pid = -1;
+    while (1)
+    {
+        usleep(QUANTUM * 1000);
+        if (ALGORITMO_PLANIFICACION == RR)
+        {
+            enviar_interrupcion(conexion_cpu_interrupt, interrupcion);
+        }
+    }
+    free(interrupcion);
+}
 
 // MANEJO DE SQUEUES
 
@@ -202,6 +247,7 @@ void iniciar_colas_y_semaforos()
 
     squeue_new = squeue_create();
     squeue_ready = squeue_create();
+    squeue_exec = squeue_create();
     squeue_block = squeue_create();
     squeue_exit = squeue_create();
 }
@@ -250,10 +296,22 @@ void cambiar_estado_pcb(t_pcb *pcb, t_estado_proceso estado)
     pthread_mutex_unlock(&procesoMutex);
 }
 
-void recibir_pcb_CPU(int fd_cpu)
+t_pcb *recibir_pcb_CPU(int fd_cpu)
 {
     t_pcb *pcbDeCPU = recibir_pcb(fd_cpu);
-    pcbDeCPU->quantum = 2; //solo para que no me tire un warning
+    
+    if (pcbDeCPU == NULL)
+    {
+        log_error(LOGGER_KERNEL, "Error al recibir PCB de CPU");
+        return NULL;
+    }
 
-    // ACA HAY QUE VER QUE TIENE QUE HACER EL KERNEL CUANDO RECIBE EL PCB DE LA CPU
+    log_info(LOGGER_KERNEL, "Se recibio el PCB con PID %d de CPU", pcbDeCPU->pid);
+    return pcbDeCPU;
+}
+
+void admitir_pcb(t_pcb *pcb)
+{
+    cambiar_estado_pcb(pcb, EJECUTANDO);
+    squeue_push(squeue_exec, pcb);
 }

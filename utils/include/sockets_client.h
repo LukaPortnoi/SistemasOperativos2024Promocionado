@@ -12,6 +12,7 @@
 #include<commons/config.h>
 
 #include "./sockets_common.h"
+#include "./contexto.h"
 
 typedef struct
 {
@@ -30,6 +31,7 @@ void enviar_mensaje(char* mensaje, int socket_cliente);
 void agregar_a_paquete(t_paquete* paquete, void* valor, int tamanio);
 void enviar_paquete(t_paquete* paquete, int socket_cliente);
 void *serializar_paquete(t_paquete *paquete, int bytes);
+void enviar_interrupcion(int socket_cliente, t_interrupcion *interrupcion);
 void liberar_conexion(int socket_cliente);
 void eliminar_paquete(t_paquete* paquete);
 

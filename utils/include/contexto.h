@@ -20,12 +20,35 @@
 
 typedef struct
 {
-    nombre_instruccion codigo;
-    uint32_t pid;
+    SET,
+    MOV_IN,
+    MOV_OUT,
+    SUM,
+    SUB,
+    JNZ,
+    RESIZE,
+    COPY_STRING,
+    WAIT,
+    SIGNAL, 
+    IO_GEN_SLEEP,
+    IO_STDIN_READ,
+    IO_STDOUT_WRITE,
+    IO_FS_CREATE,
+    IO_FS_DELETE,
+    IO_FS_TRUNCATE,
+    IO_FS_WRITE,
+    IO_FS_READ,
+    EXIT
+}nombre_instruccion;
+
+
+typedef struct
+{
+    nombre_instruccion nombre;
     char *parametro1;
-    uint32_t longitud_parametro1;
     char *parametro2;
-    uint32_t longitud_parametro2;
+    char *parametro3;
+    char *parametro4;
 } t_instruccion;
 
 typedef struct
@@ -35,10 +58,27 @@ typedef struct
     uint32_t eax, ebx, ecx, edx, si, di;
 } t_registros;
 
+typedef enum
+{
+    WAIT,
+    SIGNAL,
+    INTERRUPCION_FIN_QUANTUM,
+    INTERRUPCION_BLOQUEO,
+    INTERRUPCION_FINALIZACION,
+    INTERRUPCION_ERROR
+} t_motivo_desalojo;
+
+typedef struct
+{
+    t_motivo_desalojo motivo_interrupcion;
+    int pid;
+} t_interrupcion;
+
 typedef struct
 {
     t_registros *registros;
-    t_instruccion *instruccion_ejecutada;
+    t_list* instrucciones;
+    t_motivo_desalojo motivo_desalojo;
 } t_contexto_ejecucion;
 
 void enviar_contexto(int socket, t_contexto_ejecucion *contexto_a_enviar);

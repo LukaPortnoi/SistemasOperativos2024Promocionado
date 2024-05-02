@@ -13,6 +13,7 @@
 
 #include "./sockets_common.h"
 #include "./sockets_client.h"
+#include "./contexto.h"
 
 typedef struct
 {
@@ -28,6 +29,7 @@ int iniciar_servidor(t_log *logger, const char *name, char *ip, char *puerto);
 int esperar_cliente(int, t_log *logger);
 void iterator(char *value);
 t_list *recibir_paquete(int);
+t_interrupcion *recibir_interrupcion(int);
 t_paquete *recibir_paqueteTOP(int socket_cliente);
 void recibir_mensaje(int, t_log *logger);
 int recibir_operacion(int);

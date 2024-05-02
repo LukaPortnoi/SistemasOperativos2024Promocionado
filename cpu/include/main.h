@@ -24,6 +24,5 @@ t_instruccion *fetch(int pid, int pc);
 void decode(t_instruccion *instruccion);
 void pedir_instruccion_memoria(int pid, int pc, int socket);
 t_instruccion *deserializar_instruccion(int socket);
-void finalizar_cpu(void);
 
 #endif

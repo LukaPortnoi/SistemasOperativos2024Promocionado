@@ -45,8 +45,7 @@ int main()
         }
     }*/
 
-    terminar_programa(fd_cpu_dispatch, LOGGER_CPU, CONFIG);
-    // terminar_programa(fd_cpu_interrupt, LOGGER_CPU, CONFIG);
+    finalizar_conexiones_cpu(;)
 }
 
 void inicializar_config()
@@ -283,10 +282,3 @@ t_instruccion *deserializar_instruccion(int socket)
     return instruccion_recibida;
 }
 
-void finalizar_cpu()
-{
-    log_info(cpu_logger_info, "Finalizando CPU...");
-    log_destroy(cpu_logger_info);
-    config_destroy(cpu_config);
-    exit(0);
-}

@@ -34,7 +34,7 @@ void iniciar_planificador_corto_plazo(void);
 void planificar_PCB_cortoPlazo(void);
 
 void ejecutar_PCB(t_pcb *pcb);
-void recibir_pcb_CPU(int socket);
+t_pcb *recibir_pcb_CPU(int socket);
 void interrupcion_quantum(void);
 
 // SQUEUES

@@ -18,6 +18,8 @@
 
 static void procesar_conexion_dispatch(void *void_args);
 static void procesar_conexion_interrupt(void *void_args);
+void *recibir_interrupciones(void);
+void finalizar_conexiones_cpu(void);
 
 int server_escuchar(t_log *logger, char *server_name, int server_socket);
 

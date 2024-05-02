@@ -143,3 +143,44 @@ int server_escuchar(t_log *logger, char *server_name, int server_socket)
 	}
 	return 0;
 }
+
+void *recibir_interrupciones(void)		//  TODO: Revisar
+{
+		while (1)
+		{
+			t_interrupcion *interrupcion = recibir_interrupciones(fd_cpu_interrupt);
+			
+			switch (interrupcion->motivo_interrupcion)
+			{
+				case INTERRUPCION_FIN_QUANTUM:
+					//
+					break;
+
+				case INTERRUPCION_BLOQUEO:
+					//
+					break;
+
+				case INTERRUPCION_FINALIZACION:
+					//
+					break;
+				case INTERRUPCION_ERROR:
+					//
+					break;			
+				default:
+					break;
+
+			}
+		}	
+		
+		
+}
+
+void finalizar_conexiones_cpu(){
+
+	log_info(LOGGER_CPU, "Finalizando conexiones CPU");
+	log_destroy(LOGGER_CPU);
+	config_destroy(CONFIG_CPU);
+	liberar_conexion(fd_cpu_dispatch);
+	liberar_conexion(fd_cpu_interrupt);
+	liberar_conexion(fd_cpu_memoria);	
+}
