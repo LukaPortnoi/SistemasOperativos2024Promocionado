@@ -129,13 +129,13 @@ t_paquete *recibir_paqueteTOP(int socket_cliente)
 t_interrupcion *recibir_interrupcion(int socket_cliente)
 {
 	int size;
-	void *buffer = recibir_buffer(&size, socket);
+	void *buffer = recibir_buffer(&size, socket_cliente);
 	int offset = 0;
 
 	t_interrupcion *interrupcion_recibida = malloc(sizeof(t_interrupcion));
 
-	memcpy(&(interrupcion_recibida->motivo_interrupcion), buffer + offset, sizeof(motivo_desalojo));
-	offset += sizeof(motivo_desalojo);
+	memcpy(&(interrupcion_recibida->motivo_interrupcion), buffer + offset, sizeof(t_motivo_desalojo));
+	offset += sizeof(t_motivo_desalojo);
 
 	memcpy(&(interrupcion_recibida->pid), buffer + offset, sizeof(int));
 	offset += sizeof(int);

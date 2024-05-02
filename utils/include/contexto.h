@@ -18,7 +18,7 @@
 #include "sockets_server.h"
 #include "sockets_utils.h"
 
-typedef struct
+typedef enum
 {
     SET,
     MOV_IN,
@@ -39,7 +39,7 @@ typedef struct
     IO_FS_WRITE,
     IO_FS_READ,
     EXIT
-}nombre_instruccion;
+} nombre_instruccion;
 
 
 typedef struct
@@ -60,8 +60,6 @@ typedef struct
 
 typedef enum
 {
-    WAIT,
-    SIGNAL,
     INTERRUPCION_FIN_QUANTUM,
     INTERRUPCION_BLOQUEO,
     INTERRUPCION_FINALIZACION,
