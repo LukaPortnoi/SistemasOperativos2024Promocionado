@@ -4,7 +4,6 @@
 void _set(char *registro, char *valor)
 {
     *(get_registry(registro)) = str_to_uint32(valor);
-    contexto_actual->codigo_ultima_instru = SET;
 }
 
 // Suma al registro el valor pasado como parámetro.
@@ -14,8 +13,6 @@ void _sum(char *registro_destino, char *registro_origen)
     uint32_t *origen = get_registry(registro_origen);
 
     *(destino) = *(destino) + *(origen);
-
-    contexto_actual->codigo_ultima_instru = SUM;
 }
 
 // Resta al registro el valor pasado como parámetro.
@@ -25,8 +22,6 @@ void _sub(char *registro_destino, char *registro_origen)
     uint32_t *origen = get_registry(registro_origen);
 
     *(destino) = *(destino) - *(origen);
-
-    contexto_actual->codigo_ultima_instru = SUB;
 }
 
 // Si valor del registro != cero, actualiza el IP al número de instrucción pasada por parámetro.
@@ -37,11 +32,10 @@ void _jnz(char *registro, char *instruccion)
     if (regis != 0)
     {
         contexto_actual->program_counter = str_to_uint32(instruccion);
-        contexto_actual->codigo_ultima_instru = JNZ;
     }
     else
     {
-        // log_warning(cpu_logger_info, "El registro %s es igual a cero, no se actualiza el IP", registro);
+        log_warning(LOGGER_CPU, "El registro %s es igual a cero, no se actualiza el IP", registro);
     }
 
     free(regis);
@@ -51,41 +45,32 @@ void _jnz(char *registro, char *instruccion)
 // junto a la cantidad de segundos que va a bloquearse el proceso.
 void _sleep()
 {
-    contexto_actual->codigo_ultima_instru = SLEEP;
-    // NO TIENE TIPO MOTIVO_DESALOJADOOOOOOOOOOOOOOOOOOOOO
-    //contexto_actual->motivo_desalojado = SYSCALL;
+    
+    contexto_actual->motivo_desalojo = INTERRUPCION_SYSCALL;
 }
 
 // Esta instrucción solicita al Kernel que se asigne una instancia del recurso indicado por parámetro.
 void _wait()
 {
-    // solicitar al kernel asignar recurso
-    contexto_actual->codigo_ultima_instru = WAIT;
-    //contexto_actual->motivo_desalojado = SYSCALL;
+    contexto_actual->motivo_desalojo = INTERRUPCION_SYSCALL;
 }
 
 //  Esta instrucción solicita al Kernel que se libere una instancia del recurso indicado por parámetro.
 void _signal()
 {
-    // solicitar al kernel liberar recurso
-    contexto_actual->codigo_ultima_instru = SIGNAL;
-   // contexto_actual->motivo_desalojado = SYSCALL;
+    contexto_actual->motivo_desalojo = INTERRUPCION_SYSCALL;
 }
 
 // Lee el valor de memoria correspondiente a la Dirección Lógica y lo almacena en el Registro.
 void _mov_in(char *registro, char *direc_logica)
 {
-    uint32_t *regis = malloc(sizeof(uint32_t));
-    regis = get_registry(registro);
+    uint32_t *regis = get_registry(registro);
 
-    uint32_t valor = 0 //obtener_valor_dir(str_to_uint32(direc_logica)); NO EXISTEEEEEEEEE
+    uint32_t valor = 0; //obtener_valor_dir(str_to_uint32(direc_logica)); NO EXISTEEEEEEEEE
     if (valor != -1)
     {
         *(regis) = valor;
     }
-
-    contexto_actual->codigo_ultima_instru = MOV_IN;
-    // free(regis);
 }
 
 // Lee el valor del Registro y lo escribe en la dirección
@@ -97,29 +82,25 @@ void _mov_out(char *direc_logica, char *registro)
    // escribir_memoria(str_to_uint32(direc_logica), regis); ???????????????????
 
     // TODO: solo cambiar si no es page fault
-    contexto_actual->codigo_ultima_instru = MOV_OUT;
     // free(regis);
 }
 
 // Solicita al kernel que abra el archivo pasado por parámetro con el modo de apertura indicado.
 void _f_open(char *nombre_archivo, char *modo_apertura)
 {
-    contexto_actual->codigo_ultima_instru = F_OPEN;
-   // contexto_actual->motivo_desalojado = SYSCALL;
+    contexto_actual->motivo_desalojo = INTERRUPCION_SYSCALL;
 }
 
 // Solicita al kernel que cierre el archivo pasado por parámetro.
 void _f_close(char *nombre_archivo)
 {
-    contexto_actual->codigo_ultima_instru = F_CLOSE;
-   // contexto_actual->motivo_desalojado = SYSCALL;
+    contexto_actual->motivo_desalojo = INTERRUPCION_SYSCALL;
 }
 
 // Solicita al kernel actualizar el puntero del archivo a la posición pasada por parámetro.
 void _f_seek(char *nombre_archivo, char *posicion)
 {
-    contexto_actual->codigo_ultima_instru = F_SEEK;
-   // contexto_actual->motivo_desalojado = SYSCALL;
+    contexto_actual->motivo_desalojo = INTERRUPCION_SYSCALL;
 }
 
 // Solicita al Kernel que se lea del archivo indicado y
@@ -128,8 +109,7 @@ void _f_read(char *nombre_archivo, char *direc_logica)
 {
     traducir_dl_fs(direc_logica);
 
-    contexto_actual->codigo_ultima_instru = F_READ;
-   // contexto_actual->motivo_desalojado = SYSCALL;
+    contexto_actual->motivo_desalojo = INTERRUPCION_SYSCALL;
 }
 
 // Solicita al Kernel que se escriba en el archivo indicado l
@@ -138,27 +118,25 @@ void _f_write(char *nombre_archivo, char *direc_logica)
 {
     traducir_dl_fs(direc_logica);
 
-    contexto_actual->codigo_ultima_instru = F_WRITE;
-   // contexto_actual->motivo_desalojado = SYSCALL;
+    contexto_actual->motivo_desalojo = INTERRUPCION_SYSCALL;
 }
 
 //  Solicita al Kernel que se modifique el tamaño del archivo al indicado por parámetro.
 void _f_truncate(char *nombre_archivo, char *tamanio)
 {
-    contexto_actual->codigo_ultima_instru = F_TRUNCATE;
-    //contexto_actual->motivo_desalojado = SYSCALL;
+    contexto_actual->motivo_desalojo = INTERRUPCION_SYSCALL;
 }
 
 // representa la syscall de finalización del proceso.
 // Se deberá devolver el contexto_actual de ejecución actualizado al kernel
 void __exit()
 {
-    contexto_actual->codigo_ultima_instru = EXIT;
+    // exitea
 }
 
 void traducir_dl_fs(char *dl)
 {
-    int df = traducir_dl(str_to_uint32(dl));
+    int df = 0; //traducir_dl(str_to_uint32(dl)); // NO EXISTE
     if (df == -1)
     {
         log_error(cpu_logger_info, "Page fault: %s", dl);

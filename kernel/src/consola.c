@@ -260,6 +260,9 @@ void mostrar_listado_estados_procesos()
 }
 
 void mostrar_procesos_en_cola(t_squeue *squeue, const char *nombre_cola)
+//Yo creo que esta funcion no esta bien,
+//cada vez que yo haga un pop de una cola, deberia pushearla de nuevo
+//porque sino se pierden los procesos :)
 {
   if (queue_is_empty(squeue->cola))
   {
