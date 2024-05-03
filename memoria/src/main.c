@@ -32,6 +32,7 @@ int main(void)
 
 void inicializar_config()
 {
+	procesos_totales = list_create();
 	LOGGER_MEMORIA = iniciar_logger("memoria.log", "Servidor Memoria");
 	CONFIG_MEMORIA = iniciar_config("./memoria.config", "MEMORIA");
 	PUERTO_ESCUCHA_MEMORIA = config_get_string_value(CONFIG_MEMORIA, "PUERTO_ESCUCHA");

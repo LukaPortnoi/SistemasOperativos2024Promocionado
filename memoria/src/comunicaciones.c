@@ -48,7 +48,7 @@ static void procesar_conexion_memoria(void *void_args)
 		case INICIALIZAR_PROCESO:
 			log_info(logger, "Se recibio un INICIALIZAR_PROCESO");
 			proceso_memoria = recibir_proceso_memoria(cliente_socket);
-			log_info(logger, "Se recibio el proceso %d con el path %s", proceso_memoria->pid, proceso_memoria->path_proceso);
+			log_info(logger, "Se recibio el proceso %d con el path %s", proceso_memoria->pid, proceso_memoria->path);
 			
 			
 
@@ -62,13 +62,13 @@ static void procesar_conexion_memoria(void *void_args)
 
 		case PEDIDO_INSTRUCCION:
 			uint32_t pid, pc;
-			pedido_intruccion(&pid, &pc, cliente_socket);
+			recibir_pedido_instruccion(&pid, &pc, cliente_socket);
 			t_proceso_memoria *proceso = obtener_proceso_pid(pid);
 			if(proceso == NULL){
 				break;
 			}else{
-				t_instruccion *instruccion = obtener_instruccion_pid_pc(pid, pc);
-				log_info(logger, " Se envia la instruccion a CPU de PC %d para el PID %d y es: %s - %s - %s", pc, pid, obtener_nombre_instruccion(instruccion->codigo), instruccion->parametro1, instruccion->parametro2);
+				t_instruccion *instruccion = obtener_instruccion_del_proces_pc(proceso, pc); //revisar
+				log_info(logger, " Se envia la instruccion a CPU de PC %d para el PID %d y es: %s - %s - %s", pc, pid, obtener_nombre_instruccion(instruccion->nombre), instruccion->parametro1, instruccion->parametro2);
 				if(instruccion != NULL) enviar_instruccion(cliente_socket, instruccion);
 				break;
 			}
@@ -81,11 +81,15 @@ static void procesar_conexion_memoria(void *void_args)
 			log_info(logger, "Este deberia ser el canal mediante el cual nos comunicamos con el KERNEL");
 			break;
 
-		//CASO NO TERMINADO
-		/*case INICIALIZAR_PROCESO:
+		//	CASO DUDASEMENTE TERMINADO, SE ESTARA REVISANDO
+		case INICIALIZAR_PROCESO:
 			log_info(logger, " Inicializando estructuras para el proceso");
 			proceso_memoria = recibir_proceso_memoria(cliente_socket);
-			proceso_memoria = iniciar_proceso_path(proceso_memoria);*/ 
+			proceso_memoria = iniciar_proceso_path(proceso_memoria);
+
+			cop = recibir_operacion(cliente_socket);
+			log_info(logger, "Proceso inicializado OK - Instrucciones - PID [%d]", proceso_memoria->pid);
+			break;
 
 
 		// -------------------
@@ -147,7 +151,7 @@ void extraer_de_paquete(t_paquete *paquete, void *destino, int size){}
 }*/
 
 // ENVIADO DE INSTRUCCIONES DE MEMORIA A CPU
-void pedido_instruccion(uint32_t *pid, uint32_t *pc, int socket){
+void recibir_pedido_instruccion(uint32_t *pid, uint32_t *pc, int socket){
 	int size;
 	void *buffer = recibir_buffer(&size, socket);
 	int offset = 0;
@@ -157,14 +161,23 @@ void pedido_instruccion(uint32_t *pid, uint32_t *pc, int socket){
 	free(buffer);
 }
 
-t_proceso_memoria obtener_proceso_pid(uint32_t pid_){
+t_proceso_memoria obtener_proceso_pid(uint32_t pid_pedido){
 	bool id_process(void *elemento){
-		return ((t_proceso_memoria*)elemento)->pid == pid_;
+		return ((t_proceso_memoria*)elemento)->pid == pid_pedido;
 	}
 	t_proceso_memoria *proceso;
 	pthread_mutex_lock(&mutex_procesos);
 	proceso = list_find(procesos_totales, id_process);
 	return proceso;
+}
+
+t_instruccion obtener_instruccion_del_proces_pc(t_proceso_memoria proceso, uint32_t pc){
+	usleep(RETARDO_RESPUESTA * 1000);
+	if (proceso != NULL){
+		return list_get(proceso->instrucciones, pc);
+	}else{
+		return NULL;
+	}
 }
 
 char *obtener_nombre_instruccion(nombre_instruccion instruccion){
@@ -189,12 +202,12 @@ void enviar_instruccion(int socket, t_instruccion *instruccion){
 	eliminar_paquete(paquete);
 }
 
-void serializar_instruccion(t_paquete *paquete, t_instruccion *instruccion){
+void serializar_instruccion(t_paquete *paquete, t_instruccion *instruccion){ //Revisar toda la funcion
 	paquete->buffer->size = sizeof(nombre_instruccion) + sizeof(uint32_t) * 2 + instruccion->longitud_parametro1 + instruccion->longitud_parametro2;
 	paquete->buffer->stream = malloc(paquete->buffer->size);
 	int desplazamiento = 0;
 
-	memcpy(paquete->buffer->stream + desplazamiento, &(instruccion->codigo), sizeof(nombre_instruccion));
+	memcpy(paquete->buffer->stream + desplazamiento, &(instruccion->nombre), sizeof(nombre_instruccion));
 	desplazamiento += sizeof(nombre_instruccion);
 	memcpy(paquete->buffer->stream + desplazamiento, &(instruccion->longitud_parametro1), sizeof(uint32_t));
 	desplazamiento += sizeof(uint32_t);
@@ -236,8 +249,8 @@ t_proceso_memoria *iniciar_proceso_path(t_proceso_memoria *proceso_nuevo){
 	return proceso_nuevo;
 }
 
-//LEE EL ARCHIVO E INGRESA CADA INSTRUCCION EN LA LISTA DE INSTRUCCIONES DEL PROCESO, NO SE TERMINO DE DESARROLLAR
-/*t_list *parsear_instrucciones(char *path){
+//LEE EL ARCHIVO E INGRESA CADA INSTRUCCION EN LA LISTA DE INSTRUCCIONES DEL PROCESO
+t_list *parsear_instrucciones(char *path){
 	t_list *instrucciones = list_create();
 	char *path_archivo = string_new();
 	string_append(&path_archivo, "./cfg/");
@@ -249,8 +262,64 @@ t_proceso_memoria *iniciar_proceso_path(t_proceso_memoria *proceso_nuevo){
 	{
 		char **palabras = string_split(split_instrucciones[indice_split], " ");
 		if(string_equals_ignore_case(palabras[0], "SET")){
-			list_add(instrucciones, )
+			list_add(instrucciones, armar_estructura_instruccion(SET, palabras[1], palabras[2]));
 		}
+		else if(string_equals_ignore_case(palabras[0], "SUM")){
+			list_add(instrucciones, armar_estructura_instruccion(SUM, palabras[1], palabras[2]));
+		}
+		else if(string_equals_ignore_case(palabras[0], "SUB")){
+			list_add(instrucciones, armar_estructura_instruccion(SUB, palabras[1], palabras[2]));
+		}
+		else if(string_equals_ignore_case(palabras[0], "JNZ")){
+			list_add(instrucciones, armar_estructura_instruccion(JNZ, palabras[1], palabras[2]));
+		}
+		else if(string_equals_ignore_case(palabras[0], "IO_GEN_SLEEP")){
+			list_add(instrucciones, armar_estructura_instruccion(IO_GEN_SLEEP, palabras[1], palabras[2]));
+		}
+		indice_split++;
+		string_iterates_lines(palabras, (void (*)(char *))free);
+		free(palabras);
 	}
+	free(codigo_leido);
+	string_iterates_lines(split_instrucciones, (void (*)(char *))free);
+	free(split_instrucciones);
+	free(path_archivo);
+	return instrucciones;
 	
-}*/
+}
+
+t_instruccion *armar_estructura_instruccion(nombre_instruccion instruccion, char *parametro1, char *parametro2){
+	t_instruccion *estructura = (t_instruccion *) malloc(sizeof(t_instruccion));
+	estructura->nombre = instruccion;
+	estructura->parametro1 = (parametro[0] != '\0') ? strdup(parametro1) : parametro1;
+	estructura->parametro2 = (parametro[0] != '\0') ? strdup(parametro2) : parametro2;
+	//estructura->longitud_parametro1 = strlen(estructura->parametro1) + 1;
+	//estructura->longitud_parametro2 = strlen(estructura->parametro2) + 1; Thomi rajo las longitudes del struct, se dejara asi por ahora hasta ver si se necesita o no
+	printf("%s - %s - %s \n", obtener_nombre_instruccion(estructura->nombre), estructura->parametro1, estructura->parametro2); //printea instrucciones
+	return estructura;
+}
+
+char *leer_archivo(char *path){
+	char instrucciones[100];
+	strcpy(instrucciones, path);
+	FILE *archivo = fopen(instrucciones, "r");
+	if(archivo == NULL){perror("Error al abrir el archivo");}
+	fseek(archivo, 0, SEEK_END);
+	int cant_elementos = ftell(archivo);
+	rewind(archivo);
+	char *cadena = calloc(cant_elementos + 1, sizeof(char));
+	if(cadena == NULL){
+		perror("Error en la reserva de memoria \n");
+		fclose(archivo);
+		return NULL;
+	}
+	int cant_elementos_leidos = fread(cadena, sizeof(char), cant_elementos, archivo);
+	if(cant_elementos != cant_elementos){
+		perror("Error leyendo el archivo \n");
+		fclose(archivo);
+		free(cadena);
+		return NULL;
+	}
+	fclose(archivo);
+	return cadena;
+}

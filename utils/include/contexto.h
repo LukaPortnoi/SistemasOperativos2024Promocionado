@@ -14,9 +14,9 @@
 #include <assert.h>
 #include <pthread.h>
 
-#include "sockets_client.h"
-#include "sockets_server.h"
-#include "sockets_utils.h"
+#include "../include/sockets_client.h"
+#include "../include/sockets_server.h"
+#include "../include/sockets_utils.h"
 
 typedef enum
 {

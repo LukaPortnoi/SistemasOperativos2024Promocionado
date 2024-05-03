@@ -11,9 +11,9 @@
 #include <string.h>
 #include <assert.h>
 
-#include "./sockets_common.h"
-#include "./sockets_client.h"
-#include "./contexto.h"
+#include "../include/sockets_common.h"
+#include "../include/sockets_client.h"
+#include "../include/contexto.h"
 
 typedef struct
 {

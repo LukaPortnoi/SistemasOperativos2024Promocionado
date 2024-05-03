@@ -122,7 +122,7 @@ void escuchar_interrupt()
 
 void ejecutar_ciclo_instruccion()
 {
-    t_instruccion *instruccion = fetch(contexto_actual->pid, contexto_actual->program_counter);
+    t_instruccion *instruccion = fetch(contexto_actual->pid, contexto_actual->program_counter); //Los parametros estan mal, hay que cambiarlos
     decode(instruccion);
     if (!page_fault)
         contexto_actual->program_counter++;
@@ -168,10 +168,9 @@ void decode(t_instruccion *instruccion) // esto es el execute, no el decode
     {
         strcpy(param2, instruccion->parametro2);
     }
-    //cod_inst_to_str ?????????????????????????
     //log_info(cpu_logger_info, "PID: %d - Ejecutando: %s - Parametros: %s - %s", contexto_actual->pid, cod_inst_to_str(instruccion->codigo), param1, param2);
 
-    switch (instruccion->codigo)
+    switch (instruccion->nombre)
     {
     case SET:
         _set(instruccion->parametro1, instruccion->parametro2);
@@ -185,58 +184,10 @@ void decode(t_instruccion *instruccion) // esto es el execute, no el decode
     case JNZ:
         _jnz(instruccion->parametro1, instruccion->parametro2);
         break;
-    case WAIT:
-        _wait();
-        break;
-    case SIGNAL:
-        _signal();
-        break;
-    case MOV_IN:
-        _mov_in(instruccion->parametro1, instruccion->parametro2);
-        break;
-    case MOV_OUT:
-        _mov_out(instruccion->parametro1, instruccion->parametro2);
-        break;
-    case RESIZE:
-        _resize();
-        break;
-    case COPY_STRING:
-        _copy_string(instruccion->parametro1);
-        break;
     case IO_GEN_SLEEP:
         _io_gen_sleep(instruccion->parametro1, instruccion->parametro2);
         break;
-    case IO_STDIN_READ:
-        _io_stdin_read(instruccion->parametro1, instruccion->parametro2);
-        break;
-    case IO_STDOUT_WRITE:
-        _io_stdout_write(instruccion->parametro1, instruccion->parametro2);
-        break;
-    case IO_FS_CREATE:
-        _io_fs_create(instruccion->parametro1, instruccion->parametro2);
-        break;
-    case IO_FS_DELETE:
-        _io_fs_delete(instruccion->parametro1, instruccion->parametro2);
-        break;
-    case IO_FS_TRUNCATE:
-        _io_fs_truncate(instruccion->parametro1, instruccion->parametro2);
-        break;
-    case IO_FS_WRITE:
-        _io_fs_write(instruccion->parametro1, instruccion->parametro2);
-        break;
-    case IO_FS_READ:
-        _io_fs_read(instruccion->parametro1, instruccion->parametro2);
-        break;
-    case EXIT:
-        __exit(contexto_actual);
-        break;
-    default:
-        log_error(cpu_logger_info, "Instruccion no reconocida");
-        break;
     }
-
-    // free(param1);
-    // free(param2);
 }
 
 void pedir_instruccion_memoria(int pid, int pc, int socket)
@@ -260,22 +211,30 @@ t_instruccion *deserializar_instruccion(int socket)
     t_instruccion *instruccion_recibida = malloc(sizeof(t_instruccion));
     int offset = 0;
 
-    memcpy(&(intruccion_recibida->codigo), buffer + offset, sizeof(nombre_instruccion));
+    memcpy(&(intruccion_recibida->nombre), buffer + offset, sizeof(nombre_instruccion));
     offset += sizeof(nombre_instruccion);
 
-    memcpy(&(instruccion_recibida->longitud_parametro1), buffer + offset, sizeof(uint32_t));
+    /*memcpy(&(instruccion_recibida->longitud_parametro1), buffer + offset, sizeof(uint32_t));
     offset += sizeof(uint32_t);
 
     memcpy(&(instruccion_recibida->longitud_parametro2), buffer + offset, sizeof(uint32_t));
-    offset += sizeof(uint32_t);
+    offset += sizeof(uint32_t);*/
 
-    instruccion_recibida->parametro1 = malloc(instruccion_recibida->longitud_parametro1);
-    memcpy(instruccion_recibida->parametro1, buffer + offset, instruccion_recibida->longitud_parametro1);
+    instruccion_recibida->parametro1 = malloc(sizeof(uint32_t));
+    memcpy(instruccion_recibida->parametro1, buffer + offset, sizeof(uint32_t));
     offset += sizeof(instruccion_recibida->parametro1);
 
-    instruccion_recibida->parametro2 = malloc(instruccion_recibida->longitud_parametro2);
-    memcpy(instruccion_recibida->parametro2, buffer + offset, instruccion_recibida->longitud_parametro2);
+    instruccion_recibida->parametro2 = malloc(sizeof(uint32_t));
+    memcpy(instruccion_recibida->parametro2, buffer + offset, sizeof(uint32_t));
     offset += sizeof(instruccion_recibida->parametro2);
+
+    instruccion_recibida->parametro3 = malloc(sizeof(uint32_t));
+    memcpy(instruccion_recibida->parametro3, buffer + offset, sizeof(uint32_t));
+    offset += sizeof(instruccion_recibida->parametro3);
+
+    instruccion_recibida->parametro4 = malloc(sizeof(uint32_t));
+    memcpy(instruccion_recibida->parametro4, buffer + offset, sizeof(uint32_t));
+    offset += sizeof(instruccion_recibida->parametro4);
 
     free(buffer);
 
