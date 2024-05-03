@@ -99,7 +99,7 @@ void liberar_conexion(int socket_cliente)
 
 void enviar_interrupcion(int socket_cliente, t_interrupcion *interrupcion)
 {
-	t_paquete * paquete = crear_paquete_con_codigo_de_operacion(INTERRUPCION);
+	t_paquete *paquete = crear_paquete_con_codigo_de_operacion(INTERRUPCION);
 
 	agregar_a_paquete(paquete, &(interrupcion->motivo_interrupcion), sizeof(t_motivo_desalojo));
 	agregar_a_paquete(paquete, &(interrupcion->pid), sizeof(int));

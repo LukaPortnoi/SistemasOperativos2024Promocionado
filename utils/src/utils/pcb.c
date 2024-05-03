@@ -120,6 +120,7 @@ t_pcb *deserializar_pcb(t_paquete *paquete) //Hacerlo d nuevo con la estructura 
 void enviar_pcb(t_pcb *pcb, int socket_cliente)
 {
     t_paquete *paquete = crear_paquete_con_codigo_de_operacion(PCB);
+    agregar_a_paquete(paquete, pcb, sizeof(t_pcb));
     enviar_paquete(paquete, socket_cliente);
     eliminar_paquete(paquete);
 }

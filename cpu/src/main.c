@@ -93,7 +93,6 @@ void escuchar_interrupt()
     {
     case CONTEXTO:
         contexto_actual = recibir_contexto(fd_cpu_dispatch);
-        contexto_actual->codigo_ultima_instru = -1;
 
         while (!es_syscall() && !hay_interrupciones() && !page_fault && contexto_actual != NULL) // page fault no existe
         {
@@ -123,7 +122,7 @@ void escuchar_interrupt()
 void ejecutar_ciclo_instruccion()
 {
     t_instruccion *instruccion = fetch(contexto_actual->pid, contexto_actual->program_counter); //Los parametros estan mal, hay que cambiarlos
-    decode(instruccion);
+    execute(instruccion);
     if (!page_fault)
         contexto_actual->program_counter++;
 }
@@ -132,8 +131,6 @@ t_instruccion *fetch(int pid, int pc)
 {
     // TODO -- chequear que en los casos de instruccion con memoria logica puede dar PAGE FAULT y no hay que aumentar el pc (restarlo dentro del decode en esos casos)
 
-
-    
     pedir_instruccion_memoria(pid, pc, fd_cpu_memoria);
 
     op_cod codigo_op = recibir_operacion(fd_cpu_memoria);
@@ -143,7 +140,7 @@ t_instruccion *fetch(int pid, int pc)
     if (codigo_op == INSTRUCCION)
     {
         instruccion = deserializar_instruccion(fd_cpu_memoria);
-        contexto_actual->instruccion_ejecutada = instruccion;
+        contexto_actual->instruccion_ejecutada-> = instruccion;
     }
     else
     {
@@ -156,7 +153,7 @@ t_instruccion *fetch(int pid, int pc)
     return instruccion;
 }
 
-void decode(t_instruccion *instruccion) // esto es el execute, no el decode
+void execute(t_instruccion *instruccion) // esto es el execute, no el decode
 {
     char *param1 = string_new();
     char *param2 = string_new();

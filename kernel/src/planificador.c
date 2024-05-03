@@ -19,7 +19,7 @@ t_queue *procesosEnSistema;
 t_squeue *squeue_new;
 t_squeue *squeue_ready;
 t_squeue *squeue_exec;
-t_squeue *squeue_block;
+t_squeue *squeue_blocked;
 t_squeue *squeue_exit;
 
 // PLANIFICADOR LARGO PLAZO
@@ -35,7 +35,7 @@ t_pcb *crear_proceso()
     int pid_nuevo = asignar_pid();
     t_pcb *pcb = crear_pcb(pid_nuevo, LISTO, QUANTUM); // POR AHORA ES A LISTOS. PARA CHECK3 ES A NUEVOS
     squeue_push(squeue_ready, pcb);                    // PARA CHECK2 ES EN READY, PARA EL CHECK3 ES EN NEW YA QUE HAY QUE DESARROLLAR EL PLANIFICADOR LARGO PLAZO
-    log_debug(LOGGER_KERNEL, "Se crea el proceso %d en NEW", pid_nuevo);
+    log_debug(LOGGER_KERNEL, "Se crea el proceso %d en NEW", pcb->pid);
     return pcb;
 }
 
@@ -52,13 +52,9 @@ t_pcb *crear_proceso()
 void enviar_proceso_a_memoria(int pid_nuevo, char *path_proceso)
 {
     t_paquete *paquete_nuevo_proceso = crear_paquete_con_codigo_de_operacion(INICIALIZAR_PROCESO);
-
     serializar_inicializar_proceso(paquete_nuevo_proceso, pid_nuevo, path_proceso);
-
     enviar_paquete(paquete_nuevo_proceso, fd_kernel_memoria);
-
     eliminar_paquete(paquete_nuevo_proceso);
-    
     log_info(LOGGER_KERNEL, "Se envio el proceso con PID %d a MEMORIA", pid_nuevo);
 }
 

@@ -15,12 +15,6 @@
 #include "../include/sockets_client.h"
 #include "../include/contexto.h"
 
-typedef struct
-{
-    int pid;
-    char *path;
-} t_proceso_memoria;
-
 extern t_log *logger;
 
 void *recibir_buffer(int *, int);

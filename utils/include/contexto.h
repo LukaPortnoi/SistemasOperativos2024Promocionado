@@ -29,7 +29,7 @@ typedef enum
     RESIZE,
     COPY_STRING,
     WAIT,
-    SIGNAL, 
+    SIGNAL,
     IO_GEN_SLEEP,
     IO_STDIN_READ,
     IO_STDOUT_WRITE,
@@ -41,12 +41,13 @@ typedef enum
     EXIT
 } nombre_instruccion;
 
-
 typedef struct
 {
     nombre_instruccion nombre;
     char *parametro1;
     char *parametro2;
+    uint32_t *longitud_parametro1;
+    uint32_t *longitud_parametro2;
     char *parametro3;
     char *parametro4;
 } t_instruccion;
@@ -76,7 +77,7 @@ typedef struct
 typedef struct
 {
     t_registros *registros;
-    t_list* instrucciones;
+    t_instruccion *instrucciones; // dudoso
     t_motivo_desalojo motivo_desalojo;
 } t_contexto_ejecucion;
 

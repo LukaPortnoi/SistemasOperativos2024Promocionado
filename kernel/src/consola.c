@@ -163,30 +163,38 @@ void iniciar_proceso(char *path_proceso)
 void finalizar_proceso(char *pid_string)
 {
   int pid = atoi(pid_string);
-  
-if(pcb_ejecutandose != NULL && pcb_ejecutandose->pid == pid){
-    //debemos mandar una interrupcion a la cpu
+
+  if (pcb_ejecutandose != NULL && pcb_ejecutandose->pid == pid)
+  {
+    // debemos mandar una interrupcion a la cpu
     t_interrupcion *interrupcion = malloc(sizeof(t_interrupcion));
     interrupcion->motivo_interrupcion = INTERRUPCION_FINALIZACION;
     interrupcion->pid = pid;
-    enviar_interrupcion(fd_kernel_cpu_interrupt, interrupcion);    
+    enviar_interrupcion(fd_kernel_cpu_interrupt, interrupcion);
   }
 
   t_pcb *proceso = buscar_proceso_en_colas(pid);
 
-  if(proceso->estado == NEW){
+  if (proceso->estado == NUEVO)
+  {
     squeue_remove(squeue_new, proceso);
-  }else if(proceso->estado == READY){
+  }
+  else if (proceso->estado == LISTO)
+  {
     squeue_remove(squeue_ready, proceso);
-  }else if(proceso->estado == EXEC){
+  }
+  else if (proceso->estado == EJECUTANDO)
+  {
     squeue_remove(squeue_exec, proceso);
-  }else if(proceso->estado == BLOCK){
-    squeue_remove(squeue_block, proceso);
+  }
+  else if (proceso->estado == BLOQUEADO)
+  {
+    squeue_remove(squeue_blocked, proceso);
   }
 
   squeue_push(squeue_exit, proceso);
   cambiar_estado_pcb(proceso, FINALIZADO);
-  
+
   sem_post(&semFinalizado);
 }
 
@@ -260,9 +268,9 @@ void mostrar_listado_estados_procesos()
 }
 
 void mostrar_procesos_en_cola(t_squeue *squeue, const char *nombre_cola)
-//Yo creo que esta funcion no esta bien,
-//cada vez que yo haga un pop de una cola, deberia pushearla de nuevo
-//porque sino se pierden los procesos :)
+// Yo creo que esta funcion no esta bien,
+// cada vez que yo haga un pop de una cola, deberia pushearla de nuevo
+// porque sino se pierden los procesos :)
 {
   if (queue_is_empty(squeue->cola))
   {
