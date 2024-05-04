@@ -139,7 +139,7 @@ void traducir_dl_fs(char *dl)
     int df = 0; //traducir_dl(str_to_uint32(dl)); // NO EXISTE
     if (df == -1)
     {
-        log_error(cpu_logger_info, "Page fault: %s", dl);
+        log_error(LOGGER_CPU, "Page fault: %s", dl);
     }
     else
     {
@@ -161,7 +161,7 @@ uint32_t *get_registry(char *registro)
         return &(contexto_actual->registros->dx);
     else
     {
-        log_error(cpu_logger_info, "No se reconoce el registro %s", registro);
+        log_error(LOGGER_CPU, "No se reconoce el registro %s", registro);
         return NULL;
     }
 }

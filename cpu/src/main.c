@@ -1,6 +1,7 @@
 #include "../include/main.h"
 
 t_contexto_ejecucion *contexto_actual;
+t_pcb *pcb_actual;
 
 char *IP_MEMORIA;
 char *IP_CPU;
@@ -10,7 +11,8 @@ char *PUERTO_ESCUCHA_INTERRUPT;
 char *CANTIDAD_ENTRADAS_TLB;
 char *ALGORITMO_TLB;
 
-t_log *LOGGER_CPU;
+t_log *LOGGER_CPU;4
+
 t_config *CONFIG;
 
 int fd_cpu_dispatch;
@@ -85,21 +87,21 @@ void escuchar_interrupt()
     while (server_escuchar(LOGGER_CPU, "CPU_INTERRUPT", fd_cpu_interrupt));
 }
 
-/*while (1) // el while esta suelto en el medio de la nada
+while (1) // el while esta suelto en el medio de la nada
 {
     codigo_operacion = recibir_operacion(fd_cpu_dispatch);
 
     switch (codigo_operacion)
     {
-    case CONTEXTO:
-        contexto_actual = recibir_contexto(fd_cpu_dispatch);
+    case PCB:
+        pcb_actual = recibir_pcb(fd_cpu_dispatch);
 
-        while (!es_syscall() && !hay_interrupciones() && !page_fault && contexto_actual != NULL) // page fault no existe
+        while (/* !es_syscall() && !hay_interrupciones() && */ !page_fault && pcb_actual != NULL) // page fault no existe
         {
             ejecutar_ciclo_instruccion();
         }
         // obtener_motivo_desalojo();
-        enviar_contexto(fd_cpu_dispatch, contexto_actual);
+        enviar_pcb( pcb_actual,fd_cpu_dispatch);
 
         contexto_actual = NULL;
 
@@ -117,11 +119,11 @@ void escuchar_interrupt()
         abort();
         break;
     }
-}*/
+}
 
 void ejecutar_ciclo_instruccion()
 {
-    t_instruccion *instruccion = fetch(contexto_actual->pid, contexto_actual->program_counter); //Los parametros estan mal, hay que cambiarlos
+    t_instruccion *instruccion = fetch(pcb_actual->pid, pcb_actual->contexto_ejecucion->registros->program_counter); //Los parametros estan mal, hay que cambiarlos
     execute(instruccion);
     if (!page_fault)
         contexto_actual->program_counter++;
@@ -140,7 +142,7 @@ t_instruccion *fetch(int pid, int pc)
     if (codigo_op == INSTRUCCION)
     {
         instruccion = deserializar_instruccion(fd_cpu_memoria);
-        contexto_actual->instruccion_ejecutada-> = instruccion;
+        //pcb_actual->contexto_ejecucion-> = instruccion;
     }
     else
     {

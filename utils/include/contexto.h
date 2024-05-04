@@ -77,7 +77,7 @@ typedef struct
 typedef struct
 {
     t_registros *registros;
-    t_instruccion *instrucciones; // dudoso
+    //t_instruccion *instrucciones; // no vamos a guardarlo aca, sino en una lista en la memoria que va a tener todas las instrucciones
     t_motivo_desalojo motivo_desalojo;
 } t_contexto_ejecucion;
 
