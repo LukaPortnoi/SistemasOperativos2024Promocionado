@@ -11,12 +11,12 @@
 #include <string.h>
 #include <assert.h>
 
-#include "./sockets_common.h"
-#include "./sockets_client.h"
-#include "./contexto.h"
+#include "sockets_client.h"
+#include "sockets_common.h"
+#include "contexto.h"
+
 
 void *recibir_buffer(int *, int);
-
 int iniciar_servidor(t_log *logger, const char *name, char *ip, char *puerto);
 int esperar_cliente(int, t_log *logger);
 void iterator(char *value);

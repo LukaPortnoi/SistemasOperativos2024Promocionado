@@ -1,6 +1,6 @@
 #include "../include/contexto.h"
 
-void enviar_contexto(int socket, t_contexto_ejecucion *contexto_a_enviar)
+/*void enviar_contexto(int socket, t_contexto_ejecucion *contexto_a_enviar)
 {
 	t_paquete *paquete = crear_paquete_con_codigo_de_operacion(CONTEXTO);
 	serializar_contexto(paquete, contexto_a_enviar);
@@ -37,7 +37,7 @@ void serializar_contexto(t_paquete *paquete, t_contexto_ejecucion *ctx)
 	desplazamiento += sizeof(int);
 
 	memcpy(paquete->buffer->stream + desplazamiento, &(ctx->nro_pf), sizeof(int));
-	desplazamiento += sizeof(int); */
+	desplazamiento += sizeof(int); 
 
 	memcpy(paquete->buffer->stream + desplazamiento, &(ctx->instruccion_ejecutada->codigo), sizeof(nombre_instruccion));
 	desplazamiento += sizeof(nombre_instruccion);
@@ -61,7 +61,7 @@ void serializar_contexto(t_paquete *paquete, t_contexto_ejecucion *ctx)
 	desplazamiento += sizeof(nombre_instruccion);
 
 	 memcpy(paquete->buffer->stream + desplazamiento, &(ctx->motivo_desalojado), sizeof(motivo_desalojo));
-	desplazamiento += sizeof(motivo_desalojo);*/
+	desplazamiento += sizeof(motivo_desalojo);
 }
 
 t_contexto_ejecucion *recibir_contexto(int socket)
@@ -88,7 +88,7 @@ t_contexto_ejecucion *recibir_contexto(int socket)
 	/* memcpy(&(contexto_recibido->numero_marco), buffer + offset, sizeof(int));
 	offset += sizeof(int);
 	memcpy(&(contexto_recibido->nro_pf), buffer + offset, sizeof(int));
-	offset += sizeof(int); */
+	offset += sizeof(int); 
 
 	contexto_recibido->instruccion_ejecutada = malloc(sizeof(t_instruccion));
 
@@ -113,9 +113,10 @@ t_contexto_ejecucion *recibir_contexto(int socket)
 	offset += sizeof(nombre_instruccion);
 
 	/*memcpy(&(contexto_recibido->motivo_desalojado), buffer + offset, sizeof(motivo_desalojo));
-	offset += sizeof(motivo_desalojo);*/
+	offset += sizeof(motivo_desalojo);
 
 	free(buffer);
 
 	return contexto_recibido;
 }
+*/

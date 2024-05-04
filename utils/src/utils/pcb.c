@@ -4,17 +4,17 @@
 
 void inicializar_contexto_y_registros(t_pcb *pcb)
 {
-    pcb->contexto_ejecucion->registros.program_counter = 0;
-    pcb->contexto_ejecucion->registros.ax = 0;
-    pcb->contexto_ejecucion->registros.bx = 0;
-    pcb->contexto_ejecucion->registros.cx = 0;
-    pcb->contexto_ejecucion->registros.dx = 0;
-    pcb->contexto_ejecucion->registros.eax = 0;
-    pcb->contexto_ejecucion->registros.ebx = 0;
-    pcb->contexto_ejecucion->registros.ecx = 0;
-    pcb->contexto_ejecucion->registros.edx = 0;
-    pcb->contexto_ejecucion->registros.si = 0;
-    pcb->contexto_ejecucion->registros.di = 0;
+    pcb->contexto_ejecucion->registros->program_counter = 0;
+    pcb->contexto_ejecucion->registros->ax = 0;
+    pcb->contexto_ejecucion->registros->bx = 0;
+    pcb->contexto_ejecucion->registros->cx = 0;
+    pcb->contexto_ejecucion->registros->dx = 0;
+    pcb->contexto_ejecucion->registros->eax = 0;
+    pcb->contexto_ejecucion->registros->ebx = 0;
+    pcb->contexto_ejecucion->registros->ecx = 0;
+    pcb->contexto_ejecucion->registros->edx = 0;
+    pcb->contexto_ejecucion->registros->si = 0;
+    pcb->contexto_ejecucion->registros->di = 0;
     pcb->contexto_ejecucion->motivo_desalojo = SIN_MOTIVO;
 }
 
@@ -61,37 +61,37 @@ t_buffer *crear_buffer_pcb(t_pcb *pcb1)
     memcpy(buffer->stream + desplazamiento, &(pcb1->quantum), sizeof(int));
     desplazamiento += sizeof(int);
 
-    memcpy(buffer->stream + desplazamiento, &(pcb1->contexto_ejecucion->registros.program_counter), sizeof(uint32_t));
+    memcpy(buffer->stream + desplazamiento, &(pcb1->contexto_ejecucion->registros->program_counter), sizeof(uint32_t));
     desplazamiento += sizeof(uint32_t);
 
-    memcpy(buffer->stream + desplazamiento, &(pcb1->contexto_ejecucion->registros.ax), sizeof(uint8_t));
+    memcpy(buffer->stream + desplazamiento, &(pcb1->contexto_ejecucion->registros->ax), sizeof(uint8_t));
     desplazamiento += sizeof(uint8_t);
 
-    memcpy(buffer->stream + desplazamiento, &(pcb1->contexto_ejecucion->registros.bx), sizeof(uint8_t));
+    memcpy(buffer->stream + desplazamiento, &(pcb1->contexto_ejecucion->registros->bx), sizeof(uint8_t));
     desplazamiento += sizeof(uint8_t);
 
-    memcpy(buffer->stream + desplazamiento, &(pcb1->contexto_ejecucion->registros.cx), sizeof(uint8_t));
+    memcpy(buffer->stream + desplazamiento, &(pcb1->contexto_ejecucion->registros->cx), sizeof(uint8_t));
     desplazamiento += sizeof(uint8_t);
 
-    memcpy(buffer->stream + desplazamiento, &(pcb1->contexto_ejecucion->registros.dx), sizeof(uint8_t));
+    memcpy(buffer->stream + desplazamiento, &(pcb1->contexto_ejecucion->registros->dx), sizeof(uint8_t));
     desplazamiento += sizeof(uint8_t);
 
-    memcpy(buffer->stream + desplazamiento, &(pcb1->contexto_ejecucion->registros.eax), sizeof(uint32_t));
+    memcpy(buffer->stream + desplazamiento, &(pcb1->contexto_ejecucion->registros->eax), sizeof(uint32_t));
     desplazamiento += sizeof(uint32_t);
 
-    memcpy(buffer->stream + desplazamiento, &(pcb1->contexto_ejecucion->registros.ebx), sizeof(uint32_t));
+    memcpy(buffer->stream + desplazamiento, &(pcb1->contexto_ejecucion->registros->ebx), sizeof(uint32_t));
     desplazamiento += sizeof(uint32_t);
 
-    memcpy(buffer->stream + desplazamiento, &(pcb1->contexto_ejecucion->registros.ecx), sizeof(uint32_t));
+    memcpy(buffer->stream + desplazamiento, &(pcb1->contexto_ejecucion->registros->ecx), sizeof(uint32_t));
     desplazamiento += sizeof(uint32_t);
 
-    memcpy(buffer->stream + desplazamiento, &(pcb1->contexto_ejecucion->registros.edx), sizeof(uint32_t));
+    memcpy(buffer->stream + desplazamiento, &(pcb1->contexto_ejecucion->registros->edx), sizeof(uint32_t));
     desplazamiento += sizeof(uint32_t);
 
-    memcpy(buffer->stream + desplazamiento, &(pcb1->contexto_ejecucion->registros.si), sizeof(uint32_t));
+    memcpy(buffer->stream + desplazamiento, &(pcb1->contexto_ejecucion->registros->si), sizeof(uint32_t));
     desplazamiento += sizeof(uint32_t);
 
-    memcpy(buffer->stream + desplazamiento, &(pcb1->contexto_ejecucion->registros.di), sizeof(uint32_t));
+    memcpy(buffer->stream + desplazamiento, &(pcb1->contexto_ejecucion->registros->di), sizeof(uint32_t));
     desplazamiento += sizeof(uint32_t);
 
     memcpy(buffer->stream + desplazamiento, &(pcb1->contexto_ejecucion->motivo_desalojo), sizeof(t_motivo_desalojo));

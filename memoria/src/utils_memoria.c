@@ -1,8 +1,8 @@
 #include "../include/utils_memoria.h"
 
 pthread_mutex_t mutex_procesos;
-t_list procesos_totales;
-t_proceso_memoria *proceso_memoria;
+t_list *procesos_totales;
+t_proceso_memoria *procesos_memoria;
 
 // ESTA PARTE LA HIZO THOMI (NO LO DIGO DE MALO, SOLO COMENTO PARA SEPARAR LO QUE HICE)
 // SE ESTARA USANDO ESTA FUNCION A PRIORI, SI HAY DRAMA, SE REEMPLAZARA
@@ -16,8 +16,8 @@ t_proceso_memoria *recibir_proceso_memoria(int socket_cliente)
     memcpy(&(proceso->pid), buffer + offset, sizeof(int));
     offset += sizeof(int);
 
-    proceso->path_proceso = malloc(size - offset);
-    memcpy(proceso->path_proceso, buffer + offset, size - offset);
+    proceso->path = malloc(size - offset);
+    memcpy(proceso->path, buffer + offset, size - offset);
     free(buffer);
     return proceso;
 }
@@ -64,7 +64,7 @@ t_proceso_memoria *obtener_proceso_pid(uint32_t pid_pedido)
     return proceso;
 }
 
-t_instruccion obtener_instruccion_del_proceso_pc(t_proceso_memoria proceso, uint32_t pc)
+t_instruccion *obtener_instruccion_del_proceso_pc(t_proceso_memoria *proceso, uint32_t pc)
 {
     usleep(RETARDO_RESPUESTA * 1000); // 1000 * 1000 = 1 segundo
     return list_get(proceso->instrucciones, pc);
@@ -97,7 +97,11 @@ void enviar_instruccion(int socket, t_instruccion *instruccion)
 
 void serializar_instruccion(t_paquete *paquete, t_instruccion *instruccion)
 { // Revisar toda la funcion
-    paquete->buffer->size = sizeof(nombre_instruccion) + sizeof(uint32_t) * 2 + instruccion->longitud_parametro1 + instruccion->longitud_parametro2;
+    paquete->buffer->size = sizeof(nombre_instruccion) + 
+                            sizeof(uint32_t) * 2 + 
+                            instruccion->longitud_parametro1 + 
+                            instruccion->longitud_parametro2;
+                            
     paquete->buffer->stream = malloc(paquete->buffer->size);
     int desplazamiento = 0;
 
@@ -173,8 +177,8 @@ t_instruccion *armar_estructura_instruccion(nombre_instruccion instruccion, char
 {
     t_instruccion *estructura = (t_instruccion *)malloc(sizeof(t_instruccion));
     estructura->nombre = instruccion;
-    estructura->parametro1 = (parametro[0] != '\0') ? strdup(parametro1) : parametro1;
-    estructura->parametro2 = (parametro[0] != '\0') ? strdup(parametro2) : parametro2;
+    estructura->parametro1 = (parametro1[0] != '\0') ? strdup(parametro1) : parametro1;
+    estructura->parametro2 = (parametro2[0] != '\0') ? strdup(parametro2) : parametro2;
     estructura->longitud_parametro1 = strlen(estructura->parametro1) + 1;
     estructura->longitud_parametro2 = strlen(estructura->parametro2) + 1;
     printf("%s - %s - %s \n", obtener_nombre_instruccion(estructura->nombre), estructura->parametro1, estructura->parametro2); // printea instrucciones

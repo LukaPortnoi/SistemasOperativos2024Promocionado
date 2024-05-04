@@ -19,18 +19,12 @@
 #include "../../utils/include/contexto.h"
 #include "../include/gestor.h"
 
-typedef struct
-{
-    int pid;
-    char *path;
-    t_list *instrucciones;
-} t_proceso_memoria;
 
 t_proceso_memoria *recibir_proceso_memoria(int socket);
 void extraer_de_paquete(t_paquete *paquete, void *destino, int size);
 void recibir_pedido_instruccion(uint32_t *pid, uint32_t *pc, int socket);
 t_proceso_memoria *obtener_proceso_pid(uint32_t pid_pedido);
-t_instruccion obtener_instruccion_del_proceso_pc(t_proceso_memoria proceso, uint32_t pc);
+t_instruccion *obtener_instruccion_del_proceso_pc(t_proceso_memoria *proceso, uint32_t pc);
 char *obtener_nombre_instruccion(nombre_instruccion instruccion);
 void enviar_instruccion(int socket, t_instruccion *instruccion);
 void serializar_instruccion(t_paquete *paquete, t_instruccion *instruccion);
