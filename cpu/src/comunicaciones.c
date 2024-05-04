@@ -37,7 +37,7 @@ static void procesar_conexion_dispatch(void *void_args)
 			log_info(logger, "Me llegaron los siguientes valores:");
 			list_iterate(lista, (void *)iterator);
 			break;
-		
+
 		// ----------------------
 		// -- KERNEL - CPU --
 		// ----------------------
@@ -46,16 +46,34 @@ static void procesar_conexion_dispatch(void *void_args)
 			log_info(logger, "Este deberia ser el canal mediante el cual nos comunicamos con el KERNEL");
 			break;
 
+		case PCB:
+			t_pcb *pcb_actual = recibir_pcb(cliente_socket);
+			// TODO: Procesar PCB
+			while (/* !es_syscall() &&   !page_fault &&*/ !hayInterrupcion && pcb_actual != NULL) // Aca deberia ir el check_interrupt()
+			{
+				ejecutar_ciclo_instruccion();
+			}
+			// obtener_motivo_desalojo();
+			enviar_pcb(pcb_actual, fd_cpu_dispatch); // Envia el PCB actualizado
+
+			pcb_actual = NULL;
+
+			// pthread_mutex_lock(&mutex_interrupt);
+			// limpiar_interrupciones();
+			// pthread_mutex_unlock(&mutex_interrupt);
+			// liberar_contexto(contexto_actual);
+			break;
+
 		// ---------------
 		// -- ERRORES --
 		// ---------------
 		case -1:
 			log_error(logger, "Cliente desconectado de %s... con cop -1", server_name);
-			break;  //hay un return, voy a probar un break
+			break; // hay un return, voy a probar un break
 		default:
 			log_error(logger, "Algo anduvo mal en el server de %s", server_name);
 			log_info(logger, "Cop: %d", cop);
-			break;  //hay un return, voy a probar un break
+			break; // hay un return, voy a probar un break
 		}
 	}
 
@@ -93,10 +111,13 @@ static void procesar_conexion_interrupt(void *void_args)
 			log_info(logger, "Me llegaron los siguientes valores:");
 			list_iterate(lista, (void *)iterator);
 			break;
-		
+
 		// ----------------------
 		// -- KERNEL - CPU --
 		// ----------------------
+		case INTERRUPCION:
+		hayInterrupcion = recibir_interrupciones();
+
 		case HANDSHAKE_kernel:
 			recibir_mensaje(cliente_socket, logger);
 			log_info(logger, "Este deberia ser el canal mediante el cual nos comunicamos con el KERNEL");
@@ -107,18 +128,17 @@ static void procesar_conexion_interrupt(void *void_args)
 		// ---------------
 		case -1:
 			log_error(logger, "Cliente desconectado de %s... con cop -1", server_name);
-			break;  //hay un return, voy a probar un break
+			break; // hay un return, voy a probar un break
 		default:
 			log_error(logger, "Algo anduvo mal en el server de %s", server_name);
 			log_info(logger, "Cop: %d", cop);
-			break;  //hay un return, voy a probar un break
+			break; // hay un return, voy a probar un break
 		}
 	}
 
 	log_warning(logger, "El cliente se desconecto de %s server", server_name);
 	return;
 }
-
 
 int server_escuchar(t_log *logger, char *server_name, int server_socket)
 {
@@ -144,43 +164,32 @@ int server_escuchar(t_log *logger, char *server_name, int server_socket)
 	return 0;
 }
 
-void *recibir_interrupciones(void)		//  TODO: Revisar
+bool recibir_interrupciones(void) //  TODO: Revisar
 {
-		while (1)
+	bool hayInterrupcion = false;
+	while (1)
+	{
+		t_interrupcion *interrupcion = recibir_interrupciones(fd_cpu_interrupt);
+
+		switch (interrupcion->motivo_interrupcion)
 		{
-			t_interrupcion *interrupcion = recibir_interrupciones(fd_cpu_interrupt);
-			
-			switch (interrupcion->motivo_interrupcion)
-			{
-				case INTERRUPCION_FIN_QUANTUM:
-					//
-					break;
+		case INTERRUPCION_FIN_QUANTUM:
+			hayInterrupcion = true;
+			break;
 
-				case INTERRUPCION_BLOQUEO:
-					//
-					break;
+		case INTERRUPCION_BLOQUEO:
+			hayInterrupcion = true;
+			break;
 
-				case INTERRUPCION_FINALIZACION:
-					//
-					break;
-				case INTERRUPCION_ERROR:
-					//
-					break;			
-				default:
-					break;
-
-			}
-		}	
-		
-		
-}
-
-void finalizar_conexiones_cpu(){
-
-	log_info(LOGGER_CPU, "Finalizando conexiones CPU");
-	log_destroy(LOGGER_CPU);
-	config_destroy(CONFIG_CPU);
-	liberar_conexion(fd_cpu_dispatch);
-	liberar_conexion(fd_cpu_interrupt);
-	liberar_conexion(fd_cpu_memoria);	
+		case INTERRUPCION_FINALIZACION:
+			hayInterrupcion = true;
+			break;
+		case INTERRUPCION_ERROR:
+			hayInterrupcion = true;
+			break;
+		default:
+			break;
+		}
+	}
+	return hayInterrupcion;
 }

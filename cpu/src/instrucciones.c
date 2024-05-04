@@ -31,7 +31,7 @@ void _jnz(char *registro, char *instruccion)
 
     if (regis != 0)
     {
-        contexto_actual->program_counter = str_to_uint32(instruccion);
+        pcb_actual->contexto_ejecucion->registrosprogram_counter = str_to_uint32(instruccion);
     }
     else
     {
@@ -152,13 +152,13 @@ void traducir_dl_fs(char *dl)
 uint32_t *get_registry(char *registro)
 {
     if (strcmp(registro, "AX") == 0)
-        return &(contexto_actual->registros->ax);
+        return &(pcb_actual->contexto_ejecucion->registros->ax);
     else if (strcmp(registro, "BX") == 0)
-        return &(contexto_actual->registros->bx);
+        return &(pcb_actual->contexto_ejecucion->registros->bx);
     else if (strcmp(registro, "CX") == 0)
-        return &(contexto_actual->registros->cx);
+        return &(pcb_actual->contexto_ejecucion->registros->cx);
     else if (strcmp(registro, "DX") == 0)
-        return &(contexto_actual->registros->dx);
+        return &(pcb_actual->contexto_ejecucion->registros->dx);
     else
     {
         log_error(LOGGER_CPU, "No se reconoce el registro %s", registro);

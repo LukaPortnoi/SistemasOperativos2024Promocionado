@@ -49,7 +49,9 @@ int asignar_pid(void);
 
 // Funciones de Serialización
 
+t_paquete *crear_paquete_PCB(t_pcb *pcb);
 t_buffer *crear_buffer_pcb(t_pcb *pcb);
+void agregar_a_paquetePCB(t_paquete *paquete, t_pcb *pcb);
 t_pcb *deserializar_pcb(t_paquete *paquete);
 
 // Funciones de Envío y Recepción

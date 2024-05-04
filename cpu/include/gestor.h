@@ -16,4 +16,7 @@ extern int fd_cpu_dispatch;
 extern int fd_cpu_interrupt;
 extern int fd_cpu_memoria;
 
+extern t_pcb *pcb_actual;
+extern bool hayInterrupcion;
+
 #endif /* GESTOR_H_ */

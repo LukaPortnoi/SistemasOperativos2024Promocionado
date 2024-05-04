@@ -158,6 +158,8 @@ void iniciar_proceso(char *path_proceso)
 
   // enviar proceso a memoria
   enviar_proceso_a_memoria(pcb->pid, path_proceso);
+
+  destruir_pcb(pcb);
 }
 
 void finalizar_proceso(char *pid_string)
@@ -256,6 +258,7 @@ void detener_planificacion() {}
 void cambiar_multiprogramacion(char *grado_multiprogramacion_string)
 {
   int numero = atoi(grado_multiprogramacion_string);
+  GRADO_MULTIPROGRAMACION = numero;
 }
 
 void mostrar_listado_estados_procesos()
@@ -263,7 +266,7 @@ void mostrar_listado_estados_procesos()
   log_info(LOGGER_KERNEL, "Listado de procesos:");
   mostrar_procesos_en_cola(squeue_new, "NEW");
   mostrar_procesos_en_cola(squeue_ready, "READY");
-  mostrar_procesos_en_cola(squeue_block, "BLOCKED");
+  mostrar_procesos_en_cola(squeue_blocked, "BLOCKED");
   mostrar_procesos_en_cola(squeue_exit, "FINISHED");
 }
 

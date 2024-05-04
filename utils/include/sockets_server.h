@@ -11,11 +11,9 @@
 #include <string.h>
 #include <assert.h>
 
-#include "../include/sockets_common.h"
-#include "../include/sockets_client.h"
-#include "../include/contexto.h"
-
-extern t_log *logger;
+#include "./sockets_common.h"
+#include "./sockets_client.h"
+#include "./contexto.h"
 
 void *recibir_buffer(int *, int);
 

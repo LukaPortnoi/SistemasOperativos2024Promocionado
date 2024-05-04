@@ -1,6 +1,8 @@
 #ifndef GESTOR_H_
 #define GESTOR_H_
 
+#include "./utils_memoria.h"
+
 extern t_log* LOGGER_MEMORIA;
 extern t_config* CONFIG_MEMORIA;
 extern char* PUERTO_ESCUCHA_MEMORIA;

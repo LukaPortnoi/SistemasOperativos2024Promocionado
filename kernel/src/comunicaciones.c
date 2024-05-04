@@ -1,30 +1,5 @@
 #include "../include/comunicaciones.h"
 
-typedef struct
-{
-	t_log *log;
-	int fd;
-	char *server_name;
-} t_procesar_conexion_args;
-
-int server_escuchar(t_log *logger, char *server_name, int server_socket)
-{
-	int cliente_socket = esperar_cliente(server_socket, logger);
-
-	if (cliente_socket != -1)
-	{
-		pthread_t hilo;
-		t_procesar_conexion_args *args = malloc(sizeof(t_procesar_conexion_args));
-		args->log = logger;
-		args->fd = cliente_socket;
-		args->server_name = server_name;
-		pthread_create(&hilo, NULL, (void *)procesar_conexion_kernel, (void *)args);
-		pthread_detach(hilo);
-		return 1;
-	}
-	return 0;
-}
-
 void procesar_conexion_kernel(void *void_args)
 {
 	t_procesar_conexion_args *args = (t_procesar_conexion_args *)void_args;
@@ -55,6 +30,13 @@ void procesar_conexion_kernel(void *void_args)
 			break;
 
 		// -------------------
+		// -- CPU - KERNEL --
+		// -------------------
+		case RECIBIR_PCB_ACTUALIZADO:
+			//recibir_pcb_actualizado(cliente_socket, logger); // TODO
+			break;
+
+		// -------------------
 		// -- I/O - KERNEL --
 		// -------------------
 		case HANDSHAKE_in_out:
@@ -67,14 +49,32 @@ void procesar_conexion_kernel(void *void_args)
 		// ---------------
 		case -1:
 			log_error(logger, "Cliente desconectado de %s... con cop -1", server_name);
-			break;  //hay un return, voy a probar un break
+			break; // hay un return, voy a probar un break
 		default:
 			log_error(logger, "Algo anduvo mal en el server de %s", server_name);
 			log_info(logger, "Cop: %d", cop);
-			break;  //hay un return, voy a probar un break
+			break; // hay un return, voy a probar un break
 		}
 	}
 
 	log_warning(logger, "El cliente se desconecto de %s server", server_name);
 	return;
+}
+
+int server_escuchar(t_log *logger, char *server_name, int server_socket)
+{
+	int cliente_socket = esperar_cliente(server_socket, logger);
+
+	if (cliente_socket != -1)
+	{
+		pthread_t hilo;
+		t_procesar_conexion_args *args = malloc(sizeof(t_procesar_conexion_args));
+		args->log = logger;
+		args->fd = cliente_socket;
+		args->server_name = server_name;
+		pthread_create(&hilo, NULL, (void *)procesar_conexion_kernel, (void *)args);
+		pthread_detach(hilo);
+		return 1;
+	}
+	return 0;
 }

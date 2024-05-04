@@ -24,8 +24,6 @@ int fd_kernel_cpu_interrupt;
 t_pcb *pcb_ejecutandose;
 pthread_t hilo_server_kernel;
 
-int PID_GLOBAL = 1;
-
 int main()
 {
 	inicializar_config();

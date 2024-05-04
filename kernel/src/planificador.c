@@ -22,6 +22,8 @@ t_squeue *squeue_exec;
 t_squeue *squeue_blocked;
 t_squeue *squeue_exit;
 
+int PID_GLOBAL = 1;
+
 // PLANIFICADOR LARGO PLAZO
 void iniciar_planificador_largo_plazo() {}
 /* {

@@ -15,6 +15,8 @@
 
 #include "../../utils/include/sockets_client.h"
 #include "../../utils/include/sockets_server.h"
+#include "../../utils/include/pcb.h"
+#include "../include/utils_cpu.h"
 
 static void procesar_conexion_dispatch(void *void_args);
 static void procesar_conexion_interrupt(void *void_args);

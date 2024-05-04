@@ -1,5 +1,5 @@
-#ifndef MAIN_H_
-#define MAIN_H_
+#ifndef UTILS_CPU_H_
+#define UTILS_CPU_H_
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -16,11 +16,11 @@
 #include "../../utils/include/pcb.h"
 #include "../../utils/include/contexto.h"
 #include "./comunicaciones.h"
-#include "../include/utils_cpu.h"
 
-void inicializar_config(void);
-void iniciar_conexiones(void);
-void escuchar_interrupt(void);
-void finalizar_conexiones_cpu();
+void ejecutar_ciclo_instruccion();
+t_instruccion *fetch(int pid, int pc);
+void execute(t_instruccion *instruccion);
+void pedir_instruccion_memoria(int pid, int pc, int socket);
+t_instruccion *deserializar_instruccion(int socket);
 
 #endif

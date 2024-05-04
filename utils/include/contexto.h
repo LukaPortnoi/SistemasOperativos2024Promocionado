@@ -61,6 +61,7 @@ typedef struct
 
 typedef enum
 {
+    SIN_MOTIVO,
     INTERRUPCION_FIN_QUANTUM,
     INTERRUPCION_BLOQUEO,
     INTERRUPCION_FINALIZACION,
@@ -77,14 +78,11 @@ typedef struct
 typedef struct
 {
     t_registros *registros;
-    //t_instruccion *instrucciones; // no vamos a guardarlo aca, sino en una lista en la memoria que va a tener todas las instrucciones
     t_motivo_desalojo motivo_desalojo;
 } t_contexto_ejecucion;
 
-void enviar_contexto(int socket, t_contexto_ejecucion *contexto_a_enviar);
-
+/* void enviar_contexto(int socket, t_contexto_ejecucion *contexto_a_enviar);
 void serializar_contexto(t_paquete *paquete, t_contexto_ejecucion *ctx);
-
-t_contexto_ejecucion *recibir_contexto(int socket);
+t_contexto_ejecucion *recibir_contexto(int socket); */
 
 #endif // CONTEXTO_H_

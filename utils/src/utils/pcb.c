@@ -4,17 +4,18 @@
 
 void inicializar_contexto_y_registros(t_pcb *pcb)
 {
-    pcb->registros.program_counter = 0;
-    pcb->registros.ax = 0;
-    pcb->registros.bx = 0;
-    pcb->registros.cx = 0;
-    pcb->registros.dx = 0;
-    pcb->registros.eax = 0;
-    pcb->registros.ebx = 0;
-    pcb->registros.ecx = 0;
-    pcb->registros.edx = 0;
-    pcb->registros.si = 0;
-    pcb->registros.di = 0;
+    pcb->contexto_ejecucion->registros.program_counter = 0;
+    pcb->contexto_ejecucion->registros.ax = 0;
+    pcb->contexto_ejecucion->registros.bx = 0;
+    pcb->contexto_ejecucion->registros.cx = 0;
+    pcb->contexto_ejecucion->registros.dx = 0;
+    pcb->contexto_ejecucion->registros.eax = 0;
+    pcb->contexto_ejecucion->registros.ebx = 0;
+    pcb->contexto_ejecucion->registros.ecx = 0;
+    pcb->contexto_ejecucion->registros.edx = 0;
+    pcb->contexto_ejecucion->registros.si = 0;
+    pcb->contexto_ejecucion->registros.di = 0;
+    pcb->contexto_ejecucion->motivo_desalojo = SIN_MOTIVO;
 }
 
 // Funciones PCB
@@ -36,91 +37,93 @@ void destruir_pcb(t_pcb *pcb)
 
 // Funciones Serializacion
 
-t_buffer *crear_buffer_pcb(t_pcb *pcb)
+t_buffer *crear_buffer_pcb(t_pcb *pcb1)
 {
-    buffer->size = sizeof(uint32_t) + sizeof(t_estado_proceso) + sizeof(int) + sizeof(t_contexto_ejecucion)
-                   + sizeof(t_registros) + sizeof(t_instruccion)
+    t_buffer *buffer = malloc(sizeof(t_buffer));
 
-    buffer->stream = malloc(buffer->size);
+    buffer->size = sizeof(uint32_t)
+                 + sizeof(t_estado_proceso)
+                 + sizeof(int)
+                 + sizeof(uint32_t)
+                 + 4 * sizeof(uint8_t)
+                 + 6 * sizeof(uint32_t)+
+                 sizeof(t_motivo_desalojo);
 
     int desplazamiento = 0;
+    buffer->stream = malloc(buffer->size);
 
-    memcpy(buffer->stream + desplazamiento, &(pcb->pid), sizeof(uint32_t));
+    memcpy(buffer->stream + desplazamiento, &(pcb1->pid), sizeof(uint32_t));
     desplazamiento += sizeof(uint32_t);
 
-    memcpy(buffer->stream + desplazamiento, &(pcb->estado), sizeof(t_estado_proceso));
+    memcpy(buffer->stream + desplazamiento, &(pcb1->estado), sizeof(t_estado_proceso));
     desplazamiento += sizeof(t_estado_proceso);
 
-    memcpy(buffer->stream + desplazamiento, &(pcb->quantum), sizeof(int));
+    memcpy(buffer->stream + desplazamiento, &(pcb1->quantum), sizeof(int));
     desplazamiento += sizeof(int);
 
-    memcpy(buffer->stream + desplazamiento, pcb->contexto_ejecucion->registros, sizeof(t_registros));
-    desplazamiento += sizeof(t_registros);
-    
+    memcpy(buffer->stream + desplazamiento, &(pcb1->contexto_ejecucion->registros.program_counter), sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+    memcpy(buffer->stream + desplazamiento, &(pcb1->contexto_ejecucion->registros.ax), sizeof(uint8_t));
+    desplazamiento += sizeof(uint8_t);
+
+    memcpy(buffer->stream + desplazamiento, &(pcb1->contexto_ejecucion->registros.bx), sizeof(uint8_t));
+    desplazamiento += sizeof(uint8_t);
+
+    memcpy(buffer->stream + desplazamiento, &(pcb1->contexto_ejecucion->registros.cx), sizeof(uint8_t));
+    desplazamiento += sizeof(uint8_t);
+
+    memcpy(buffer->stream + desplazamiento, &(pcb1->contexto_ejecucion->registros.dx), sizeof(uint8_t));
+    desplazamiento += sizeof(uint8_t);
+
+    memcpy(buffer->stream + desplazamiento, &(pcb1->contexto_ejecucion->registros.eax), sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+    memcpy(buffer->stream + desplazamiento, &(pcb1->contexto_ejecucion->registros.ebx), sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+    memcpy(buffer->stream + desplazamiento, &(pcb1->contexto_ejecucion->registros.ecx), sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+    memcpy(buffer->stream + desplazamiento, &(pcb1->contexto_ejecucion->registros.edx), sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+    memcpy(buffer->stream + desplazamiento, &(pcb1->contexto_ejecucion->registros.si), sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+    memcpy(buffer->stream + desplazamiento, &(pcb1->contexto_ejecucion->registros.di), sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+    memcpy(buffer->stream + desplazamiento, &(pcb1->contexto_ejecucion->motivo_desalojo), sizeof(t_motivo_desalojo));
+    desplazamiento += sizeof(t_motivo_desalojo);
+
     return buffer;
 }
 
-t_pcb *deserializar_pcb(t_paquete *paquete) //Hacerlo d nuevo con la estructura de t_pcb
+t_paquete *crear_paquete_PCB(t_pcb *pcb){
+    t_paquete *paquete = malloc(sizeof(t_paquete));
+    paquete->codigo_operacion = PCB;
+    paquete->buffer = crear_buffer_pcb(pcb);
+    return paquete;
+}
+
+void agregar_a_paquetePCB(t_paquete *paquete, t_pcb *pcb){
+    
+    // Armamos el stream a enviar
+    void *a_enviar = malloc(paquete->buffer->size);
+}
+
+t_pcb *deserializar_pcb(t_paquete *paquete) // Hacerlo d nuevo con la estructura de t_pcb
 {
     
-
-    void *stream = paquete->buffer->stream;
-    int presize = paquete->buffer->size;
-
-    memcpy(&(pcb->pid), stream, sizeof(int));
-    stream += sizeof(int);
-    presize -= sizeof(int);
-    memcpy(&(pcb->estado), stream, sizeof(t_estado_proceso));
-    stream += sizeof(t_estado_proceso);
-    presize -= sizeof(t_estado_proceso);
-    memcpy(&(pcb->registros.program_counter), stream, sizeof(uint32_t));
-    stream += sizeof(uint32_t);
-    presize -= sizeof(uint32_t);
-    memcpy(&(pcb->registros.ax), stream, sizeof(uint8_t));
-    stream += sizeof(uint8_t);
-    presize -= sizeof(uint8_t);
-    memcpy(&(pcb->registros.bx), stream, sizeof(uint8_t));
-    stream += sizeof(uint8_t);
-    presize -= sizeof(uint8_t);
-    memcpy(&(pcb->registros.cx), stream, sizeof(uint8_t));
-    stream += sizeof(uint8_t);
-    presize -= sizeof(uint8_t);
-    memcpy(&(pcb->registros.dx), stream, sizeof(uint8_t));
-    stream += sizeof(uint8_t);
-    presize -= sizeof(uint8_t);
-    memcpy(&(pcb->registros.eax), stream, sizeof(uint32_t));
-    stream += sizeof(uint32_t);
-    presize -= sizeof(uint32_t);
-    memcpy(&(pcb->registros.ebx), stream, sizeof(uint32_t));
-    stream += sizeof(uint32_t);
-    presize -= sizeof(uint32_t);
-    memcpy(&(pcb->registros.ecx), stream, sizeof(uint32_t));
-    stream += sizeof(uint32_t);
-    presize -= sizeof(uint32_t);
-    memcpy(&(pcb->registros.edx), stream, sizeof(uint32_t));
-    stream += sizeof(uint32_t);
-    presize -= sizeof(uint32_t);
-    memcpy(&(pcb->registros.si), stream, sizeof(uint32_t));
-    stream += sizeof(uint32_t);
-    presize -= sizeof(uint32_t);
-    memcpy(&(pcb->registros.di), stream, sizeof(uint32_t));
-    stream += sizeof(uint32_t);
-    presize -= sizeof(uint32_t);
-    memcpy(&(pcb->quantum), stream, sizeof(int));
-    stream += sizeof(int);
-    presize -= sizeof(int);
-
-    memcpy(paquete->buffer->stream, stream, presize);
-    paquete->buffer->size = presize;
-    return pcb;
 }
 
 // Funciones de Envio y Recepcion
 
 void enviar_pcb(t_pcb *pcb, int socket_cliente)
 {
-    t_paquete *paquete = crear_paquete_con_codigo_de_operacion(PCB);
-    agregar_a_paquete(paquete, pcb, sizeof(t_pcb));
+    t_paquete *paquete = crear_paquete_PCB(pcb);
+    agregar_a_paquetePCB(paquete, pcb);
     enviar_paquete(paquete, socket_cliente);
     eliminar_paquete(paquete);
 }
@@ -130,6 +133,5 @@ t_pcb *recibir_pcb(int socket_cliente)
     t_paquete *paquete = recibir_paqueteTOP(socket_cliente);
     t_pcb *pcb = deserializar_pcb(paquete);
     eliminar_paquete(paquete);
-
     return pcb;
 }
