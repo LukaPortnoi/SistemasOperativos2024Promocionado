@@ -92,6 +92,14 @@ void eliminar_paquete(t_paquete *paquete)
 	free(paquete);
 }
 
+t_paquete *crear_paquete_con_codigo_de_operacion(op_cod codigo)
+{
+	t_paquete *paquete = malloc(sizeof(t_paquete));
+	paquete->codigo_operacion = codigo;
+	crear_buffer(paquete);
+	return paquete;
+}
+
 void liberar_conexion(int socket_cliente)
 {
 	close(socket_cliente);

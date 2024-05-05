@@ -24,13 +24,7 @@ t_config *iniciar_config(char *file_name, char *name)
 	return nuevo_config;
 }
 
-t_paquete *crear_paquete_con_codigo_de_operacion(op_cod codigo)
-{
-	t_paquete *paquete = malloc(sizeof(t_paquete));
-	paquete->codigo_operacion = codigo;
-	crear_buffer(paquete);
-	return paquete;
-}
+
 
 void serializar_nuevo(t_paquete *paquete, int pid, int size, char *path)
 {
