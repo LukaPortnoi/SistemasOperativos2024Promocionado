@@ -91,12 +91,12 @@ t_instruccion *deserializar_instruccion(int socket)
     memcpy(&(instruccion->nombre), stream + desplazamiento, sizeof(nombre_instruccion));
     desplazamiento += sizeof(nombre_instruccion);
 
-    uint32_t tamanio_parametro1;
-    memcpy(&(tamanio_parametro1), stream + desplazamiento, sizeof(uint32_t));
+    uint32_t tamanio_parametro1; // Cambio aquí
+    memcpy(&tamanio_parametro1, stream + desplazamiento, sizeof(uint32_t)); // Cambio aquí
     desplazamiento += sizeof(uint32_t);
 
-    uint32_t tamanio_parametro2;
-    memcpy(&(tamanio_parametro2), stream + desplazamiento, sizeof(uint32_t));
+    uint32_t tamanio_parametro2; // Cambio aquí
+    memcpy(&tamanio_parametro2, stream + desplazamiento, sizeof(uint32_t)); // Cambio aquí
     desplazamiento += sizeof(uint32_t);
 
     instruccion->parametro1 = malloc(tamanio_parametro1);
