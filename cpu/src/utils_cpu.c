@@ -82,40 +82,32 @@ void pedir_instruccion_memoria(int pid, int pc, int socket)
 
 t_instruccion *deserializar_instruccion(int socket)
 {
-    int size;
-    void *buffer;
+    t_paquete *paquete = recibir_paqueteTOP(socket);
+    t_instruccion *instruccion = malloc(sizeof(t_instruccion));
 
-    buffer = recibir_buffer(&size, socket);
+    void *stream = paquete->buffer->stream;
+    int desplazamiento = 0;
 
-    t_instruccion *instruccion_recibida = malloc(sizeof(t_instruccion));
-    int offset = 0;
+    memcpy(&(instruccion->nombre), stream + desplazamiento, sizeof(nombre_instruccion));
+    desplazamiento += sizeof(nombre_instruccion);
 
-    memcpy(&(intruccion_recibida->nombre), buffer + offset, sizeof(nombre_instruccion));
-    offset += sizeof(nombre_instruccion);
+    uint32_t tamanio_parametro1;
+    memcpy(&(tamanio_parametro1), stream + desplazamiento, sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
 
-    /*memcpy(&(instruccion_recibida->longitud_parametro1), buffer + offset, sizeof(uint32_t));
-    offset += sizeof(uint32_t);
+    uint32_t tamanio_parametro2;
+    memcpy(&(tamanio_parametro2), stream + desplazamiento, sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
 
-    memcpy(&(instruccion_recibida->longitud_parametro2), buffer + offset, sizeof(uint32_t));
-    offset += sizeof(uint32_t);*/
+    instruccion->parametro1 = malloc(tamanio_parametro1);
+    memcpy(instruccion->parametro1, stream + desplazamiento, tamanio_parametro1);
+    desplazamiento += tamanio_parametro1;
 
-    instruccion_recibida->parametro1 = malloc(sizeof(uint32_t));
-    memcpy(instruccion_recibida->parametro1, buffer + offset, sizeof(uint32_t));
-    offset += sizeof(instruccion_recibida->parametro1);
+    instruccion->parametro2 = malloc(tamanio_parametro2);
+    memcpy(instruccion->parametro2, stream + desplazamiento, tamanio_parametro2);
+    desplazamiento += tamanio_parametro2;
 
-    instruccion_recibida->parametro2 = malloc(sizeof(uint32_t));
-    memcpy(instruccion_recibida->parametro2, buffer + offset, sizeof(uint32_t));
-    offset += sizeof(instruccion_recibida->parametro2);
+    eliminar_paquete(paquete);
 
-    instruccion_recibida->parametro3 = malloc(sizeof(uint32_t));
-    memcpy(instruccion_recibida->parametro3, buffer + offset, sizeof(uint32_t));
-    offset += sizeof(instruccion_recibida->parametro3);
-
-    instruccion_recibida->parametro4 = malloc(sizeof(uint32_t));
-    memcpy(instruccion_recibida->parametro4, buffer + offset, sizeof(uint32_t));
-    offset += sizeof(instruccion_recibida->parametro4);
-
-    free(buffer);
-
-    return instruccion_recibida;
+    return instruccion;
 }

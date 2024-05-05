@@ -4,8 +4,7 @@ pthread_mutex_t mutex_procesos;
 t_list *procesos_totales;
 t_proceso_memoria *procesos_memoria;
 
-// ESTA PARTE LA HIZO THOMI (NO LO DIGO DE MALO, SOLO COMENTO PARA SEPARAR LO QUE HICE)
-// SE ESTARA USANDO ESTA FUNCION A PRIORI, SI HAY DRAMA, SE REEMPLAZARA
+
 t_proceso_memoria *recibir_proceso_memoria(int socket_cliente)
 {
     t_proceso_memoria *proceso = malloc(sizeof(t_proceso_memoria));
@@ -21,21 +20,6 @@ t_proceso_memoria *recibir_proceso_memoria(int socket_cliente)
     free(buffer);
     return proceso;
 }
-
-void extraer_de_paquete(t_paquete *paquete, void *destino, int size) {}
-/*{
-    if (paquete->buffer->size < size)
-    {
-        // Manejar error
-        log_error(logger, "No se puede extraer %d bytes de un paquete de %d bytes", size, paquete->buffer->size);
-        return;
-    }
-
-    memcpy(destino, paquete->buffer->stream, size);
-
-    paquete->buffer->size -= size;
-    memmove(paquete->buffer->stream, paquete->buffer->stream + size, paquete->buffer->size);
-}*/
 
 // ENVIADO DE INSTRUCCIONES DE MEMORIA A CPU
 void recibir_pedido_instruccion(uint32_t *pid, uint32_t *pc, int socket)
@@ -119,32 +103,70 @@ char *obtener_nombre_instruccion(nombre_instruccion instruccion)
 
 void enviar_instruccion(int socket, t_instruccion *instruccion)
 {
-    t_paquete *paquete = crear_paquete_con_codigo_de_operacion(INSTRUCCION);
-    serializar_instruccion(paquete, instruccion);
+    t_paquete *paquete = crear_paquete_Instruccion(instruccion);
+    agregar_a_paquete_Instruccion(paquete, instruccion);
     enviar_paquete(paquete, socket);
     eliminar_paquete(paquete);
 }
 
-void serializar_instruccion(t_paquete *paquete, t_instruccion *instruccion)
-{ // Revisar toda la funcion
-    paquete->buffer->size = sizeof(nombre_instruccion) + 
-                            sizeof(uint32_t) * 2 + 
-                            instruccion->longitud_parametro1 + 
-                            instruccion->longitud_parametro2;
-                            
-    paquete->buffer->stream = malloc(paquete->buffer->size);
+t_paquete *crear_paquete_Instruccion(t_instruccion *instruccion)
+{
+    t_paquete *paquete = malloc(sizeof(t_paquete));
+    paquete->codigo_operacion = INSTRUCCION;
+    paquete->buffer = crear_buffer_instruccion(instruccion);
+    return paquete;
+}
+
+void agregar_a_paquete_Instruccion(t_paquete *paquete, t_instruccion *instruccion)
+{
     int desplazamiento = 0;
 
     memcpy(paquete->buffer->stream + desplazamiento, &(instruccion->nombre), sizeof(nombre_instruccion));
     desplazamiento += sizeof(nombre_instruccion);
+
     memcpy(paquete->buffer->stream + desplazamiento, &(instruccion->longitud_parametro1), sizeof(uint32_t));
     desplazamiento += sizeof(uint32_t);
+
     memcpy(paquete->buffer->stream + desplazamiento, &(instruccion->longitud_parametro2), sizeof(uint32_t));
     desplazamiento += sizeof(uint32_t);
+
     memcpy(paquete->buffer->stream + desplazamiento, instruccion->parametro1, instruccion->longitud_parametro1);
     desplazamiento += instruccion->longitud_parametro1;
+
     memcpy(paquete->buffer->stream + desplazamiento, instruccion->parametro2, instruccion->longitud_parametro2);
     desplazamiento += instruccion->longitud_parametro2;
+
+}
+
+t_buffer *crear_buffer_instruccion(t_instruccion *instruccion)
+{
+    t_buffer *buffer = malloc(sizeof(t_buffer));
+
+    buffer->size =  sizeof(nombre_instruccion)
+                    + instruccion->longitud_parametro1
+                    + instruccion->longitud_parametro2
+                    + sizeof(uint32_t) * 2;
+
+    buffer->stream = malloc(buffer->size);
+
+    int desplazamiento = 0;
+
+    memcpy(buffer->stream + desplazamiento, &(instruccion->nombre), sizeof(nombre_instruccion));
+    desplazamiento += sizeof(nombre_instruccion);
+   
+    memcpy(buffer->stream + desplazamiento, &(instruccion->longitud_parametro1), sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+    memcpy(buffer->stream + desplazamiento, &(instruccion->longitud_parametro2), sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+    memcpy(buffer->stream + desplazamiento, instruccion->parametro1, instruccion->longitud_parametro1);
+    desplazamiento += instruccion->longitud_parametro1;
+
+    memcpy(buffer->stream + desplazamiento, instruccion->parametro2, instruccion->longitud_parametro2);
+    desplazamiento += instruccion->longitud_parametro2;
+
+    return buffer;
 }
 
 // NO ME CIERRA LA FUNCION, SE REVISARA MAS TARDE (MAS QUE NADA AL DEVOLVER EL PROCESO_NUEVO, YA QUE SE INICIALIZA PREVIAMENTE Y NO SE DESARROLLO LA FUNCION POR EL TEMA DE LA ESTRUCTURA DE LOS PROCESOS EN MEMORIA)
@@ -193,11 +215,11 @@ t_list *parsear_instrucciones(char *path)
             list_add(instrucciones, armar_estructura_instruccion(IO_GEN_SLEEP, palabras[1], palabras[2]));
         }
         indice_split++;
-        string_iterates_lines(palabras, (void (*)(char *))free);
+        string_iterate_lines(palabras, (void (*)(char *))free);
         free(palabras);
     }
     free(codigo_leido);
-    string_iterates_lines(split_instrucciones, (void (*)(char *))free);
+    string_iterate_lines(split_instrucciones, (void (*)(char *))free);
     free(split_instrucciones);
     free(path_archivo);
     return instrucciones;
@@ -206,11 +228,16 @@ t_list *parsear_instrucciones(char *path)
 t_instruccion *armar_estructura_instruccion(nombre_instruccion instruccion, char *parametro1, char *parametro2)
 {
     t_instruccion *estructura = (t_instruccion *)malloc(sizeof(t_instruccion));
+    
     estructura->nombre = instruccion;
-    estructura->parametro1 = (parametro1[0] != '\0') ? strdup(parametro1) : parametro1;
-    estructura->parametro2 = (parametro2[0] != '\0') ? strdup(parametro2) : parametro2;
-    estructura->longitud_parametro1 = strlen(estructura->parametro1) + 1;
-    estructura->longitud_parametro2 = strlen(estructura->parametro2) + 1;
+    estructura->parametro1 = (parametro1 && parametro1[0] != '\0') ? strdup(parametro1) : NULL;
+    estructura->parametro2 = (parametro2 && parametro2[0] != '\0') ? strdup(parametro2) : NULL;
+
+    estructura->longitud_parametro1 = estructura->parametro1 ? (uint32_t)strlen(estructura->parametro1) + 1 : 0;
+    estructura->longitud_parametro2 = estructura->parametro2 ? (uint32_t)strlen(estructura->parametro2) + 1 : 0;
+/*  estructura->longitud_parametro1 = estructura->parametro1 ? strlen(estructura->parametro1) + 1 : 0;
+    estructura->longitud_parametro2 = estructura->parametro2 ? strlen(estructura->parametro2) + 1 : 0; */
+    
     printf("%s - %s - %s \n", obtener_nombre_instruccion(estructura->nombre), estructura->parametro1, estructura->parametro2); // printea instrucciones
     return estructura;
 }
@@ -219,14 +246,19 @@ char *leer_archivo(char *path)
 {
     char instrucciones[100];
     strcpy(instrucciones, path);
+
     FILE *archivo = fopen(instrucciones, "r");
+
     if (archivo == NULL)
     {
         perror("Error al abrir el archivo");
     }
+
     fseek(archivo, 0, SEEK_END);
+
     int cant_elementos = ftell(archivo);
     rewind(archivo);
+
     char *cadena = calloc(cant_elementos + 1, sizeof(char));
     if (cadena == NULL)
     {
@@ -234,8 +266,9 @@ char *leer_archivo(char *path)
         fclose(archivo);
         return NULL;
     }
+    
     int cant_elementos_leidos = fread(cadena, sizeof(char), cant_elementos, archivo);
-    if (cant_elementos != cant_elementos)
+    if (cant_elementos != cant_elementos_leidos)
     {
         perror("Error leyendo el archivo \n");
         fclose(archivo);

@@ -21,13 +21,14 @@
 
 
 t_proceso_memoria *recibir_proceso_memoria(int socket);
-void extraer_de_paquete(t_paquete *paquete, void *destino, int size);
 void recibir_pedido_instruccion(uint32_t *pid, uint32_t *pc, int socket);
 t_proceso_memoria *obtener_proceso_pid(uint32_t pid_pedido);
 t_instruccion *obtener_instruccion_del_proceso_pc(t_proceso_memoria *proceso, uint32_t pc);
 char *obtener_nombre_instruccion(nombre_instruccion instruccion);
 void enviar_instruccion(int socket, t_instruccion *instruccion);
-void serializar_instruccion(t_paquete *paquete, t_instruccion *instruccion);
+t_paquete *crear_paquete_Instruccion(t_instruccion *instruccion);
+void agregar_a_paqueteInstruccion(t_paquete *paquete, t_instruccion *instruccion);
+t_buffer *crear_buffer_instruccion(t_instruccion *instruccion);
 t_proceso_memoria *iniciar_proceso_path(t_proceso_memoria *proceso_nuevo);
 t_list *parsear_instrucciones(char *path);
 t_instruccion *armar_estructura_instruccion(nombre_instruccion instruccion, char *parametro1, char *parametro2);

@@ -41,7 +41,7 @@ t_buffer *crear_buffer_pcb(t_pcb *pcb) {
                    sizeof(t_motivo_desalojo);
 
     buffer->stream = malloc(buffer->size);
-    size_t desplazamiento = 0;
+    int desplazamiento = 0;
 
     memcpy(buffer->stream + desplazamiento, &(pcb->pid), sizeof(uint32_t));
     desplazamiento += sizeof(uint32_t);
@@ -121,7 +121,7 @@ void agregar_a_paquetePCB(t_paquete *paquete, t_pcb *pcb){
 t_pcb *deserializar_pcb(t_buffer *buffer) {
     t_pcb *pcb = malloc(sizeof(t_pcb));
     void *stream = buffer->stream;
-    size_t desplazamiento = 0;
+    int desplazamiento = 0;
 
     memcpy(&(pcb->pid), stream + desplazamiento, sizeof(uint32_t));
     desplazamiento += sizeof(uint32_t);
