@@ -62,33 +62,24 @@ void enviar_proceso_a_memoria(int pid_nuevo, char *path_proceso)
 
 void serializar_inicializar_proceso(t_paquete *paquete, int pid_nuevo, char *path_proceso)
 {
-    void *stream = malloc(sizeof(int) + strlen(path_proceso) + sizeof(int));
-    int offset = 0;
+    int path_length = strlen(path_proceso) + 1;
+    int buffer_size = sizeof(int) + sizeof(int) + path_length;
 
+    void *stream = malloc(buffer_size);
+    if (stream == NULL) {
+        return;
+    }
+
+    int offset = 0;
     memcpy(stream + offset, &pid_nuevo, sizeof(int));
     offset += sizeof(int);
 
-    memcpy(stream + offset, path_proceso, strlen(path_proceso) + 1);
-    offset += strlen(path_proceso) + 1;
+    memcpy(stream + offset, &path_length, sizeof(int));
+    offset += sizeof(int);
+    memcpy(stream + offset, path_proceso, path_length);
 
     paquete->buffer = stream;
-    paquete->buffer_size = sizeof(int) + strlen(path_proceso) + sizeof(int);
-
-    
-    // OTRA FORMA DE HACERLO
-    /*paquete->buffer->size += sizeof(uint32_t) * 3 + strlen(path_proceso) + 1;
-    paquete->buffer->stream = malloc(paquete->buffer->size);
-
-    int desplazamiento = 0;
-
-    memcpy(paquete->buffer->stream + desplazamiento, &(pid), sizeof(uint32_t));
-    desplazamiento += sizeof(uint32_t);
-
-    uint32_t long_path = strlen(path_proceso) + 1;
-    memcpy(paquete->buffer->stream + desplazamiento, &(long_path), sizeof(uint32_t));
-    desplazamiento += sizeof(uint32_t);
-
-    memcpy(paquete->buffer->stream + desplazamiento, path_proceso, long_path);*/
+    paquete->buffer_size = buffer_size;
 }
 
 // PLANIFICADOR CORTO PLAZO
@@ -163,7 +154,7 @@ void ejecutar_PCB(t_pcb *pcb)
 void interrupcion_quantum() {
     
     t_interrupcion *interrupcion = malloc(sizeof(t_interrupcion));
-    interrupcion->motivo_interrupcion = INTERRUCION_FIN_QUANTUM;
+    interrupcion->motivo_interrupcion = INTERRUPCION_FIN_QUANTUM;
     interrupcion->pid = -1;
     while (1)
     {
@@ -247,7 +238,7 @@ void iniciar_colas_y_semaforos()
     squeue_new = squeue_create();
     squeue_ready = squeue_create();
     squeue_exec = squeue_create();
-    squeue_block = squeue_create();
+    squeue_blocked = squeue_create();
     squeue_exit = squeue_create();
 }
 

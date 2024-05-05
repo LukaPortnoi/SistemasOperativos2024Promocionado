@@ -271,22 +271,31 @@ void mostrar_listado_estados_procesos()
 }
 
 void mostrar_procesos_en_cola(t_squeue *squeue, const char *nombre_cola)
-// Yo creo que esta funcion no esta bien,
-// cada vez que yo haga un pop de una cola, deberia pushearla de nuevo
-// porque sino se pierden los procesos :)
 {
-  if (queue_is_empty(squeue->cola))
-  {
-    log_info(LOGGER_KERNEL, "No hay procesos en la cola %s", nombre_cola);
-  }
-  else
-  {
-    log_info(LOGGER_KERNEL, "Procesos en estado %s:", nombre_cola);
-    while (!queue_is_empty(squeue->cola))
+
+    t_list *temp_list = list_create();
+
+    if (queue_is_empty(squeue->cola))
     {
-      t_pcb *proceso = squeue_pop(squeue);
-      log_info(LOGGER_KERNEL, "PID: %d - Estado: %s", proceso->pid, estado_to_string(proceso->estado));
-      squeue_push(squeue, proceso);
+        log_info(LOGGER_KERNEL, "No hay procesos en la cola %s", nombre_cola);
     }
-  }
+    else
+    {
+        while (!queue_is_empty(squeue->cola))
+        {
+            t_pcb *proceso = squeue_pop(squeue);
+            list_add(temp_list, proceso);
+        }
+
+        log_info(LOGGER_KERNEL, "Procesos en estado %s:", nombre_cola);
+        for (int i = 0; i < list_size(temp_list); i++)
+        {
+            t_pcb *proceso = list_get(temp_list, i);
+            log_info(LOGGER_KERNEL, "PID: %d - Estado: %s", proceso->pid, estado_to_string(proceso->estado));
+            
+            squeue_push(squeue, proceso);
+        }
+    }
+
+    list_destroy(temp_list);
 }
