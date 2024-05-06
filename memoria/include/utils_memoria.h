@@ -27,7 +27,7 @@ t_instruccion *obtener_instruccion_del_proceso_pc(t_proceso_memoria *proceso, ui
 char *obtener_nombre_instruccion(nombre_instruccion instruccion);
 void enviar_instruccion(int socket, t_instruccion *instruccion);
 t_paquete *crear_paquete_Instruccion(t_instruccion *instruccion);
-void agregar_a_paquete_Instruccion(t_paquete *paquete, t_instruccion *instruccion)
+void agregar_a_paquete_Instruccion(t_paquete *paquete, t_instruccion *instruccion);
 t_buffer *crear_buffer_instruccion(t_instruccion *instruccion);
 t_proceso_memoria *iniciar_proceso_path(t_proceso_memoria *proceso_nuevo);
 t_list *parsear_instrucciones(char *path);

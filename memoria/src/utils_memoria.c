@@ -120,7 +120,7 @@ t_paquete *crear_paquete_Instruccion(t_instruccion *instruccion)
 
 void agregar_a_paquete_Instruccion(t_paquete *paquete, t_instruccion *instruccion)
 {
-    size_t desplazamiento = 0;
+    int desplazamiento = 0;
 
     memcpy(paquete->buffer->stream + desplazamiento, &(instruccion->nombre), sizeof(nombre_instruccion));
     desplazamiento += sizeof(nombre_instruccion);
@@ -144,29 +144,29 @@ t_buffer *crear_buffer_instruccion(t_instruccion *instruccion)
 {
     t_buffer *buffer = malloc(sizeof(t_buffer));
 
-    buffer->size =  sizeof(nombre_instruccion)
-                    + *(instruccion->longitud_parametro1)
-                    + *(instruccion->longitud_parametro2)
-                    + sizeof(uint32_t) * 2;
+    buffer->size = sizeof(nombre_instruccion) +
+					sizeof(uint32_t) * 2 +
+					instruccion->longitud_parametro1 +
+					instruccion->longitud_parametro2;
 
     buffer->stream = malloc(buffer->size);
 
-    size_t desplazamiento = 0;
+	int desplazamiento = 0;
 
-    memcpy(buffer->stream + desplazamiento, &(instruccion->nombre), sizeof(nombre_instruccion));
-    desplazamiento += sizeof(nombre_instruccion);
-   
-    memcpy(buffer->stream + desplazamiento, &(instruccion->longitud_parametro1), sizeof(uint32_t));
-    desplazamiento += sizeof(uint32_t);
+	memcpy(buffer->stream + desplazamiento, &(instruccion->nombre), sizeof(nombre_instruccion));
+	desplazamiento += sizeof(nombre_instruccion);
 
-    memcpy(buffer->stream + desplazamiento, &(instruccion->longitud_parametro2), sizeof(uint32_t));
-    desplazamiento += sizeof(uint32_t);
+	memcpy(buffer->stream + desplazamiento, &(instruccion->longitud_parametro1), sizeof(uint32_t));
+	desplazamiento += sizeof(uint32_t);
 
-    memcpy(buffer->stream + desplazamiento, instruccion->parametro1, instruccion->longitud_parametro1);
-    desplazamiento += instruccion->longitud_parametro1;
+	memcpy(buffer->stream + desplazamiento, &(instruccion->longitud_parametro2), sizeof(uint32_t));
+	desplazamiento += sizeof(uint32_t);
 
-    memcpy(buffer->stream + desplazamiento, instruccion->parametro2, instruccion->longitud_parametro2);
-    desplazamiento += instruccion->longitud_parametro2;
+	memcpy(buffer->stream + desplazamiento, instruccion->parametro1, instruccion->longitud_parametro1);
+	desplazamiento += instruccion->longitud_parametro1;
+
+	memcpy(buffer->stream + desplazamiento, instruccion->parametro2, instruccion->longitud_parametro2);
+	desplazamiento += instruccion->longitud_parametro2;
 
     return buffer;
 }

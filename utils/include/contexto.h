@@ -42,8 +42,8 @@ typedef struct
     nombre_instruccion nombre;
     char *parametro1;
     char *parametro2;
-    uint32_t *longitud_parametro1;
-    uint32_t *longitud_parametro2;
+    uint32_t longitud_parametro1;
+    uint32_t longitud_parametro2;
     char *parametro3;
     char *parametro4;
 } t_instruccion;
