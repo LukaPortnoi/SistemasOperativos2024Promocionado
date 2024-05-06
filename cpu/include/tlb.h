@@ -1,7 +1,7 @@
 #ifndef TLB_H_
 #define TLB_H_
 
-#includ "./gestor.h"
+#include "./gestor.h"
 
 typedef struct
 {

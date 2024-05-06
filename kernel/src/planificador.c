@@ -35,8 +35,8 @@ void iniciar_planificador_largo_plazo() {}
 t_pcb *crear_proceso()
 {
     int pid_nuevo = asignar_pid();
-    t_pcb *pcb = crear_pcb(pid_nuevo, LISTO, QUANTUM); // POR AHORA ES A LISTOS. PARA CHECK3 ES A NUEVOS
-    squeue_push(squeue_ready, pcb);                    // PARA CHECK2 ES EN READY, PARA EL CHECK3 ES EN NEW YA QUE HAY QUE DESARROLLAR EL PLANIFICADOR LARGO PLAZO
+    t_pcb *pcb = crear_pcb(pid_nuevo, LISTO, QUANTUM);                    // POR AHORA ES A LISTOS. PARA CHECK3 ES A NUEVOS
+    squeue_push(squeue_ready, pcb);                                       // PARA CHECK2 ES EN READY, PARA EL CHECK3 ES EN NEW YA QUE HAY QUE DESARROLLAR EL PLANIFICADOR LARGO PLAZO
     log_debug(LOGGER_KERNEL, "Se crea el proceso %d en READY", pcb->pid); // CAMBIAR A NEW CUANDO SE DESARROLLE EL PLANIFICADOR LARGO PLAZO
     return pcb;
 }
@@ -79,8 +79,17 @@ void serializar_inicializar_proceso(t_paquete *paquete, int pid_nuevo, char *pat
     offset += sizeof(int);
     memcpy(stream + offset, path_proceso, path_length);
 
-    paquete->buffer = stream;
-    paquete->buffer->size = buffer_size;
+    t_buffer *buffer = malloc(sizeof(t_buffer));
+    if (buffer == NULL)
+    {
+        free(stream);
+        return;
+    }
+
+    buffer->size = buffer_size;
+    buffer->stream = stream;
+
+    paquete->buffer = buffer;
 }
 
 // PLANIFICADOR CORTO PLAZO
@@ -175,7 +184,6 @@ void admitir_pcb(t_pcb *pcb)
 
 void interrupcion_quantum()
 {
-
     t_interrupcion *interrupcion = malloc(sizeof(t_interrupcion));
     interrupcion->motivo_interrupcion = INTERRUPCION_FIN_QUANTUM;
     interrupcion->pid = -1;

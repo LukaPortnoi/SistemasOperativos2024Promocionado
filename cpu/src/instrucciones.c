@@ -45,7 +45,7 @@ void _jnz(char *registro, char *instruccion)
 // junto a la cantidad de segundos que va a bloquearse el proceso.
 void _sleep()
 {
-    
+
     pcb_actual->contexto_ejecucion->motivo_desalojo = INTERRUPCION_SYSCALL;
 }
 
@@ -58,7 +58,7 @@ void _wait()
 //  Esta instrucción solicita al Kernel que se libere una instancia del recurso indicado por parámetro.
 void _signal()
 {
-    pcb_actual->contexto_ejecucion->motivo_desalojo= INTERRUPCION_SYSCALL;
+    pcb_actual->contexto_ejecucion->motivo_desalojo = INTERRUPCION_SYSCALL;
 }
 
 // Lee el valor de memoria correspondiente a la Dirección Lógica y lo almacena en el Registro.
@@ -66,7 +66,7 @@ void _mov_in(char *registro, char *direc_logica)
 {
     uint32_t *regis = get_registry(registro);
 
-    uint32_t valor = 0; //obtener_valor_dir(str_to_uint32(direc_logica)); NO EXISTEEEEEEEEE
+    uint32_t valor = 0; // obtener_valor_dir(str_to_uint32(direc_logica)); NO EXISTEEEEEEEEE
     if (valor != -1)
     {
         *(regis) = valor;
@@ -79,7 +79,7 @@ void _mov_out(char *direc_logica, char *registro)
 {
     uint32_t *regis = get_registry(registro);
 
-   // escribir_memoria(str_to_uint32(direc_logica), regis); ???????????????????
+    // escribir_memoria(str_to_uint32(direc_logica), regis); ???????????????????
 
     // TODO: solo cambiar si no es page fault
     free(regis);
@@ -136,19 +136,19 @@ void __exit()
 
 void traducir_dl_fs(char *dl)
 {
-    int df = 0; //traducir_dl(str_to_uint32(dl)); // NO EXISTE
+    int df = 0; // traducir_dl(str_to_uint32(dl)); // NO EXISTE
     if (df == -1)
     {
         log_error(LOGGER_CPU, "Page fault: %s", dl);
     }
     else
     {
-                log_error(LOGGER_CPU, "Thomy puto");
+        log_error(LOGGER_CPU, "Thomy puto");
 
-        //char *df_string = atoi(df);
-        // NO GUARDAMOS EN EL PCB YA LAS INSTRUCCIONES, HABRIA QUE VER COMO HACER ESTO DESPUES XDDDDDD
-        //contexto_actual->instruccion_ejecutada->longitud_parametro2 = strlen(df_string) + 1;
-        //contexto_actual->instruccion_ejecutada->parametro2 = strdup(df_string);
+        // char *df_string = atoi(df);
+        //  NO GUARDAMOS EN EL PCB YA LAS INSTRUCCIONES, HABRIA QUE VER COMO HACER ESTO DESPUES XDDDDDD
+        // contexto_actual->instruccion_ejecutada->longitud_parametro2 = strlen(df_string) + 1;
+        // contexto_actual->instruccion_ejecutada->parametro2 = strdup(df_string);
     }
 }
 

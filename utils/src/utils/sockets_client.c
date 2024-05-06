@@ -48,12 +48,18 @@ void enviar_mensaje(char *mensaje, int socket_cliente)
 	paquete->buffer->stream = malloc(paquete->buffer->size);
 	memcpy(paquete->buffer->stream, mensaje, paquete->buffer->size);
 
-	int bytes = paquete->buffer->size + 2 * sizeof(int);
+	void *a_enviar = malloc(paquete->buffer->size + sizeof(op_cod) + sizeof(uint32_t));
+	int offset = 0;
 
-	void *a_enviar = serializar_paquete(paquete, bytes);
-
-	send(socket_cliente, a_enviar, bytes, 0);
-
+	memcpy(a_enviar + offset, &(paquete->codigo_operacion), sizeof(op_cod));
+	offset += sizeof(op_cod);
+	memcpy(a_enviar + offset, &(paquete->buffer->size), sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(a_enviar + offset, paquete->buffer->stream, paquete->buffer->size);
+	if (send(socket_cliente, a_enviar, paquete->buffer->size + sizeof(op_cod) + sizeof(uint32_t), 0) == -1)
+	{
+		free(a_enviar);
+	}
 	free(a_enviar);
 	eliminar_paquete(paquete);
 }
@@ -77,11 +83,21 @@ void agregar_a_paquete(t_paquete *paquete, void *valor, int tamanio)
 
 void enviar_paquete(t_paquete *paquete, int socket_cliente)
 {
-	int bytes = paquete->buffer->size + 2 * sizeof(int);
-	void *a_enviar = serializar_paquete(paquete, bytes);
+	void *a_enviar = malloc(paquete->buffer->size + sizeof(op_cod) + sizeof(int));
+	int offset = 0;
 
-	send(socket_cliente, a_enviar, bytes, 0);
+	printf("Enviando paquete con tamaño %d\n", paquete->buffer->size);
 
+	memcpy(a_enviar + offset, &(paquete->codigo_operacion), sizeof(op_cod));
+	offset += sizeof(op_cod);
+	memcpy(a_enviar + offset, &(paquete->buffer->size), sizeof(int));
+	offset += sizeof(int);
+	memcpy(a_enviar + offset, paquete->buffer->stream, paquete->buffer->size);
+
+	if (send(socket_cliente, a_enviar, paquete->buffer->size + sizeof(op_cod) + sizeof(int), 0) == -1)
+	{
+		free(a_enviar);
+	}
 	free(a_enviar);
 }
 

@@ -10,7 +10,7 @@ char *IP_CPU;
 char *PUERTO_CPU_DISPATCH;
 char *PUERTO_CPU_INTERRUPT;
 char *ALGORITMO_PLANIFICACION;
-int QUANTUM;
+uint32_t QUANTUM;
 char **RECURSOS;
 char **INSTANCIAS_RECURSOS;
 int GRADO_MULTIPROGRAMACION;
@@ -31,7 +31,7 @@ int main()
 	iniciar_conexiones();
 	iniciar_colas_y_semaforos();
 	iniciar_planificador_largo_plazo();
-	iniciar_planificador_corto_plazo();
+	//iniciar_planificador_corto_plazo();
 
 	iniciar_consola_interactiva();
 

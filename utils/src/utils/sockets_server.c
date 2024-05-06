@@ -48,7 +48,7 @@ int esperar_cliente(int socket_servidor, t_log *logger)
 	// Aceptamos un nuevo cliente
 	int socket_cliente = accept(socket_servidor, NULL, NULL);
 	log_info(logger, "Se conecto un cliente!");
-	
+
 	return socket_cliente;
 }
 
@@ -112,23 +112,32 @@ t_list *recibir_paquete(int socket_cliente)
 
 t_paquete *recibir_paqueteTOP(int socket_cliente)
 {
-    t_paquete *paquete = malloc(sizeof(t_paquete));
-    paquete->buffer = malloc(sizeof(t_buffer));
-    paquete->buffer->stream = NULL;
-    paquete->buffer->size = 0;
-    paquete->codigo_operacion = 0;
+	t_paquete *paquete = malloc(sizeof(t_paquete));
+	paquete->buffer = malloc(sizeof(t_buffer));
+	paquete->buffer->stream = NULL;
+	paquete->buffer->size = 0;
+	paquete->codigo_operacion = 0;
 
-	recv(socket_cliente, &(paquete->codigo_operacion), sizeof(int), MSG_WAITALL);
-	recv(socket_cliente, &(paquete->buffer->size), sizeof(int), MSG_WAITALL);
+	if(recv(socket_cliente, &(paquete->codigo_operacion), sizeof(op_cod), 0)!=sizeof(op_cod)){
+		printf("Error al recibir el codigo de operacion\n");
+		return NULL;
+	}
+	printf("Codigo de operacion: %d\n", paquete->codigo_operacion);
+	//lo mismo con el otro recv
+	if(recv(socket_cliente, &(paquete->buffer->size), sizeof(uint32_t), 0)!=sizeof(uint32_t)){
+		printf("Error al recibir el tamanio del buffer\n");
+		return NULL;
+	}
+	printf("Tamanio del buffer: %d\n", paquete->buffer->size);
 	paquete->buffer->stream = malloc(paquete->buffer->size);
-	recv(socket_cliente, paquete->buffer->stream, paquete->buffer->size, MSG_WAITALL);
+	recv(socket_cliente, paquete->buffer->stream, paquete->buffer->size, 0);
 
-    return paquete;
+	return paquete;
 }
 
 t_interrupcion *recibir_interrupcion(int socket_cliente)
 {
-	int size;
+	int size = 0;
 	void *buffer = recibir_buffer(&size, socket_cliente);
 	int offset = 0;
 
