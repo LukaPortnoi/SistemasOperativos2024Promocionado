@@ -59,4 +59,8 @@ t_pcb *deserializar_pcb(t_buffer *buffer);
 void enviar_pcb(t_pcb *pcb, int socket_cliente);
 t_pcb *recibir_pcb(int socket_cliente);
 
+// Funciones instrucciones
+
+uint32_t str_to_uint32(char *);
+
 #endif // PCB_H_

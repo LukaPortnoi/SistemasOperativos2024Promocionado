@@ -4,6 +4,7 @@
 #include <pthread.h>
 #include <commons/collections/queue.h>
 #include <semaphore.h>
+#include "../../utils/include/pcb.h"
 
 extern t_log *LOGGER_KERNEL;
 extern t_config *CONFIG_KERNEL;

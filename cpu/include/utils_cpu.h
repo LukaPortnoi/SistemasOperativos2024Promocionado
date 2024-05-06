@@ -16,6 +16,9 @@
 #include "../../utils/include/pcb.h"
 #include "../../utils/include/contexto.h"
 #include "./comunicaciones.h"
+#include "./instrucciones.h"
+#include "./gestor.h"
+
 
 void ejecutar_ciclo_instruccion();
 t_instruccion *fetch(int pid, int pc);

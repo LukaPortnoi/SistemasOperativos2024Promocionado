@@ -16,7 +16,9 @@
 #include "../../utils/include/pcb.h"
 #include "../../utils/include/contexto.h"
 #include "./comunicaciones.h"
-#include "../include/utils_cpu.h"
+#include "./gestor.h"
+#include "./utils_cpu.h"
+
 
 void inicializar_config(void);
 void iniciar_conexiones(void);

@@ -166,30 +166,30 @@ int server_escuchar(t_log *logger, char *server_name, int server_socket)
 
 bool recibir_interrupciones(void) //  TODO: Revisar
 {
-	bool hayInterrupcion = false;
+	bool hayInterrup = false;
 	while (1)
 	{
-		t_interrupcion *interrupcion = recibir_interrupciones(fd_cpu_interrupt);
+		t_interrupcion *interrupcion = recibir_interrupcion(fd_cpu_interrupt);
 
 		switch (interrupcion->motivo_interrupcion)
 		{
 		case INTERRUPCION_FIN_QUANTUM:
-			hayInterrupcion = true;
+			hayInterrup = true;
 			break;
 
 		case INTERRUPCION_BLOQUEO:
-			hayInterrupcion = true;
+			hayInterrup = true;
 			break;
 
 		case INTERRUPCION_FINALIZACION:
-			hayInterrupcion = true;
+			hayInterrup = true;
 			break;
 		case INTERRUPCION_ERROR:
-			hayInterrupcion = true;
+			hayInterrup = true;
 			break;
 		default:
 			break;
 		}
 	}
-	return hayInterrupcion;
+	return hayInterrup;
 }

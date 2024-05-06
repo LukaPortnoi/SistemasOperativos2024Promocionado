@@ -77,7 +77,7 @@ void finalizar_conexiones_cpu()
 {
 	log_info(LOGGER_CPU, "Finalizando conexiones CPU");
 	log_destroy(LOGGER_CPU);
-	config_destroy(CONFIG_CPU);
+	config_destroy(CONFIG);
 	liberar_conexion(fd_cpu_dispatch);
 	liberar_conexion(fd_cpu_interrupt);
 	liberar_conexion(fd_cpu_memoria);

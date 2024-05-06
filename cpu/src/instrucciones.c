@@ -1,4 +1,4 @@
-#include "./instrucciones.h"
+#include "../include/instrucciones.h"
 
 // Asigna al registro el valor pasado como parámetro.
 void _set(char *registro, char *valor)
@@ -27,11 +27,11 @@ void _sub(char *registro_destino, char *registro_origen)
 // Si valor del registro != cero, actualiza el IP al número de instrucción pasada por parámetro.
 void _jnz(char *registro, char *instruccion)
 {
-    uint32_t regis = *(get_registry(registro));
+    uint32_t *regis = get_registry(registro);
 
     if (regis != 0)
     {
-        pcb_actual->contexto_ejecucion->registrosprogram_counter = str_to_uint32(instruccion);
+        pcb_actual->contexto_ejecucion->registros->program_counter = str_to_uint32(instruccion);
     }
     else
     {
@@ -46,19 +46,19 @@ void _jnz(char *registro, char *instruccion)
 void _sleep()
 {
     
-    contexto_actual->motivo_desalojo = INTERRUPCION_SYSCALL;
+    pcb_actual->contexto_ejecucion->motivo_desalojo = INTERRUPCION_SYSCALL;
 }
 
 // Esta instrucción solicita al Kernel que se asigne una instancia del recurso indicado por parámetro.
 void _wait()
 {
-    contexto_actual->motivo_desalojo = INTERRUPCION_SYSCALL;
+    pcb_actual->contexto_ejecucion->motivo_desalojo = INTERRUPCION_SYSCALL;
 }
 
 //  Esta instrucción solicita al Kernel que se libere una instancia del recurso indicado por parámetro.
 void _signal()
 {
-    contexto_actual->motivo_desalojo = INTERRUPCION_SYSCALL;
+    pcb_actual->contexto_ejecucion->motivo_desalojo= INTERRUPCION_SYSCALL;
 }
 
 // Lee el valor de memoria correspondiente a la Dirección Lógica y lo almacena en el Registro.
@@ -77,30 +77,30 @@ void _mov_in(char *registro, char *direc_logica)
 // física de memoria obtenida a partir de la Dirección Lógica.
 void _mov_out(char *direc_logica, char *registro)
 {
-    uint32_t regis = *(get_registry(registro));
+    uint32_t *regis = get_registry(registro);
 
    // escribir_memoria(str_to_uint32(direc_logica), regis); ???????????????????
 
     // TODO: solo cambiar si no es page fault
-    // free(regis);
+    free(regis);
 }
 
 // Solicita al kernel que abra el archivo pasado por parámetro con el modo de apertura indicado.
 void _f_open(char *nombre_archivo, char *modo_apertura)
 {
-    contexto_actual->motivo_desalojo = INTERRUPCION_SYSCALL;
+    pcb_actual->contexto_ejecucion->motivo_desalojo = INTERRUPCION_SYSCALL;
 }
 
 // Solicita al kernel que cierre el archivo pasado por parámetro.
 void _f_close(char *nombre_archivo)
 {
-    contexto_actual->motivo_desalojo = INTERRUPCION_SYSCALL;
+    pcb_actual->contexto_ejecucion->motivo_desalojo = INTERRUPCION_SYSCALL;
 }
 
 // Solicita al kernel actualizar el puntero del archivo a la posición pasada por parámetro.
 void _f_seek(char *nombre_archivo, char *posicion)
 {
-    contexto_actual->motivo_desalojo = INTERRUPCION_SYSCALL;
+    pcb_actual->contexto_ejecucion->motivo_desalojo = INTERRUPCION_SYSCALL;
 }
 
 // Solicita al Kernel que se lea del archivo indicado y
@@ -109,7 +109,7 @@ void _f_read(char *nombre_archivo, char *direc_logica)
 {
     traducir_dl_fs(direc_logica);
 
-    contexto_actual->motivo_desalojo = INTERRUPCION_SYSCALL;
+    pcb_actual->contexto_ejecucion->motivo_desalojo = INTERRUPCION_SYSCALL;
 }
 
 // Solicita al Kernel que se escriba en el archivo indicado l
@@ -118,13 +118,13 @@ void _f_write(char *nombre_archivo, char *direc_logica)
 {
     traducir_dl_fs(direc_logica);
 
-    contexto_actual->motivo_desalojo = INTERRUPCION_SYSCALL;
+    pcb_actual->contexto_ejecucion->motivo_desalojo = INTERRUPCION_SYSCALL;
 }
 
 //  Solicita al Kernel que se modifique el tamaño del archivo al indicado por parámetro.
 void _f_truncate(char *nombre_archivo, char *tamanio)
 {
-    contexto_actual->motivo_desalojo = INTERRUPCION_SYSCALL;
+    pcb_actual->contexto_ejecucion->motivo_desalojo = INTERRUPCION_SYSCALL;
 }
 
 // representa la syscall de finalización del proceso.
@@ -143,9 +143,12 @@ void traducir_dl_fs(char *dl)
     }
     else
     {
-        char *df_string = atoi(df);
-        contexto_actual->instruccion_ejecutada->longitud_parametro2 = strlen(df_string) + 1;
-        contexto_actual->instruccion_ejecutada->parametro2 = strdup(df_string);
+                log_error(LOGGER_CPU, "Thomy puto");
+
+        //char *df_string = atoi(df);
+        // NO GUARDAMOS EN EL PCB YA LAS INSTRUCCIONES, HABRIA QUE VER COMO HACER ESTO DESPUES XDDDDDD
+        //contexto_actual->instruccion_ejecutada->longitud_parametro2 = strlen(df_string) + 1;
+        //contexto_actual->instruccion_ejecutada->parametro2 = strdup(df_string);
     }
 }
 

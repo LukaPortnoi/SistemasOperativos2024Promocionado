@@ -63,9 +63,11 @@ void execute(t_instruccion *instruccion)
     case JNZ:
         _jnz(instruccion->parametro1, instruccion->parametro2);
         break;
-    case IO_GEN_SLEEP:
-        _io_gen_sleep(instruccion->parametro1, instruccion->parametro2);
-        break;
+    //case IO_GEN_SLEEP:
+     //   _io_gen_sleep(instruccion->parametro1, instruccion->parametro2);
+      //  break;
+      default:
+            break;
     }
 }
 
@@ -75,7 +77,7 @@ void pedir_instruccion_memoria(int pid, int pc, int socket)
     paquete->buffer->size += sizeof(int) * 2;
     paquete->buffer->stream = malloc(paquete->buffer->size);
     memcpy(paquete->buffer->stream, &(pid), sizeof(int));
-    memcpy(paquete->buffer->stream + sizeof(int), &(pc), sizeof(int););
+    memcpy(paquete->buffer->stream + sizeof(int), &(pc), sizeof(int));
     enviar_paquete(paquete, socket);
     eliminar_paquete(paquete);
 }

@@ -16,7 +16,8 @@
 #include "../../utils/include/sockets_client.h"
 #include "../../utils/include/sockets_server.h"
 #include "../../utils/include/pcb.h"
-#include "../../utils/include/instrucciones.h"
+#include "./gestor.h"
+
 
 int server_escuchar(t_log *logger, char *server_name, int server_socket);
 
