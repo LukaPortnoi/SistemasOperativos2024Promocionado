@@ -1,6 +1,26 @@
 #ifndef GESTOR_H_
 #define GESTOR_H_
 
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdint.h>
+#include <string.h>
+#include <pthread.h>
+#include <inttypes.h>
+
+#include <commons/log.h>
+#include <commons/string.h>
+#include <commons/config.h>
+#include <commons/collections/list.h>
+#include <readline/readline.h>
+
+#include "../../utils/include/sockets_server.h"
+#include "../../utils/include/sockets_client.h"
+#include "../../utils/include/sockets_utils.h"
+#include "../../utils/include/sockets_common.h"
+#include "../../utils/include/pcb.h"
+#include "../../utils/include/contexto.h"
+
 extern char *IP_MEMORIA;
 extern char *IP_CPU;
 extern char *PUERTO_MEMORIA;

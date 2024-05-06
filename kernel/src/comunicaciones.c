@@ -1,6 +1,6 @@
 #include "../include/comunicaciones.h"
 
-void procesar_conexion_kernel(void *void_args)
+static void procesar_conexion_kernel(void *void_args)
 {
 	t_procesar_conexion_args *args = (t_procesar_conexion_args *)void_args;
 	t_log *logger = args->log;

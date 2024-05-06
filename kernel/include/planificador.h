@@ -1,25 +1,7 @@
 #ifndef PLANIFICADOR_H_
 #define PLANIFICADOR_H_
 
-#include <stdio.h>
-#include <stdbool.h>
-#include <sys/time.h>
-#include <time.h>
-#include <unistd.h>
-
-#include <commons/string.h>
-#include <commons/collections/queue.h>
-#include <semaphore.h>
-#include <pthread.h>
-
-#include "../../utils/include/sockets_client.h"
-#include "../../utils/include/sockets_utils.h"
-#include "../../utils/include/sockets_common.h"
-#include "../../utils/include/pcb.h"
-
 #include "./gestor.h"
-#include "./comunicaciones.h"
-#include "./planificador.h"
 
 // PLANIFICADOR LARGO PLAZO
 void iniciar_planificador_largo_plazo(void);
@@ -35,9 +17,10 @@ void planificar_PCB_cortoPlazo(void);
 
 void ejecutar_PCB(t_pcb *pcb);
 t_pcb *recibir_pcb_CPU(int socket);
+void admitir_pcb(t_pcb *pcb);
 void interrupcion_quantum(void);
 
-// SQUEUES
+// MANEJO DE SQUEUES
 t_squeue *squeue_create();
 void squeue_destroy(t_squeue *squeue);
 void *squeue_pop(t_squeue *squeue);
@@ -45,6 +28,7 @@ void squeue_push(t_squeue *squeue, void *elemento);
 void *squeue_peek(t_squeue *squeue);
 t_pcb *squeue_pop_pcb(t_squeue *squeue);
 
+// OTRAS FUNCIONES
 void iniciar_colas_y_semaforos(void);
 int asignar_pid(void);
 

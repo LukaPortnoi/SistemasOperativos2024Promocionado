@@ -162,8 +162,8 @@ void iniciar_proceso(char *path_proceso)
   destruir_pcb(pcb);
 }
 
-void finalizar_proceso(char *pid_string)
-{
+void finalizar_proceso(char *pid_string){}
+/* {
   int pid = atoi(pid_string);
 
   if (pcb_ejecutandose != NULL && pcb_ejecutandose->pid == pid)
@@ -198,7 +198,7 @@ void finalizar_proceso(char *pid_string)
   cambiar_estado_pcb(proceso, FINALIZADO);
 
   sem_post(&semFinalizado);
-}
+} */
 
 t_pcb *buscar_proceso_en_colas(int pid) // TODO: revisar q no este haciendo cagadas
 {
@@ -219,16 +219,16 @@ t_pcb *buscar_proceso_en_colas(int pid) // TODO: revisar q no este haciendo caga
     proceso = buscar_proceso_en_cola(squeue_exec, pid);
   }
 
-  if (proceso == NULL && !queue_is_empty(squeue_block->cola))
+  if (proceso == NULL && !queue_is_empty(squeue_blocked->cola))
   {
-    proceso = buscar_proceso_en_cola(squeue_block, pid);
+    proceso = buscar_proceso_en_cola(squeue_blocked, pid);
   }
 
   return proceso;
 }
 
-t_pcb *buscar_proceso_en_cola(t_squeue *squeue, int pid)
-{
+t_pcb *buscar_proceso_en_cola(t_squeue *squeue, int pid){}
+/* {
   t_pcb *proceso = NULL;
   t_list *temp = list_create();
 
@@ -250,7 +250,7 @@ t_pcb *buscar_proceso_en_cola(t_squeue *squeue, int pid)
 
   list_destroy(temp);
   return proceso;
-}
+} */
 
 void iniciar_planificacion() {}
 void detener_planificacion() {}
@@ -272,30 +272,29 @@ void mostrar_listado_estados_procesos()
 
 void mostrar_procesos_en_cola(t_squeue *squeue, const char *nombre_cola)
 {
+  t_list *temp_list = list_create();
 
-    t_list *temp_list = list_create();
-
-    if (queue_is_empty(squeue->cola))
+  if (queue_is_empty(squeue->cola))
+  {
+    log_info(LOGGER_KERNEL, "No hay procesos en la cola %s", nombre_cola);
+  }
+  else
+  {
+    while (!queue_is_empty(squeue->cola))
     {
-        log_info(LOGGER_KERNEL, "No hay procesos en la cola %s", nombre_cola);
-    }
-    else
-    {
-        while (!queue_is_empty(squeue->cola))
-        {
-            t_pcb *proceso = squeue_pop(squeue);
-            list_add(temp_list, proceso);
-        }
-
-        log_info(LOGGER_KERNEL, "Procesos en estado %s:", nombre_cola);
-        for (int i = 0; i < list_size(temp_list); i++)
-        {
-            t_pcb *proceso = list_get(temp_list, i);
-            log_info(LOGGER_KERNEL, "PID: %d - Estado: %s", proceso->pid, estado_to_string(proceso->estado));
-            
-            squeue_push(squeue, proceso);
-        }
+      t_pcb *proceso = squeue_pop(squeue);
+      list_add(temp_list, proceso);
     }
 
-    list_destroy(temp_list);
+    log_info(LOGGER_KERNEL, "Procesos en estado %s:", nombre_cola);
+    for (int i = 0; i < list_size(temp_list); i++)
+    {
+      t_pcb *proceso = list_get(temp_list, i);
+      log_info(LOGGER_KERNEL, "PID: %d - Estado: %s", proceso->pid, estado_to_string(proceso->estado));
+
+      squeue_push(squeue, proceso);
+    }
+  }
+
+  list_destroy(temp_list);
 }

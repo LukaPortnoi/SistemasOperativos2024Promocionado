@@ -1,9 +1,29 @@
 #ifndef GESTOR_H_
 #define GESTOR_H_
 
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdint.h>
+#include <string.h>
+#include <stdbool.h>
+#include <inttypes.h>
 #include <pthread.h>
-#include <commons/collections/queue.h>
 #include <semaphore.h>
+#include <sys/time.h>
+#include <time.h>
+#include <unistd.h>
+#include <readline/readline.h>
+#include <readline/history.h>
+
+#include <commons/log.h>
+#include <commons/string.h>
+#include <commons/config.h>
+#include <commons/collections/queue.h>
+
+#include "../../utils/include/sockets_server.h"
+#include "../../utils/include/sockets_client.h"
+#include "../../utils/include/sockets_utils.h"
+#include "../../utils/include/sockets_common.h"
 #include "../../utils/include/pcb.h"
 
 extern t_log *LOGGER_KERNEL;
@@ -16,7 +36,7 @@ extern char *IP_CPU;
 extern char *PUERTO_CPU_DISPATCH;
 extern char *PUERTO_CPU_INTERRUPT;
 extern char *ALGORITMO_PLANIFICACION;
-extern int   QUANTUM;
+extern int QUANTUM;
 extern char **RECURSOS;
 extern char **INSTANCIAS_RECURSOS;
 extern int GRADO_MULTIPROGRAMACION;
@@ -56,6 +76,6 @@ extern t_squeue *squeue_new;
 extern t_squeue *squeue_ready;
 extern t_squeue *squeue_exec;
 extern t_squeue *squeue_blocked;
-extern t_squeue *squeue_exit;  
+extern t_squeue *squeue_exit;
 
 #endif /* GESTOR_H_ */

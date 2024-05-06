@@ -1,7 +1,22 @@
 #ifndef GESTOR_H_
 #define GESTOR_H_
 
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdint.h>
+#include <string.h>
+#include <pthread.h>
+#include <inttypes.h>
 
+#include <commons/log.h>
+#include <commons/string.h>
+#include <commons/config.h>
+#include <commons/collections/list.h>
+#include <readline/readline.h>
+
+#include "../../utils/include/sockets_server.h"
+#include "../../utils/include/sockets_client.h"
+#include "../../utils/include/sockets_utils.h"
 
 typedef struct
 {
@@ -10,10 +25,10 @@ typedef struct
     t_list *instrucciones;
 } t_proceso_memoria;
 
-extern t_log* LOGGER_MEMORIA;
-extern t_config* CONFIG_MEMORIA;
-extern char* PUERTO_ESCUCHA_MEMORIA;
-extern char* IP_MEMORIA;
+extern t_log *LOGGER_MEMORIA;
+extern t_config *CONFIG_MEMORIA;
+extern char *PUERTO_ESCUCHA_MEMORIA;
+extern char *IP_MEMORIA;
 extern int TAM_MEMORIA;
 extern int TAM_PAGINA;
 extern char *PATH_INSTRUCCIONES;

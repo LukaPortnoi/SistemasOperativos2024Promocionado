@@ -1,6 +1,18 @@
 #ifndef GESTOR_H_
 #define GESTOR_H_
 
+#include <stdlib.h>
+#include <stdio.h>
+
+#include <commons/log.h>
+#include <commons/string.h>
+#include <commons/config.h>
+#include <readline/readline.h>
+
+#include "../../utils/include/sockets_server.h"
+#include "../../utils/include/sockets_client.h"
+#include "../../utils/include/sockets_utils.h"
+
 extern char *TIPO_INTERFAZ;
 extern int TIEMPO_UNIDAD_TRABAJO;
 extern char *IP_KERNEL;

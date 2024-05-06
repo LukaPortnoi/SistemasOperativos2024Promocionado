@@ -33,7 +33,7 @@ void serializar_contexto(t_paquete *paquete, t_contexto_ejecucion *ctx)
 	memcpy(paquete->buffer->stream + desplazamiento, ctx->registros, sizeof(t_registros));
 	desplazamiento += sizeof(t_registros);
 
-	/* memcpy(paquete->buffer->stream + desplazamiento, &(ctx->numero_marco), sizeof(int));
+	memcpy(paquete->buffer->stream + desplazamiento, &(ctx->numero_marco), sizeof(int));
 	desplazamiento += sizeof(int);
 
 	memcpy(paquete->buffer->stream + desplazamiento, &(ctx->nro_pf), sizeof(int));
@@ -57,7 +57,7 @@ void serializar_contexto(t_paquete *paquete, t_contexto_ejecucion *ctx)
 	memcpy(paquete->buffer->stream + desplazamiento, ctx->instruccion_ejecutada->parametro2, ctx->instruccion_ejecutada->longitud_parametro2);
 	desplazamiento += ctx->instruccion_ejecutada->longitud_parametro2;
 
-	/*memcpy(paquete->buffer->stream + desplazamiento, &(ctx->codigo_ultima_instru), sizeof(nombre_instruccion));
+	memcpy(paquete->buffer->stream + desplazamiento, &(ctx->codigo_ultima_instru), sizeof(nombre_instruccion));
 	desplazamiento += sizeof(nombre_instruccion);
 
 	 memcpy(paquete->buffer->stream + desplazamiento, &(ctx->motivo_desalojado), sizeof(motivo_desalojo));
@@ -85,7 +85,7 @@ t_contexto_ejecucion *recibir_contexto(int socket)
 	memcpy(contexto_recibido->registros, buffer + offset, sizeof(t_registros));
 	offset += sizeof(t_registros);
 
-	/* memcpy(&(contexto_recibido->numero_marco), buffer + offset, sizeof(int));
+	memcpy(&(contexto_recibido->numero_marco), buffer + offset, sizeof(int));
 	offset += sizeof(int);
 	memcpy(&(contexto_recibido->nro_pf), buffer + offset, sizeof(int));
 	offset += sizeof(int); 
@@ -112,7 +112,7 @@ t_contexto_ejecucion *recibir_contexto(int socket)
 	memcpy(&(contexto_recibido->codigo_ultima_instru), buffer + offset, sizeof(nombre_instruccion));
 	offset += sizeof(nombre_instruccion);
 
-	/*memcpy(&(contexto_recibido->motivo_desalojado), buffer + offset, sizeof(motivo_desalojo));
+	memcpy(&(contexto_recibido->motivo_desalojado), buffer + offset, sizeof(motivo_desalojo));
 	offset += sizeof(motivo_desalojo);
 
 	free(buffer);

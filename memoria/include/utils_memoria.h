@@ -1,24 +1,8 @@
 #ifndef UTILS_MEMORIA_H
 #define UTILS_MEMORIA_H
 
-#include <stdlib.h>
-#include <stdio.h>
-
-#include <commons/log.h>
-#include <commons/string.h>
-#include <commons/config.h>
-#include <commons/collections/list.h>
-#include <stdint.h>
-#include <string.h>
-#include <pthread.h>
-#include <inttypes.h>
-#include <readline/readline.h>
-
-#include "../../utils/include/sockets_client.h"
-#include "../../utils/include/sockets_server.h"
+#include "./gestor.h"
 #include "../../utils/include/contexto.h"
-#include "../include/gestor.h"
-
 
 t_proceso_memoria *recibir_proceso_memoria(int socket);
 void recibir_pedido_instruccion(uint32_t *pid, uint32_t *pc, int socket);

@@ -19,5 +19,4 @@ void serializar_nuevo(t_paquete *paquete, int pid, int size, char *path);
 void paquete(int conexion, t_log *logger);
 void terminar_programa(int conexion, t_log *logger, t_config *config);
 
-
-#endif
+#endif /* SOCKETS_UTILS_H_ */

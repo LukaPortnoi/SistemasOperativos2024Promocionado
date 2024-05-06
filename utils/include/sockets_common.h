@@ -1,6 +1,6 @@
 #ifndef SOCKETS_COMMON_H_
 #define SOCKETS_COMMON_H_
- typedef enum 
+typedef enum
 {
     HANDSHAKE_consola,
     HANDSHAKE_kernel,
@@ -10,7 +10,7 @@
     HANDSHAKE_dispatch,
     HANDSHAKE_in_out,
     HANDSHAKE_ok_continue,
-    
+
     MENSAJE,
     PAQUETE,
     PCB,
