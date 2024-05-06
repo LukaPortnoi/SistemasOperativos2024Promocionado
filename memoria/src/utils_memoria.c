@@ -2,7 +2,7 @@
 
 pthread_mutex_t mutex_procesos;
 t_list *procesos_totales;
-t_proceso_memoria *procesos_memoria;
+t_proceso_memoria *proceso_memoria;
 
 
 t_proceso_memoria *recibir_proceso_memoria(int socket_cliente)
