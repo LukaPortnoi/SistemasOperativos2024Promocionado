@@ -4,6 +4,9 @@ void ejecutar_ciclo_instruccion()
 {
     t_instruccion *instruccion = fetch(pcb_actual->pid, pcb_actual->contexto_ejecucion->registros->program_counter);
     // TODO decode: manejo de TLB y MMU
+    printf("NOMBRE INSTRUCCION: %d\n", instruccion->nombre);
+    printf("PARAMETRO 1 INSTRUCCION: %s\n", instruccion->parametro1);
+    printf("PARAMETRO 2 INSTRUCCION: %s\n", instruccion->parametro2);
     execute(instruccion);
     // if (!page_fault)
     pcb_actual->contexto_ejecucion->registros->program_counter++;
@@ -49,7 +52,7 @@ void execute(t_instruccion *instruccion)
     {
         strcpy(param2, instruccion->parametro2);
     }
-    // log_info(cpu_logger_info, "PID: %d - Ejecutando: %s - Parametros: %s - %s", contexto_actual->pid, cod_inst_to_str(instruccion->codigo), param1, param2);
+    log_info(LOGGER_CPU, "PID: %d - Ejecutando: %s - Parametros: %s - %s", pcb_actual->pid, cod_inst_to_str(instruccion->nombre), param1, param2);
 
     switch (instruccion->nombre)
     {
@@ -95,12 +98,14 @@ t_instruccion *deserializar_instruccion(int socket)
     memcpy(&(instruccion->nombre), stream + desplazamiento, sizeof(nombre_instruccion));
     desplazamiento += sizeof(nombre_instruccion);
 
+    printf("NOMBRE DE LA INSTRUCCION DURANTE LA DESERIALIZACION: %d", instruccion->nombre);
+
     uint32_t tamanio_parametro1;                                            // Cambio aquí
-    memcpy(&tamanio_parametro1, stream + desplazamiento, sizeof(uint32_t)); // Cambio aquí
+    memcpy(&(tamanio_parametro1), stream + desplazamiento, sizeof(uint32_t)); // Cambio aquí
     desplazamiento += sizeof(uint32_t);
 
     uint32_t tamanio_parametro2;                                            // Cambio aquí
-    memcpy(&tamanio_parametro2, stream + desplazamiento, sizeof(uint32_t)); // Cambio aquí
+    memcpy(&(tamanio_parametro2), stream + desplazamiento, sizeof(uint32_t)); // Cambio aquí
     desplazamiento += sizeof(uint32_t);
 
     instruccion->parametro1 = malloc(tamanio_parametro1);

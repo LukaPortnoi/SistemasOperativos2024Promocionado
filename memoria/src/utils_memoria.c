@@ -78,6 +78,7 @@ t_proceso_memoria *obtener_proceso_pid(uint32_t pid_pedido)
 
     pthread_mutex_lock(&mutex_procesos);
     proceso = list_find(procesos_totales, id_process);
+    printf("CANTIDAD DE PROCESOS AL MOMENTO DE OBTENERLO: %d \n", procesos_totales->elements_count);
     pthread_mutex_unlock(&mutex_procesos);
     return proceso;
 }
@@ -212,6 +213,7 @@ t_proceso_memoria *iniciar_proceso_path(t_proceso_memoria *proceso_nuevo)
     log_info(LOGGER_MEMORIA, "Instrucciones bien parseadas para el proceso PID [%d]", proceso_nuevo->pid);
     pthread_mutex_lock(&mutex_procesos);
     list_add(procesos_totales, proceso_nuevo); // Se agrega el proceso a la lista de procesos totales
+    printf("CANTIDAD DE PROCESOS AGREGADOS: %d \n", procesos_totales->elements_count);
     pthread_mutex_unlock(&mutex_procesos);
     // inicializar_nuevo_proceso(proceso_nuevo); -> Se usa para inicializar las estructuras de memoria del proceso. Se agregara despues si es que no hay drama con la funcion actual. Si genera problema, se eliminara y buscara otra alternativa
     return proceso_nuevo;

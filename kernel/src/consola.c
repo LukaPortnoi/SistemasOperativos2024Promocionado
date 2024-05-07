@@ -153,11 +153,11 @@ void iniciar_proceso(char *path_proceso)
   // chequear si hay multiprogramacion disponible
   // chequear_multiprogramacion();
 
-  // enviar pcb a cpu
-  enviar_pcb(pcb, fd_kernel_cpu_dispatch);
-
   // enviar proceso a memoria
   enviar_proceso_a_memoria(pcb->pid, path_proceso);
+
+  // enviar pcb a cpu
+  enviar_pcb(pcb, fd_kernel_cpu_dispatch);
 
   destruir_pcb(pcb);
 }
