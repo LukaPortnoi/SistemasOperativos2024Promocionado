@@ -32,16 +32,19 @@ t_proceso_memoria *deserializar_proceso(t_buffer *buffer)
         return NULL;
     }
 
+    uint32_t long_path;
     void *stream = buffer->stream;
     int desplazamiento = 0;
 
     memcpy(&(proceso->pid), stream + desplazamiento, sizeof(uint32_t));
     desplazamiento += sizeof(uint32_t);
-
     printf("PID EN MEMORIA: %d\n", proceso->pid);
+    memcpy(&(long_path), stream + desplazamiento, sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+     
+    proceso->path = malloc(long_path);
 
-    // uint32_t long_path = strlen(proceso->path) + 1; TODO
-    memcpy(&(proceso->path), stream + desplazamiento, sizeof(char *)); // ARREGLAR ESTO
+    memcpy(proceso->path, stream + desplazamiento, long_path); // ARREGLAR ESTO
 
     printf("PATH EN MEMORIA: %s\n", proceso->path);
 
