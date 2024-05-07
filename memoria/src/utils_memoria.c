@@ -44,7 +44,7 @@ t_proceso_memoria *deserializar_proceso(t_buffer *buffer)
      
     proceso->path = malloc(long_path);
 
-    memcpy(proceso->path, stream + desplazamiento, long_path); // ARREGLAR ESTO
+    memcpy(proceso->path, stream + desplazamiento, long_path);
 
     printf("PATH EN MEMORIA: %s\n", proceso->path);
 
@@ -54,13 +54,17 @@ t_proceso_memoria *deserializar_proceso(t_buffer *buffer)
 // ENVIADO DE INSTRUCCIONES DE MEMORIA A CPU
 void recibir_pedido_instruccion(uint32_t *pid, uint32_t *pc, int socket)
 {
-    int size;
-    void *buffer = recibir_buffer(&size, socket);
-    int offset = 0;
-    memcpy(pid, buffer + offset, sizeof(int));
-    offset += sizeof(int);
-    memcpy(pc, buffer + offset, sizeof(int));
-    free(buffer);
+    t_paquete *paquete = recibir_paquete(socket);
+    deserializar_pedido_instruccion(pid, pc, paquete->buffer);
+    eliminar_paquete(paquete);
+}
+
+void deserializar_pedido_instruccion(uint32_t *pid, uint32_t *pc, t_buffer *buffer)
+{
+    int desplazamiento = 0;
+    memcpy(pid, buffer->stream + desplazamiento, sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+    memcpy(pc, buffer->stream + desplazamiento, sizeof(uint32_t));
 }
 
 t_proceso_memoria *obtener_proceso_pid(uint32_t pid_pedido)
@@ -220,6 +224,7 @@ t_list *parsear_instrucciones(char *path)
     char *path_archivo = string_new();
     string_append(&path_archivo, "../procesos/");
     string_append(&path_archivo, path);
+    printf("%s", path_archivo);
     char *codigo_leido = leer_archivo(path_archivo);
     char **split_instrucciones = string_split(codigo_leido, "\n");
     int indice_split = 0;
@@ -274,10 +279,10 @@ t_instruccion *armar_estructura_instruccion(nombre_instruccion instruccion, char
 
 char *leer_archivo(char *path)
 {
-    char instrucciones[100];
-    strcpy(instrucciones, path);
-
-    FILE *archivo = fopen(instrucciones, "r");
+    //char instrucciones[100];
+    //strcpy(instrucciones, path);
+    //printf("PATH INSTRUCCIONES: %s\n", instrucciones);
+    FILE *archivo = fopen("/home/utnso/tp-2024-1c-OALP/memoria/procesos/proceso1.txt", "r"); // HACER ESTO BIEN CON EL PATH RECIBIDO
 
     if (archivo == NULL)
     {

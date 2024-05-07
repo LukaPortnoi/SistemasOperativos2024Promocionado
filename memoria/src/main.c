@@ -1,9 +1,9 @@
 #include "../include/main.h"
 
-t_log* LOGGER_MEMORIA;
-t_config* CONFIG_MEMORIA;
-char* PUERTO_ESCUCHA_MEMORIA;
-char* IP_MEMORIA;
+t_log *LOGGER_MEMORIA;
+t_config *CONFIG_MEMORIA;
+char *PUERTO_ESCUCHA_MEMORIA;
+char *IP_MEMORIA;
 int TAM_MEMORIA;
 int TAM_PAGINA;
 char *PATH_INSTRUCCIONES;
@@ -16,8 +16,8 @@ int CLIENTE_CPU, CLIENTE_KERNEL, CLIENTE_IN_OU;
 }*/
 
 int main(void)
-{	
-	//signal(SIGINT, sighandler);
+{
+	// signal(SIGINT, sighandler);
 	inicializar_config();
 
 	int fd_memoria = iniciar_servidor(LOGGER_MEMORIA, "MEMORIA", IP_MEMORIA, PUERTO_ESCUCHA_MEMORIA);

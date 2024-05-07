@@ -47,7 +47,7 @@ static void procesar_conexion_dispatch(void *void_args)
 			break;
 
 		case PCB:
-			t_pcb *pcb_actual = recibir_pcb(cliente_socket);
+			pcb_actual = recibir_pcb(cliente_socket);
 
 			// TODO: Procesar PCB
 			while (/* !es_syscall() && !page_fault && */ !hayInterrupcion && pcb_actual != NULL) // Aca deberia ir el check_interrupt()

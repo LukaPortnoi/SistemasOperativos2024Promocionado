@@ -263,6 +263,7 @@ void iniciar_colas_y_semaforos()
     sem_init(&semDetener, 0, 0);
     sem_init(&semBloqueado, 0, 0);
     sem_init(&semFinalizado, 0, 0);
+    
 
     procesosEnSistema = queue_create();
 

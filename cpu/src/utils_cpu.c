@@ -12,10 +12,12 @@ void ejecutar_ciclo_instruccion()
 t_instruccion *fetch(int pid, int pc)
 {
     // TODO -- chequear que en los casos de instruccion con memoria logica puede dar PAGE FAULT y no hay que aumentar el pc (restarlo dentro del decode en esos casos)
-
+    //log_trace(LOGGER_CPU, "PID Y PC PARA PEDIR INSTRUCCION A MEMORIA: %d - %d\n", pid, pc);
     pedir_instruccion_memoria(pid, pc, fd_cpu_memoria);
 
     op_cod codigo_op = recibir_operacion(fd_cpu_memoria);
+
+    log_trace(LOGGER_CPU, "Operacion recibida en FETCH: %d", codigo_op);
 
     t_instruccion *instruccion;
 
@@ -27,7 +29,7 @@ t_instruccion *fetch(int pid, int pc)
     else
     {
         log_warning(LOGGER_CPU, "Operación desconocida. No se pudo recibir la instruccion de memoria.");
-        abort();
+        exit(EXIT_FAILURE);
     }
 
     log_info(LOGGER_CPU, "PID: %d - FETCH - Program Counter: %d", pid, pc);

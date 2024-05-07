@@ -40,9 +40,12 @@ static void procesar_conexion_memoria(void *void_args)
 		// Recibe PID y PATH del Kernel, y las guarda en conjunto con la lista de instrucciones en el struct PROCESO_MEMORIA (hecho)
 		case INICIALIZAR_PROCESO:
 			log_info(logger, "Inicializando estructuras para el proceso");
-			proceso_memoria = recibir_proceso_memoria(cliente_socket);
+			proceso_memoria = recibir_proceso_memoria(cliente_socket);		//esta perfecto hasta aca
 			log_info(logger, "Se recibio el proceso %d con el path %s", proceso_memoria->pid, proceso_memoria->path);
 			proceso_memoria = iniciar_proceso_path(proceso_memoria);
+			//aca quiero hacer un signal para que el hilo de la cpu se desbloquee y pueda seguir con el proceso
+			printf("EL PROCESO LLEGO ACA BIEN");
+			//printf("EL PROCESO: %s -- %s -- %s", proceso_memoria->instrucciones, proceso_memoria->pid, proceso_memoria->path);
 
 			// cop = recibir_operacion(cliente_socket);
 			// log_info(logger, "Proceso inicializado OK - Instrucciones - PID [%d]", proceso_memoria->pid); 
@@ -59,6 +62,7 @@ static void procesar_conexion_memoria(void *void_args)
 		case PEDIDO_INSTRUCCION:
 			uint32_t pid, pc;
 			recibir_pedido_instruccion(&pid, &pc, cliente_socket);
+			log_info(logger, "Se recibio un pedido de instruccion para el PID %d y PC %d", pid, pc);
 			proceso_memoria = obtener_proceso_pid(pid);
 			if (proceso_memoria == NULL)
 			{
