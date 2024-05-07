@@ -88,9 +88,34 @@ void recibir_mensaje(int socket_cliente, t_log *logger)
 	free(buffer);
 }
 
-t_list *recibir_paquete(int socket_cliente)
+t_paquete *recibir_paquete(int socket_cliente)
 {
-	int size;
+	t_paquete *paquete = malloc(sizeof(t_paquete));
+	paquete->buffer = malloc(sizeof(t_buffer));
+	paquete->buffer->stream = NULL;
+	paquete->buffer->size = 0;
+	paquete->codigo_operacion = 0;
+
+	if (recv(socket_cliente, &(paquete->buffer->size), sizeof(uint32_t), 0) != sizeof(uint32_t))
+	{
+		printf("Error al recibir el tamanio del buffer\n");
+		return NULL;
+	}
+
+	paquete->buffer->stream = malloc(paquete->buffer->size);
+
+	if (recv(socket_cliente, paquete->buffer->stream, paquete->buffer->size, 0) != paquete->buffer->size)
+	{
+		printf("Error al recibir el buffer\n");
+		return NULL;
+	}
+
+	return paquete;
+}
+
+/* t_paquete *recibir_paquete2(int socket_cliente)
+{
+		int size;
 	int desplazamiento = 0;
 	void *buffer;
 	t_list *valores = list_create();
@@ -108,32 +133,7 @@ t_list *recibir_paquete(int socket_cliente)
 	}
 	free(buffer);
 	return valores;
-}
-
-t_paquete *recibir_paqueteTOP(int socket_cliente)
-{
-	t_paquete *paquete = malloc(sizeof(t_paquete));
-	paquete->buffer = malloc(sizeof(t_buffer));
-	paquete->buffer->stream = NULL;
-	paquete->buffer->size = 0;
-	paquete->codigo_operacion = 0;
-
-	if(recv(socket_cliente, &(paquete->codigo_operacion), sizeof(op_cod), 0)!=sizeof(op_cod)){
-		printf("Error al recibir el codigo de operacion\n");
-		return NULL;
-	}
-	printf("Codigo de operacion: %d\n", paquete->codigo_operacion);
-	//lo mismo con el otro recv
-	if(recv(socket_cliente, &(paquete->buffer->size), sizeof(uint32_t), 0)!=sizeof(uint32_t)){
-		printf("Error al recibir el tamanio del buffer\n");
-		return NULL;
-	}
-	printf("Tamanio del buffer: %d\n", paquete->buffer->size);
-	paquete->buffer->stream = malloc(paquete->buffer->size);
-	recv(socket_cliente, paquete->buffer->stream, paquete->buffer->size, 0);
-
-	return paquete;
-}
+} */
 
 t_interrupcion *recibir_interrupcion(int socket_cliente)
 {

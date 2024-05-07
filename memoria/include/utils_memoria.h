@@ -5,6 +5,7 @@
 #include "../../utils/include/contexto.h"
 
 t_proceso_memoria *recibir_proceso_memoria(int socket);
+t_proceso_memoria *deserializar_proceso(t_buffer *buffer);
 void recibir_pedido_instruccion(uint32_t *pid, uint32_t *pc, int socket);
 t_proceso_memoria *obtener_proceso_pid(uint32_t pid_pedido);
 t_instruccion *obtener_instruccion_del_proceso_pc(t_proceso_memoria *proceso, uint32_t pc);

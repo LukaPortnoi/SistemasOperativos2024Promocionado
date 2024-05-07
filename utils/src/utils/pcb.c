@@ -123,22 +123,15 @@ void enviar_pcb(t_pcb *pcb, int socket_cliente)
     // imprimamos el pcb antes de enviarlo
     printf("pcb->pid: %d\n", pcb->pid);
     printf("pcb->estado: %d\n", pcb->estado);
-    printf("pcb->quantum: %d\n", pcb->quantum);
-    printf("pcb->contexto_ejecucion->registros->A: %d\n", pcb->contexto_ejecucion->registros->ax);
-    printf("pcb->contexto_ejecucion->registros->B: %d\n", pcb->contexto_ejecucion->registros->bx);
-    printf("pcb->contexto_ejecucion->registros->C: %d\n", pcb->contexto_ejecucion->registros->cx);
-    printf("pcb->contexto_ejecucion->registros->D: %d\n", pcb->contexto_ejecucion->registros->dx);
-    printf("pcb->contexto_ejecucion->motivo_desalojo: %d\n", pcb->contexto_ejecucion->motivo_desalojo);
 
     t_paquete *paquete = crear_paquete_PCB(pcb);
-
     enviar_paquete(paquete, socket_cliente);
     eliminar_paquete(paquete);
 }
 
 t_pcb *recibir_pcb(int socket_cliente)
 {
-    t_paquete *paquete = recibir_paqueteTOP(socket_cliente);
+    t_paquete *paquete = recibir_paquete(socket_cliente);
     t_pcb *pcb = deserializar_pcb(paquete->buffer);
     eliminar_paquete(paquete);
     return pcb;
@@ -157,4 +150,49 @@ uint32_t str_to_uint32(char *str)
     }
 
     return result;
+}
+
+t_pcb *recibir_pcbTOP(int socket_cliente)
+{
+    int size;
+    void *buffer;
+
+    buffer = recibir_bufferTOP(socket_cliente, &size);
+
+    // vamos a printear el buffer recibido
+
+    t_pcb *pcb = malloc(sizeof(t_pcb));
+    int desplazamiento = 0;
+
+    memcpy(&(pcb->pid), buffer + desplazamiento, sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+    memcpy(&(pcb->estado), buffer + desplazamiento, sizeof(t_estado_proceso));
+    desplazamiento += sizeof(t_estado_proceso);
+
+    memcpy(&(pcb->quantum), buffer + desplazamiento, sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+    pcb->contexto_ejecucion = malloc(sizeof(t_contexto_ejecucion));
+    pcb->contexto_ejecucion->registros = malloc(sizeof(t_registros));
+
+    memcpy(pcb->contexto_ejecucion->registros, buffer + desplazamiento, sizeof(t_registros));
+    desplazamiento += sizeof(t_registros);
+
+    memcpy(&(pcb->contexto_ejecucion->motivo_desalojo), buffer + desplazamiento, sizeof(t_motivo_desalojo));
+
+    free(buffer);
+
+    return pcb;
+}
+
+void *recibir_bufferTOP(int socket_cliente, int *size)
+{
+    void *buffer;
+
+    recv(socket_cliente, size, sizeof(int), MSG_WAITALL);
+    buffer = malloc(*size);
+    recv(socket_cliente, buffer, *size, MSG_WAITALL);
+
+    return buffer;
 }

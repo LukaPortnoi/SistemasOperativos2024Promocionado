@@ -20,7 +20,7 @@
 
 typedef struct
 {
-    int pid;
+    uint32_t pid;
     char *path;
     t_list *instrucciones;
 } t_proceso_memoria;

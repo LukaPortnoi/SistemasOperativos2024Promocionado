@@ -47,7 +47,7 @@ extern int fd_kernel_memoria;
 extern int fd_kernel_cpu_dispatch;
 extern int fd_kernel_cpu_interrupt;
 
-extern int PID_GLOBAL;
+extern uint32_t PID_GLOBAL;
 extern t_pcb *pcb_ejecutandose;
 
 /* extern sem_t semMultiprogramacion;

@@ -2,10 +2,10 @@
 
 void ejecutar_ciclo_instruccion()
 {
-    t_instruccion *instruccion = fetch(pcb_actual->pid, pcb_actual->contexto_ejecucion->registros->program_counter); 
-    //TODO decode: manejo de TLB y MMU
+    t_instruccion *instruccion = fetch(pcb_actual->pid, pcb_actual->contexto_ejecucion->registros->program_counter);
+    // TODO decode: manejo de TLB y MMU
     execute(instruccion);
-    //if (!page_fault)
+    // if (!page_fault)
     pcb_actual->contexto_ejecucion->registros->program_counter++;
 }
 
@@ -63,11 +63,11 @@ void execute(t_instruccion *instruccion)
     case JNZ:
         _jnz(instruccion->parametro1, instruccion->parametro2);
         break;
-    //case IO_GEN_SLEEP:
-     //   _io_gen_sleep(instruccion->parametro1, instruccion->parametro2);
-      //  break;
-      default:
-            break;
+        // case IO_GEN_SLEEP:
+        //    _io_gen_sleep(instruccion->parametro1, instruccion->parametro2);
+        //   break;
+    default:
+        break;
     }
 }
 
@@ -84,7 +84,7 @@ void pedir_instruccion_memoria(int pid, int pc, int socket)
 
 t_instruccion *deserializar_instruccion(int socket)
 {
-    t_paquete *paquete = recibir_paqueteTOP(socket);
+    t_paquete *paquete = recibir_paquete(socket);
     t_instruccion *instruccion = malloc(sizeof(t_instruccion));
 
     void *stream = paquete->buffer->stream;
@@ -93,11 +93,11 @@ t_instruccion *deserializar_instruccion(int socket)
     memcpy(&(instruccion->nombre), stream + desplazamiento, sizeof(nombre_instruccion));
     desplazamiento += sizeof(nombre_instruccion);
 
-    uint32_t tamanio_parametro1; // Cambio aquí
+    uint32_t tamanio_parametro1;                                            // Cambio aquí
     memcpy(&tamanio_parametro1, stream + desplazamiento, sizeof(uint32_t)); // Cambio aquí
     desplazamiento += sizeof(uint32_t);
 
-    uint32_t tamanio_parametro2; // Cambio aquí
+    uint32_t tamanio_parametro2;                                            // Cambio aquí
     memcpy(&tamanio_parametro2, stream + desplazamiento, sizeof(uint32_t)); // Cambio aquí
     desplazamiento += sizeof(uint32_t);
 

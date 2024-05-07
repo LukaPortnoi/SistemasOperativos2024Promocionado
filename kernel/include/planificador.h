@@ -30,7 +30,7 @@ t_pcb *squeue_pop_pcb(t_squeue *squeue);
 
 // OTRAS FUNCIONES
 void iniciar_colas_y_semaforos(void);
-int asignar_pid(void);
+uint32_t asignar_pid(void);
 
 char *estado_to_string(t_estado_proceso estado);
 void cambiar_estado_pcb(t_pcb *pcb, t_estado_proceso estado);

@@ -4,10 +4,9 @@ pthread_mutex_t mutex_procesos;
 t_list *procesos_totales;
 t_proceso_memoria *proceso_memoria;
 
-
 t_proceso_memoria *recibir_proceso_memoria(int socket_cliente)
 {
-    t_proceso_memoria *proceso = malloc(sizeof(t_proceso_memoria));
+    /* t_proceso_memoria *proceso = malloc(sizeof(t_proceso_memoria));
     int size;
     void *buffer = recibir_buffer(&size, socket_cliente);
     int offset = 0;
@@ -18,6 +17,34 @@ t_proceso_memoria *recibir_proceso_memoria(int socket_cliente)
     proceso->path = malloc(size - offset);
     memcpy(proceso->path, buffer + offset, size - offset);
     free(buffer);
+    return proceso; */
+    t_paquete *paquete = recibir_paquete(socket_cliente);
+    t_proceso_memoria *proceso = deserializar_proceso(paquete->buffer);
+    eliminar_paquete(paquete);
+    return proceso;
+}
+
+t_proceso_memoria *deserializar_proceso(t_buffer *buffer)
+{
+    t_proceso_memoria *proceso = malloc(sizeof(t_proceso_memoria));
+    if (proceso == NULL)
+    {
+        return NULL;
+    }
+
+    void *stream = buffer->stream;
+    int desplazamiento = 0;
+
+    memcpy(&(proceso->pid), stream + desplazamiento, sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+    printf("PID EN MEMORIA: %d\n", proceso->pid);
+
+    // uint32_t long_path = strlen(proceso->path) + 1; TODO
+    memcpy(&(proceso->path), stream + desplazamiento, sizeof(char *)); // ARREGLAR ESTO
+
+    printf("PATH EN MEMORIA: %s\n", proceso->path);
+
     return proceso;
 }
 
@@ -125,11 +152,11 @@ void agregar_a_paquete_Instruccion(t_paquete *paquete, t_instruccion *instruccio
     memcpy(paquete->buffer->stream + desplazamiento, &(instruccion->nombre), sizeof(nombre_instruccion));
     desplazamiento += sizeof(nombre_instruccion);
 
-    uint32_t longitud_parametro1 = instruccion->longitud_parametro1; // Cambio aquí
+    uint32_t longitud_parametro1 = instruccion->longitud_parametro1;                          // Cambio aquí
     memcpy(paquete->buffer->stream + desplazamiento, &longitud_parametro1, sizeof(uint32_t)); // Cambio aquí
     desplazamiento += sizeof(uint32_t);
 
-    uint32_t longitud_parametro2 = instruccion->longitud_parametro2; // Cambio aquí
+    uint32_t longitud_parametro2 = instruccion->longitud_parametro2;                          // Cambio aquí
     memcpy(paquete->buffer->stream + desplazamiento, &longitud_parametro2, sizeof(uint32_t)); // Cambio aquí
     desplazamiento += sizeof(uint32_t);
 
@@ -145,28 +172,28 @@ t_buffer *crear_buffer_instruccion(t_instruccion *instruccion)
     t_buffer *buffer = malloc(sizeof(t_buffer));
 
     buffer->size = sizeof(nombre_instruccion) +
-					sizeof(uint32_t) * 2 +
-					instruccion->longitud_parametro1 +
-					instruccion->longitud_parametro2;
+                   sizeof(uint32_t) * 2 +
+                   instruccion->longitud_parametro1 +
+                   instruccion->longitud_parametro2;
 
     buffer->stream = malloc(buffer->size);
 
-	int desplazamiento = 0;
+    int desplazamiento = 0;
 
-	memcpy(buffer->stream + desplazamiento, &(instruccion->nombre), sizeof(nombre_instruccion));
-	desplazamiento += sizeof(nombre_instruccion);
+    memcpy(buffer->stream + desplazamiento, &(instruccion->nombre), sizeof(nombre_instruccion));
+    desplazamiento += sizeof(nombre_instruccion);
 
-	memcpy(buffer->stream + desplazamiento, &(instruccion->longitud_parametro1), sizeof(uint32_t));
-	desplazamiento += sizeof(uint32_t);
+    memcpy(buffer->stream + desplazamiento, &(instruccion->longitud_parametro1), sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
 
-	memcpy(buffer->stream + desplazamiento, &(instruccion->longitud_parametro2), sizeof(uint32_t));
-	desplazamiento += sizeof(uint32_t);
+    memcpy(buffer->stream + desplazamiento, &(instruccion->longitud_parametro2), sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
 
-	memcpy(buffer->stream + desplazamiento, instruccion->parametro1, instruccion->longitud_parametro1);
-	desplazamiento += instruccion->longitud_parametro1;
+    memcpy(buffer->stream + desplazamiento, instruccion->parametro1, instruccion->longitud_parametro1);
+    desplazamiento += instruccion->longitud_parametro1;
 
-	memcpy(buffer->stream + desplazamiento, instruccion->parametro2, instruccion->longitud_parametro2);
-	desplazamiento += instruccion->longitud_parametro2;
+    memcpy(buffer->stream + desplazamiento, instruccion->parametro2, instruccion->longitud_parametro2);
+    desplazamiento += instruccion->longitud_parametro2;
 
     return buffer;
 }
@@ -188,7 +215,7 @@ t_list *parsear_instrucciones(char *path)
 {
     t_list *instrucciones = list_create();
     char *path_archivo = string_new();
-    string_append(&path_archivo, "./cfg/");
+    string_append(&path_archivo, "../procesos/");
     string_append(&path_archivo, path);
     char *codigo_leido = leer_archivo(path_archivo);
     char **split_instrucciones = string_split(codigo_leido, "\n");
@@ -230,14 +257,14 @@ t_list *parsear_instrucciones(char *path)
 t_instruccion *armar_estructura_instruccion(nombre_instruccion instruccion, char *parametro1, char *parametro2)
 {
     t_instruccion *estructura = (t_instruccion *)malloc(sizeof(t_instruccion));
-    
+
     estructura->nombre = instruccion;
     estructura->parametro1 = (parametro1 && parametro1[0] != '\0') ? strdup(parametro1) : NULL;
     estructura->parametro2 = (parametro2 && parametro2[0] != '\0') ? strdup(parametro2) : NULL;
 
-	estructura->longitud_parametro1 = strlen(estructura->parametro1) + 1;
-	estructura->longitud_parametro2 = strlen(estructura->parametro2) + 1;
-    
+    estructura->longitud_parametro1 = strlen(estructura->parametro1) + 1;
+    estructura->longitud_parametro2 = strlen(estructura->parametro2) + 1;
+
     printf("%s - %s - %s \n", obtener_nombre_instruccion(estructura->nombre), estructura->parametro1, estructura->parametro2); // printea instrucciones
     return estructura;
 }

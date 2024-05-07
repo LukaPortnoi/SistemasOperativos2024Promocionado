@@ -25,7 +25,7 @@ static void procesar_conexion_dispatch(void *void_args)
 			return;
 		}
 
-		log_info(logger, "Procesando conexion en %s server", server_name);
+		log_info(logger, "Codigo de operacion: %d", cop);
 
 		switch (cop)
 		{
@@ -48,13 +48,15 @@ static void procesar_conexion_dispatch(void *void_args)
 
 		case PCB:
 			t_pcb *pcb_actual = recibir_pcb(cliente_socket);
+
 			// TODO: Procesar PCB
-			while (/* !es_syscall() &&   !page_fault &&*/ !hayInterrupcion && pcb_actual != NULL) // Aca deberia ir el check_interrupt()
+			while (/* !es_syscall() && !page_fault && */ !hayInterrupcion && pcb_actual != NULL) // Aca deberia ir el check_interrupt()
 			{
 				ejecutar_ciclo_instruccion();
 			}
+			
 			// obtener_motivo_desalojo();
-			enviar_pcb(pcb_actual, fd_cpu_dispatch); // Envia el PCB actualizado
+			enviar_pcb(pcb_actual, cliente_socket); // Envia el PCB actualizado
 
 			pcb_actual = NULL;
 
@@ -69,11 +71,11 @@ static void procesar_conexion_dispatch(void *void_args)
 		// ---------------
 		case -1:
 			log_error(logger, "Cliente desconectado de %s... con cop -1", server_name);
-			break; // hay un return, voy a probar un break
+			break;
 		default:
 			log_error(logger, "Algo anduvo mal en el server de %s", server_name);
 			log_info(logger, "Cop: %d", cop);
-			break; // hay un return, voy a probar un break
+			break;
 		}
 	}
 
@@ -99,8 +101,6 @@ static void procesar_conexion_interrupt(void *void_args)
 			return;
 		}
 
-		log_info(logger, "Procesando conexion en %s server", server_name);
-
 		switch (cop)
 		{
 		case MENSAJE:
@@ -116,7 +116,7 @@ static void procesar_conexion_interrupt(void *void_args)
 		// -- KERNEL - CPU --
 		// ----------------------
 		case INTERRUPCION:
-		hayInterrupcion = recibir_interrupciones();
+			hayInterrupcion = recibir_interrupciones();
 
 		case HANDSHAKE_kernel:
 			recibir_mensaje(cliente_socket, logger);

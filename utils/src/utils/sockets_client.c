@@ -90,14 +90,19 @@ void enviar_paquete(t_paquete *paquete, int socket_cliente)
 
 	memcpy(a_enviar + offset, &(paquete->codigo_operacion), sizeof(op_cod));
 	offset += sizeof(op_cod);
+	printf("Codigo de operacion ENVIADO: %d\n", paquete->codigo_operacion);
+
 	memcpy(a_enviar + offset, &(paquete->buffer->size), sizeof(int));
 	offset += sizeof(int);
+	printf("Tamaño del buffer ENVIADO: %d\n", paquete->buffer->size);
+
 	memcpy(a_enviar + offset, paquete->buffer->stream, paquete->buffer->size);
 
 	if (send(socket_cliente, a_enviar, paquete->buffer->size + sizeof(op_cod) + sizeof(int), 0) == -1)
 	{
 		free(a_enviar);
 	}
+
 	free(a_enviar);
 }
 

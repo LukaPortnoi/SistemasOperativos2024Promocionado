@@ -162,7 +162,7 @@ void iniciar_proceso(char *path_proceso)
   destruir_pcb(pcb);
 }
 
-void finalizar_proceso(char *pid_string){}
+void finalizar_proceso(char *pid_string) {}
 /* {
   int pid = atoi(pid_string);
 
@@ -227,7 +227,7 @@ t_pcb *buscar_proceso_en_colas(int pid) // TODO: revisar q no este haciendo caga
   return proceso;
 }
 
-t_pcb *buscar_proceso_en_cola(t_squeue *squeue, int pid){}
+t_pcb *buscar_proceso_en_cola(t_squeue *squeue, int pid) {}
 /* {
   t_pcb *proceso = NULL;
   t_list *temp = list_create();

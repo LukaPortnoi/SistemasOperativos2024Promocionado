@@ -19,9 +19,8 @@ void *recibir_buffer(int *, int);
 int iniciar_servidor(t_log *logger, const char *name, char *ip, char *puerto);
 int esperar_cliente(int, t_log *logger);
 void iterator(char *value);
-t_list *recibir_paquete(int);
+t_paquete *recibir_paquete(int socket_cliente);
 t_interrupcion *recibir_interrupcion(int);
-t_paquete *recibir_paqueteTOP(int socket_cliente);
 void recibir_mensaje(int, t_log *logger);
 int recibir_operacion(int);
 

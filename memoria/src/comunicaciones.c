@@ -45,7 +45,7 @@ static void procesar_conexion_memoria(void *void_args)
 			proceso_memoria = iniciar_proceso_path(proceso_memoria);
 
 			// cop = recibir_operacion(cliente_socket);
-			// log_info(logger, "Proceso inicializado OK - Instrucciones - PID [%d]", proceso_memoria->pid); QUE PONES DOWN DE MIERDA????
+			// log_info(logger, "Proceso inicializado OK - Instrucciones - PID [%d]", proceso_memoria->pid); 
 			break;
 
 		// -------------------

@@ -22,7 +22,7 @@ t_squeue *squeue_exec;
 t_squeue *squeue_blocked;
 t_squeue *squeue_exit;
 
-int PID_GLOBAL = 1;
+uint32_t PID_GLOBAL = 1;
 
 // PLANIFICADOR LARGO PLAZO
 void iniciar_planificador_largo_plazo() {}
@@ -34,7 +34,7 @@ void iniciar_planificador_largo_plazo() {}
 
 t_pcb *crear_proceso()
 {
-    int pid_nuevo = asignar_pid();
+    uint32_t pid_nuevo = asignar_pid();
     t_pcb *pcb = crear_pcb(pid_nuevo, LISTO, QUANTUM);                    // POR AHORA ES A LISTOS. PARA CHECK3 ES A NUEVOS
     squeue_push(squeue_ready, pcb);                                       // PARA CHECK2 ES EN READY, PARA EL CHECK3 ES EN NEW YA QUE HAY QUE DESARROLLAR EL PLANIFICADOR LARGO PLAZO
     log_debug(LOGGER_KERNEL, "Se crea el proceso %d en READY", pcb->pid); // CAMBIAR A NEW CUANDO SE DESARROLLE EL PLANIFICADOR LARGO PLAZO
@@ -273,9 +273,9 @@ void iniciar_colas_y_semaforos()
     squeue_exit = squeue_create();
 }
 
-int asignar_pid()
+uint32_t asignar_pid()
 {
-    int valor_pid;
+    uint32_t valor_pid;
 
     pthread_mutex_lock(&mutex_pid);
     valor_pid = PID_GLOBAL;
