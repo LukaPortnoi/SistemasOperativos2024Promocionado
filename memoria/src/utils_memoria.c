@@ -224,7 +224,7 @@ t_list *parsear_instrucciones(char *path)
 {
     t_list *instrucciones = list_create();
     char *path_archivo = string_new();
-    string_append(&path_archivo, "../procesos/");
+    string_append(&path_archivo, PATH_INSTRUCCIONES);
     string_append(&path_archivo, path);
     printf("%s", path_archivo);
     char *codigo_leido = leer_archivo(path_archivo);
@@ -281,10 +281,10 @@ t_instruccion *armar_estructura_instruccion(nombre_instruccion instruccion, char
 
 char *leer_archivo(char *path)
 {
-    //char instrucciones[100];
-    //strcpy(instrucciones, path);
-    //printf("PATH INSTRUCCIONES: %s\n", instrucciones);
-    FILE *archivo = fopen("/home/utnso/tp-2024-1c-OALP/memoria/procesos/proceso1.txt", "r"); // HACER ESTO BIEN CON EL PATH RECIBIDO
+    char instrucciones[100];
+    strcpy(instrucciones, path);
+    printf("PATH INSTRUCCIONES: %s\n", instrucciones);
+    FILE *archivo = fopen(instrucciones, "r");
 
     if (archivo == NULL)
     {

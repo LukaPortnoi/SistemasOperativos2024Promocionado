@@ -52,7 +52,7 @@ void execute(t_instruccion *instruccion)
     {
         strcpy(param2, instruccion->parametro2);
     }
-    log_info(LOGGER_CPU, "PID: %d - Ejecutando: %s - Parametros: %s - %s", pcb_actual->pid, cod_inst_to_str(instruccion->nombre), param1, param2);
+    //log_info(LOGGER_CPU, "PID: %d - Ejecutando: %s - Parametros: %s - %s", pcb_actual->pid, cod_inst_to_str(instruccion->nombre), param1, param2);
 
     switch (instruccion->nombre)
     {
