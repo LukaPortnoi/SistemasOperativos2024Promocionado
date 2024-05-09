@@ -9,7 +9,6 @@ static void procesar_conexion_kernel(void *void_args)
 	free(args);
 
 	op_cod cop;
-	t_list *lista;
 	while (cliente_socket != -1)
 	{
 		if (recv(cliente_socket, &cop, sizeof(op_cod), 0) != sizeof(op_cod))
@@ -23,11 +22,6 @@ static void procesar_conexion_kernel(void *void_args)
 		case MENSAJE:
 			recibir_mensaje(cliente_socket, logger);
 			break;
-		case PAQUETE:
-			lista = recibir_paquete(cliente_socket);
-			log_info(logger, "Me llegaron los siguientes valores:");
-			list_iterate(lista, (void *)iterator);
-			break;
 
 		// -------------------
 		// -- CPU - KERNEL --
@@ -40,10 +34,6 @@ static void procesar_conexion_kernel(void *void_args)
 		// -------------------
 		// -- I/O - KERNEL --
 		// -------------------
-		case HANDSHAKE_in_out:
-			recibir_mensaje(cliente_socket, logger);
-			log_info(logger, "Este deberia ser el canal mediante el cual nos comunicamos con el I/O");
-			break;
 
 		// ---------------
 		// -- ERRORES --

@@ -26,6 +26,12 @@
 #include "../../utils/include/sockets_common.h"
 #include "../../utils/include/pcb.h"
 
+typedef struct
+{
+    t_queue *cola;
+    pthread_mutex_t *mutex;
+} t_squeue;
+
 extern t_log *LOGGER_KERNEL;
 extern t_config *CONFIG_KERNEL;
 
@@ -50,27 +56,20 @@ extern int fd_kernel_cpu_interrupt;
 extern uint32_t PID_GLOBAL;
 extern t_pcb *pcb_ejecutandose;
 
-/* extern sem_t semMultiprogramacion;
-extern sem_t semNuevo;
-extern sem_t semExit;
-extern sem_t semListos_Ready;
+extern sem_t semMultiprogramacion;
+extern sem_t semNew;
 extern sem_t semReady;
 extern sem_t semExec;
 extern sem_t semDetener;
-extern sem_t semBloqueado;
-extern sem_t semFinalizado; */
+extern sem_t semBlocked;
+extern sem_t semFinalizado;
+extern sem_t semExit;
 
-extern t_queue *procesosEnSistema;
+extern t_list *procesosEnSistema;
 
-/* extern pthread_mutex_t procesoMutex;
-extern pthread_mutex_t procesosEnSistemaMutex; */
+// extern pthread_mutex_t procesoMutex;
+extern pthread_mutex_t procesosEnSistemaMutex;
 extern pthread_mutex_t mutex_pid;
-
-typedef struct
-{
-    t_queue *cola;
-    pthread_mutex_t *mutex;
-} t_squeue;
 
 extern t_squeue *squeue_new;
 extern t_squeue *squeue_ready;

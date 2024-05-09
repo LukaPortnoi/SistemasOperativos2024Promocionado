@@ -75,37 +75,30 @@ void ejecutar_comando(char *comando)
 
   if (strcmp(comando_separado[0], "EJECUTAR_SCRIPT") == 0)
   {
-    log_info(LOGGER_KERNEL, "Ejecutando script desde %s...", comando_separado[1]);
     ejecutar_script(comando_separado[1]);
   }
   else if (strcmp(comando_separado[0], "INICIAR_PROCESO") == 0)
   {
-    log_info(LOGGER_KERNEL, "Iniciando proceso desde %s...", comando_separado[1]);
     iniciar_proceso(comando_separado[1]);
   }
   else if (strcmp(comando_separado[0], "FINALIZAR_PROCESO") == 0)
   {
-    log_info(LOGGER_KERNEL, "Finalizando proceso %s...", comando_separado[1]);
     finalizar_proceso(comando_separado[1]);
   }
   else if (strcmp(comando_separado[0], "DETENER_PLANIFICACION") == 0)
   {
-    log_info(LOGGER_KERNEL, "Deteniendo planificacion...");
     detener_planificacion();
   }
   else if (strcmp(comando_separado[0], "INICIAR_PLANIFICACION") == 0)
   {
-    log_info(LOGGER_KERNEL, "Iniciando planificacion...");
     iniciar_planificacion();
   }
   else if (strcmp(comando_separado[0], "MULTIPROGRAMACION") == 0)
   {
-    log_info(LOGGER_KERNEL, "Cambiando grado de multiprogramacion a %s...", comando_separado[1]);
     cambiar_multiprogramacion(comando_separado[1]);
   }
   else if (strcmp(comando_separado[0], "PROCESO_ESTADO") == 0)
   {
-    log_info(LOGGER_KERNEL, "Estado del proceso %s...", comando_separado[1]);
     mostrar_listado_estados_procesos();
   }
 
@@ -149,17 +142,7 @@ void ejecutar_script(char *path_script)
 void iniciar_proceso(char *path_proceso)
 {
   t_pcb *pcb = crear_proceso();
-
-  // chequear si hay multiprogramacion disponible
-  // chequear_multiprogramacion();
-
-  // enviar proceso a memoria
   enviar_proceso_a_memoria(pcb->pid, path_proceso);
-
-  // enviar pcb a cpu
-  enviar_pcb(pcb, fd_kernel_cpu_dispatch);
-
-  destruir_pcb(pcb);
 }
 
 void finalizar_proceso(char *pid_string) {}

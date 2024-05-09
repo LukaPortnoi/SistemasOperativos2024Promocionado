@@ -9,7 +9,7 @@ t_proceso_memoria *deserializar_proceso(t_buffer *buffer);
 void recibir_pedido_instruccion(uint32_t *pid, uint32_t *pc, int socket);
 t_proceso_memoria *obtener_proceso_pid(uint32_t pid_pedido);
 t_instruccion *obtener_instruccion_del_proceso_pc(t_proceso_memoria *proceso, uint32_t pc);
-char *obtener_nombre_instruccion(nombre_instruccion instruccion);
+char *instruccion_to_string(nombre_instruccion nombre);
 void enviar_instruccion(int socket, t_instruccion *instruccion);
 t_paquete *crear_paquete_Instruccion(t_instruccion *instruccion);
 void agregar_a_paquete_Instruccion(t_paquete *paquete, t_instruccion *instruccion);

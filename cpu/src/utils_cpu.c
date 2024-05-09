@@ -15,7 +15,7 @@ void ejecutar_ciclo_instruccion()
 t_instruccion *fetch(int pid, int pc)
 {
     // TODO -- chequear que en los casos de instruccion con memoria logica puede dar PAGE FAULT y no hay que aumentar el pc (restarlo dentro del decode en esos casos)
-    //log_trace(LOGGER_CPU, "PID Y PC PARA PEDIR INSTRUCCION A MEMORIA: %d - %d\n", pid, pc);
+    // log_trace(LOGGER_CPU, "PID Y PC PARA PEDIR INSTRUCCION A MEMORIA: %d - %d\n", pid, pc);
     pedir_instruccion_memoria(pid, pc, fd_cpu_memoria);
 
     op_cod codigo_op = recibir_operacion(fd_cpu_memoria);
@@ -42,35 +42,33 @@ t_instruccion *fetch(int pid, int pc)
 
 void execute(t_instruccion *instruccion)
 {
-    char *param1 = string_new();
-    char *param2 = string_new();
-    if (instruccion->parametro1 != NULL)
-    {
-        strcpy(param1, instruccion->parametro1);
-    }
-    if (instruccion->parametro2 != NULL)
-    {
-        strcpy(param2, instruccion->parametro2);
-    }
-    //log_info(LOGGER_CPU, "PID: %d - Ejecutando: %s - Parametros: %s - %s", pcb_actual->pid, cod_inst_to_str(instruccion->nombre), param1, param2);
-
     switch (instruccion->nombre)
     {
     case SET:
         _set(instruccion->parametro1, instruccion->parametro2);
+        log_instruccion_ejecutada(instruccion->nombre, instruccion->parametro1, instruccion->parametro2);
         break;
     case SUM:
         _sum(instruccion->parametro1, instruccion->parametro2);
+        log_instruccion_ejecutada(instruccion->nombre, instruccion->parametro1, instruccion->parametro2);
         break;
     case SUB:
         _sub(instruccion->parametro1, instruccion->parametro2);
+        log_instruccion_ejecutada(instruccion->nombre, instruccion->parametro1, instruccion->parametro2);
         break;
     case JNZ:
         _jnz(instruccion->parametro1, instruccion->parametro2);
+        log_instruccion_ejecutada(instruccion->nombre, instruccion->parametro1, instruccion->parametro2);
         break;
-        // case IO_GEN_SLEEP:
-        //    _io_gen_sleep(instruccion->parametro1, instruccion->parametro2);
-        //   break;
+    /* case IO_GEN_SLEEP:
+        _io_gen_sleep(instruccion->parametro1, instruccion->parametro2);
+        break; */
+
+    // Esta instrucción representa la syscall de finalización del proceso.
+    // Se deberá devolver el Contexto de Ejecución actualizado al Kernel para su finalización.
+    case EXIT:
+        exit(EXIT_SUCCESS);
+        break;
     default:
         break;
     }
@@ -98,13 +96,13 @@ t_instruccion *deserializar_instruccion(int socket)
     memcpy(&(instruccion->nombre), stream + desplazamiento, sizeof(nombre_instruccion));
     desplazamiento += sizeof(nombre_instruccion);
 
-    printf("NOMBRE DE LA INSTRUCCION DURANTE LA DESERIALIZACION: %d", instruccion->nombre);
+    printf("NOMBRE DE LA INSTRUCCION DURANTE LA DESERIALIZACION: %d \n", instruccion->nombre);
 
-    uint32_t tamanio_parametro1;                                            // Cambio aquí
+    uint32_t tamanio_parametro1;                                              // Cambio aquí
     memcpy(&(tamanio_parametro1), stream + desplazamiento, sizeof(uint32_t)); // Cambio aquí
     desplazamiento += sizeof(uint32_t);
 
-    uint32_t tamanio_parametro2;                                            // Cambio aquí
+    uint32_t tamanio_parametro2;                                              // Cambio aquí
     memcpy(&(tamanio_parametro2), stream + desplazamiento, sizeof(uint32_t)); // Cambio aquí
     desplazamiento += sizeof(uint32_t);
 
@@ -119,4 +117,10 @@ t_instruccion *deserializar_instruccion(int socket)
     eliminar_paquete(paquete);
 
     return instruccion;
+}
+
+void log_instruccion_ejecutada(nombre_instruccion nombre, char *param1, char *param2)
+{
+    char *nombre_instruccion = instruccion_to_string(nombre);
+    log_info(LOGGER_CPU, "PID: %d - Ejecutando: %s - Parametros: %s - %s", pcb_actual->pid, nombre_instruccion, param1, param2);
 }

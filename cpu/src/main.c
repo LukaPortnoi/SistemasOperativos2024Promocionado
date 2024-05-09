@@ -23,11 +23,9 @@ bool hayInterrupcion = false;
 
 op_cod cod_op;
 
-
 int main()
 {
     inicializar_config();
-    log_info(LOGGER_CPU, "Iniciando CPU...");
 
     iniciar_conexiones();
 
@@ -53,15 +51,15 @@ void iniciar_conexiones()
 {
     // server CPU DISPATCH
     fd_cpu_dispatch = iniciar_servidor(LOGGER_CPU, "CPU_DISPATCH", IP_CPU, PUERTO_ESCUCHA_DISPATCH);
-    log_info(LOGGER_CPU, "CPU listo para recibir cliente en DISPATCH");
+    //log_info(LOGGER_CPU, "CPU listo para recibir cliente en DISPATCH");
 
     // server CPU INTERRUPT
     fd_cpu_interrupt = iniciar_servidor(LOGGER_CPU, "CPU_INTERRUPT", IP_CPU, PUERTO_ESCUCHA_INTERRUPT);
-    log_info(LOGGER_CPU, "CPU listo para recibir cliente en INTERRUPT");
+    //log_info(LOGGER_CPU, "CPU listo para recibir cliente en INTERRUPT");
 
     // conexion como cliente a MEMORIA
     fd_cpu_memoria = crear_conexion(IP_MEMORIA, PUERTO_MEMORIA);
-    enviar_mensaje("Mensaje de CPU para memoria", fd_cpu_memoria);
+    // enviar_mensaje("Mensaje de CPU para memoria", fd_cpu_memoria);
 
     // hilo para escuchar interrupciones
     pthread_create(&hilo_interrupt, NULL, (void *)escuchar_interrupt, NULL);
@@ -75,10 +73,10 @@ void escuchar_interrupt()
 
 void finalizar_conexiones_cpu()
 {
-	log_info(LOGGER_CPU, "Finalizando conexiones CPU");
-	log_destroy(LOGGER_CPU);
-	config_destroy(CONFIG);
-	liberar_conexion(fd_cpu_dispatch);
-	liberar_conexion(fd_cpu_interrupt);
-	liberar_conexion(fd_cpu_memoria);
+    log_info(LOGGER_CPU, "Finalizando conexiones CPU");
+    log_destroy(LOGGER_CPU);
+    config_destroy(CONFIG);
+    liberar_conexion(fd_cpu_dispatch);
+    liberar_conexion(fd_cpu_interrupt);
+    liberar_conexion(fd_cpu_memoria);
 }

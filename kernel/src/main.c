@@ -27,11 +27,10 @@ pthread_t hilo_server_kernel;
 int main()
 {
 	inicializar_config();
-	log_info(LOGGER_KERNEL, "Iniciando Kernel...");
 	iniciar_conexiones();
 	iniciar_colas_y_semaforos();
 	iniciar_planificador_largo_plazo();
-	//iniciar_planificador_corto_plazo();
+	iniciar_planificador_corto_plazo();
 
 	iniciar_consola_interactiva();
 
@@ -62,19 +61,19 @@ void iniciar_conexiones()
 {
 	// inicar server KERNEL
 	fd_kernel = iniciar_servidor(LOGGER_KERNEL, "KERNEL", IP_KERNEL, PUERTO_ESCUCHA);
-	log_info(LOGGER_KERNEL, "Kernel listo para recibir clientes");
+	//log_info(LOGGER_KERNEL, "Kernel listo para recibir clientes");
 
 	// conexion como cliente a MEMORIA
 	fd_kernel_memoria = crear_conexion(IP_MEMORIA, PUERTO_MEMORIA);
-	enviar_mensaje("Mensaje de Kernel para memoria", fd_kernel_memoria);
+	//enviar_mensaje("Mensaje de Kernel para memoria", fd_kernel_memoria);
 
 	// conexion como cliente a CPU DISPATCH
 	fd_kernel_cpu_dispatch = crear_conexion(IP_CPU, PUERTO_CPU_DISPATCH); // planificar la ejecucion de procesos
-	enviar_mensaje("Mensaje de Kernel para CPU DISPATCH", fd_kernel_cpu_dispatch);
+	//enviar_mensaje("Mensaje de Kernel para CPU DISPATCH", fd_kernel_cpu_dispatch);
 
 	// conexion como cliente a CPU INTERRUPT
 	fd_kernel_cpu_interrupt = crear_conexion(IP_CPU, PUERTO_CPU_INTERRUPT); // planificar la interrupcion de procesos
-	enviar_mensaje("Mensaje de Kernel para CPU INTERRUPT", fd_kernel_cpu_interrupt);
+	//enviar_mensaje("Mensaje de Kernel para CPU INTERRUPT", fd_kernel_cpu_interrupt);
 
 	// hilo servidor
 	pthread_create(&hilo_server_kernel, NULL, (void *)escuchar_kernel, NULL);

@@ -86,8 +86,6 @@ void enviar_paquete(t_paquete *paquete, int socket_cliente)
 	void *a_enviar = malloc(paquete->buffer->size + sizeof(op_cod) + sizeof(int));
 	int offset = 0;
 
-	printf("Enviando paquete con tamaño %d\n", paquete->buffer->size);
-
 	memcpy(a_enviar + offset, &(paquete->codigo_operacion), sizeof(op_cod));
 	offset += sizeof(op_cod);
 	printf("Codigo de operacion ENVIADO: %d\n", paquete->codigo_operacion);

@@ -21,7 +21,7 @@ int main(void)
 	inicializar_config();
 
 	int fd_memoria = iniciar_servidor(LOGGER_MEMORIA, "MEMORIA", IP_MEMORIA, PUERTO_ESCUCHA_MEMORIA);
-	log_info(LOGGER_MEMORIA, "Memoria listo para recibir clientes");
+	//log_info(LOGGER_MEMORIA, "Memoria listo para recibir clientes");
 
 	while (server_escuchar(LOGGER_MEMORIA, "MEMORIA", fd_memoria));
 

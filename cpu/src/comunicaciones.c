@@ -16,7 +16,6 @@ static void procesar_conexion_dispatch(void *void_args)
 	free(args);
 
 	op_cod cop;
-	t_list *lista;
 	while (cliente_socket != -1)
 	{
 		if (recv(cliente_socket, &cop, sizeof(op_cod), 0) != sizeof(op_cod))
@@ -32,19 +31,10 @@ static void procesar_conexion_dispatch(void *void_args)
 		case MENSAJE:
 			recibir_mensaje(cliente_socket, logger);
 			break;
-		case PAQUETE:
-			lista = recibir_paquete(cliente_socket);
-			log_info(logger, "Me llegaron los siguientes valores:");
-			list_iterate(lista, (void *)iterator);
-			break;
 
-		// ----------------------
-		// -- KERNEL - CPU --
-		// ----------------------
-		case HANDSHAKE_kernel:
-			recibir_mensaje(cliente_socket, logger);
-			log_info(logger, "Este deberia ser el canal mediante el cual nos comunicamos con el KERNEL");
-			break;
+			// ----------------------
+			// -- KERNEL - CPU --
+			// ----------------------
 
 		case PCB:
 			pcb_actual = recibir_pcb(cliente_socket);
@@ -54,7 +44,7 @@ static void procesar_conexion_dispatch(void *void_args)
 			{
 				ejecutar_ciclo_instruccion();
 			}
-			
+
 			// obtener_motivo_desalojo();
 			enviar_pcb(pcb_actual, cliente_socket); // Envia el PCB actualizado
 
@@ -92,7 +82,6 @@ static void procesar_conexion_interrupt(void *void_args)
 	free(args);
 
 	op_cod cop;
-	t_list *lista;
 	while (cliente_socket != -1)
 	{
 		if (recv(cliente_socket, &cop, sizeof(op_cod), 0) != sizeof(op_cod))
@@ -106,21 +95,12 @@ static void procesar_conexion_interrupt(void *void_args)
 		case MENSAJE:
 			recibir_mensaje(cliente_socket, logger);
 			break;
-		case PAQUETE:
-			lista = recibir_paquete(cliente_socket);
-			log_info(logger, "Me llegaron los siguientes valores:");
-			list_iterate(lista, (void *)iterator);
-			break;
 
 		// ----------------------
 		// -- KERNEL - CPU --
 		// ----------------------
 		case INTERRUPCION:
 			hayInterrupcion = recibir_interrupciones();
-
-		case HANDSHAKE_kernel:
-			recibir_mensaje(cliente_socket, logger);
-			log_info(logger, "Este deberia ser el canal mediante el cual nos comunicamos con el KERNEL");
 			break;
 
 		// ---------------

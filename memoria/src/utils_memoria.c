@@ -38,15 +38,12 @@ t_proceso_memoria *deserializar_proceso(t_buffer *buffer)
 
     memcpy(&(proceso->pid), stream + desplazamiento, sizeof(uint32_t));
     desplazamiento += sizeof(uint32_t);
-    printf("PID EN MEMORIA: %d\n", proceso->pid);
     memcpy(&(long_path), stream + desplazamiento, sizeof(uint32_t));
     desplazamiento += sizeof(uint32_t);
-     
+
     proceso->path = malloc(long_path);
 
     memcpy(proceso->path, stream + desplazamiento, long_path);
-
-    printf("PATH EN MEMORIA: %s\n", proceso->path);
 
     return proceso;
 }
@@ -89,7 +86,7 @@ t_instruccion *obtener_instruccion_del_proceso_pc(t_proceso_memoria *proceso, ui
     return list_get(proceso->instrucciones, pc);
 }
 
-char *obtener_nombre_instruccion(nombre_instruccion instruccion)
+char *instruccion_to_string(nombre_instruccion instruccion)
 {
     switch (instruccion)
     {
@@ -226,7 +223,6 @@ t_list *parsear_instrucciones(char *path)
     char *path_archivo = string_new();
     string_append(&path_archivo, PATH_INSTRUCCIONES);
     string_append(&path_archivo, path);
-    printf("%s", path_archivo);
     char *codigo_leido = leer_archivo(path_archivo);
     char **split_instrucciones = string_split(codigo_leido, "\n");
     int indice_split = 0;
@@ -275,7 +271,7 @@ t_instruccion *armar_estructura_instruccion(nombre_instruccion instruccion, char
     estructura->longitud_parametro1 = strlen(estructura->parametro1) + 1;
     estructura->longitud_parametro2 = strlen(estructura->parametro2) + 1;
 
-    printf("%s - %s - %s \n", obtener_nombre_instruccion(estructura->nombre), estructura->parametro1, estructura->parametro2); // printea instrucciones
+    printf("%s - %s - %s \n", instruccion_to_string(estructura->nombre), estructura->parametro1, estructura->parametro2); // printea instrucciones
     return estructura;
 }
 

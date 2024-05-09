@@ -120,10 +120,6 @@ t_pcb *deserializar_pcb(t_buffer *buffer)
 
 void enviar_pcb(t_pcb *pcb, int socket_cliente)
 {
-    // imprimamos el pcb antes de enviarlo
-    printf("pcb->pid: %d\n", pcb->pid);
-    printf("pcb->estado: %d\n", pcb->estado);
-
     t_paquete *paquete = crear_paquete_PCB(pcb);
     enviar_paquete(paquete, socket_cliente);
     eliminar_paquete(paquete);
