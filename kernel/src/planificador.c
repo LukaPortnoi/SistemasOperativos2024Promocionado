@@ -300,27 +300,6 @@ uint32_t asignar_pid()
     return valor_pid;
 }
 
-char *estado_to_string(t_estado_proceso estado)
-{
-    switch (estado)
-    {
-    case NUEVO:
-        return "NUEVO";
-    case LISTO:
-        return "LISTO";
-    case EJECUTANDO:
-        return "EJECUTANDO";
-    case BLOQUEADO:
-        return "BLOQUEADO";
-    case FINALIZADO:
-        return "TERMINADO";
-    case ERROR:
-        return "ERROR";
-    default:
-        return "ERROR";
-    }
-}
-
 void cambiar_estado_pcb(t_pcb *pcb, t_estado_proceso estado)
 {
     if (estado != pcb->estado)

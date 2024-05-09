@@ -192,3 +192,24 @@ void *recibir_bufferTOP(int socket_cliente, int *size)
 
     return buffer;
 }
+
+char *estado_to_string(t_estado_proceso estado)
+{
+    switch (estado)
+    {
+    case NUEVO:
+        return "NUEVO";
+    case LISTO:
+        return "LISTO";
+    case EJECUTANDO:
+        return "EJECUTANDO";
+    case BLOQUEADO:
+        return "BLOQUEADO";
+    case FINALIZADO:
+        return "TERMINADO";
+    case ERROR:
+        return "ERROR";
+    default:
+        return "ERROR";
+    }
+}

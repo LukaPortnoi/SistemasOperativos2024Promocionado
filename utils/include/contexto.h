@@ -77,8 +77,6 @@ typedef struct
     t_motivo_desalojo motivo_desalojo;
 } t_contexto_ejecucion;
 
-/* void enviar_contexto(int socket, t_contexto_ejecucion *contexto_a_enviar);
-void serializar_contexto(t_paquete *paquete, t_contexto_ejecucion *ctx);
-t_contexto_ejecucion *recibir_contexto(int socket); */
+char *motivo_desalojo_to_string(t_motivo_desalojo motivo);
 
 #endif // CONTEXTO_H_

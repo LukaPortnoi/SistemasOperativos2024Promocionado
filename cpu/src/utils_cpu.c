@@ -4,15 +4,11 @@ void ejecutar_ciclo_instruccion()
 {
     t_instruccion *instruccion = fetch(pcb_actual->pid, pcb_actual->contexto_ejecucion->registros->program_counter);
     // TODO decode: manejo de TLB y MMU
-    printf("NOMBRE INSTRUCCION: %d\n", instruccion->nombre);
-    printf("PARAMETRO 1 INSTRUCCION: %s\n", instruccion->parametro1);
-    printf("PARAMETRO 2 INSTRUCCION: %s\n", instruccion->parametro2);
     execute(instruccion);
     // if (!page_fault)
-    pcb_actual->contexto_ejecucion->registros->program_counter++;
 }
 
-t_instruccion *fetch(int pid, int pc)
+t_instruccion *fetch(uint32_t pid, uint32_t pc)
 {
     // TODO -- chequear que en los casos de instruccion con memoria logica puede dar PAGE FAULT y no hay que aumentar el pc (restarlo dentro del decode en esos casos)
     // log_trace(LOGGER_CPU, "PID Y PC PARA PEDIR INSTRUCCION A MEMORIA: %d - %d\n", pid, pc);
@@ -46,19 +42,19 @@ void execute(t_instruccion *instruccion)
     {
     case SET:
         _set(instruccion->parametro1, instruccion->parametro2);
-        log_instruccion_ejecutada(instruccion->nombre, instruccion->parametro1, instruccion->parametro2);
+        loguear_y_sumar_pc(instruccion);
         break;
     case SUM:
         _sum(instruccion->parametro1, instruccion->parametro2);
-        log_instruccion_ejecutada(instruccion->nombre, instruccion->parametro1, instruccion->parametro2);
+        loguear_y_sumar_pc(instruccion);
         break;
     case SUB:
         _sub(instruccion->parametro1, instruccion->parametro2);
-        log_instruccion_ejecutada(instruccion->nombre, instruccion->parametro1, instruccion->parametro2);
+       loguear_y_sumar_pc(instruccion);
         break;
     case JNZ:
         _jnz(instruccion->parametro1, instruccion->parametro2);
-        log_instruccion_ejecutada(instruccion->nombre, instruccion->parametro1, instruccion->parametro2);
+        loguear_y_sumar_pc(instruccion);
         break;
     /* case IO_GEN_SLEEP:
         _io_gen_sleep(instruccion->parametro1, instruccion->parametro2);
@@ -67,20 +63,28 @@ void execute(t_instruccion *instruccion)
     // Esta instrucción representa la syscall de finalización del proceso.
     // Se deberá devolver el Contexto de Ejecución actualizado al Kernel para su finalización.
     case EXIT:
-        exit(EXIT_SUCCESS);
+        log_info(LOGGER_CPU, "PID: %d - Ejecutando: %s", pcb_actual->pid, instruccion_to_string(instruccion->nombre));
+        pcb_actual->estado = FINALIZADO;
+        pcb_actual->contexto_ejecucion->motivo_desalojo = INTERRUPCION_FINALIZACION;
         break;
     default:
         break;
     }
 }
 
-void pedir_instruccion_memoria(int pid, int pc, int socket)
+void loguear_y_sumar_pc(t_instruccion *instruccion)
+{
+    log_instruccion_ejecutada(instruccion->nombre, instruccion->parametro1, instruccion->parametro2);
+    pcb_actual->contexto_ejecucion->registros->program_counter++;
+}
+
+void pedir_instruccion_memoria(uint32_t pid, uint32_t pc, int socket)
 {
     t_paquete *paquete = crear_paquete_con_codigo_de_operacion(PEDIDO_INSTRUCCION);
-    paquete->buffer->size += sizeof(int) * 2;
+    paquete->buffer->size += sizeof(uint32_t) * 2;
     paquete->buffer->stream = malloc(paquete->buffer->size);
-    memcpy(paquete->buffer->stream, &(pid), sizeof(int));
-    memcpy(paquete->buffer->stream + sizeof(int), &(pc), sizeof(int));
+    memcpy(paquete->buffer->stream, &(pid), sizeof(uint32_t));
+    memcpy(paquete->buffer->stream + sizeof(uint32_t), &(pc), sizeof(int));
     enviar_paquete(paquete, socket);
     eliminar_paquete(paquete);
 }
@@ -112,7 +116,6 @@ t_instruccion *deserializar_instruccion(int socket)
 
     instruccion->parametro2 = malloc(tamanio_parametro2);
     memcpy(instruccion->parametro2, stream + desplazamiento, tamanio_parametro2);
-    desplazamiento += tamanio_parametro2;
 
     eliminar_paquete(paquete);
 

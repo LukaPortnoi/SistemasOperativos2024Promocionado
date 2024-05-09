@@ -6,18 +6,6 @@ t_proceso_memoria *proceso_memoria;
 
 t_proceso_memoria *recibir_proceso_memoria(int socket_cliente)
 {
-    /* t_proceso_memoria *proceso = malloc(sizeof(t_proceso_memoria));
-    int size;
-    void *buffer = recibir_buffer(&size, socket_cliente);
-    int offset = 0;
-
-    memcpy(&(proceso->pid), buffer + offset, sizeof(int));
-    offset += sizeof(int);
-
-    proceso->path = malloc(size - offset);
-    memcpy(proceso->path, buffer + offset, size - offset);
-    free(buffer);
-    return proceso; */
     t_paquete *paquete = recibir_paquete(socket_cliente);
     t_proceso_memoria *proceso = deserializar_proceso(paquete->buffer);
     eliminar_paquete(paquete);
@@ -75,8 +63,9 @@ t_proceso_memoria *obtener_proceso_pid(uint32_t pid_pedido)
 
     pthread_mutex_lock(&mutex_procesos);
     proceso = list_find(procesos_totales, id_process);
-    printf("CANTIDAD DE PROCESOS AL MOMENTO DE OBTENERLO: %d \n", procesos_totales->elements_count);
     pthread_mutex_unlock(&mutex_procesos);
+    printf("CANTIDAD DE PROCESOS AL MOMENTO DE OBTENERLO: %d \n", procesos_totales->elements_count);
+
     return proceso;
 }
 
@@ -206,9 +195,9 @@ t_buffer *crear_buffer_instruccion(t_instruccion *instruccion)
 // NO ME CIERRA LA FUNCION, SE REVISARA MAS TARDE (MAS QUE NADA AL DEVOLVER EL PROCESO_NUEVO, YA QUE SE INICIALIZA PREVIAMENTE Y NO SE DESARROLLO LA FUNCION POR EL TEMA DE LA ESTRUCTURA DE LOS PROCESOS EN MEMORIA)
 t_proceso_memoria *iniciar_proceso_path(t_proceso_memoria *proceso_nuevo)
 {
+    pthread_mutex_lock(&mutex_procesos);
     proceso_nuevo->instrucciones = parsear_instrucciones(proceso_nuevo->path);
     log_info(LOGGER_MEMORIA, "Instrucciones bien parseadas para el proceso PID [%d]", proceso_nuevo->pid);
-    pthread_mutex_lock(&mutex_procesos);
     list_add(procesos_totales, proceso_nuevo); // Se agrega el proceso a la lista de procesos totales
     printf("CANTIDAD DE PROCESOS AGREGADOS: %d \n", procesos_totales->elements_count);
     pthread_mutex_unlock(&mutex_procesos);
@@ -249,6 +238,11 @@ t_list *parsear_instrucciones(char *path)
         {
             list_add(instrucciones, armar_estructura_instruccion(IO_GEN_SLEEP, palabras[1], palabras[2]));
         }
+        else if (string_equals_ignore_case(palabras[0], "EXIT"))
+        {
+            list_add(instrucciones, armar_estructura_instruccion(EXIT, "", ""));
+        }   
+
         indice_split++;
         string_iterate_lines(palabras, (void (*)(char *))free);
         free(palabras);
@@ -265,8 +259,8 @@ t_instruccion *armar_estructura_instruccion(nombre_instruccion instruccion, char
     t_instruccion *estructura = (t_instruccion *)malloc(sizeof(t_instruccion));
 
     estructura->nombre = instruccion;
-    estructura->parametro1 = (parametro1 && parametro1[0] != '\0') ? strdup(parametro1) : NULL;
-    estructura->parametro2 = (parametro2 && parametro2[0] != '\0') ? strdup(parametro2) : NULL;
+    estructura->parametro1 = (parametro1[0] != '\0') ? strdup(parametro1) : parametro1;//(parametro1 && parametro1[0] != '\0') ? strdup(parametro1) : NULL;
+    estructura->parametro2 = (parametro2[0] != '\0') ? strdup(parametro2) : parametro2; //(parametro2 && parametro2[0] != '\0') ? strdup(parametro2) : NULL;
 
     estructura->longitud_parametro1 = strlen(estructura->parametro1) + 1;
     estructura->longitud_parametro2 = strlen(estructura->parametro2) + 1;

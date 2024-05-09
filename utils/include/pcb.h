@@ -61,4 +61,7 @@ uint32_t str_to_uint32(char *);
 t_pcb *recibir_pcbTOP(int socket_cliente);
 void *recibir_bufferTOP(int socket_cliente, int *size);
 
+// To string
+char *estado_to_string(t_estado_proceso estado);
+
 #endif // PCB_H_

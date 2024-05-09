@@ -7,6 +7,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <inttypes.h>
+#include <stdbool.h>
 
 #include <commons/log.h>
 #include <commons/string.h>
