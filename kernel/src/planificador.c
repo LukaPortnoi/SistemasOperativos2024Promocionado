@@ -166,7 +166,7 @@ void ejecutar_PCB(t_pcb *pcb)
         squeue_push(squeue_blocked, pcb);
         break;
     case INTERRUPCION_FINALIZACION:
-        log_info(LOGGER_KERNEL, "El PCB con PID %d se desalojo por finalizacion", pcb->pid);
+        log_debug(LOGGER_KERNEL, "El PCB con PID %d se desalojo por finalizacion", pcb->pid);
         cambiar_estado_pcb(pcb, FINALIZADO);
         squeue_push(squeue_exit, pcb);
         break;
@@ -185,6 +185,10 @@ void ejecutar_PCB(t_pcb *pcb)
 
 t_pcb *recibir_pcb_CPU(int fd_cpu)
 {
+    op_cod cop;
+
+    recv(fd_cpu, &cop, sizeof(op_cod), 0);
+    
     t_pcb *pcbDeCPU = recibir_pcb(fd_cpu);
 
     if (pcbDeCPU == NULL)
@@ -193,7 +197,7 @@ t_pcb *recibir_pcb_CPU(int fd_cpu)
         return NULL;
     }
 
-    log_info(LOGGER_KERNEL, "Se recibio el PCB con PID %d de CPU", pcbDeCPU->pid);
+    log_info(LOGGER_KERNEL, "Se recibio el PCB con PID %d de CPU (entre al case de plani)", pcbDeCPU->pid);
     return pcbDeCPU;
 }
 

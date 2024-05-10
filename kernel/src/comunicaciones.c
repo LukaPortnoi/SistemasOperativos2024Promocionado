@@ -34,7 +34,7 @@ static void procesar_conexion_kernel(void *void_args)
 		// -------------------
 		case PCB:
 			t_pcb *pcb_actualizado = recibir_pcb(cliente_socket);
-			log_info(logger, "Recibi un PCB del CPU con PID: %d", pcb_actualizado->pid);
+			log_info(logger, "Recibi un PCB del CPU con PID: %d (entre al case de KERNEL)", pcb_actualizado->pid);
 			break;
 
 		// -------------------
