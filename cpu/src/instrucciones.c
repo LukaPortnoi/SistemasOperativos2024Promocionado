@@ -23,7 +23,7 @@ void _mov_in(char *registro, char *direc_logica)
         regis = get_registry32(registro);
     }
 
-    uint32_t valor = 0; // obtener_valor_dir(str_to_uint32(direc_logica)); NO EXISTEEEEEEEEE
+    uint32_t valor = 0;
     if (valor != -1)
     {
         *(regis) = valor;
@@ -43,7 +43,7 @@ void _mov_out(char *direc_logica, char *registro)
         regis = get_registry32(registro);
     }
 
-    uint32_t valor = 0; // obtener_valor_dir(str_to_uint32(direc_logica)); NO EXISTEEEEEEEEE
+    uint32_t valor = 0;
     if (valor != -1)
     {
         *(regis) = valor;

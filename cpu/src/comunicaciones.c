@@ -70,7 +70,7 @@ static void procesar_conexion_dispatch(void *void_args)
 		// ---------------
 		// -- ERRORES --
 		// ---------------
-		case -1:
+		case ERROR:
 			log_error(logger, "Cliente desconectado de %s... con cop -1", server_name);
 			break;
 		default:
@@ -117,7 +117,7 @@ static void procesar_conexion_interrupt(void *void_args)
 		// ---------------
 		// -- ERRORES --
 		// ---------------
-		case -1:
+		case ERROR:
 			log_error(logger, "Cliente desconectado de %s... con cop -1", server_name);
 			break; // hay un return, voy a probar un break
 		default:

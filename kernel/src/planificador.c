@@ -38,9 +38,6 @@ t_pcb *crear_proceso()
     t_pcb *pcb = crear_pcb(pid_nuevo, NUEVO, QUANTUM);
     squeue_push(squeue_new, pcb);
 
-    /* t_pcb *pcb = crear_pcb(pid_nuevo, LISTO, QUANTUM);
-    squeue_push(squeue_ready, pcb); */
-
     pthread_mutex_lock(&procesosEnSistemaMutex);
     list_add(procesosEnSistema, pcb);
     pthread_mutex_unlock(&procesosEnSistemaMutex);
@@ -56,12 +53,12 @@ void chequear_grado_de_multiprogramacion()
 {
     while (1)
     {
-        sem_wait(&semMultiprogramacion);
+        sem_wait(&semMultiprogramacion);    //ESTE SEMAFORO NO ES SUFICIENTE, REVISAR CHEQUEAR GRADO
         log_trace(LOGGER_KERNEL, "Chequeando grado de multiprogramacion!");
         if (list_size(procesosEnSistema) < GRADO_MULTIPROGRAMACION)
         {
             t_pcb *pcb_a_mover = squeue_pop(squeue_new); // CHEQUEAR TEMA BLOQUEADOS
-            cambiar_estado_pcb(pcb_a_mover, LISTO);
+            cambiar_estado_pcb(pcb_a_mover, LISTO);     //previamente tendria que hablar con memoria antes de pasar a ready, tengo que esperar respuesta de que memoria todo en orden
             squeue_push(squeue_ready, pcb_a_mover);
             sem_post(&semReady);
         }
