@@ -148,6 +148,21 @@ uint32_t str_to_uint32(char *str)
     return result;
 }
 
+uint8_t str_to_uint8(char *str)
+{
+    char *endptr;
+    uint8_t result = (uint8_t)strtoul(str, &endptr, 10);
+
+    // Comprobar si hubo errores durante la conversión
+    if (*endptr != '\0')
+    {
+        fprintf(stderr, "Error en la conversión de '%s' a uint8_t.\n", str);
+        exit(EXIT_FAILURE);
+    }
+
+    return result;
+}
+
 t_pcb *recibir_pcbTOP(int socket_cliente)
 {
     int size;

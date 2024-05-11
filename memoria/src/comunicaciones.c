@@ -62,7 +62,7 @@ static void procesar_conexion_memoria(void *void_args)
 			proceso_memoria = obtener_proceso_pid(pid);
 			if (proceso_memoria == NULL)
 			{
-				log_error(logger, "No se encontro el proceso con PID %d", pid);
+				log_error(logger, "No se encontro el proceso con PID %d", pid);		//ACA ERROR
 				break;
 			}
 			else

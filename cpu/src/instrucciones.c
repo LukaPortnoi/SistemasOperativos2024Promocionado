@@ -3,14 +3,25 @@
 // (Registro, Valor): Asigna al registro el valor pasado como parámetro.
 void _set(char *registro, char *valor)
 {
-    *(get_registry(registro)) = str_to_uint32(valor);
+    if(revisar_registro(registro)){
+        *(get_registry8(registro)) = str_to_uint8(valor);
+    }else{
+        *(get_registry32(registro)) = str_to_uint32(valor);
+    }
 }
 
 // (Registro Datos, Registro Dirección): Lee el valor de memoria correspondiente a
 // la Dirección Lógica que se encuentra en el Registro Dirección y lo almacena en el Registro Datos.
 void _mov_in(char *registro, char *direc_logica)
 {
-    uint32_t *regis = get_registry(registro);
+    uint8_t *regis;
+    
+    if(revisar_registro(registro)){
+        regis = get_registry8(registro);
+    }else{
+        uint32_t *regis = (uint32_t *)regis;
+        regis = get_registry32(registro);
+    }
 
     uint32_t valor = 0; // obtener_valor_dir(str_to_uint32(direc_logica)); NO EXISTEEEEEEEEE
     if (valor != -1)
@@ -23,20 +34,42 @@ void _mov_in(char *registro, char *direc_logica)
 // la dirección física de memoria obtenida a partir de la Dirección Lógica almacenada en el Registro Dirección.
 void _mov_out(char *direc_logica, char *registro)
 {
-    uint32_t *regis = get_registry(registro);
+    uint8_t *regis;
+    
+    if(revisar_registro(registro)){
+        regis = get_registry8(registro);
+    }else{
+        uint32_t *regis = (uint32_t *)regis;
+        regis = get_registry32(registro);
+    }
 
-    // escribir_memoria(str_to_uint32(direc_logica), regis); ???????????????????
-
-    // TODO: solo cambiar si no es page fault
-    free(regis);
+    uint32_t valor = 0; // obtener_valor_dir(str_to_uint32(direc_logica)); NO EXISTEEEEEEEEE
+    if (valor != -1)
+    {
+        *(regis) = valor;
+    }
 }
 
 // (Registro Destino, Registro Origen): Suma al Registro Destino el
 // Registro Origen y deja el resultado en el Registro Destino.
 void _sum(char *registro_destino, char *registro_origen)
 {
-    uint32_t *destino = get_registry(registro_destino);
-    uint32_t *origen = get_registry(registro_origen);
+    uint8_t *destino;
+    uint8_t *origen;
+    
+    if(revisar_registro(registro_destino)){
+        destino = get_registry8(registro_destino);
+    }else{
+        uint32_t *destino = (uint32_t *)destino;
+        destino = get_registry32(registro_destino);
+    }
+
+    if(revisar_registro(registro_origen)){
+        origen = get_registry8(registro_origen);
+    }else{
+        uint32_t *origen = (uint32_t *)origen;
+        origen = get_registry32(registro_origen);
+    }  
 
     *(destino) = *(destino) + *(origen);
 }
@@ -45,8 +78,22 @@ void _sum(char *registro_destino, char *registro_origen)
 // el Registro Origen y deja el resultado en el Registro Destino
 void _sub(char *registro_destino, char *registro_origen)
 {
-    uint32_t *destino = get_registry(registro_destino);
-    uint32_t *origen = get_registry(registro_origen);
+    uint8_t *destino;
+    uint8_t *origen;
+    
+    if(revisar_registro(registro_destino)){
+        destino = get_registry8(registro_destino);
+    }else{
+        uint32_t *destino = (uint32_t *)destino;
+        destino = get_registry32(registro_destino);
+    }
+
+    if(revisar_registro(registro_origen)){
+        origen = get_registry8(registro_origen);
+    }else{
+        uint32_t *origen = (uint32_t *)origen;
+        origen = get_registry32(registro_origen);
+    }  
 
     *(destino) = *(destino) - *(origen);
 }
@@ -55,7 +102,14 @@ void _sub(char *registro_destino, char *registro_origen)
 // actualiza el program counter al número de instrucción pasada por parámetro.
 void _jnz(char *registro, char *instruccion)
 {
-    uint32_t *regis = get_registry(registro);
+    uint8_t *regis;
+    
+    if(revisar_registro(registro)){
+        regis = get_registry8(registro);
+    }else{
+        uint32_t *regis = (uint32_t *)regis;
+        regis = get_registry32(registro);
+    }
 
     if (regis != 0)
     {
@@ -74,7 +128,28 @@ void _io_gen_sleep(char *interfaz, int unidades_de_trabajo)
     // sleep
 }
 
-uint32_t *get_registry(char *registro)
+uint32_t *get_registry32(char *registro)
+{
+    if (strcmp(registro, "EAX") == 0)
+        return &(pcb_actual->contexto_ejecucion->registros->eax);
+    else if (strcmp(registro, "EBX") == 0)
+        return &(pcb_actual->contexto_ejecucion->registros->ebx);
+    else if (strcmp(registro, "ECX") == 0)
+        return &(pcb_actual->contexto_ejecucion->registros->ecx);
+    else if (strcmp(registro, "EDX") == 0)
+        return &(pcb_actual->contexto_ejecucion->registros->edx);
+    else if (strcmp(registro, "DI") == 0)
+        return &(pcb_actual->contexto_ejecucion->registros->di);
+    else if (strcmp(registro, "SI") == 0)
+        return &(pcb_actual->contexto_ejecucion->registros->si);
+    else
+    {
+        log_error(LOGGER_CPU, "No se reconoce el registro %s", registro);
+        return NULL;
+    }
+}
+
+uint8_t *get_registry8(char *registro)
 {
     if (strcmp(registro, "AX") == 0)
         return &(pcb_actual->contexto_ejecucion->registros->ax);
@@ -131,5 +206,33 @@ char *instruccion_to_string(nombre_instruccion nombre)
         return "EXIT";
     default:
         return "DESCONOCIDA";
+    }
+}
+
+bool revisar_registro(char *registro){
+    if (strcmp(registro, "AX") == 0)
+        return true;
+    else if (strcmp(registro, "BX") == 0)
+        return true;
+    else if (strcmp(registro, "CX") == 0)
+        return true;
+    else if (strcmp(registro, "DX") == 0)
+        return true;
+    else if (strcmp(registro, "EAX") == 0)
+        return false;
+    else if (strcmp(registro, "EBX") == 0)
+        return false;
+    else if (strcmp(registro, "ECX") == 0)
+        return false;
+    else if (strcmp(registro, "EDX") == 0)
+        return false;
+    else if (strcmp(registro, "DI") == 0)
+        return false;
+    else if (strcmp(registro, "SI") == 0)
+        return false;
+    else
+    {
+        log_error(LOGGER_CPU, "No se reconoce el registro %s", registro);
+        return NULL;
     }
 }

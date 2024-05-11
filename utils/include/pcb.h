@@ -56,6 +56,7 @@ t_pcb *recibir_pcb(int socket_cliente);
 
 // Funciones instrucciones
 uint32_t str_to_uint32(char *);
+uint8_t str_to_uint8(char *);
 
 // Funciones adicionales
 t_pcb *recibir_pcbTOP(int socket_cliente);

@@ -62,7 +62,7 @@ t_proceso_memoria *obtener_proceso_pid(uint32_t pid_pedido)
     }
 
     pthread_mutex_lock(&mutex_procesos);
-    proceso = list_find(procesos_totales, id_process);
+    proceso = list_find(procesos_totales, id_process);      //SOPORTE: TENEMOS UN PROBLEMA DE SINCRONIZACION, CONDICION DE CARRERA EN AGREGAR PROCESOS Y ENCONTRARLOS
     pthread_mutex_unlock(&mutex_procesos);
     printf("CANTIDAD DE PROCESOS AL MOMENTO DE OBTENERLO: %d \n", procesos_totales->elements_count);
 
@@ -198,7 +198,7 @@ t_proceso_memoria *iniciar_proceso_path(t_proceso_memoria *proceso_nuevo)
     pthread_mutex_lock(&mutex_procesos);
     proceso_nuevo->instrucciones = parsear_instrucciones(proceso_nuevo->path);
     log_info(LOGGER_MEMORIA, "Instrucciones bien parseadas para el proceso PID [%d]", proceso_nuevo->pid);
-    list_add(procesos_totales, proceso_nuevo); // Se agrega el proceso a la lista de procesos totales
+    list_add(procesos_totales, proceso_nuevo); // SOPORTE: ACA ESTARIA AGREGANDO EL PROCESO
     printf("CANTIDAD DE PROCESOS AGREGADOS: %d \n", procesos_totales->elements_count);
     pthread_mutex_unlock(&mutex_procesos);
     // inicializar_nuevo_proceso(proceso_nuevo); -> Se usa para inicializar las estructuras de memoria del proceso. Se agregara despues si es que no hay drama con la funcion actual. Si genera problema, se eliminara y buscara otra alternativa
@@ -305,3 +305,9 @@ char *leer_archivo(char *path)
     fclose(archivo);
     return cadena;
 }
+
+//SOPORTE: 
+/*
+LLEGAMOS A ESTE ERROR QUE VIENE DE ACAERROR
+[ERROR] 23:31:30:912 Servidor Memoria/(2209:2328): No se encontro el proceso con PID 3
+*/
