@@ -90,7 +90,7 @@ static void procesar_conexion_memoria(void *void_args)
 		// ---------------
 		// -- ERRORES --
 		// ---------------
-		case ERROR:		//NO TIENEN QUE HABER NEGATIVOS, NO VA AENTRAR NUNCA
+		case ERROROPCODE:		//NO TIENEN QUE HABER NEGATIVOS, NO VA AENTRAR NUNCA
 			log_error(logger, "Cliente desconectado de %s... con cop -1", server_name);
 			break; // hay un return, voy a probar un break
 		default:

@@ -10,7 +10,7 @@ typedef enum
     HANDSHAKE_dispatch,
     HANDSHAKE_in_out,
     HANDSHAKE_ok_continue,
-    ERROR,
+    ERROROPCODE,
     MENSAJE,
     PAQUETE,
     PCB,
