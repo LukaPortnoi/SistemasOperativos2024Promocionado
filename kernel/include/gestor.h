@@ -67,7 +67,7 @@ extern sem_t semExit;
 
 extern t_list *procesosEnSistema;
 
-// extern pthread_mutex_t procesoMutex;
+extern pthread_mutex_t procesoMutex;
 extern pthread_mutex_t procesosEnSistemaMutex;
 extern pthread_mutex_t mutex_pid;
 

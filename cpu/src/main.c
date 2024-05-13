@@ -19,13 +19,12 @@ t_pcb *pcb_actual;
 
 pthread_t hilo_interrupt;
 
-bool hayInterrupcion = false;
-
 op_cod cod_op;
 
 int main()
 {
     inicializar_config();
+    iniciar_semaforos();
 
     iniciar_conexiones();
 

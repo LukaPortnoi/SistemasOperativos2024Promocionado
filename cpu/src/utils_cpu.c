@@ -1,5 +1,7 @@
 #include "../include/utils_cpu.h"
 
+pthread_mutex_t mutex_interrupt;
+
 void ejecutar_ciclo_instruccion()
 {
     t_instruccion *instruccion = fetch(pcb_actual->pid, pcb_actual->contexto_ejecucion->registros->program_counter);
@@ -126,4 +128,8 @@ void log_instruccion_ejecutada(nombre_instruccion nombre, char *param1, char *pa
 {
     char *nombre_instruccion = instruccion_to_string(nombre);
     log_info(LOGGER_CPU, "PID: %d - Ejecutando: %s - Parametros: %s - %s", pcb_actual->pid, nombre_instruccion, param1, param2);
+}
+
+void iniciar_semaforos(){
+    pthread_mutex_init(&mutex_interrupt, NULL);
 }
