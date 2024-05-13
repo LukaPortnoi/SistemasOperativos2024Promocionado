@@ -19,7 +19,6 @@ int main(void)
 {
 	// signal(SIGINT, sighandler);
 	inicializar_config();
-	inicializar_semaforos_y_mutex();
 
 	int fd_memoria = iniciar_servidor(LOGGER_MEMORIA, "MEMORIA", IP_MEMORIA, PUERTO_ESCUCHA_MEMORIA);
 	//log_info(LOGGER_MEMORIA, "Memoria listo para recibir clientes");

@@ -38,6 +38,6 @@ extern int fd_cpu_interrupt;
 extern int fd_cpu_memoria;
 
 extern t_pcb *pcb_actual;
-extern pthread_mutex_t mutex_interrupt;
+extern bool hayInterrupcion;
 
 #endif /* GESTOR_H_ */

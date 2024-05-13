@@ -5,7 +5,6 @@
 #include "./comunicaciones.h"
 #include "./instrucciones.h"
 
-void iniciar_semaforos(void);
 void ejecutar_ciclo_instruccion();
 t_instruccion *fetch(uint32_t pid, uint32_t pc);
 void execute(t_instruccion *instruccion);

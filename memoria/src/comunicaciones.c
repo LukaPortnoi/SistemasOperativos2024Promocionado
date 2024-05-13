@@ -1,5 +1,7 @@
 #include "../include/comunicaciones.h"
 
+pthread_mutex_t mutex_comunicacion_procesos;
+
 static void procesar_conexion_memoria(void *void_args)
 {
 	t_procesar_conexion_args *args = (t_procesar_conexion_args *)void_args;

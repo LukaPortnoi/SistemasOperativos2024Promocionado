@@ -4,7 +4,6 @@
 #include "./gestor.h"
 #include "../../utils/include/contexto.h"
 
-void inicializar_semaforos_y_mutex();
 t_proceso_memoria *recibir_proceso_memoria(int socket);
 t_proceso_memoria *deserializar_proceso(t_buffer *buffer);
 void recibir_pedido_instruccion(uint32_t *pid, uint32_t *pc, int socket);

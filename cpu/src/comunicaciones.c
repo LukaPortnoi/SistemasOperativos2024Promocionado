@@ -7,8 +7,6 @@ typedef struct
 	char *server_name;
 } t_procesar_conexion_args;
 
-bool interrupciones[5] = {0, 0, 0, 0, 0};
-
 static void procesar_conexion_dispatch(void *void_args)
 {
 	t_procesar_conexion_args *args = (t_procesar_conexion_args *)void_args;
@@ -50,7 +48,7 @@ static void procesar_conexion_dispatch(void *void_args)
 
 		case PCB:
 			pcb_actual = recibir_pcb(cliente_socket);
-			while (!hayInterrupciones() && pcb_actual != NULL && pcb_actual->estado != FINALIZADO /* !es_syscall() && !page_fault && */ ) // Aca deberia ir el check_interrupt()
+			while (!hayInterrupcion && pcb_actual != NULL && pcb_actual->estado != FINALIZADO /* !es_syscall() && !page_fault && */ ) // Aca deberia ir el check_interrupt()
 			{
 				ejecutar_ciclo_instruccion();
 			}
@@ -63,9 +61,10 @@ static void procesar_conexion_dispatch(void *void_args)
 
 			pcb_actual = NULL;
 
-			pthread_mutex_lock(&mutex_interrupt);
-			limpiar_interrupciones();
-			pthread_mutex_unlock(&mutex_interrupt);
+			// pthread_mutex_lock(&mutex_interrupt);
+			// limpiar_interrupciones();
+			// pthread_mutex_unlock(&mutex_interrupt);
+			// liberar_contexto(contexto_actual);
 			break;
 
 		// ---------------
@@ -112,7 +111,7 @@ static void procesar_conexion_interrupt(void *void_args)
 		// -- KERNEL - CPU --
 		// ----------------------
 		case INTERRUPCION:
-			recibir_interrupciones(logger);
+			hayInterrupcion = recibir_interrupciones();
 			break;
 
 		// ---------------
@@ -156,8 +155,9 @@ int server_escuchar(t_log *logger, char *server_name, int server_socket)
 	return 0;
 }
 
-void recibir_interrupciones(t_log *logger)
+bool recibir_interrupciones(void) //  TODO: Revisar
 {
+	bool hayInterrup = false;
 	while (1)
 	{
 		t_interrupcion *interrupcion = recibir_interrupcion(fd_cpu_interrupt);
@@ -165,51 +165,22 @@ void recibir_interrupciones(t_log *logger)
 		switch (interrupcion->motivo_interrupcion)
 		{
 		case INTERRUPCION_FIN_QUANTUM:
-			log_info(logger, "Interrupcion por fin de quantum");
-			interrupciones[0] = 1;
+			hayInterrup = true;
 			break;
 
 		case INTERRUPCION_BLOQUEO:
-			log_info(logger, "Interrupcion por bloqueo");
-			interrupciones[1] = 1;
+			hayInterrup = true;
 			break;
 
 		case INTERRUPCION_FINALIZACION:
-			log_info(logger, "Interrupcion por finalizacion");
-			interrupciones[2] = 1;
+			hayInterrup = true;
 			break;
 		case INTERRUPCION_ERROR:
-			log_info(logger, "Interrupcion por error");
-			interrupciones[3] = 1;
-			break;
-		case INTERRUPCION_SYSCALL:
-			log_info(logger, "Interrupcion por syscall");
-			interrupciones[4] = 1;
+			hayInterrup = true;
 			break;
 		default:
-			//log_error(logger, "Error en la interrupcion");
 			break;
 		}
 	}
-	free(interrupcion);
-}
-
-bool hayInterrupciones(void)
-{
-	for (int i = 0; i < 5; i++)
-	{
-		if (interrupciones[i])
-		{
-			return true;
-		}
-	}
-	return false;
-}
-
-void limpiar_interrupciones(void)
-{
-	for (int i = 0; i < 5; i++)
-	{
-		interrupciones[i] = 0;
-	}
+	return hayInterrup;
 }

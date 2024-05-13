@@ -1,7 +1,6 @@
 #include "../include/utils_memoria.h"
 
 pthread_mutex_t mutex_procesos;
-pthread_mutex_t mutex_comunicacion_procesos;
 t_list *procesos_totales;
 t_proceso_memoria *proceso_memoria;
 
@@ -307,8 +306,8 @@ char *leer_archivo(char *path)
     return cadena;
 }
 
-void inicializar_semaforos_y_mutex()
-{
-    pthread_mutex_init(&mutex_procesos, NULL);
-    pthread_mutex_init(&mutex_comunicacion_procesos, NULL);
-}
+//SOPORTE: 
+/*
+LLEGAMOS A ESTE ERROR QUE VIENE DE ACAERROR
+[ERROR] 23:31:30:912 Servidor Memoria/(2209:2328): No se encontro el proceso con PID 3
+*/

@@ -270,7 +270,6 @@ void iniciar_colas_y_semaforos()
     pthread_mutex_init(&procesoMutex, NULL);
     pthread_mutex_init(&procesosEnSistemaMutex, NULL);
     pthread_mutex_init(&mutex_pid, NULL);
-    pthread_mutex_init(&mutex_interrupt, NULL);
 
     sem_init(&semMultiprogramacion, 0, 0);
     sem_init(&semNew, 0, 0);

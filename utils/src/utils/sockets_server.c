@@ -137,23 +137,18 @@ t_paquete *recibir_paquete(int socket_cliente)
 
 t_interrupcion *recibir_interrupcion(int socket_cliente)
 {
-	t_paquete *paquete = recibir_paquete(socket_cliente);
-	t_interrupcion *interrupcion = deserializar_interrupcion(paquete->buffer);
-	eliminar_paquete(paquete);
-	return interrupcion;
-}
+	int size = 0;
+	void *buffer = recibir_buffer(&size, socket_cliente);
+	int offset = 0;
 
-t_interrupcion *deserializar_interrupcion(t_buffer *buffer)
-{
-	t_interrupcion *interrupcion = malloc(sizeof(t_interrupcion));
-	void *stream = buffer->stream;
+	t_interrupcion *interrupcion_recibida = malloc(sizeof(t_interrupcion));
 
-	int desplazamiento = 0;
+	memcpy(&(interrupcion_recibida->motivo_interrupcion), buffer + offset, sizeof(t_motivo_desalojo));
+	offset += sizeof(t_motivo_desalojo);
 
-	memcpy(&(interrupcion->motivo_interrupcion), stream + desplazamiento, sizeof(t_motivo_desalojo));
-	desplazamiento += sizeof(t_motivo_desalojo);
+	memcpy(&(interrupcion_recibida->pid), buffer + offset, sizeof(int));
+	offset += sizeof(int);
 
-	memcpy(&(interrupcion->pid), stream + desplazamiento, sizeof(int));
-
-	return interrupcion;
+	free(buffer);
+	return interrupcion_recibida;
 }

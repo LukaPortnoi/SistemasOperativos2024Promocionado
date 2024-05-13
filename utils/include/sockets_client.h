@@ -33,8 +33,6 @@ void enviar_paquete(t_paquete *paquete, int socket_cliente);
 void crear_buffer(t_paquete *paquete);
 void *serializar_paquete(t_paquete *paquete, int bytes);
 void enviar_interrupcion(int socket_cliente, t_interrupcion *interrupcion);
-t_paquete *crear_paquete_instruccion(t_interrupcion *interrupcion);
-t_buffer *crear_buffer_interrupcion(t_interrupcion *interrupcion);
 void liberar_conexion(int socket_cliente);
 void eliminar_paquete(t_paquete *paquete);
 t_paquete *crear_paquete_con_codigo_de_operacion(op_cod codigo);
