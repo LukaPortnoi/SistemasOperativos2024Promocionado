@@ -10,6 +10,9 @@ char *PATH_INSTRUCCIONES;
 int RETARDO_RESPUESTA;
 int CLIENTE_CPU, CLIENTE_KERNEL, CLIENTE_IN_OU;
 
+pthread_mutex_t mutex_comunicacion_procesos;
+pthread_mutex_t mutex_procesos;
+
 /*void sighandler(int s) {
 	terminar_programa(fd_kernel, LOGGER_KERNEL, CONFIG_KERNEL);
 	exit(0);
@@ -19,6 +22,7 @@ int main(void)
 {
 	// signal(SIGINT, sighandler);
 	inicializar_config();
+	iniciar_semaforos();
 
 	int fd_memoria = iniciar_servidor(LOGGER_MEMORIA, "MEMORIA", IP_MEMORIA, PUERTO_ESCUCHA_MEMORIA);
 	//log_info(LOGGER_MEMORIA, "Memoria listo para recibir clientes");

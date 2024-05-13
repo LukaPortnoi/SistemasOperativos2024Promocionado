@@ -23,6 +23,14 @@ int iniciar_servidor(t_log *logger, const char *name, char *ip, char *puerto)
 		if (socket_servidor == -1)
 			continue;
 
+		int enable = 1;
+		if (setsockopt(socket_servidor, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0)
+		{
+			close(socket_servidor);
+			log_error(logger, "setsockopt(SO_REUSEADDR) failed");
+			continue;
+		}
+
 		if (bind(socket_servidor, p->ai_addr, p->ai_addrlen) == -1)
 		{
 			close(socket_servidor);
@@ -137,18 +145,22 @@ t_paquete *recibir_paquete(int socket_cliente)
 
 t_interrupcion *recibir_interrupcion(int socket_cliente)
 {
-	int size = 0;
-	void *buffer = recibir_buffer(&size, socket_cliente);
-	int offset = 0;
+	t_paquete *paquete = recibir_paquete(socket_cliente);
+	t_interrupcion *interrupcion = deserializar_interrupcion(paquete->buffer->stream);
+	eliminar_paquete(paquete);
+	return interrupcion;
+}
 
-	t_interrupcion *interrupcion_recibida = malloc(sizeof(t_interrupcion));
+t_interrupcion *deserializar_interrupcion(t_buffer *buffer)
+{
+	t_interrupcion *interrupcion = malloc(sizeof(t_interrupcion));
+	void *stream = buffer->stream;
+	int desplazamiento = 0;
 
-	memcpy(&(interrupcion_recibida->motivo_interrupcion), buffer + offset, sizeof(t_motivo_desalojo));
-	offset += sizeof(t_motivo_desalojo);
+	memcpy(&(interrupcion->motivo_interrupcion), stream + desplazamiento, sizeof(t_motivo_desalojo));
+	desplazamiento += sizeof(t_motivo_desalojo);
+	memcpy(&(interrupcion->pid), stream + desplazamiento, sizeof(int));
 
-	memcpy(&(interrupcion_recibida->pid), buffer + offset, sizeof(int));
-	offset += sizeof(int);
+	return interrupcion;
 
-	free(buffer);
-	return interrupcion_recibida;
 }

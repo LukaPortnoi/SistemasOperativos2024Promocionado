@@ -18,14 +18,14 @@ int fd_cpu_memoria;
 t_pcb *pcb_actual;
 
 pthread_t hilo_interrupt;
-
-bool hayInterrupcion = false;
+pthread_mutex_t mutex_interrupt;
 
 op_cod cod_op;
 
 int main()
 {
     inicializar_config();
+    iniciar_semaforos_etc();
 
     iniciar_conexiones();
 

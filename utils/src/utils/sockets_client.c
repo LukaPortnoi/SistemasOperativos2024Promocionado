@@ -126,10 +126,32 @@ void liberar_conexion(int socket_cliente)
 
 void enviar_interrupcion(int socket_cliente, t_interrupcion *interrupcion)
 {
-	t_paquete *paquete = crear_paquete_con_codigo_de_operacion(INTERRUPCION);
-
-	agregar_a_paquete(paquete, &(interrupcion->motivo_interrupcion), sizeof(t_motivo_desalojo));
-	agregar_a_paquete(paquete, &(interrupcion->pid), sizeof(int));
-
+	t_paquete *paquete = crear_paquete_interrupcion(interrupcion);
 	enviar_paquete(paquete, socket_cliente);
+	eliminar_paquete(paquete);
 }
+
+t_paquete *crear_paquete_interrupcion(t_interrupcion *interrupcion)
+{
+	t_paquete *paquete = malloc(sizeof(t_paquete));
+	paquete->codigo_operacion = INTERRUPCION;
+	paquete->buffer = crear_buffer_interrupcion(interrupcion);
+	return paquete;
+}
+
+t_buffer *crear_buffer_interrupcion(t_interrupcion *interrupcion)
+{
+	t_buffer *buffer = malloc(sizeof(t_buffer));
+	buffer->size = sizeof(t_interrupcion);
+	buffer->stream = malloc(buffer->size);
+
+	int offset = 0;
+
+	memcpy(buffer->stream + offset, &(interrupcion->motivo_interrupcion), sizeof(t_motivo_desalojo));
+	offset += sizeof(t_motivo_desalojo);
+
+	memcpy(buffer->stream + offset, &(interrupcion->pid), sizeof(int));
+
+	return buffer;
+}
+

@@ -3,9 +3,12 @@
 // (Registro, Valor): Asigna al registro el valor pasado como parámetro.
 void _set(char *registro, char *valor)
 {
-    if(revisar_registro(registro)){
+    if (revisar_registro(registro))
+    {
         *(get_registry8(registro)) = str_to_uint8(valor);
-    }else{
+    }
+    else
+    {
         *(get_registry32(registro)) = str_to_uint32(valor);
     }
 }
@@ -15,10 +18,13 @@ void _set(char *registro, char *valor)
 void _mov_in(char *registro, char *direc_logica)
 {
     uint8_t *regis;
-    
-    if(revisar_registro(registro)){
+
+    if (revisar_registro(registro))
+    {
         regis = get_registry8(registro);
-    }else{
+    }
+    else
+    {
         uint32_t *regis = (uint32_t *)regis;
         regis = get_registry32(registro);
     }
@@ -35,10 +41,13 @@ void _mov_in(char *registro, char *direc_logica)
 void _mov_out(char *direc_logica, char *registro)
 {
     uint8_t *regis;
-    
-    if(revisar_registro(registro)){
+
+    if (revisar_registro(registro))
+    {
         regis = get_registry8(registro);
-    }else{
+    }
+    else
+    {
         uint32_t *regis = (uint32_t *)regis;
         regis = get_registry32(registro);
     }
@@ -56,20 +65,26 @@ void _sum(char *registro_destino, char *registro_origen)
 {
     uint8_t *destino;
     uint8_t *origen;
-    
-    if(revisar_registro(registro_destino)){
+
+    if (revisar_registro(registro_destino))
+    {
         destino = get_registry8(registro_destino);
-    }else{
+    }
+    else
+    {
         uint32_t *destino = (uint32_t *)destino;
         destino = get_registry32(registro_destino);
     }
 
-    if(revisar_registro(registro_origen)){
+    if (revisar_registro(registro_origen))
+    {
         origen = get_registry8(registro_origen);
-    }else{
+    }
+    else
+    {
         uint32_t *origen = (uint32_t *)origen;
         origen = get_registry32(registro_origen);
-    }  
+    }
 
     *(destino) = *(destino) + *(origen);
 }
@@ -80,20 +95,26 @@ void _sub(char *registro_destino, char *registro_origen)
 {
     uint8_t *destino;
     uint8_t *origen;
-    
-    if(revisar_registro(registro_destino)){
+
+    if (revisar_registro(registro_destino))
+    {
         destino = get_registry8(registro_destino);
-    }else{
+    }
+    else
+    {
         uint32_t *destino = (uint32_t *)destino;
         destino = get_registry32(registro_destino);
     }
 
-    if(revisar_registro(registro_origen)){
+    if (revisar_registro(registro_origen))
+    {
         origen = get_registry8(registro_origen);
-    }else{
+    }
+    else
+    {
         uint32_t *origen = (uint32_t *)origen;
         origen = get_registry32(registro_origen);
-    }  
+    }
 
     *(destino) = *(destino) - *(origen);
 }
@@ -103,10 +124,13 @@ void _sub(char *registro_destino, char *registro_origen)
 void _jnz(char *registro, char *instruccion)
 {
     uint8_t *regis;
-    
-    if(revisar_registro(registro)){
+
+    if (revisar_registro(registro))
+    {
         regis = get_registry8(registro);
-    }else{
+    }
+    else
+    {
         uint32_t *regis = (uint32_t *)regis;
         regis = get_registry32(registro);
     }
@@ -142,6 +166,8 @@ uint32_t *get_registry32(char *registro)
         return &(pcb_actual->contexto_ejecucion->registros->di);
     else if (strcmp(registro, "SI") == 0)
         return &(pcb_actual->contexto_ejecucion->registros->si);
+    else if (strcmp(registro, "PC") == 0)
+        return &(pcb_actual->contexto_ejecucion->registros->program_counter);
     else
     {
         log_error(LOGGER_CPU, "No se reconoce el registro %s", registro);
@@ -209,7 +235,8 @@ char *instruccion_to_string(nombre_instruccion nombre)
     }
 }
 
-bool revisar_registro(char *registro){
+bool revisar_registro(char *registro)
+{
     if (strcmp(registro, "AX") == 0)
         return true;
     else if (strcmp(registro, "BX") == 0)
@@ -230,9 +257,11 @@ bool revisar_registro(char *registro){
         return false;
     else if (strcmp(registro, "SI") == 0)
         return false;
+    else if (strcmp(registro, "PC") == 0)
+        return false;
     else
     {
         log_error(LOGGER_CPU, "No se reconoce el registro %s", registro);
-        return NULL;
+        return false;
     }
 }

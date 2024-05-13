@@ -64,7 +64,7 @@ void execute(t_instruccion *instruccion)
     // Se deberá devolver el Contexto de Ejecución actualizado al Kernel para su finalización.
     case EXIT:
         log_info(LOGGER_CPU, "PID: %d - Ejecutando: %s", pcb_actual->pid, instruccion_to_string(instruccion->nombre));
-        pcb_actual->estado = FINALIZADO;
+        pcb_actual->estado = FINALIZADO; // ESTO LO TIENE QUE MANEJAR EL KERNEL, POR AHORA ESTA ACA PARA QUE SALGA DEL WHILE DE EJECUTAR CICLO INSTRUCCION
         pcb_actual->contexto_ejecucion->motivo_desalojo = INTERRUPCION_FINALIZACION;
         break;
     default:
@@ -126,4 +126,9 @@ void log_instruccion_ejecutada(nombre_instruccion nombre, char *param1, char *pa
 {
     char *nombre_instruccion = instruccion_to_string(nombre);
     log_info(LOGGER_CPU, "PID: %d - Ejecutando: %s - Parametros: %s - %s", pcb_actual->pid, nombre_instruccion, param1, param2);
+}
+
+void iniciar_semaforos_etc()
+{
+    pthread_mutex_init(&mutex_interrupt, NULL);
 }

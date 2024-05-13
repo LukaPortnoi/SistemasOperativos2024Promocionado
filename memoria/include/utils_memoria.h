@@ -19,5 +19,6 @@ t_list *parsear_instrucciones(char *path);
 t_instruccion *armar_estructura_instruccion(nombre_instruccion instruccion, char *parametro1, char *parametro2);
 char *leer_archivo(char *path);
 void deserializar_pedido_instruccion(uint32_t *pid, uint32_t *pc, t_buffer *buffer);
+void iniciar_semaforos();
 
 #endif // UTILS_MEMORIA_H

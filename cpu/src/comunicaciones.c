@@ -7,6 +7,8 @@ typedef struct
 	char *server_name;
 } t_procesar_conexion_args;
 
+bool interrupciones[5] = {0, 0, 0, 0, 0};
+
 static void procesar_conexion_dispatch(void *void_args)
 {
 	t_procesar_conexion_args *args = (t_procesar_conexion_args *)void_args;
@@ -48,7 +50,7 @@ static void procesar_conexion_dispatch(void *void_args)
 
 		case PCB:
 			pcb_actual = recibir_pcb(cliente_socket);
-			while (!hayInterrupcion && pcb_actual != NULL && pcb_actual->estado != FINALIZADO /* !es_syscall() && !page_fault && */ ) // Aca deberia ir el check_interrupt()
+			while (!hayInterrupciones() && pcb_actual != NULL && pcb_actual->estado != FINALIZADO /* !es_syscall() && !page_fault && */) // Aca deberia ir el check_interrupt()
 			{
 				ejecutar_ciclo_instruccion();
 			}
@@ -56,14 +58,13 @@ static void procesar_conexion_dispatch(void *void_args)
 			// obtener_motivo_desalojo();
 			printf("PID: %d - Estado: %s, Contexto: %s\n", pcb_actual->pid, estado_to_string(pcb_actual->estado), motivo_desalojo_to_string(pcb_actual->contexto_ejecucion->motivo_desalojo));
 
-
 			enviar_pcb(pcb_actual, cliente_socket); // Envia el PCB actualizado
 
 			pcb_actual = NULL;
 
-			// pthread_mutex_lock(&mutex_interrupt);
-			// limpiar_interrupciones();
-			// pthread_mutex_unlock(&mutex_interrupt);
+			pthread_mutex_lock(&mutex_interrupt);
+			limpiar_interrupciones();
+			pthread_mutex_unlock(&mutex_interrupt);
 			// liberar_contexto(contexto_actual);
 			break;
 
@@ -111,7 +112,7 @@ static void procesar_conexion_interrupt(void *void_args)
 		// -- KERNEL - CPU --
 		// ----------------------
 		case INTERRUPCION:
-			hayInterrupcion = recibir_interrupciones();
+			recibir_interrupciones(logger);
 			break;
 
 		// ---------------
@@ -155,32 +156,53 @@ int server_escuchar(t_log *logger, char *server_name, int server_socket)
 	return 0;
 }
 
-bool recibir_interrupciones(void) //  TODO: Revisar
+void recibir_interrupciones(t_log *logger)
 {
-	bool hayInterrup = false;
-	while (1)
+	t_interrupcion *interrupcion = recibir_interrupcion(fd_cpu_interrupt);
+
+	switch (interrupcion->motivo_interrupcion)
 	{
-		t_interrupcion *interrupcion = recibir_interrupcion(fd_cpu_interrupt);
+	case INTERRUPCION_FIN_QUANTUM:
+		interrupciones[0] = true;
+		break;
 
-		switch (interrupcion->motivo_interrupcion)
+	case INTERRUPCION_BLOQUEO:
+		interrupciones[1] = true;
+		break;
+
+	case INTERRUPCION_FINALIZACION:
+		interrupciones[2] = true;
+		break;
+
+	case INTERRUPCION_ERROR:
+		interrupciones[3] = true;
+		break;
+
+	case INTERRUPCION_SYSCALL:
+		interrupciones[4] = true;
+		break;
+
+	default:
+		break;
+	}
+}
+
+bool hayInterrupciones(void)
+{
+	for (int i = 0; i < 5; i++)
+	{
+		if (interrupciones[i])
 		{
-		case INTERRUPCION_FIN_QUANTUM:
-			hayInterrup = true;
-			break;
-
-		case INTERRUPCION_BLOQUEO:
-			hayInterrup = true;
-			break;
-
-		case INTERRUPCION_FINALIZACION:
-			hayInterrup = true;
-			break;
-		case INTERRUPCION_ERROR:
-			hayInterrup = true;
-			break;
-		default:
-			break;
+			return true;
 		}
 	}
-	return hayInterrup;
+	return false;
+}
+
+void limpiar_interrupciones(void)
+{
+	for (int i = 0; i < 5; i++)
+	{
+		interrupciones[i] = false;
+	}
 }
