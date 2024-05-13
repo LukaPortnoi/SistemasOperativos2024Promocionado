@@ -22,8 +22,17 @@ pthread_mutex_t mutex_interrupt;
 
 op_cod cod_op;
 
+void sighandler(int s)
+{
+    terminar_programa(fd_cpu_dispatch, LOGGER_CPU, CONFIG);
+    liberar_conexion(fd_cpu_interrupt);
+    liberar_conexion(fd_cpu_memoria);
+    exit(0);
+}
+
 int main()
 {
+    signal(SIGINT, sighandler);
     inicializar_config();
     iniciar_semaforos_etc();
 
@@ -51,11 +60,11 @@ void iniciar_conexiones()
 {
     // server CPU DISPATCH
     fd_cpu_dispatch = iniciar_servidor(LOGGER_CPU, "CPU_DISPATCH", IP_CPU, PUERTO_ESCUCHA_DISPATCH);
-    //log_info(LOGGER_CPU, "CPU listo para recibir cliente en DISPATCH");
+    // log_info(LOGGER_CPU, "CPU listo para recibir cliente en DISPATCH");
 
     // server CPU INTERRUPT
     fd_cpu_interrupt = iniciar_servidor(LOGGER_CPU, "CPU_INTERRUPT", IP_CPU, PUERTO_ESCUCHA_INTERRUPT);
-    //log_info(LOGGER_CPU, "CPU listo para recibir cliente en INTERRUPT");
+    // log_info(LOGGER_CPU, "CPU listo para recibir cliente en INTERRUPT");
 
     // conexion como cliente a MEMORIA
     fd_cpu_memoria = crear_conexion(IP_MEMORIA, PUERTO_MEMORIA);

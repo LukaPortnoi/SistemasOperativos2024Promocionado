@@ -6,6 +6,7 @@
 #include "./consola.h"
 #include "./planificador.h"
 
+void sighandler(int s);
 void inicializar_config();
 void iniciar_conexiones();
 void escuchar_kernel();

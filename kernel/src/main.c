@@ -24,8 +24,18 @@ int fd_kernel_cpu_interrupt;
 t_pcb *pcb_ejecutandose;
 pthread_t hilo_server_kernel;
 
+void sighandler(int s)
+{
+	terminar_programa(fd_kernel, LOGGER_KERNEL, CONFIG_KERNEL);
+	liberar_conexion(fd_kernel_memoria);
+	liberar_conexion(fd_kernel_cpu_dispatch);
+	liberar_conexion(fd_kernel_cpu_interrupt);
+	exit(0);
+}
+
 int main()
 {
+	signal(SIGINT, sighandler);
 	inicializar_config();
 	iniciar_conexiones();
 	iniciar_colas_y_semaforos();

@@ -3,6 +3,7 @@
 void iniciar_consola_interactiva()
 {
   log_trace(LOGGER_KERNEL, "<CONSOLA INTERACTIVA>");
+  inicializar_readline(); // Autocompletado con readline
   char *leido = readline("> ");
 
   while (leido != NULL)
@@ -105,6 +106,58 @@ void ejecutar_comando(char *comando)
   string_array_destroy(comando_separado);
 }
 
+// AUTOCOMPLETADO CON READLINE
+char *comandos[] = {
+    "EJECUTAR_SCRIPT",
+    "INICIAR_PROCESO",
+    "FINALIZAR_PROCESO",
+    "DETENER_PLANIFICACION",
+    "INICIAR_PLANIFICACION",
+    "MULTIPROGRAMACION",
+    "PROCESO_ESTADO",
+    NULL};
+
+char *comando_autocompletar(const char *text, int state)
+{
+  static int list_index, len;
+  char *name;
+
+  if (!state)
+  {
+    list_index = 0;
+    len = strlen(text);
+  }
+
+  while ((name = comandos[list_index++]))
+  {
+    if (strncmp(name, text, len) == 0)
+    {
+      return strdup(name);
+    }
+  }
+
+  return NULL;
+}
+
+char **consola_completar(const char *text, int start, int end)
+{
+  char **matches = NULL;
+
+  if (start == 0)
+  {
+    matches = rl_completion_matches(text, comando_autocompletar);
+  }
+
+  return matches;
+}
+
+void inicializar_readline()
+{
+  rl_attempted_completion_function = consola_completar;
+}
+
+//
+
 void ejecutar_script(char *path_script)
 {
   FILE *script = fopen(path_script, "r");
@@ -128,7 +181,7 @@ void ejecutar_script(char *path_script)
 
     if (!validar_comando(linea))
     {
-      log_error(LOGGER_KERNEL, "Comando de CONSOLA no reconocido");
+      log_error(LOGGER_KERNEL, "Comando de CONSOLA no reconocido en script: %s", linea);
       continue;
     }
 

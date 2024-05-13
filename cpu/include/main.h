@@ -5,6 +5,7 @@
 #include "./comunicaciones.h"
 #include "./utils_cpu.h"
 
+void sighandler(int s);
 void inicializar_config(void);
 void iniciar_conexiones(void);
 void escuchar_interrupt(void);

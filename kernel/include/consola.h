@@ -8,8 +8,11 @@ void iniciar_consola_interactiva();
 
 bool validar_comando(char *comando);
 void ejecutar_comando(char *comando);
-void ejecutar_script(char *path);
+char *comando_autocompletar(const char *text, int state);
+char **consola_completar(const char *text, int start, int end);
+void inicializar_readline();
 
+void ejecutar_script(char *path);
 void iniciar_proceso(char *path_proceso);
 void finalizar_proceso(char *pid_string);
 t_pcb *buscar_proceso_en_colas(int pid);

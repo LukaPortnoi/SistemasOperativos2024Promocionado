@@ -1,7 +1,5 @@
 #include "../include/main.h"
 
-t_log *LOGGER_MEMORIA;
-t_config *CONFIG_MEMORIA;
 char *PUERTO_ESCUCHA_MEMORIA;
 char *IP_MEMORIA;
 int TAM_MEMORIA;
@@ -10,22 +8,27 @@ char *PATH_INSTRUCCIONES;
 int RETARDO_RESPUESTA;
 int CLIENTE_CPU, CLIENTE_KERNEL, CLIENTE_IN_OU;
 
+t_log *LOGGER_MEMORIA;
+t_config *CONFIG_MEMORIA;
+
+int fd_memoria;
+
 pthread_mutex_t mutex_comunicacion_procesos;
 pthread_mutex_t mutex_procesos;
 
-/*void sighandler(int s) {
-	terminar_programa(fd_kernel, LOGGER_KERNEL, CONFIG_KERNEL);
+void sighandler(int s)
+{
+	terminar_programa(fd_memoria, LOGGER_MEMORIA, CONFIG_MEMORIA);
 	exit(0);
-}*/
+}
 
 int main(void)
 {
-	// signal(SIGINT, sighandler);
+	signal(SIGINT, sighandler);
 	inicializar_config();
 	iniciar_semaforos();
 
-	int fd_memoria = iniciar_servidor(LOGGER_MEMORIA, "MEMORIA", IP_MEMORIA, PUERTO_ESCUCHA_MEMORIA);
-	//log_info(LOGGER_MEMORIA, "Memoria listo para recibir clientes");
+	fd_memoria = iniciar_servidor(LOGGER_MEMORIA, "MEMORIA", IP_MEMORIA, PUERTO_ESCUCHA_MEMORIA);
 
 	while (server_escuchar(LOGGER_MEMORIA, "MEMORIA", fd_memoria));
 
