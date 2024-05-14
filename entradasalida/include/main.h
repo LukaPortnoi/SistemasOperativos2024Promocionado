@@ -3,8 +3,8 @@
 
 #include "./gestor.h"
 
-void sighandler(int s);
 void inicializar_config(void);
 void iniciar_conexiones();
+void finalizar_io();
 
 #endif // MAIN_H_

@@ -24,18 +24,8 @@ int fd_kernel_cpu_interrupt;
 t_pcb *pcb_ejecutandose;
 pthread_t hilo_server_kernel;
 
-void sighandler(int s)
-{
-	terminar_programa(fd_kernel, LOGGER_KERNEL, CONFIG_KERNEL);
-	liberar_conexion(fd_kernel_memoria);
-	liberar_conexion(fd_kernel_cpu_dispatch);
-	liberar_conexion(fd_kernel_cpu_interrupt);
-	exit(0);
-}
-
 int main()
 {
-	signal(SIGINT, sighandler);
 	inicializar_config();
 	iniciar_conexiones();
 	iniciar_colas_y_semaforos();
@@ -44,9 +34,7 @@ int main()
 
 	iniciar_consola_interactiva();
 
-	log_info(LOGGER_KERNEL, "Finalizando Kernel...");
-
-	terminar_programa(fd_kernel, LOGGER_KERNEL, CONFIG_KERNEL);
+	finalizar_kernel();
 }
 
 void inicializar_config()
@@ -71,19 +59,19 @@ void iniciar_conexiones()
 {
 	// inicar server KERNEL
 	fd_kernel = iniciar_servidor(LOGGER_KERNEL, "KERNEL", IP_KERNEL, PUERTO_ESCUCHA);
-	//log_info(LOGGER_KERNEL, "Kernel listo para recibir clientes");
+	// log_info(LOGGER_KERNEL, "Kernel listo para recibir clientes");
 
 	// conexion como cliente a MEMORIA
 	fd_kernel_memoria = crear_conexion(IP_MEMORIA, PUERTO_MEMORIA);
-	//enviar_mensaje("Mensaje de Kernel para memoria", fd_kernel_memoria);
+	// enviar_mensaje("Mensaje de Kernel para memoria", fd_kernel_memoria);
 
 	// conexion como cliente a CPU DISPATCH
 	fd_kernel_cpu_dispatch = crear_conexion(IP_CPU, PUERTO_CPU_DISPATCH); // planificar la ejecucion de procesos
-	//enviar_mensaje("Mensaje de Kernel para CPU DISPATCH", fd_kernel_cpu_dispatch);
+	// enviar_mensaje("Mensaje de Kernel para CPU DISPATCH", fd_kernel_cpu_dispatch);
 
 	// conexion como cliente a CPU INTERRUPT
 	fd_kernel_cpu_interrupt = crear_conexion(IP_CPU, PUERTO_CPU_INTERRUPT); // planificar la interrupcion de procesos
-	//enviar_mensaje("Mensaje de Kernel para CPU INTERRUPT", fd_kernel_cpu_interrupt);
+	// enviar_mensaje("Mensaje de Kernel para CPU INTERRUPT", fd_kernel_cpu_interrupt);
 
 	// hilo servidor
 	pthread_create(&hilo_server_kernel, NULL, (void *)escuchar_kernel, NULL);
@@ -92,5 +80,16 @@ void iniciar_conexiones()
 
 void escuchar_kernel()
 {
-	while (server_escuchar(LOGGER_KERNEL, "KERNEL", fd_kernel));
+	while (server_escuchar(LOGGER_KERNEL, "KERNEL", fd_kernel))
+		;
+}
+
+void finalizar_kernel()
+{
+	log_destroy(LOGGER_KERNEL);
+	config_destroy(CONFIG_KERNEL);
+	liberar_conexion(fd_kernel);
+	liberar_conexion(fd_kernel_memoria);
+	liberar_conexion(fd_kernel_cpu_dispatch);
+	liberar_conexion(fd_kernel_cpu_interrupt);
 }

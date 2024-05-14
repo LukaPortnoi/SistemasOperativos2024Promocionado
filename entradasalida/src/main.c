@@ -15,22 +15,14 @@ int fd_io_kernel;
 t_log *LOGGER_INPUT_OUTPUT;
 t_config *CONFIG_INPUT_OUTPUT;
 
-void sighandler(int s)
-{
-    terminar_programa(fd_io_memoria, LOGGER_INPUT_OUTPUT, CONFIG_INPUT_OUTPUT);
-    liberar_conexion(fd_io_kernel);
-    exit(0);
-}
-
 int main()
 {
-    signal(SIGINT, sighandler);
     inicializar_config();
     log_info(LOGGER_INPUT_OUTPUT, "Iniciando Entradas/Salidas...");
 
     iniciar_conexiones();
 
-    terminar_programa(fd_io_memoria, LOGGER_INPUT_OUTPUT, CONFIG_INPUT_OUTPUT);
+    finalizar_io();
 }
 
 void inicializar_config()
@@ -57,4 +49,12 @@ void iniciar_conexiones()
     //conexion como cliente a KERNEL
     fd_io_kernel = crear_conexion(IP_KERNEL, PUERTO_KERNEL);
     enviar_mensaje("Mensaje de I/O para KERNEL", fd_io_kernel);
+}
+
+void finalizar_io()
+{
+    log_destroy(LOGGER_INPUT_OUTPUT);
+    config_destroy(CONFIG_INPUT_OUTPUT);
+    liberar_conexion(fd_io_memoria);
+    liberar_conexion(fd_io_kernel);
 }

@@ -56,7 +56,7 @@ static void procesar_conexion_memoria(void *void_args)
 			// printf("CANTIDAD DE PROCESOS TOTALES ANTES DE PEDIRLOS: %d \n", procesos_totales->elements_count);
 			uint32_t pid, pc;
 			recibir_pedido_instruccion(&pid, &pc, cliente_socket);
-			log_info(logger, "Se recibio un pedido de instruccion para el PID %d y PC %d", pid, pc);
+			log_debug(logger, "Se recibio un pedido de instruccion para el PID %d y PC %d", pid, pc);
 			proceso_memoria = obtener_proceso_pid(pid);
 			if (proceso_memoria == NULL)
 			{
@@ -69,7 +69,7 @@ static void procesar_conexion_memoria(void *void_args)
 				if (instruccion != NULL)
 				{
 					enviar_instruccion(cliente_socket, instruccion);
-					log_info(logger, "Se envia la instruccion a CPU de PC %d para el PID %d y es: %s - %s - %s", pc, pid, instruccion_to_string(instruccion->nombre), instruccion->parametro1, instruccion->parametro2);
+					log_debug(logger, "Se envia la instruccion a CPU de PC %d para el PID %d y es: %s - %s - %s", pc, pid, instruccion_to_string(instruccion->nombre), instruccion->parametro1, instruccion->parametro2);
 				}
 				else
 				{

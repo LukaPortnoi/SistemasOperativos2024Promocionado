@@ -42,7 +42,7 @@ t_pcb *crear_proceso()
     list_add(procesosEnSistema, pcb);
     pthread_mutex_unlock(&procesosEnSistemaMutex);
 
-    log_debug(LOGGER_KERNEL, "Se crea el proceso %d en %s", pcb->pid, estado_to_string(pcb->estado));
+    log_info(LOGGER_KERNEL, "Se crea el proceso %d en %s", pcb->pid, estado_to_string(pcb->estado));
 
     sem_post(&semMultiprogramacion); // CAMBIAR A CONTADOR
     sem_post(&semNew);
@@ -71,7 +71,7 @@ void enviar_proceso_a_memoria(int pid_nuevo, char *path_proceso)
     serializar_inicializar_proceso(paquete_nuevo_proceso, pid_nuevo, path_proceso);
     enviar_paquete(paquete_nuevo_proceso, fd_kernel_memoria);
 
-    log_info(LOGGER_KERNEL, "El PID %d se envio a MEMORIA", pid_nuevo);
+    log_debug(LOGGER_KERNEL, "El PID %d se envio a MEMORIA", pid_nuevo);
     
     eliminar_paquete(paquete_nuevo_proceso);
 }
@@ -128,7 +128,7 @@ void planificar_PCB_cortoPlazo()
         sem_wait(&semReady);
         t_pcb *pcb = squeue_pop(squeue_ready);
 
-        log_info(LOGGER_KERNEL, "Se planifica el PCB con PID %d", pcb->pid);
+        log_debug(LOGGER_KERNEL, "Se planifica el PCB con PID %d", pcb->pid);
         admitir_pcb(pcb);
         ejecutar_PCB(pcb);
     }
@@ -137,7 +137,7 @@ void planificar_PCB_cortoPlazo()
 void ejecutar_PCB(t_pcb *pcb)
 {
     enviar_pcb(pcb, fd_kernel_cpu_dispatch);
-    log_info(LOGGER_KERNEL, "El PCB con PID %d se envio a CPU", pcb->pid);
+    log_debug(LOGGER_KERNEL, "El PCB con PID %d se envio a CPU", pcb->pid);
 
     pcb = recibir_pcb_CPU(fd_kernel_cpu_dispatch);
     if (pcb == NULL)
@@ -153,27 +153,27 @@ void ejecutar_PCB(t_pcb *pcb)
     switch (*motivo_desalojo)
     {
     case INTERRUPCION_FIN_QUANTUM:
-        log_info(LOGGER_KERNEL, "El PCB con PID %d se desalojo por fin de quantum", pcb->pid);
+        log_info(LOGGER_KERNEL, "PID %d - Desalojado por fin de Quantum", pcb->pid);
         cambiar_estado_pcb(pcb, LISTO);
         squeue_push(squeue_ready, pcb);
         break;
     case INTERRUPCION_BLOQUEO:
-        log_info(LOGGER_KERNEL, "El PCB con PID %d se desalojo por bloqueo", pcb->pid);
+        log_info(LOGGER_KERNEL, "PID %d - Desalojado por bloqueo", pcb->pid);
         cambiar_estado_pcb(pcb, BLOQUEADO);
         squeue_push(squeue_blocked, pcb);
         break;
     case INTERRUPCION_FINALIZACION:
-        log_debug(LOGGER_KERNEL, "El PCB con PID %d se desalojo por finalizacion", pcb->pid);
+        log_info(LOGGER_KERNEL, "PID %d - Desalojado por finalizacion", pcb->pid);
         cambiar_estado_pcb(pcb, FINALIZADO);
         squeue_push(squeue_exit, pcb);
         break;
     case INTERRUPCION_ERROR:
-        log_info(LOGGER_KERNEL, "El PCB con PID %d se desalojo por error", pcb->pid);
+        log_info(LOGGER_KERNEL, "PID %d - Desalojado por error", pcb->pid);
         cambiar_estado_pcb(pcb, ERROR);
         squeue_push(squeue_exit, pcb);
         break;
     default:
-        log_error(LOGGER_KERNEL, "El PCB con PID %d se desalojo por un motivo desconocido", pcb->pid);
+        log_error(LOGGER_KERNEL, "PID %d - Desalojado por motivo desconocido", pcb->pid);
         break;
     }
 
@@ -194,7 +194,7 @@ t_pcb *recibir_pcb_CPU(int fd_cpu)
         return NULL;
     }
 
-    log_info(LOGGER_KERNEL, "Se recibio el PCB con PID %d de CPU (entre al case de plani)", pcbDeCPU->pid);
+    log_debug(LOGGER_KERNEL, "Se recibio el PCB con PID %d de CPU (entre al case de plani)", pcbDeCPU->pid);
     return pcbDeCPU;
 }
 
@@ -305,7 +305,7 @@ void cambiar_estado_pcb(t_pcb *pcb, t_estado_proceso estado)
 {
     if (estado != pcb->estado)
     {
-        log_debug(LOGGER_KERNEL, "PID: %d - Estado Anterior: %s - Estado Actual: %s", pcb->pid, estado_to_string(pcb->estado), estado_to_string(estado));
+        log_info(LOGGER_KERNEL, "PID: %d - Estado Anterior: %s - Estado Actual: %s", pcb->pid, estado_to_string(pcb->estado), estado_to_string(estado));
     }
     pthread_mutex_lock(&procesoMutex);
     pcb->estado = estado;

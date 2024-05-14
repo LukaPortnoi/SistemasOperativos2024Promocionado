@@ -50,7 +50,7 @@ void execute(t_instruccion *instruccion)
         break;
     case SUB:
         _sub(instruccion->parametro1, instruccion->parametro2);
-       loguear_y_sumar_pc(instruccion);
+        loguear_y_sumar_pc(instruccion);
         break;
     case JNZ:
         _jnz(instruccion->parametro1, instruccion->parametro2);
@@ -99,8 +99,6 @@ t_instruccion *deserializar_instruccion(int socket)
 
     memcpy(&(instruccion->nombre), stream + desplazamiento, sizeof(nombre_instruccion));
     desplazamiento += sizeof(nombre_instruccion);
-
-    printf("NOMBRE DE LA INSTRUCCION DURANTE LA DESERIALIZACION: %d \n", instruccion->nombre);
 
     uint32_t tamanio_parametro1;                                              // Cambio aquí
     memcpy(&(tamanio_parametro1), stream + desplazamiento, sizeof(uint32_t)); // Cambio aquí

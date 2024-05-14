@@ -22,17 +22,8 @@ pthread_mutex_t mutex_interrupt;
 
 op_cod cod_op;
 
-void sighandler(int s)
-{
-    terminar_programa(fd_cpu_dispatch, LOGGER_CPU, CONFIG);
-    liberar_conexion(fd_cpu_interrupt);
-    liberar_conexion(fd_cpu_memoria);
-    exit(0);
-}
-
 int main()
 {
-    signal(SIGINT, sighandler);
     inicializar_config();
     iniciar_semaforos_etc();
 
@@ -40,7 +31,7 @@ int main()
 
     while (server_escuchar(LOGGER_CPU, "CPU_DISPATCH", fd_cpu_dispatch));
 
-    finalizar_conexiones_cpu();
+    finalizar_cpu();
 }
 
 void inicializar_config()
@@ -80,9 +71,8 @@ void escuchar_interrupt()
     while (server_escuchar(LOGGER_CPU, "CPU_INTERRUPT", fd_cpu_interrupt));
 }
 
-void finalizar_conexiones_cpu()
+void finalizar_cpu()
 {
-    log_info(LOGGER_CPU, "Finalizando conexiones CPU");
     log_destroy(LOGGER_CPU);
     config_destroy(CONFIG);
     liberar_conexion(fd_cpu_dispatch);

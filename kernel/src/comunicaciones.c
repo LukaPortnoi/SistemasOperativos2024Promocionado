@@ -14,7 +14,7 @@ static void procesar_conexion_kernel(void *void_args)
 	{
 		if (recv(cliente_socket, &cop, sizeof(op_cod), 0) != sizeof(op_cod))
 		{
-			log_info(logger, "Se desconecto el cliente!\n");
+			log_debug(logger, "Se desconecto el cliente!\n");
 			return;
 		}
 
@@ -25,7 +25,7 @@ static void procesar_conexion_kernel(void *void_args)
 			break;
 		case PAQUETE:
 			lista = recibir_paquete(cliente_socket);
-			log_info(logger, "Me llegaron los siguientes valores:");
+			log_debug(logger, "Me llegaron los siguientes valores:");
 			list_iterate(lista, (void *)iterator);
 			break;
 

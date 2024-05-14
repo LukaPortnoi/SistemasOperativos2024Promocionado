@@ -196,7 +196,7 @@ t_proceso_memoria *iniciar_proceso_path(t_proceso_memoria *proceso_nuevo)
 {
     pthread_mutex_lock(&mutex_procesos);
     proceso_nuevo->instrucciones = parsear_instrucciones(proceso_nuevo->path);
-    log_info(LOGGER_MEMORIA, "Instrucciones bien parseadas para el proceso PID [%d]", proceso_nuevo->pid);
+    log_debug(LOGGER_MEMORIA, "Instrucciones bien parseadas para el proceso PID [%d]", proceso_nuevo->pid);
     list_add(procesos_totales, proceso_nuevo); // SOPORTE: ACA ESTARIA AGREGANDO EL PROCESO
     printf("CANTIDAD DE PROCESOS AGREGADOS: %d \n", procesos_totales->elements_count);
     pthread_mutex_unlock(&mutex_procesos);
@@ -264,7 +264,7 @@ t_instruccion *armar_estructura_instruccion(nombre_instruccion instruccion, char
     estructura->longitud_parametro1 = strlen(estructura->parametro1) + 1;
     estructura->longitud_parametro2 = strlen(estructura->parametro2) + 1;
 
-    printf("%s - %s - %s \n", instruccion_to_string(estructura->nombre), estructura->parametro1, estructura->parametro2); // printea instrucciones
+    //printf("%s - %s - %s \n", instruccion_to_string(estructura->nombre), estructura->parametro1, estructura->parametro2); // printea instrucciones
     return estructura;
 }
 
@@ -272,7 +272,6 @@ char *leer_archivo(char *path)
 {
     char instrucciones[100];
     strcpy(instrucciones, path);
-    printf("PATH INSTRUCCIONES: %s\n", instrucciones);
     FILE *archivo = fopen(instrucciones, "r");
 
     if (archivo == NULL)
