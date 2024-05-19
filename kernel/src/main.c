@@ -59,19 +59,15 @@ void iniciar_conexiones()
 {
 	// inicar server KERNEL
 	fd_kernel = iniciar_servidor(LOGGER_KERNEL, "KERNEL", IP_KERNEL, PUERTO_ESCUCHA);
-	// log_info(LOGGER_KERNEL, "Kernel listo para recibir clientes");
 
 	// conexion como cliente a MEMORIA
 	fd_kernel_memoria = crear_conexion(IP_MEMORIA, PUERTO_MEMORIA);
-	// enviar_mensaje("Mensaje de Kernel para memoria", fd_kernel_memoria);
 
 	// conexion como cliente a CPU DISPATCH
-	fd_kernel_cpu_dispatch = crear_conexion(IP_CPU, PUERTO_CPU_DISPATCH); // planificar la ejecucion de procesos
-	// enviar_mensaje("Mensaje de Kernel para CPU DISPATCH", fd_kernel_cpu_dispatch);
+	fd_kernel_cpu_dispatch = crear_conexion(IP_CPU, PUERTO_CPU_DISPATCH);
 
 	// conexion como cliente a CPU INTERRUPT
-	fd_kernel_cpu_interrupt = crear_conexion(IP_CPU, PUERTO_CPU_INTERRUPT); // planificar la interrupcion de procesos
-	// enviar_mensaje("Mensaje de Kernel para CPU INTERRUPT", fd_kernel_cpu_interrupt);
+	fd_kernel_cpu_interrupt = crear_conexion(IP_CPU, PUERTO_CPU_INTERRUPT);
 
 	// hilo servidor
 	pthread_create(&hilo_server_kernel, NULL, (void *)escuchar_kernel, NULL);
@@ -80,8 +76,7 @@ void iniciar_conexiones()
 
 void escuchar_kernel()
 {
-	while (server_escuchar(LOGGER_KERNEL, "KERNEL", fd_kernel))
-		;
+	while (server_escuchar(LOGGER_KERNEL, "KERNEL", fd_kernel));
 }
 
 void finalizar_kernel()

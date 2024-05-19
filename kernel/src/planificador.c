@@ -42,11 +42,11 @@ void crear_proceso(char *path_proceso)
     list_add(procesosEnSistema, pcb);
     pthread_mutex_unlock(&procesosEnSistemaMutex);
 
-    log_info(LOGGER_KERNEL, "Se crea el proceso %d en %s", pcb->pid, estado_to_string(pcb->estado));
+    log_info(LOGGER_KERNEL, "Se crea el proceso %d en NEW", pcb->pid);
 
     enviar_proceso_a_memoria(pcb->pid, path_proceso);
 
-    sem_post(&semMultiprogramacion); // CAMBIAR A CONTADOR
+    // sem_post(&semMultiprogramacion); // CAMBIAR A CONTADOR
     sem_post(&semNew);
 }
 
@@ -54,15 +54,31 @@ void chequear_grado_de_multiprogramacion()
 {
     while (1)
     {
-        sem_wait(&semMultiprogramacion);    //ESTE SEMAFORO NO ES SUFICIENTE, REVISAR CHEQUEAR GRADO
+        /* sem_wait(&semNew);
+        sem_wait(&semMultiprogramacion); // ESTE SEMAFORO NO ES SUFICIENTE, REVISAR CHEQUEAR GRADO
         log_trace(LOGGER_KERNEL, "Chequeando grado de multiprogramacion!");
         if (list_size(procesosEnSistema) < GRADO_MULTIPROGRAMACION)
         {
             t_pcb *pcb_a_mover = squeue_pop(squeue_new); // CHEQUEAR TEMA BLOQUEADOS
-            cambiar_estado_pcb(pcb_a_mover, LISTO);     //previamente tendria que hablar con memoria antes de pasar a ready, tengo que esperar respuesta de que memoria todo en orden
+            cambiar_estado_pcb(pcb_a_mover, LISTO);      // previamente tendria que hablar con memoria antes de pasar a ready, tengo que esperar respuesta de que memoria todo en orden
             squeue_push(squeue_ready, pcb_a_mover);
+
             sem_post(&semReady);
+        } */
+
+        sem_wait(&semNew);
+        sem_wait(&semMultiprogramacion);
+
+        int sem_value;
+        if (sem_getvalue(&semMultiprogramacion, &sem_value) == 0)
+        {
+            log_trace(LOGGER_KERNEL, "Valor semaforo multiprogramacion: %d", sem_value);
         }
+
+        t_pcb *pcb_a_mover = squeue_pop(squeue_new); // CHEQUEAR TEMA BLOQUEADOS
+        cambiar_estado_pcb(pcb_a_mover, LISTO);      // previamente tendria que hablar con memoria antes de pasar a ready, tengo que esperar respuesta de que memoria todo en orden
+        squeue_push(squeue_ready, pcb_a_mover);
+        sem_post(&semReady);
     }
 }
 
@@ -73,7 +89,7 @@ void enviar_proceso_a_memoria(int pid_nuevo, char *path_proceso)
     enviar_paquete(paquete_nuevo_proceso, fd_kernel_memoria);
 
     log_debug(LOGGER_KERNEL, "El PID %d se envio a MEMORIA", pid_nuevo);
-    
+
     eliminar_paquete(paquete_nuevo_proceso);
 }
 
@@ -118,8 +134,6 @@ void iniciar_planificador_corto_plazo()
 
     pthread_create(&hilo_corto_plazo, NULL, (void *)planificar_PCB_cortoPlazo, NULL);
     pthread_detach(hilo_corto_plazo);
-    // pthread_create(&hilo_quantum, NULL, (void *)interrupcion_quantum, NULL);
-    // pthread_detach(hilo_quantum);
 }
 
 void planificar_PCB_cortoPlazo()
@@ -128,17 +142,44 @@ void planificar_PCB_cortoPlazo()
     {
         sem_wait(&semReady);
         t_pcb *pcb = squeue_pop(squeue_ready);
-
-        log_debug(LOGGER_KERNEL, "Se planifica el PCB con PID %d", pcb->pid);
-        admitir_pcb(pcb);
+        log_debug(LOGGER_KERNEL, "Se planifica el PID %d", pcb->pid);
         ejecutar_PCB(pcb);
+        /* if (strcmp(ALGORITMO_PLANIFICACION, "FIFO") != 0 && strcmp(ALGORITMO_PLANIFICACION, "RR") != 0 && strcmp(ALGORITMO_PLANIFICACION, "VRR") != 0)
+        {
+            log_error(LOGGER_KERNEL, "Algoritmo de planificacion no reconocido");
+            return;
+        }
+
+        if (strcmp(ALGORITMO_PLANIFICACION, "FIFO") == 0)
+        {
+            log_debug(LOGGER_KERNEL, "Se planifica por FIFO el PCB con PID %d", pcb->pid);
+            ejecutar_PCB(pcb);
+        }
+        else
+        {
+            // pthread_create(&hilo_quantum, NULL, (void *)interrupcion_quantum, NULL);
+            // pthread_detach(hilo_quantum);
+            if (strcmp(ALGORITMO_PLANIFICACION, "RR") == 0)
+            {
+                log_debug(LOGGER_KERNEL, "Se planifica por RR el PCB con PID %d", pcb->pid);
+                ejecutar_PCB(pcb);
+            }
+            else if (strcmp(ALGORITMO_PLANIFICACION, "VRR") == 0)
+            {
+                // VRR
+            }
+        } */
     }
 }
 
 void ejecutar_PCB(t_pcb *pcb)
 {
+    cambiar_estado_pcb(pcb, EJECUTANDO);
+    squeue_push(squeue_exec, pcb);
+
     enviar_pcb(pcb, fd_kernel_cpu_dispatch);
     log_debug(LOGGER_KERNEL, "El PCB con PID %d se envio a CPU", pcb->pid);
+    pcb_ejecutandose = pcb;
 
     pcb = recibir_pcb_CPU(fd_kernel_cpu_dispatch);
     if (pcb == NULL)
@@ -147,8 +188,6 @@ void ejecutar_PCB(t_pcb *pcb)
         return;
     }
     squeue_pop(squeue_exec);
-
-    pcb_ejecutandose = pcb;
 
     t_motivo_desalojo *motivo_desalojo = malloc(sizeof(t_motivo_desalojo));
     *motivo_desalojo = pcb->contexto_ejecucion->motivo_desalojo;
@@ -166,14 +205,17 @@ void ejecutar_PCB(t_pcb *pcb)
         squeue_push(squeue_blocked, pcb);
         break;
     case INTERRUPCION_FINALIZACION:
-        log_debug(LOGGER_KERNEL, "PID %d - Desalojado por finalizacion", pcb->pid);
+        // log_info(LOGGER_KERNEL, "Finaliza el proceso %d - Motivo: %s", pcb->pid, motivo_finalizacion_to_string(pcb->contexto_ejecucion->motivo_finalizacion));
+        log_info(LOGGER_KERNEL, "Finaliza el proceso %d - Motivo: %s", pcb->pid, "Finalizacion");
         cambiar_estado_pcb(pcb, FINALIZADO);
         squeue_push(squeue_exit, pcb);
-        break;
-    case INTERRUPCION_ERROR:
-        log_error(LOGGER_KERNEL, "PID %d - Desalojado por error", pcb->pid);
-        cambiar_estado_pcb(pcb, ERROR);
-        squeue_push(squeue_exit, pcb);
+        sem_post(&semMultiprogramacion);
+
+        int sem_value;
+        if (sem_getvalue(&semMultiprogramacion, &sem_value) == 0)
+        {
+            log_trace(LOGGER_KERNEL, "Se libera un espacio de multiprogramacion, semaforo: %d", sem_value);
+        }
         break;
     default:
         log_error(LOGGER_KERNEL, "PID %d - Desalojado por motivo desconocido", pcb->pid);
@@ -188,7 +230,7 @@ t_pcb *recibir_pcb_CPU(int fd_cpu)
     op_cod cop;
 
     recv(fd_cpu, &cop, sizeof(op_cod), 0);
-    
+
     t_pcb *pcbDeCPU = recibir_pcb(fd_cpu);
 
     if (pcbDeCPU == NULL)
@@ -197,21 +239,15 @@ t_pcb *recibir_pcb_CPU(int fd_cpu)
         return NULL;
     }
 
-    log_debug(LOGGER_KERNEL, "Se recibio el PCB con PID %d de CPU (entre al case de plani)", pcbDeCPU->pid);
+    log_debug(LOGGER_KERNEL, "Se recibio el PCB con PID %d de CPU", pcbDeCPU->pid);
     return pcbDeCPU;
-}
-
-void admitir_pcb(t_pcb *pcb)
-{
-    cambiar_estado_pcb(pcb, EJECUTANDO);
-    squeue_push(squeue_exec, pcb);
 }
 
 void interrupcion_quantum()
 {
     t_interrupcion *interrupcion = malloc(sizeof(t_interrupcion));
     interrupcion->motivo_interrupcion = INTERRUPCION_FIN_QUANTUM;
-    interrupcion->pid = -1;
+    interrupcion->pid = -1; // ????
     while (1)
     {
         usleep(QUANTUM * 1000);
@@ -252,6 +288,16 @@ void *squeue_pop(t_squeue *squeue)
 
 void squeue_push(t_squeue *squeue, void *elemento)
 {
+    /* if (squeue == squeue_ready)
+    {
+        log_info(LOGGER_KERNEL, "Ingreso a Cola Ready:");
+        mostrar_procesos_en_squeue(squeue);
+    } */
+    // COLA READY PLUS DEL VRR
+    /* if (squeue == squeue_readyPlus) {
+        log_info(LOGGER_KERNEL, "Ingreso a Cola Ready+:);
+        mostrar_procesos_en_squeue(squeue);
+    } */
     pthread_mutex_lock(squeue->mutex);
     queue_push(squeue->cola, elemento);
     pthread_mutex_unlock(squeue->mutex);
@@ -274,7 +320,7 @@ void iniciar_colas_y_semaforos()
     pthread_mutex_init(&procesosEnSistemaMutex, NULL);
     pthread_mutex_init(&mutex_pid, NULL);
 
-    sem_init(&semMultiprogramacion, 0, 0); //sem_init(&semMultiprogramacion, 0, GRADO_MULTIPROGRAMACION);
+    sem_init(&semMultiprogramacion, 0, GRADO_MULTIPROGRAMACION);
     sem_init(&semNew, 0, 0);
     sem_init(&semReady, 0, 0);
     sem_init(&semExec, 0, 0);
@@ -313,4 +359,28 @@ void cambiar_estado_pcb(t_pcb *pcb, t_estado_proceso estado)
     pthread_mutex_lock(&procesoMutex);
     pcb->estado = estado;
     pthread_mutex_unlock(&procesoMutex);
+}
+
+void mostrar_procesos_en_squeue(t_squeue *squeue)
+{
+    t_list *temp_list = list_create();
+
+    if (queue_is_empty(squeue->cola))
+    {
+        log_info(LOGGER_KERNEL, "No hay procesos en la cola");
+    }
+    else
+    {
+        while (!queue_is_empty(squeue->cola))
+        {
+            t_pcb *proceso = squeue_pop(squeue);
+            list_add(temp_list, proceso);
+        }
+
+        for (int i = 0; i < list_size(temp_list); i++)
+        {
+            t_pcb *proceso = list_get(temp_list, i);
+            log_info(LOGGER_KERNEL, "PID: %d", proceso->pid);
+        }
+    }
 }

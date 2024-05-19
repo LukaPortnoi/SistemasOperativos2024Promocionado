@@ -52,8 +52,6 @@ static void procesar_conexion_memoria(void *void_args)
 			break;
 
 		case PEDIDO_INSTRUCCION:
-			// pthread_mutex_lock(&mutex_comunicacion_procesos); ??????
-			// printf("CANTIDAD DE PROCESOS TOTALES ANTES DE PEDIRLOS: %d \n", procesos_totales->elements_count);
 			uint32_t pid, pc;
 			recibir_pedido_instruccion(&pid, &pc, cliente_socket);
 			log_debug(logger, "Se recibio un pedido de instruccion para el PID %d y PC %d", pid, pc);

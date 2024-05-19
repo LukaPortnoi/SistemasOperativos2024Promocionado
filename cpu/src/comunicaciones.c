@@ -73,9 +73,6 @@ static void procesar_conexion_dispatch(void *void_args)
 		// ---------------
 		// -- ERRORES --
 		// ---------------
-		case ERROR:
-			log_error(logger, "Cliente desconectado de %s... con cop -1", server_name);
-			break;
 		default:
 			log_error(logger, "Algo anduvo mal en el server de %s", server_name);
 			log_info(logger, "Cop: %d", cop);
@@ -120,13 +117,10 @@ static void procesar_conexion_interrupt(void *void_args)
 		// ---------------
 		// -- ERRORES --
 		// ---------------
-		case ERROR:
-			log_error(logger, "Cliente desconectado de %s... con cop -1", server_name);
-			break; // hay un return, voy a probar un break
 		default:
 			log_error(logger, "Algo anduvo mal en el server de %s", server_name);
 			log_info(logger, "Cop: %d", cop);
-			break; // hay un return, voy a probar un break
+			break;
 		}
 	}
 

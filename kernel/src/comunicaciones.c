@@ -32,11 +32,7 @@ static void procesar_conexion_kernel(void *void_args)
 		// -------------------
 		// -- CPU - KERNEL --
 		// -------------------
-		case PCB:
-			t_pcb *pcb_actualizado = recibir_pcb(cliente_socket);
-			log_info(logger, "Recibi un PCB del CPU con PID: %d (entre al case de KERNEL)", pcb_actualizado->pid);
-			break;
-
+		
 		// -------------------
 		// -- I/O - KERNEL --
 		// -------------------
@@ -48,13 +44,10 @@ static void procesar_conexion_kernel(void *void_args)
 		// ---------------
 		// -- ERRORES --
 		// ---------------
-		case ERROR:
-			log_error(logger, "Cliente desconectado de %s... con cop -1", server_name);
-			break; // hay un return, voy a probar un break
 		default:
 			log_error(logger, "Algo anduvo mal en el server de %s", server_name);
 			log_info(logger, "Cop: %d", cop);
-			break; // hay un return, voy a probar un break
+			break;
 		}
 	}
 

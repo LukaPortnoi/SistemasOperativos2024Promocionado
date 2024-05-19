@@ -60,11 +60,8 @@ void execute(t_instruccion *instruccion)
         _io_gen_sleep(instruccion->parametro1, instruccion->parametro2);
         break; */
 
-    // Esta instrucción representa la syscall de finalización del proceso.
-    // Se deberá devolver el Contexto de Ejecución actualizado al Kernel para su finalización.
     case EXIT:
         log_info(LOGGER_CPU, "PID: %d - Ejecutando: %s", pcb_actual->pid, instruccion_to_string(instruccion->nombre));
-        //pcb_actual->estado = FINALIZADO; // ESTO LO TIENE QUE MANEJAR EL KERNEL, POR AHORA ESTA ACA PARA QUE SALGA DEL WHILE DE EJECUTAR CICLO INSTRUCCION
         esSyscall = true;
         pcb_actual->contexto_ejecucion->motivo_desalojo = INTERRUPCION_FINALIZACION;
         break;

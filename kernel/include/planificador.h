@@ -17,7 +17,6 @@ void planificar_PCB_cortoPlazo(void);
 
 void ejecutar_PCB(t_pcb *pcb);
 t_pcb *recibir_pcb_CPU(int socket);
-void admitir_pcb(t_pcb *pcb);
 void interrupcion_quantum(void);
 
 // MANEJO DE SQUEUES
@@ -31,7 +30,7 @@ t_pcb *squeue_pop_pcb(t_squeue *squeue);
 // OTRAS FUNCIONES
 void iniciar_colas_y_semaforos(void);
 uint32_t asignar_pid(void);
-
 void cambiar_estado_pcb(t_pcb *pcb, t_estado_proceso estado);
+void mostrar_procesos_en_squeue(t_squeue *squeue);
 
 #endif // PLANIFICADOR_H_
