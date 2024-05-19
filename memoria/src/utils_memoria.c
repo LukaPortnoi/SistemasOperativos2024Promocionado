@@ -61,9 +61,8 @@ t_proceso_memoria *obtener_proceso_pid(uint32_t pid_pedido)
     }
 
     pthread_mutex_lock(&mutex_procesos);
-    proceso = list_find(procesos_totales, id_process);      //SOPORTE: TENEMOS UN PROBLEMA DE SINCRONIZACION, CONDICION DE CARRERA EN AGREGAR PROCESOS Y ENCONTRARLOS
+    proceso = list_find(procesos_totales, id_process); // SOPORTE: TENEMOS UN PROBLEMA DE SINCRONIZACION, CONDICION DE CARRERA EN AGREGAR PROCESOS Y ENCONTRARLOS
     pthread_mutex_unlock(&mutex_procesos);
-    printf("CANTIDAD DE PROCESOS AL MOMENTO DE OBTENERLO: %d \n", procesos_totales->elements_count);
 
     return proceso;
 }
@@ -198,7 +197,6 @@ t_proceso_memoria *iniciar_proceso_path(t_proceso_memoria *proceso_nuevo)
     proceso_nuevo->instrucciones = parsear_instrucciones(proceso_nuevo->path);
     log_debug(LOGGER_MEMORIA, "Instrucciones bien parseadas para el proceso PID [%d]", proceso_nuevo->pid);
     list_add(procesos_totales, proceso_nuevo); // SOPORTE: ACA ESTARIA AGREGANDO EL PROCESO
-    printf("CANTIDAD DE PROCESOS AGREGADOS: %d \n", procesos_totales->elements_count);
     pthread_mutex_unlock(&mutex_procesos);
     // inicializar_nuevo_proceso(proceso_nuevo); -> Se usa para inicializar las estructuras de memoria del proceso. Se agregara despues si es que no hay drama con la funcion actual. Si genera problema, se eliminara y buscara otra alternativa
     return proceso_nuevo;
@@ -240,7 +238,7 @@ t_list *parsear_instrucciones(char *path)
         else if (string_equals_ignore_case(palabras[0], "EXIT"))
         {
             list_add(instrucciones, armar_estructura_instruccion(EXIT, "", ""));
-        }   
+        }
 
         indice_split++;
         string_iterate_lines(palabras, (void (*)(char *))free);
@@ -258,13 +256,13 @@ t_instruccion *armar_estructura_instruccion(nombre_instruccion instruccion, char
     t_instruccion *estructura = (t_instruccion *)malloc(sizeof(t_instruccion));
 
     estructura->nombre = instruccion;
-    estructura->parametro1 = (parametro1[0] != '\0') ? strdup(parametro1) : parametro1;//(parametro1 && parametro1[0] != '\0') ? strdup(parametro1) : NULL;
+    estructura->parametro1 = (parametro1[0] != '\0') ? strdup(parametro1) : parametro1; //(parametro1 && parametro1[0] != '\0') ? strdup(parametro1) : NULL;
     estructura->parametro2 = (parametro2[0] != '\0') ? strdup(parametro2) : parametro2; //(parametro2 && parametro2[0] != '\0') ? strdup(parametro2) : NULL;
 
     estructura->longitud_parametro1 = strlen(estructura->parametro1) + 1;
     estructura->longitud_parametro2 = strlen(estructura->parametro2) + 1;
 
-    //printf("%s - %s - %s \n", instruccion_to_string(estructura->nombre), estructura->parametro1, estructura->parametro2); // printea instrucciones
+    // printf("%s - %s - %s \n", instruccion_to_string(estructura->nombre), estructura->parametro1, estructura->parametro2); // printea instrucciones
     return estructura;
 }
 
@@ -308,4 +306,4 @@ void iniciar_semaforos()
 {
     pthread_mutex_init(&mutex_procesos, NULL);
     pthread_mutex_init(&mutex_comunicacion_procesos, NULL);
-}    
+}

@@ -24,27 +24,25 @@ t_config *iniciar_config(char *file_name, char *name)
 	return nuevo_config;
 }
 
-
-
 void serializar_nuevo(t_paquete *paquete, int pid, int size, char *path)
 {
-    paquete->buffer->size += sizeof(uint32_t) * 3 +  strlen(path) + 1;
+	paquete->buffer->size += sizeof(uint32_t) * 3 + strlen(path) + 1;
 
-    paquete->buffer->stream = malloc(paquete->buffer->size);
+	paquete->buffer->stream = malloc(paquete->buffer->size);
 
-    int desplazamiento = 0;
+	int desplazamiento = 0;
 
-    memcpy(paquete->buffer->stream + desplazamiento, &(pid), sizeof(uint32_t));
-    desplazamiento += sizeof(uint32_t);
+	memcpy(paquete->buffer->stream + desplazamiento, &(pid), sizeof(uint32_t));
+	desplazamiento += sizeof(uint32_t);
 
-    memcpy(paquete->buffer->stream + desplazamiento, &(size), sizeof(uint32_t));
-    desplazamiento += sizeof(uint32_t);
+	memcpy(paquete->buffer->stream + desplazamiento, &(size), sizeof(uint32_t));
+	desplazamiento += sizeof(uint32_t);
 
-    uint32_t long_path = strlen(path) + 1;
-    memcpy(paquete->buffer->stream + desplazamiento, &(long_path), sizeof(uint32_t));
-    desplazamiento += sizeof(uint32_t);
+	uint32_t long_path = strlen(path) + 1;
+	memcpy(paquete->buffer->stream + desplazamiento, &(long_path), sizeof(uint32_t));
+	desplazamiento += sizeof(uint32_t);
 
-    memcpy(paquete->buffer->stream + desplazamiento, path, long_path);
+	memcpy(paquete->buffer->stream + desplazamiento, path, long_path);
 }
 
 void terminar_programa(int conexion, t_log *logger, t_config *config)

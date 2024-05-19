@@ -25,8 +25,7 @@ typedef enum
     LISTO,
     EJECUTANDO,
     BLOQUEADO,
-    FINALIZADO,
-    ERROR
+    FINALIZADO
 } t_estado_proceso;
 
 typedef struct

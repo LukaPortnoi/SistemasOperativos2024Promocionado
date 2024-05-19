@@ -77,6 +77,15 @@ typedef struct
     t_motivo_desalojo motivo_desalojo;
 } t_contexto_ejecucion;
 
+typedef enum {
+    SUCCESS,
+    INVALID_RESOURCE,
+    INVALID_INTERFACE,
+    OUT_OF_MEMORY,
+    INTERRUPTED_BY_USER
+} t_motivo_finalizacion;
+
 char *motivo_desalojo_to_string(t_motivo_desalojo motivo);
+char *motivo_finalizacion_to_string(t_motivo_finalizacion motivo);
 
 #endif // CONTEXTO_H_

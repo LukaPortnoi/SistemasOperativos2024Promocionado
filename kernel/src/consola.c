@@ -156,7 +156,7 @@ void inicializar_readline()
   rl_attempted_completion_function = consola_completar;
 }
 
-//
+//-----------------------------------------------------------
 
 void ejecutar_script(char *path_script)
 {
