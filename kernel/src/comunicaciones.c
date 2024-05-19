@@ -1,12 +1,5 @@
 #include "../include/comunicaciones.h"
 
-typedef struct
-{
-	t_log *log;
-	int fd;
-	char *server_name;
-} t_procesar_conexion_args;
-
 static void procesar_conexion_kernel(void *void_args)
 {
 	t_procesar_conexion_args *args = (t_procesar_conexion_args *)void_args;
@@ -21,7 +14,7 @@ static void procesar_conexion_kernel(void *void_args)
 	{
 		if (recv(cliente_socket, &cop, sizeof(op_cod), 0) != sizeof(op_cod))
 		{
-			log_info(logger, "Se desconecto el cliente!\n");
+			log_debug(logger, "Se desconecto el cliente!\n");
 			return;
 		}
 
@@ -32,8 +25,16 @@ static void procesar_conexion_kernel(void *void_args)
 			break;
 		case PAQUETE:
 			lista = recibir_paquete(cliente_socket);
-			log_info(logger, "Me llegaron los siguientes valores:");
+			log_debug(logger, "Me llegaron los siguientes valores:");
 			list_iterate(lista, (void *)iterator);
+			break;
+
+		// -------------------
+		// -- CPU - KERNEL --
+		// -------------------
+		case PCB:
+			t_pcb *pcb_actualizado = recibir_pcb(cliente_socket);
+			log_info(logger, "Recibi un PCB del CPU con PID: %d (entre al case de KERNEL)", pcb_actualizado->pid);
 			break;
 
 		// -------------------
@@ -43,17 +44,17 @@ static void procesar_conexion_kernel(void *void_args)
 			recibir_mensaje(cliente_socket, logger);
 			log_info(logger, "Este deberia ser el canal mediante el cual nos comunicamos con el I/O");
 			break;
-
+			
 		// ---------------
 		// -- ERRORES --
 		// ---------------
-		case -1:
+		case ERROR:
 			log_error(logger, "Cliente desconectado de %s... con cop -1", server_name);
-			break;  //hay un return, voy a probar un break
+			break; // hay un return, voy a probar un break
 		default:
 			log_error(logger, "Algo anduvo mal en el server de %s", server_name);
 			log_info(logger, "Cop: %d", cop);
-			break;  //hay un return, voy a probar un break
+			break; // hay un return, voy a probar un break
 		}
 	}
 

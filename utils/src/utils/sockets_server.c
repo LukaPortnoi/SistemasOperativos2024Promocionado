@@ -23,6 +23,14 @@ int iniciar_servidor(t_log *logger, const char *name, char *ip, char *puerto)
 		if (socket_servidor == -1)
 			continue;
 
+		int enable = 1;
+		if (setsockopt(socket_servidor, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0)
+		{
+			close(socket_servidor);
+			log_error(logger, "setsockopt(SO_REUSEADDR) failed");
+			continue;
+		}
+
 		if (bind(socket_servidor, p->ai_addr, p->ai_addrlen) == -1)
 		{
 			close(socket_servidor);
@@ -48,7 +56,7 @@ int esperar_cliente(int socket_servidor, t_log *logger)
 	// Aceptamos un nuevo cliente
 	int socket_cliente = accept(socket_servidor, NULL, NULL);
 	log_info(logger, "Se conecto un cliente!");
-	
+
 	return socket_cliente;
 }
 
@@ -88,9 +96,34 @@ void recibir_mensaje(int socket_cliente, t_log *logger)
 	free(buffer);
 }
 
-t_list *recibir_paquete(int socket_cliente)
+t_paquete *recibir_paquete(int socket_cliente)
 {
-	int size;
+	t_paquete *paquete = malloc(sizeof(t_paquete));
+	paquete->buffer = malloc(sizeof(t_buffer));
+	paquete->buffer->stream = NULL;
+	paquete->buffer->size = 0;
+	paquete->codigo_operacion = 0;
+
+	if (recv(socket_cliente, &(paquete->buffer->size), sizeof(uint32_t), 0) != sizeof(uint32_t))
+	{
+		printf("Error al recibir el tamanio del buffer\n");
+		return NULL;
+	}
+
+	paquete->buffer->stream = malloc(paquete->buffer->size);
+
+	if (recv(socket_cliente, paquete->buffer->stream, paquete->buffer->size, 0) != paquete->buffer->size)
+	{
+		printf("Error al recibir el buffer\n");
+		return NULL;
+	}
+
+	return paquete;
+}
+
+/* t_paquete *recibir_paquete2(int socket_cliente)
+{
+		int size;
 	int desplazamiento = 0;
 	void *buffer;
 	t_list *valores = list_create();
@@ -108,20 +141,26 @@ t_list *recibir_paquete(int socket_cliente)
 	}
 	free(buffer);
 	return valores;
+} */
+
+t_interrupcion *recibir_interrupcion(int socket_cliente)
+{
+	t_paquete *paquete = recibir_paquete(socket_cliente);
+	t_interrupcion *interrupcion = deserializar_interrupcion(paquete->buffer->stream);
+	eliminar_paquete(paquete);
+	return interrupcion;
 }
 
-t_paquete *recibir_paqueteTOP(int socket_cliente)
+t_interrupcion *deserializar_interrupcion(t_buffer *buffer)
 {
-    t_paquete *paquete = malloc(sizeof(t_paquete));
-    paquete->buffer = malloc(sizeof(t_buffer));
-    paquete->buffer->stream = NULL;
-    paquete->buffer->size = 0;
-    paquete->codigo_operacion = 0;
+	t_interrupcion *interrupcion = malloc(sizeof(t_interrupcion));
+	void *stream = buffer->stream;
+	int desplazamiento = 0;
 
-	recv(socket_cliente, &(paquete->codigo_operacion), sizeof(int), MSG_WAITALL);
-	recv(socket_cliente, &(paquete->buffer->size), sizeof(int), MSG_WAITALL);
-	paquete->buffer->stream = malloc(paquete->buffer->size);
-	recv(socket_cliente, paquete->buffer->stream, paquete->buffer->size, MSG_WAITALL);
+	memcpy(&(interrupcion->motivo_interrupcion), stream + desplazamiento, sizeof(t_motivo_desalojo));
+	desplazamiento += sizeof(t_motivo_desalojo);
+	memcpy(&(interrupcion->pid), stream + desplazamiento, sizeof(int));
 
-    return paquete;
+	return interrupcion;
+
 }

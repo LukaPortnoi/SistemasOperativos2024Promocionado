@@ -24,40 +24,28 @@ t_config *iniciar_config(char *file_name, char *name)
 	return nuevo_config;
 }
 
-void leer_consola(t_log *logger)
+
+
+void serializar_nuevo(t_paquete *paquete, int pid, int size, char *path)
 {
-	char *leido;
+    paquete->buffer->size += sizeof(uint32_t) * 3 +  strlen(path) + 1;
 
-	leido = readline("> ");
+    paquete->buffer->stream = malloc(paquete->buffer->size);
 
-	while (strcmp(leido, ""))
-	{
-		log_info(logger, "Se ingresó: %s", leido);
-		free(leido);
-		leido = readline("> ");
-	}
+    int desplazamiento = 0;
 
-	free(leido);
+    memcpy(paquete->buffer->stream + desplazamiento, &(pid), sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+    memcpy(paquete->buffer->stream + desplazamiento, &(size), sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+    uint32_t long_path = strlen(path) + 1;
+    memcpy(paquete->buffer->stream + desplazamiento, &(long_path), sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+    memcpy(paquete->buffer->stream + desplazamiento, path, long_path);
 }
-
-/*void paquete(int conexion, t_log *logger)		//DESHABILITADO PORQUE NO SE USA Y CREAR_PAQUETE() NO ESTÁ DEFINIDO
-{
-	
-	char *leido;
-	t_paquete *paquete = crear_paquete();
-
-	leido = readline("> ");
-	while (strcmp(leido, ""))
-	{
-		log_info(logger, "Se ingresó: %s", leido);
-		agregar_a_paquete(paquete, leido, strlen(leido) + 1);
-		free(leido);
-		leido = readline("> ");
-	}
-	enviar_paquete(paquete, conexion);
-
-	eliminar_paquete(paquete);
-}*/
 
 void terminar_programa(int conexion, t_log *logger, t_config *config)
 {

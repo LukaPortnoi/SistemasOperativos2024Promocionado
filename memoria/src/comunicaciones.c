@@ -1,12 +1,5 @@
 #include "../include/comunicaciones.h"
 
-typedef struct
-{
-	t_log *log;
-	int fd;
-	char *server_name;
-} t_procesar_conexion_args;
-
 static void procesar_conexion_memoria(void *void_args)
 {
 	t_procesar_conexion_args *args = (t_procesar_conexion_args *)void_args;
@@ -19,7 +12,6 @@ static void procesar_conexion_memoria(void *void_args)
 	t_list *lista;
 	while (cliente_socket != -1)
 	{
-
 		if (recv(cliente_socket, &cop, sizeof(op_cod), 0) != sizeof(op_cod))
 		{
 			log_info(logger, "Se desconecto el cliente!\n");
@@ -37,14 +29,6 @@ static void procesar_conexion_memoria(void *void_args)
 			list_iterate(lista, (void *)iterator);
 			break;
 
-		// -------------------
-		// -- CPU - MEMORIA --
-		// -------------------
-		case HANDSHAKE_cpu:
-			recibir_mensaje(cliente_socket, logger);
-			log_info(logger, "Este deberia ser el canal mediante el cual nos comunicamos con la CPU");
-			break;
-
 		// ----------------------
 		// -- KERNEL - MEMORIA --
 		// ----------------------
@@ -53,6 +37,47 @@ static void procesar_conexion_memoria(void *void_args)
 			log_info(logger, "Este deberia ser el canal mediante el cual nos comunicamos con el KERNEL");
 			break;
 
+		// Recibe PID y PATH del Kernel, y las guarda en conjunto con la lista de instrucciones en el struct PROCESO_MEMORIA
+		case INICIALIZAR_PROCESO:
+			proceso_memoria = recibir_proceso_memoria(cliente_socket);
+			proceso_memoria = iniciar_proceso_path(proceso_memoria);
+			break;
+
+		// -------------------
+		// -- CPU - MEMORIA --
+		// -------------------
+		case HANDSHAKE_cpu:
+			recibir_mensaje(cliente_socket, logger);
+			log_info(logger, "Este deberia ser el canal mediante el cual nos comunicamos con la CPU");
+			break;
+
+		case PEDIDO_INSTRUCCION:
+			// pthread_mutex_lock(&mutex_comunicacion_procesos); ??????
+			// printf("CANTIDAD DE PROCESOS TOTALES ANTES DE PEDIRLOS: %d \n", procesos_totales->elements_count);
+			uint32_t pid, pc;
+			recibir_pedido_instruccion(&pid, &pc, cliente_socket);
+			log_debug(logger, "Se recibio un pedido de instruccion para el PID %d y PC %d", pid, pc);
+			proceso_memoria = obtener_proceso_pid(pid);
+			if (proceso_memoria == NULL)
+			{
+				log_error(logger, "No se encontro el proceso con PID %d", pid);		//ACA ERROR
+				break;
+			}
+			else
+			{
+				t_instruccion *instruccion = obtener_instruccion_del_proceso_pc(proceso_memoria, pc);
+				if (instruccion != NULL)
+				{
+					enviar_instruccion(cliente_socket, instruccion);
+					log_debug(logger, "Se envia la instruccion a CPU de PC %d para el PID %d y es: %s - %s - %s", pc, pid, instruccion_to_string(instruccion->nombre), instruccion->parametro1, instruccion->parametro2);
+				}
+				else
+				{
+					log_error(logger, "No se encontro la instruccion con PC %d para el PID %d", pc, pid);
+				}
+				break;
+			}
+
 		// -------------------
 		// -- I/O - MEMORIA --
 		// -------------------
@@ -60,17 +85,16 @@ static void procesar_conexion_memoria(void *void_args)
 			recibir_mensaje(cliente_socket, logger);
 			log_info(logger, "Este deberia ser el canal mediante el cual nos comunicamos con el I/O");
 			break;
-
 		// ---------------
 		// -- ERRORES --
 		// ---------------
-		case -1:
+		case ERROROPCODE:		//NO TIENEN QUE HABER NEGATIVOS, NO VA AENTRAR NUNCA
 			log_error(logger, "Cliente desconectado de %s... con cop -1", server_name);
-			break;  //hay un return, voy a probar un break
+			break; // hay un return, voy a probar un break
 		default:
 			log_error(logger, "Algo anduvo mal en el server de %s", server_name);
 			log_info(logger, "Cop: %d", cop);
-			break;  //hay un return, voy a probar un break
+			break; // hay un return, voy a probar un break
 		}
 	}
 

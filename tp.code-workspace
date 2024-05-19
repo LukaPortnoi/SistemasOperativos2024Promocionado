@@ -8,7 +8,8 @@
 			"initializer_list": "c",
 			"utility": "c",
 			"typeinfo": "c",
-			"*.tcc": "c"
+			"*.tcc": "c",
+			"functional": "c"
 		},
 		"C_Cpp.errorSquiggles": "disabled",
 	},
