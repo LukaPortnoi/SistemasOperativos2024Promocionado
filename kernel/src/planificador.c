@@ -32,7 +32,7 @@ void iniciar_planificador_largo_plazo()
     pthread_detach(hilo_largo_plazo);
 }
 
-t_pcb *crear_proceso()
+void crear_proceso(char *path_proceso)
 {
     uint32_t pid_nuevo = asignar_pid();
     t_pcb *pcb = crear_pcb(pid_nuevo, NUEVO, QUANTUM);
@@ -44,9 +44,10 @@ t_pcb *crear_proceso()
 
     log_info(LOGGER_KERNEL, "Se crea el proceso %d en %s", pcb->pid, estado_to_string(pcb->estado));
 
+    enviar_proceso_a_memoria(pcb->pid, path_proceso);
+
     sem_post(&semMultiprogramacion); // CAMBIAR A CONTADOR
     sem_post(&semNew);
-    return pcb;
 }
 
 void chequear_grado_de_multiprogramacion()
@@ -145,6 +146,8 @@ void ejecutar_PCB(t_pcb *pcb)
         log_error(LOGGER_KERNEL, "Error al recibir PCB de CPU");
         return;
     }
+    squeue_pop(squeue_exec);
+
     pcb_ejecutandose = pcb;
 
     t_motivo_desalojo *motivo_desalojo = malloc(sizeof(t_motivo_desalojo));
@@ -158,17 +161,17 @@ void ejecutar_PCB(t_pcb *pcb)
         squeue_push(squeue_ready, pcb);
         break;
     case INTERRUPCION_BLOQUEO:
-        log_info(LOGGER_KERNEL, "PID %d - Desalojado por bloqueo", pcb->pid);
+        log_debug(LOGGER_KERNEL, "PID %d - Desalojado por bloqueo", pcb->pid);
         cambiar_estado_pcb(pcb, BLOQUEADO);
         squeue_push(squeue_blocked, pcb);
         break;
     case INTERRUPCION_FINALIZACION:
-        log_info(LOGGER_KERNEL, "PID %d - Desalojado por finalizacion", pcb->pid);
+        log_debug(LOGGER_KERNEL, "PID %d - Desalojado por finalizacion", pcb->pid);
         cambiar_estado_pcb(pcb, FINALIZADO);
         squeue_push(squeue_exit, pcb);
         break;
     case INTERRUPCION_ERROR:
-        log_info(LOGGER_KERNEL, "PID %d - Desalojado por error", pcb->pid);
+        log_error(LOGGER_KERNEL, "PID %d - Desalojado por error", pcb->pid);
         cambiar_estado_pcb(pcb, ERROR);
         squeue_push(squeue_exit, pcb);
         break;
@@ -271,7 +274,7 @@ void iniciar_colas_y_semaforos()
     pthread_mutex_init(&procesosEnSistemaMutex, NULL);
     pthread_mutex_init(&mutex_pid, NULL);
 
-    sem_init(&semMultiprogramacion, 0, 0);
+    sem_init(&semMultiprogramacion, 0, 0); //sem_init(&semMultiprogramacion, 0, GRADO_MULTIPROGRAMACION);
     sem_init(&semNew, 0, 0);
     sem_init(&semReady, 0, 0);
     sem_init(&semExec, 0, 0);

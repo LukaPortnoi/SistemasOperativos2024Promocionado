@@ -38,6 +38,7 @@ extern int fd_cpu_interrupt;
 extern int fd_cpu_memoria;
 
 extern t_pcb *pcb_actual;
+extern bool esSyscall;
 extern pthread_mutex_t mutex_interrupt;
 
 #endif /* GESTOR_H_ */

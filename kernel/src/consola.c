@@ -160,7 +160,12 @@ void inicializar_readline()
 
 void ejecutar_script(char *path_script)
 {
-  FILE *script = fopen(path_script, "r");
+  // POR AHORA DEJAR ESTE PATH COMO BASE
+  char *path_archivo = string_new();
+  string_append(&path_archivo, "/home/utnso/tp-2024-1c-OALP/kernel/scripts/");
+  string_append(&path_archivo, path_script);
+
+  FILE *script = fopen(path_archivo, "r");
 
   if (script == NULL)
   {
@@ -194,8 +199,7 @@ void ejecutar_script(char *path_script)
 
 void iniciar_proceso(char *path_proceso)
 {
-  t_pcb *pcb = crear_proceso();
-  enviar_proceso_a_memoria(pcb->pid, path_proceso);
+  crear_proceso(path_proceso);
 }
 
 void finalizar_proceso(char *pid_string) {}
@@ -302,6 +306,7 @@ void mostrar_listado_estados_procesos()
   log_info(LOGGER_KERNEL, "Listado de procesos:");
   mostrar_procesos_en_cola(squeue_new, "NEW");
   mostrar_procesos_en_cola(squeue_ready, "READY");
+  mostrar_procesos_en_cola(squeue_exec, "EXECUTING");
   mostrar_procesos_en_cola(squeue_blocked, "BLOCKED");
   mostrar_procesos_en_cola(squeue_exit, "FINISHED");
 }

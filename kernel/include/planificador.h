@@ -5,7 +5,7 @@
 
 // PLANIFICADOR LARGO PLAZO
 void iniciar_planificador_largo_plazo(void);
-t_pcb *crear_proceso(void);
+void crear_proceso(char *path_proceso);
 void chequear_grado_de_multiprogramacion(void);
 
 void enviar_proceso_a_memoria(int pid_nuevo, char *path_proceso);

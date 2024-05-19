@@ -7,6 +7,7 @@ typedef struct
 	char *server_name;
 } t_procesar_conexion_args;
 
+bool esSyscall = false;
 bool interrupciones[5] = {0, 0, 0, 0, 0};
 
 static void procesar_conexion_dispatch(void *void_args)
@@ -50,7 +51,7 @@ static void procesar_conexion_dispatch(void *void_args)
 
 		case PCB:
 			pcb_actual = recibir_pcb(cliente_socket);
-			while (!hayInterrupciones() && pcb_actual != NULL && pcb_actual->estado != FINALIZADO /* !es_syscall() && !page_fault && */) // Aca deberia ir el check_interrupt()
+			while (!hayInterrupciones() && pcb_actual != NULL && !esSyscall /*pcb_actual->estado != FINALIZADO && !page_fault*/) // Aca deberia ir el check_interrupt()
 			{
 				ejecutar_ciclo_instruccion();
 			}
@@ -59,6 +60,7 @@ static void procesar_conexion_dispatch(void *void_args)
 			log_debug(LOGGER_CPU, "PID: %d - Estado: %s, Contexto: %s\n", pcb_actual->pid, estado_to_string(pcb_actual->estado), motivo_desalojo_to_string(pcb_actual->contexto_ejecucion->motivo_desalojo));
 
 			enviar_pcb(pcb_actual, cliente_socket); // Envia el PCB actualizado
+			esSyscall = false;
 
 			pcb_actual = NULL;
 
