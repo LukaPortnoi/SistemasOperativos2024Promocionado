@@ -5,9 +5,9 @@
 #include "./comunicaciones.h"
 #include "./instrucciones.h"
 
-void ejecutar_ciclo_instruccion();
+void ejecutar_ciclo_instruccion(int cliente_socket);
 t_instruccion *fetch(uint32_t pid, uint32_t pc);
-void execute(t_instruccion *instruccion);
+void execute(t_instruccion *instruccion , int cliente_socket);
 void loguear_y_sumar_pc(t_instruccion *instruccion);
 void pedir_instruccion_memoria(uint32_t pid, uint32_t pc, int socket);
 t_instruccion *deserializar_instruccion(int socket);

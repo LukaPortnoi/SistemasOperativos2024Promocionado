@@ -77,4 +77,6 @@ extern t_squeue *squeue_exec;
 extern t_squeue *squeue_blocked;
 extern t_squeue *squeue_exit;
 
+extern pthread_t hilo_quantum;
+
 #endif /* GESTOR_H_ */

@@ -23,6 +23,8 @@ t_squeue *squeue_exit;
 
 uint32_t PID_GLOBAL = 1;
 
+pthread_t hilo_quantum;
+
 // PLANIFICADOR LARGO PLAZO
 void iniciar_planificador_largo_plazo()
 {
@@ -130,7 +132,6 @@ void iniciar_planificador_corto_plazo()
 {
     log_debug(LOGGER_KERNEL, "Inicia Planificador Corto Plazo");
     pthread_t hilo_corto_plazo;
-    pthread_t hilo_quantum;
 
     pthread_create(&hilo_corto_plazo, NULL, (void *)planificar_PCB_cortoPlazo, NULL);
     pthread_detach(hilo_corto_plazo);
@@ -142,38 +143,13 @@ void planificar_PCB_cortoPlazo()
     {
         sem_wait(&semReady);
         t_pcb *pcb = squeue_pop(squeue_ready);
-        log_debug(LOGGER_KERNEL, "Se planifica el PID %d", pcb->pid);
+        log_debug(LOGGER_KERNEL, "Se planifica el PID %d por %s", pcb->pid, ALGORITMO_PLANIFICACION);
         ejecutar_PCB(pcb);
-        /* if (strcmp(ALGORITMO_PLANIFICACION, "FIFO") != 0 && strcmp(ALGORITMO_PLANIFICACION, "RR") != 0 && strcmp(ALGORITMO_PLANIFICACION, "VRR") != 0)
-        {
-            log_error(LOGGER_KERNEL, "Algoritmo de planificacion no reconocido");
-            return;
-        }
-
-        if (strcmp(ALGORITMO_PLANIFICACION, "FIFO") == 0)
-        {
-            log_debug(LOGGER_KERNEL, "Se planifica por FIFO el PCB con PID %d", pcb->pid);
-            ejecutar_PCB(pcb);
-        }
-        else
-        {
-            // pthread_create(&hilo_quantum, NULL, (void *)interrupcion_quantum, NULL);
-            // pthread_detach(hilo_quantum);
-            if (strcmp(ALGORITMO_PLANIFICACION, "RR") == 0)
-            {
-                log_debug(LOGGER_KERNEL, "Se planifica por RR el PCB con PID %d", pcb->pid);
-                ejecutar_PCB(pcb);
-            }
-            else if (strcmp(ALGORITMO_PLANIFICACION, "VRR") == 0)
-            {
-                // VRR
-            }
-        } */
     }
 }
 
-void ejecutar_PCB(t_pcb *pcb)
-{
+void ejecutar_PCB(t_pcb *pcb) {
+
     cambiar_estado_pcb(pcb, EJECUTANDO);
     squeue_push(squeue_exec, pcb);
 
@@ -181,13 +157,30 @@ void ejecutar_PCB(t_pcb *pcb)
     log_debug(LOGGER_KERNEL, "El PCB con PID %d se envio a CPU", pcb->pid);
     pcb_ejecutandose = pcb;
 
-    pcb = recibir_pcb_CPU(fd_kernel_cpu_dispatch);
-    if (pcb == NULL)
+    if (strcmp(ALGORITMO_PLANIFICACION, "RR") == 0)
     {
+        pthread_create(&hilo_quantum, NULL, (void *)hilo_quantum, NULL);
+    }
+
+    pcb = recibir_pcb_CPU(fd_kernel_cpu_dispatch);
+
+    if (pcb == NULL) {
         log_error(LOGGER_KERNEL, "Error al recibir PCB de CPU");
+        desalojo_cpu(pcb, hilo_quantum);  // Manejar el desalojo en caso de error
         return;
     }
-    squeue_pop(squeue_exec);
+
+    desalojo_cpu(pcb, hilo_quantum);  // Manejar el desalojo y finalización del hilo de quantum
+}
+
+void desalojo_cpu(t_pcb *pcb, pthread_t hilo_quantum_id){
+
+    if (strcmp(ALGORITMO_PLANIFICACION, "RR") == 0){
+        pthread_cancel(hilo_quantum_id);
+        pthread_join(hilo_quantum_id, NULL);
+    }
+
+    squeue_pop(squeue_exec);        
 
     t_motivo_desalojo *motivo_desalojo = malloc(sizeof(t_motivo_desalojo));
     *motivo_desalojo = pcb->contexto_ejecucion->motivo_desalojo;
@@ -223,6 +216,24 @@ void ejecutar_PCB(t_pcb *pcb)
     }
 
     free(motivo_desalojo);
+
+}
+
+void *hilo_quantum(void *arg) {
+
+    pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
+    pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
+
+    sleep(QUANTUM / 1000);
+
+    t_interrupcion *interrupcion = malloc(sizeof(t_interrupcion));
+    interrupcion->motivo_interrupcion = INTERRUPCION_FIN_QUANTUM;
+    interrupcion->pid = pcb_ejecutandose->pid;
+
+    enviar_interrupcion(fd_kernel_cpu_interrupt, interrupcion);
+    free(interrupcion);
+
+    return NULL;
 }
 
 t_pcb *recibir_pcb_CPU(int fd_cpu)
@@ -243,8 +254,8 @@ t_pcb *recibir_pcb_CPU(int fd_cpu)
     return pcbDeCPU;
 }
 
-void interrupcion_quantum()
-{
+void interrupcion_quantum(){} // NO SE USA
+/*{
     t_interrupcion *interrupcion = malloc(sizeof(t_interrupcion));
     interrupcion->motivo_interrupcion = INTERRUPCION_FIN_QUANTUM;
     interrupcion->pid = -1; // ????
@@ -257,7 +268,7 @@ void interrupcion_quantum()
         }
     }
     free(interrupcion);
-}
+}*/
 
 // MANEJO DE SQUEUES
 

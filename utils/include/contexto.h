@@ -75,6 +75,7 @@ typedef struct
 {
     t_registros *registros;
     t_motivo_desalojo motivo_desalojo;
+    // t_motivo_finalizacion motivo_finalizacion;
 } t_contexto_ejecucion;
 
 typedef enum {

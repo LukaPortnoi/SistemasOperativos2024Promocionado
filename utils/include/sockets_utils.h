@@ -12,6 +12,7 @@
 #include "sockets_client.h"
 #include "sockets_server.h"
 #include "contexto.h"
+#include "IO.h"
 
 t_log *iniciar_logger(char *file_name, char *name);
 t_config *iniciar_config(char *file_name, char *name);

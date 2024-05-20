@@ -53,7 +53,7 @@ static void procesar_conexion_dispatch(void *void_args)
 			pcb_actual = recibir_pcb(cliente_socket);
 			while (!hayInterrupciones() && pcb_actual != NULL && !esSyscall /*pcb_actual->estado != FINALIZADO && !page_fault*/) // Aca deberia ir el check_interrupt()
 			{
-				ejecutar_ciclo_instruccion();
+				ejecutar_ciclo_instruccion(cliente_socket);
 			}
 
 			// obtener_motivo_desalojo();
@@ -69,7 +69,6 @@ static void procesar_conexion_dispatch(void *void_args)
 			pthread_mutex_unlock(&mutex_interrupt);
 			// liberar_contexto(contexto_actual);
 			break;
-
 		// ---------------
 		// -- ERRORES --
 		// ---------------

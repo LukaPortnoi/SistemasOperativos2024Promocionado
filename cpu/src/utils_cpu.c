@@ -1,10 +1,10 @@
 #include "../include/utils_cpu.h"
 
-void ejecutar_ciclo_instruccion()
+void ejecutar_ciclo_instruccion(int socket)
 {
     t_instruccion *instruccion = fetch(pcb_actual->pid, pcb_actual->contexto_ejecucion->registros->program_counter);
     // TODO decode: manejo de TLB y MMU
-    execute(instruccion);
+    execute(instruccion, socket);
     // if (!page_fault)
 }
 
@@ -23,7 +23,6 @@ t_instruccion *fetch(uint32_t pid, uint32_t pc)
     if (codigo_op == INSTRUCCION)
     {
         instruccion = deserializar_instruccion(fd_cpu_memoria);
-        // pcb_actual->contexto_ejecucion-> = instruccion;
     }
     else
     {
@@ -36,7 +35,7 @@ t_instruccion *fetch(uint32_t pid, uint32_t pc)
     return instruccion;
 }
 
-void execute(t_instruccion *instruccion)
+void execute(t_instruccion *instruccion, int socket)
 {
     switch (instruccion->nombre)
     {
@@ -56,14 +55,15 @@ void execute(t_instruccion *instruccion)
         _jnz(instruccion->parametro1, instruccion->parametro2);
         loguear_y_sumar_pc(instruccion);
         break;
-    /* case IO_GEN_SLEEP:
-        _io_gen_sleep(instruccion->parametro1, instruccion->parametro2);
-        break; */
+    case IO_GEN_SLEEP:
+        _io_gen_sleep(instruccion->parametro1, 30, socket);
+        break;
 
     case EXIT:
         log_info(LOGGER_CPU, "PID: %d - Ejecutando: %s", pcb_actual->pid, instruccion_to_string(instruccion->nombre));
         esSyscall = true;
         pcb_actual->contexto_ejecucion->motivo_desalojo = INTERRUPCION_FINALIZACION;
+        // pcb_actual->contexto_ejecucion->t_motivo_finalizacion = SUCCESS;
         break;
     default:
         break;
