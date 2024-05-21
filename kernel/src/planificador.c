@@ -162,7 +162,7 @@ void ejecutar_PCB(t_pcb *pcb) {
         pthread_create(&hilo_quantum, NULL, (void *)atender_quantum, NULL);
     }
 
-    pcb = recibir_pcb_CPU(fd_kernel_cpu_dispatch);
+    pcb = recibir_pcb_CPU(fd_kernel_cpu_dispatch); // Tener en cuenta la funcion para I/O
 
     if (pcb == NULL) {
         log_error(LOGGER_KERNEL, "Error al recibir PCB de CPU");

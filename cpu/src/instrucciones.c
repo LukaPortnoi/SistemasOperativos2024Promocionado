@@ -147,10 +147,10 @@ void _jnz(char *registro, char *instruccion)
     free(regis);
 }
 
-void _io_gen_sleep(char *interfaz, int unidades_de_trabajo, int cliente_socket)
+void _io_gen_sleep(char *interfaz, char *unidades_de_trabajo, int cliente_socket)
 {
-    // sleep
-    enviar_interfaz_IO(pcb_actual, interfaz, unidades_de_trabajo, cliente_socket);
+       uint32_t unidades_de_trabajoNum = atoi(&unidades_de_trabajo);
+    enviar_interfaz_IO(pcb_actual, interfaz, unidades_de_trabajoNum, cliente_socket);
 }
 
 uint32_t *get_registry32(char *registro)

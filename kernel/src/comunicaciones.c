@@ -40,6 +40,13 @@ static void procesar_conexion_kernel(void *void_args)
 			recibir_mensaje(cliente_socket, logger);
 			log_info(logger, "Este deberia ser el canal mediante el cual nos comunicamos con el I/O");
 			break;
+		// -------------------
+		// -- recibo la interfaz de cpu   --
+		// -------------------
+			case ENVIAR_INTERFAZ: -- 
+			recibir_interfaz(fd_kernel_cpu_dispatch, pcb_a_interfaz, nombre_interfaz, unidades_de_trabajo);
+			log_info(logger, "recibi la IO de kernel con el nombre: %s" , nombre_interfaz);
+			break;
 			
 		// ---------------
 		// -- ERRORES --

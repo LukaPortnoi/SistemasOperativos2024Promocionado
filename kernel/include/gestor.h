@@ -48,6 +48,8 @@ extern char **RECURSOS;
 extern char **INSTANCIAS_RECURSOS;
 extern int GRADO_MULTIPROGRAMACION;
 extern char *IP_KERNEL;
+extern char *nombre_interfaz;
+
 
 extern int fd_kernel;
 extern int fd_kernel_memoria;
@@ -55,7 +57,10 @@ extern int fd_kernel_cpu_dispatch;
 extern int fd_kernel_cpu_interrupt;
 
 extern uint32_t PID_GLOBAL;
+extern uint32_t *unidades_de_trabajo;
 extern t_pcb *pcb_ejecutandose;
+extern t_pcb *pcb_a_interfaz;
+
 
 extern sem_t semMultiprogramacion;
 extern sem_t semNew;
