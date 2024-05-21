@@ -146,7 +146,7 @@ t_paquete *recibir_paquete(int socket_cliente)
 t_interrupcion *recibir_interrupcion(int socket_cliente)
 {
 	t_paquete *paquete = recibir_paquete(socket_cliente);
-	t_interrupcion *interrupcion = deserializar_interrupcion(paquete->buffer->stream);
+	t_interrupcion *interrupcion = deserializar_interrupcion(paquete->buffer);
 	eliminar_paquete(paquete);
 	return interrupcion;
 }

@@ -8,7 +8,7 @@ int server_escuchar(t_log *logger, char *server_name, int server_socket);
 
 extern bool interrupciones[5];
 
-void recibir_interrupciones(t_log *logger);
+void recibir_interrupciones(int cliente_socket, t_log *logger);
 void limpiar_interrupciones(void);
 bool hayInterrupciones(void);
 

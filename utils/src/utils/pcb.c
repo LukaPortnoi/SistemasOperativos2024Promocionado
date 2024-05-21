@@ -222,8 +222,6 @@ char *estado_to_string(t_estado_proceso estado)
         return "BLOQUEADO";
     case FINALIZADO:
         return "TERMINADO";
-    case ERROR:
-        return "ERROR";
     default:
         return "ERROR";
     }

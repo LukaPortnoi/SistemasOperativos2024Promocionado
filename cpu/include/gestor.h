@@ -8,6 +8,7 @@
 #include <pthread.h>
 #include <inttypes.h>
 #include <stdbool.h>
+#include <sys/socket.h>
 
 #include <commons/log.h>
 #include <commons/string.h>
@@ -20,6 +21,7 @@
 #include "../../utils/include/sockets_utils.h"
 #include "../../utils/include/sockets_common.h"
 #include "../../utils/include/pcb.h"
+#include "../../utils/include/IO.h"
 #include "../../utils/include/contexto.h"
 
 extern char *IP_MEMORIA;

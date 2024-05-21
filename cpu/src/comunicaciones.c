@@ -53,7 +53,7 @@ static void procesar_conexion_dispatch(void *void_args)
 			pcb_actual = recibir_pcb(cliente_socket);
 			while (!hayInterrupciones() && pcb_actual != NULL && !esSyscall /*pcb_actual->estado != FINALIZADO && !page_fault*/) // Aca deberia ir el check_interrupt()
 			{
-				ejecutar_ciclo_instruccion();
+				ejecutar_ciclo_instruccion(cliente_socket);
 			}
 
 			// obtener_motivo_desalojo();
@@ -69,7 +69,6 @@ static void procesar_conexion_dispatch(void *void_args)
 			pthread_mutex_unlock(&mutex_interrupt);
 			// liberar_contexto(contexto_actual);
 			break;
-
 		// ---------------
 		// -- ERRORES --
 		// ---------------
@@ -100,7 +99,7 @@ static void procesar_conexion_interrupt(void *void_args)
 			log_info(logger, "Se desconecto el cliente!\n");
 			return;
 		}
-
+		printf("Codigo de operacion: %d\n", cop);
 		switch (cop)
 		{
 		case MENSAJE:
@@ -111,7 +110,7 @@ static void procesar_conexion_interrupt(void *void_args)
 		// -- KERNEL - CPU --
 		// ----------------------
 		case INTERRUPCION:
-			recibir_interrupciones(logger);
+			recibir_interrupciones(cliente_socket, logger);
 			break;
 
 		// ---------------
@@ -152,14 +151,15 @@ int server_escuchar(t_log *logger, char *server_name, int server_socket)
 	return 0;
 }
 
-void recibir_interrupciones(t_log *logger)
+void recibir_interrupciones(int cliente_socket, t_log *logger)
 {
-	t_interrupcion *interrupcion = recibir_interrupcion(fd_cpu_interrupt);
+	t_interrupcion *interrupcion = recibir_interrupcion(cliente_socket);
 
 	switch (interrupcion->motivo_interrupcion)
 	{
 	case INTERRUPCION_FIN_QUANTUM:
 		interrupciones[0] = true;
+		pcb_actual->contexto_ejecucion->motivo_desalojo = INTERRUPCION_FIN_QUANTUM;
 		break;
 
 	case INTERRUPCION_BLOQUEO:

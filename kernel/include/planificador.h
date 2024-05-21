@@ -16,7 +16,9 @@ void iniciar_planificador_corto_plazo(void);
 void planificar_PCB_cortoPlazo(void);
 
 void ejecutar_PCB(t_pcb *pcb);
+void desalojo_cpu(t_pcb *pcb, pthread_t hilo_quantum);
 t_pcb *recibir_pcb_CPU(int socket);
+void atender_quantum(void* arg);
 void interrupcion_quantum(void);
 
 // MANEJO DE SQUEUES
