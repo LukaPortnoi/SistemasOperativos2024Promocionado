@@ -110,7 +110,7 @@ static void procesar_conexion_interrupt(void *void_args)
 		// -- KERNEL - CPU --
 		// ----------------------
 		case INTERRUPCION:
-			recibir_interrupciones(logger);
+			recibir_interrupciones(cliente_socket, logger);
 			break;
 
 		// ---------------
@@ -151,9 +151,9 @@ int server_escuchar(t_log *logger, char *server_name, int server_socket)
 	return 0;
 }
 
-void recibir_interrupciones(t_log *logger)
+void recibir_interrupciones(int cliente_socket, t_log *logger)
 {
-	t_interrupcion *interrupcion = recibir_interrupcion(fd_cpu_interrupt);
+	t_interrupcion *interrupcion = recibir_interrupcion(cliente_socket);
 
 	switch (interrupcion->motivo_interrupcion)
 	{
