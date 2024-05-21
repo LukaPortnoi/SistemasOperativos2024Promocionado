@@ -8,12 +8,13 @@
 #include <pthread.h>
 #include <inttypes.h>
 #include <semaphore.h>
+#include <sys/socket.h>
+#include <readline/readline.h>
 
 #include <commons/log.h>
 #include <commons/string.h>
 #include <commons/config.h>
 #include <commons/collections/list.h>
-#include <readline/readline.h>
 
 #include "../../utils/include/sockets_server.h"
 #include "../../utils/include/sockets_client.h"

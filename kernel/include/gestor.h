@@ -10,6 +10,7 @@
 #include <pthread.h>
 #include <semaphore.h>
 #include <sys/time.h>
+#include <sys/socket.h>
 #include <time.h>
 #include <unistd.h>
 #include <readline/readline.h>

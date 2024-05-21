@@ -1,18 +1,10 @@
 #ifndef SOCKETS_UTILS_H_
 #define SOCKETS_UTILS_H_
 
-#include <stdlib.h>
-#include <stdio.h>
-
-#include <commons/log.h>
-#include <commons/string.h>
-#include <commons/config.h>
-#include <readline/readline.h>
-
-#include "sockets_client.h"
-#include "sockets_server.h"
-#include "contexto.h"
-#include "IO.h"
+#include "./gestor.h"
+#include "./sockets_client.h"
+#include "./sockets_server.h"
+#include "./contexto.h"
 
 t_log *iniciar_logger(char *file_name, char *name);
 t_config *iniciar_config(char *file_name, char *name);

@@ -1,19 +1,10 @@
 #ifndef SOCKETS_SERVER_H_
 #define SOCKETS_SERVER_H_
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/socket.h>
-#include <unistd.h>
-#include <netdb.h>
-#include <commons/log.h>
-#include <commons/collections/list.h>
-#include <string.h>
-#include <assert.h>
-
-#include "sockets_client.h"
-#include "sockets_common.h"
-#include "contexto.h"
+#include "./gestor.h"
+#include "./sockets_client.h"
+#include "./sockets_common.h"
+#include "./contexto.h"
 
 void *recibir_buffer(int *, int);
 int iniciar_servidor(t_log *logger, const char *name, char *ip, char *puerto);

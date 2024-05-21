@@ -159,7 +159,7 @@ void ejecutar_PCB(t_pcb *pcb) {
 
     if (strcmp(ALGORITMO_PLANIFICACION, "RR") == 0)
     {
-        pthread_create(&hilo_quantum, NULL, (void *)hilo_quantum, NULL);
+        pthread_create(&hilo_quantum, NULL, (void *)atender_quantum, NULL);
     }
 
     pcb = recibir_pcb_CPU(fd_kernel_cpu_dispatch);
@@ -219,7 +219,7 @@ void desalojo_cpu(t_pcb *pcb, pthread_t hilo_quantum_id){
 
 }
 
-void *hilo_quantum(void *arg) {
+void atender_quantum(void *arg) {
 
     pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
     pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
@@ -228,12 +228,10 @@ void *hilo_quantum(void *arg) {
 
     t_interrupcion *interrupcion = malloc(sizeof(t_interrupcion));
     interrupcion->motivo_interrupcion = INTERRUPCION_FIN_QUANTUM;
-    interrupcion->pid = pcb_ejecutandose->pid;
+    interrupcion->pid = 1;
 
     enviar_interrupcion(fd_kernel_cpu_interrupt, interrupcion);
     free(interrupcion);
-
-    return NULL;
 }
 
 t_pcb *recibir_pcb_CPU(int fd_cpu)

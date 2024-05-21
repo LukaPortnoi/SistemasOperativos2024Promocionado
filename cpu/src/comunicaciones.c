@@ -99,7 +99,7 @@ static void procesar_conexion_interrupt(void *void_args)
 			log_info(logger, "Se desconecto el cliente!\n");
 			return;
 		}
-
+		printf("Codigo de operacion: %d\n", cop);
 		switch (cop)
 		{
 		case MENSAJE:
