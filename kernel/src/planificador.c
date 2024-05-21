@@ -191,6 +191,7 @@ void desalojo_cpu(t_pcb *pcb, pthread_t hilo_quantum_id){
         log_info(LOGGER_KERNEL, "PID %d - Desalojado por fin de Quantum", pcb->pid);
         cambiar_estado_pcb(pcb, LISTO);
         squeue_push(squeue_ready, pcb);
+        sem_post(&semReady);
         break;
     case INTERRUPCION_BLOQUEO:
         log_debug(LOGGER_KERNEL, "PID %d - Desalojado por bloqueo", pcb->pid);
@@ -228,7 +229,7 @@ void atender_quantum(void *arg) {
 
     t_interrupcion *interrupcion = malloc(sizeof(t_interrupcion));
     interrupcion->motivo_interrupcion = INTERRUPCION_FIN_QUANTUM;
-    interrupcion->pid = 1;
+    interrupcion->pid = pcb_ejecutandose->pid;
 
     enviar_interrupcion(fd_kernel_cpu_interrupt, interrupcion);
     free(interrupcion);

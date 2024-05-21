@@ -159,6 +159,7 @@ void recibir_interrupciones(int cliente_socket, t_log *logger)
 	{
 	case INTERRUPCION_FIN_QUANTUM:
 		interrupciones[0] = true;
+		pcb_actual->contexto_ejecucion->motivo_desalojo = INTERRUPCION_FIN_QUANTUM;
 		break;
 
 	case INTERRUPCION_BLOQUEO:
