@@ -228,12 +228,10 @@ void atender_quantum(void *arg) {
 
     t_interrupcion *interrupcion = malloc(sizeof(t_interrupcion));
     interrupcion->motivo_interrupcion = INTERRUPCION_FIN_QUANTUM;
-    interrupcion->pid = pcb_ejecutandose->pid;
+    interrupcion->pid = 1;
 
     enviar_interrupcion(fd_kernel_cpu_interrupt, interrupcion);
     free(interrupcion);
-
-    return NULL;
 }
 
 t_pcb *recibir_pcb_CPU(int fd_cpu)

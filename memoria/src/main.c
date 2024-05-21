@@ -16,15 +16,8 @@ int fd_memoria;
 pthread_mutex_t mutex_comunicacion_procesos;
 pthread_mutex_t mutex_procesos;
 
-void sighandler(int s)
-{
-	terminar_programa(fd_memoria, LOGGER_MEMORIA, CONFIG_MEMORIA);
-	exit(0);
-}
-
 int main(void)
 {
-	signal(SIGINT, sighandler);
 	inicializar_config();
 	iniciar_semaforos();
 

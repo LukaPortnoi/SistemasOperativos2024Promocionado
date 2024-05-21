@@ -8,6 +8,7 @@
 #include <pthread.h>
 #include <inttypes.h>
 #include <stdbool.h>
+#include <sys/socket.h>
 
 #include <commons/log.h>
 #include <commons/string.h>

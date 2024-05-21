@@ -142,7 +142,7 @@ t_paquete *crear_paquete_interrupcion(t_interrupcion *interrupcion)
 t_buffer *crear_buffer_interrupcion(t_interrupcion *interrupcion)
 {
 	t_buffer *buffer = malloc(sizeof(t_buffer));
-	buffer->size = sizeof(t_interrupcion);
+	buffer->size =  sizeof(t_motivo_desalojo) + sizeof(int);
 	buffer->stream = malloc(buffer->size);
 
 	int offset = 0;

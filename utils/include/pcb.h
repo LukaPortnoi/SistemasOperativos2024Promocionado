@@ -1,23 +1,11 @@
 #ifndef PCB_H_
 #define PCB_H_
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <signal.h>
-#include <unistd.h>
-#include <sys/socket.h>
-#include <netdb.h>
-#include <string.h>
-#include <commons/log.h>
-#include <commons/config.h>
-#include <commons/temporal.h>
-#include <assert.h>
-#include <pthread.h>
-
-#include "sockets_client.h"
-#include "sockets_server.h"
-#include "sockets_utils.h"
-#include "contexto.h"
+#include "./gestor.h"
+#include "./sockets_client.h"
+#include "./sockets_server.h"
+#include "./sockets_utils.h"
+#include "./contexto.h"
 
 typedef enum
 {
