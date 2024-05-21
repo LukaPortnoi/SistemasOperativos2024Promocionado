@@ -11,7 +11,7 @@ char *PUERTO_CPU_DISPATCH;
 char *PUERTO_CPU_INTERRUPT;
 char *ALGORITMO_PLANIFICACION;
 uint32_t QUANTUM;
-uint32_t PID_GLOBAL;
+//uint32_t PID_GLOBAL;
 uint32_t *unidades_de_trabajo;
 char **RECURSOS;
 char **INSTANCIAS_RECURSOS;

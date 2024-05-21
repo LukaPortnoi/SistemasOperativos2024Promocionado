@@ -23,6 +23,7 @@ t_instruccion *fetch(uint32_t pid, uint32_t pc)
     if (codigo_op == INSTRUCCION)
     {
         instruccion = deserializar_instruccion(fd_cpu_memoria);
+        
     }
     else
     {
@@ -56,7 +57,8 @@ void execute(t_instruccion *instruccion, int socket)
         loguear_y_sumar_pc(instruccion);
         break;
     case IO_GEN_SLEEP:
-        _io_gen_sleep(instruccion->parametro1, instruccion->parametro1, socket);
+        _io_gen_sleep(instruccion->parametro1, instruccion->parametro2, socket);
+        loguear_y_sumar_pc(instruccion);
         break;
 
     case EXIT:

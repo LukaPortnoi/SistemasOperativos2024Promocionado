@@ -69,7 +69,7 @@ void serializar_IO_instruccion(t_paquete *paquete, t_pcb *pcb, uint32_t *unidade
 }
 
 
-void recibir_interfaz(int socket_cliente, t_pcb *pcb_a_interfaz, char *nombre_interfaz, uint32_t *unidades_de_trabajo)
+void recibir_interfaz_cpu(int socket_cliente, t_pcb *pcb_a_interfaz, char *nombre_interfaz, uint32_t *unidades_de_trabajo)
 {
     t_paquete *paquete = recibir_paquete(socket_cliente);
     deserializar_interfaz(paquete->buffer, pcb_a_interfaz, nombre_interfaz, unidades_de_trabajo);
@@ -97,7 +97,7 @@ void deserializar_interfaz(t_buffer *buffer, t_pcb *pcb_a_interfaz, char *nombre
 
     nombre_interfaz = malloc(long_interfaz);
 
-    memcpy(nombre_interfaz, stream + desplazamiento, long_interfaz);
+    memcpy(&(nombre_interfaz), stream + desplazamiento, long_interfaz);
     desplazamiento += long_interfaz;
 
      memcpy(&(pcb_a_interfaz->pid), stream + desplazamiento, sizeof(uint32_t));

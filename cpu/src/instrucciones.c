@@ -1,4 +1,6 @@
 #include "../include/instrucciones.h"
+#include <ctype.h>
+
 
 // (Registro, Valor): Asigna al registro el valor pasado como parámetro.
 void _set(char *registro, char *valor)
@@ -148,9 +150,20 @@ void _jnz(char *registro, char *instruccion)
 }
 
 void _io_gen_sleep(char *interfaz, char *unidades_de_trabajo, int cliente_socket)
-{
-       uint32_t unidades_de_trabajoNum = atoi(&unidades_de_trabajo);
-    enviar_interfaz_IO(pcb_actual, interfaz, unidades_de_trabajoNum, cliente_socket);
+{   
+    uint32_t unidades_de_trabajoNum;
+    if (isdigit(unidades_de_trabajo[0])) {
+        // Convertir char a uint32_t
+         unidades_de_trabajoNum = (uint32_t)(unidades_de_trabajo[0] - '0');
+
+    } else {
+        printf("El carácter %c no es un dígito.\n", unidades_de_trabajo[0]);
+    }
+       //uint32_t unidades_de_trabajoNum = atoi(&unidades_de_trabajo);
+
+   // pcb_actual->contexto_ejecucion->motivo_desalojo = ENVIAR_INTERFAZ;
+   enviar_interfaz_IO(pcb_actual, interfaz, unidades_de_trabajoNum, cliente_socket);
+    pcb_actual = recibir_pcb(cliente_socket);
 }
 
 uint32_t *get_registry32(char *registro)

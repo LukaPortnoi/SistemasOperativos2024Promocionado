@@ -241,6 +241,7 @@ t_pcb *recibir_pcb_CPU(int fd_cpu)
 
     recv(fd_cpu, &cop, sizeof(op_cod), 0);
 
+// Quiero mandar ademas del pcb, quiero recibir el nombre de la interfaz y eltiempo de trabaja desde la cpu en instrucciones.c que hago el enviar interfaz, ahi serializo.
     t_pcb *pcbDeCPU = recibir_pcb(fd_cpu);
 
     if (pcbDeCPU == NULL)
