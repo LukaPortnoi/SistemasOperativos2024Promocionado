@@ -151,6 +151,7 @@ void _jnz(char *registro, char *instruccion)
 
 void _io_gen_sleep(char *interfaz, char *unidades_de_trabajo, int cliente_socket)
 {   
+
     int unidades_de_trabajoNum;
 
     // Verificar si el primer carácter de la cadena unidades_de_trabajo es un dígito

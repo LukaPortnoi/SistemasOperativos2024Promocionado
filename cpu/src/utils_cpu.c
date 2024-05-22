@@ -57,10 +57,10 @@ void execute(t_instruccion *instruccion, int socket)
         loguear_y_sumar_pc(instruccion);
         break;
     case IO_GEN_SLEEP:
-        _io_gen_sleep(instruccion->parametro1, instruccion->parametro2, socket);
+        pcb_actual->contexto_ejecucion->motivo_desalojo = INTERRUPCION_BLOQUEO;
         loguear_y_sumar_pc(instruccion);
+        _io_gen_sleep(instruccion->parametro1, instruccion->parametro2, socket);
         break;
-
     case EXIT:
         log_info(LOGGER_CPU, "PID: %d - Ejecutando: %s", pcb_actual->pid, instruccion_to_string(instruccion->nombre));
         esSyscall = true;

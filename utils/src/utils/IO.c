@@ -51,7 +51,6 @@ void serializar_IO_instruccion(t_paquete *paquete, t_pcb *pcb, int unidades_de_t
 
     memcpy(paquete->buffer->stream + desplazamiento, interfaz, interfaz_length);
 
-    printf("EL TAMANIO DEL PAQUETE ES: %d\n", paquete->buffer->size);
 }
 
 
@@ -63,7 +62,7 @@ t_pcb *recibir_interfaz_cpu(int socket_cliente, char *nombre_interfaz, int unida
     return pcb;
 }
 
-t_pcb *deserializar_interfaz(t_buffer *buffer, char *nombre_interfaz, int unidades_de_trabajo)
+t_pcb *deserializar_interfaz(t_buffer *buffer, char **nombre_interfaz, int *unidades_de_trabajo)
 {
     t_pcb *pcb = malloc(sizeof(t_pcb));
      if (pcb == NULL)
@@ -106,15 +105,16 @@ t_pcb *deserializar_interfaz(t_buffer *buffer, char *nombre_interfaz, int unidad
     memcpy(&(pcb->contexto_ejecucion->motivo_desalojo), stream + desplazamiento, sizeof(t_motivo_desalojo));
     desplazamiento += sizeof(t_motivo_desalojo);
 
-    memcpy(&(unidades_de_trabajo), stream + desplazamiento, sizeof(uint32_t));
+    memcpy(unidades_de_trabajo, stream + desplazamiento, sizeof(uint32_t));
     desplazamiento += sizeof(int);
 
     memcpy(&(long_interfaz), stream + desplazamiento, sizeof(uint32_t));
     desplazamiento += sizeof(int);
 
-    nombre_interfaz = malloc(long_interfaz);
+    *nombre_interfaz = malloc(long_interfaz);
 
-    memcpy(nombre_interfaz, stream + desplazamiento, long_interfaz);
+    memcpy(*nombre_interfaz, stream + desplazamiento, long_interfaz);
+
 
     return pcb;
 }

@@ -195,8 +195,9 @@ void desalojo_cpu(t_pcb *pcb, pthread_t hilo_quantum_id){
         break;
     case INTERRUPCION_BLOQUEO:
         log_debug(LOGGER_KERNEL, "PID %d - Desalojado por bloqueo", pcb->pid);
-        cambiar_estado_pcb(pcb, BLOQUEADO);
-        squeue_push(squeue_blocked, pcb);
+        //cambiar_estado_pcb(pcb, LISTO);
+        //squeue_push(squeue_ready, pcb);
+        //sem_post(&semReady);
         break;
     case INTERRUPCION_FINALIZACION:
         // log_info(LOGGER_KERNEL, "Finaliza el proceso %d - Motivo: %s", pcb->pid, motivo_finalizacion_to_string(pcb->contexto_ejecucion->motivo_finalizacion));
@@ -248,9 +249,8 @@ t_pcb *recibir_pcb_CPU(int fd_cpu)
         break;
 
     case ENVIAR_INTERFAZ:
-    	pcb_a_interfaz = recibir_interfaz_cpu(fd_cpu, nombre_interfaz, unidades_de_trabajo);
-        printf("ME LLEGO EL NOMBRE DE INTERFAZ: %s\n", nombre_interfaz);
-        printf("ME LLEGO EL TIEMPO DE TRABAJO: %i\n", unidades_de_trabajo);
+    	pcb_a_interfaz = recibir_interfaz_cpu(fd_cpu, &nombre_interfaz, &unidades_de_trabajo);
+        
         break;
 
     default:
