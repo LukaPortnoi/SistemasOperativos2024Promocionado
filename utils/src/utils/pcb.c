@@ -113,7 +113,8 @@ t_pcb *deserializar_pcb(t_buffer *buffer)
 
     memcpy(&(pcb->contexto_ejecucion->motivo_desalojo), stream + desplazamiento, sizeof(t_motivo_desalojo));
 
-    
+    printf("EL TAMNIO DEL DESPLAZAMIENTO ES: %d\n", desplazamiento);
+
     
 
 

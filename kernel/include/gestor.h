@@ -59,7 +59,7 @@ extern int fd_kernel_cpu_dispatch;
 extern int fd_kernel_cpu_interrupt;
 
 extern uint32_t PID_GLOBAL;
-extern uint32_t *unidades_de_trabajo;
+extern int unidades_de_trabajo;
 extern t_pcb *pcb_ejecutandose;
 extern t_pcb *pcb_a_interfaz;
 

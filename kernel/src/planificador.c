@@ -241,17 +241,31 @@ t_pcb *recibir_pcb_CPU(int fd_cpu)
 
     recv(fd_cpu, &cop, sizeof(op_cod), 0);
 
-// Quiero mandar ademas del pcb, quiero recibir el nombre de la interfaz y eltiempo de trabaja desde la cpu en instrucciones.c que hago el enviar interfaz, ahi serializo.
-    t_pcb *pcbDeCPU = recibir_pcb(fd_cpu);
+    switch (cop)
+    {
+    case PCB:
+        pcb_a_interfaz = recibir_pcb(fd_cpu);
+        break;
+    case ENVIAR_INTERFAZ:
+    	pcb_a_interfaz = recibir_interfaz_cpu(fd_kernel_cpu_dispatch, nombre_interfaz, unidades_de_trabajo);
+        printf("ME LLEGO EL NOMBRE DE INTERFAZ: %d\n", pcb_a_interfaz->quantum);
+        break;
+    default:
+        log_error(LOGGER_KERNEL, "no se pudo recibir el pcb");
+        break;
+    }
 
-    if (pcbDeCPU == NULL)
+    
+// Quiero mandar ademas del pcb, quiero recibir el nombre de la interfaz y eltiempo de trabaja desde la cpu en instrucciones.c que hago el enviar interfaz, ahi serializo.
+
+    if (pcb_a_interfaz == NULL)
     {
         log_error(LOGGER_KERNEL, "Error al recibir PCB de CPU");
         return NULL;
     }
 
-    log_debug(LOGGER_KERNEL, "Se recibio el PCB con PID %d de CPU", pcbDeCPU->pid);
-    return pcbDeCPU;
+    log_debug(LOGGER_KERNEL, "Se recibio el PCB con PID %d de CPU", pcb_a_interfaz->pid);
+    return pcb_a_interfaz;
 }
 
 void interrupcion_quantum(){} // NO SE USA

@@ -151,19 +151,24 @@ void _jnz(char *registro, char *instruccion)
 
 void _io_gen_sleep(char *interfaz, char *unidades_de_trabajo, int cliente_socket)
 {   
-    uint32_t unidades_de_trabajoNum;
-    if (isdigit(unidades_de_trabajo[0])) {
-        // Convertir char a uint32_t
-         unidades_de_trabajoNum = (uint32_t)(unidades_de_trabajo[0] - '0');
+    int unidades_de_trabajoNum;
 
+    // Verificar si el primer carácter de la cadena unidades_de_trabajo es un dígito
+    if (unidades_de_trabajo[0] >= '0' && unidades_de_trabajo[0] <= '9') {
+        // Convertir el primer carácter de la cadena a int
+        unidades_de_trabajoNum = unidades_de_trabajo[0] - '0';
+
+        // Imprimir el valor convertido
+        printf("El valor de '%c' como int es: %d\n", unidades_de_trabajo[0], unidades_de_trabajoNum);
     } else {
-        printf("El carácter %c no es un dígito.\n", unidades_de_trabajo[0]);
+        printf("El carácter '%c' no es un dígito.\n", unidades_de_trabajo[0]);
+        return; // Salir de la función si no es un dígito
     }
+
        //uint32_t unidades_de_trabajoNum = atoi(&unidades_de_trabajo);
 
    // pcb_actual->contexto_ejecucion->motivo_desalojo = ENVIAR_INTERFAZ;
    enviar_interfaz_IO(pcb_actual, interfaz, unidades_de_trabajoNum, cliente_socket);
-    pcb_actual = recibir_pcb(cliente_socket);
 }
 
 uint32_t *get_registry32(char *registro)
