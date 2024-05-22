@@ -164,10 +164,6 @@ void _io_gen_sleep(char *interfaz, char *unidades_de_trabajo, int cliente_socket
         printf("El carácter '%c' no es un dígito.\n", unidades_de_trabajo[0]);
         return; // Salir de la función si no es un dígito
     }
-
-       //uint32_t unidades_de_trabajoNum = atoi(&unidades_de_trabajo);
-
-   // pcb_actual->contexto_ejecucion->motivo_desalojo = ENVIAR_INTERFAZ;
    enviar_interfaz_IO(pcb_actual, interfaz, unidades_de_trabajoNum, cliente_socket);
 }
 

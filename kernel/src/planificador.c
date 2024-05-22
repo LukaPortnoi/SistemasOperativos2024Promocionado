@@ -246,10 +246,13 @@ t_pcb *recibir_pcb_CPU(int fd_cpu)
     case PCB:
         pcb_a_interfaz = recibir_pcb(fd_cpu);
         break;
+
     case ENVIAR_INTERFAZ:
-    	pcb_a_interfaz = recibir_interfaz_cpu(fd_kernel_cpu_dispatch, nombre_interfaz, unidades_de_trabajo);
-        printf("ME LLEGO EL NOMBRE DE INTERFAZ: %d\n", pcb_a_interfaz->quantum);
+    	pcb_a_interfaz = recibir_interfaz_cpu(fd_cpu, nombre_interfaz, unidades_de_trabajo);
+        printf("ME LLEGO EL NOMBRE DE INTERFAZ: %s\n", nombre_interfaz);
+        printf("ME LLEGO EL TIEMPO DE TRABAJO: %i\n", unidades_de_trabajo);
         break;
+
     default:
         log_error(LOGGER_KERNEL, "no se pudo recibir el pcb");
         break;

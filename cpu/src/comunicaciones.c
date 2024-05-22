@@ -164,18 +164,22 @@ void recibir_interrupciones(int cliente_socket, t_log *logger)
 
 	case INTERRUPCION_BLOQUEO:
 		interrupciones[1] = true;
+		pcb_actual->contexto_ejecucion->motivo_desalojo = INTERRUPCION_BLOQUEO;
 		break;
 
 	case INTERRUPCION_FINALIZACION:
 		interrupciones[2] = true;
+		pcb_actual->contexto_ejecucion->motivo_desalojo = INTERRUPCION_FINALIZACION;
 		break;
 
 	case INTERRUPCION_ERROR:
 		interrupciones[3] = true;
+		pcb_actual->contexto_ejecucion->motivo_desalojo = INTERRUPCION_ERROR;
 		break;
 
 	case INTERRUPCION_SYSCALL:
 		interrupciones[4] = true;
+		pcb_actual->contexto_ejecucion->motivo_desalojo = INTERRUPCION_SYSCALL;
 		break;
 
 	default:
