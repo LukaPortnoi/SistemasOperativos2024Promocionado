@@ -20,6 +20,8 @@ void desalojo_cpu(t_pcb *pcb, pthread_t hilo_quantum);
 t_pcb *recibir_pcb_CPU(int socket);
 void atender_quantum(void* arg);
 void interrupcion_quantum(void);
+void atender_interrupcionBloqueo(t_pcb *pcb);
+
 
 // MANEJO DE SQUEUES
 t_squeue *squeue_create();

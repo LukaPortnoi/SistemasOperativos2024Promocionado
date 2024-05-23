@@ -51,19 +51,21 @@ static void procesar_conexion_dispatch(void *void_args)
 
 		case PCB:
 			pcb_actual = recibir_pcb(cliente_socket);
-			while (!hayInterrupciones() && pcb_actual != NULL && !esSyscall /*pcb_actual->estado != FINALIZADO && !page_fault*/) // Aca deberia ir el check_interrupt()
+
+			while (!hayInterrupciones() && pcb_actual != NULL && !esSyscall && pcb_actual->contexto_ejecucion->motivo_desalojo != INTERRUPCION_BLOQUEO /*pcb_actual->estado != FINALIZADO && !page_fault*/) // Aca deberia ir el check_interrupt()
 			{
 				ejecutar_ciclo_instruccion(cliente_socket);
 			}
 
 			// obtener_motivo_desalojo();
 			log_debug(LOGGER_CPU, "PID: %d - Estado: %s, Contexto: %s\n", pcb_actual->pid, estado_to_string(pcb_actual->estado), motivo_desalojo_to_string(pcb_actual->contexto_ejecucion->motivo_desalojo));
-			
-			enviar_pcb(pcb_actual, cliente_socket); // Envia el PCB actualizado
 
-			
+			// Envia el PCB actualizado
+			if (pcb_actual->contexto_ejecucion->motivo_desalojo != INTERRUPCION_BLOQUEO)
+			{
+				enviar_pcb(pcb_actual, cliente_socket);
+			}
 			esSyscall = false;
-
 			pcb_actual = NULL;
 
 			pthread_mutex_lock(&mutex_interrupt);

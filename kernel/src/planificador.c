@@ -148,7 +148,8 @@ void planificar_PCB_cortoPlazo()
     }
 }
 
-void ejecutar_PCB(t_pcb *pcb) {
+void ejecutar_PCB(t_pcb *pcb)
+{
 
     cambiar_estado_pcb(pcb, EJECUTANDO);
     squeue_push(squeue_exec, pcb);
@@ -164,23 +165,26 @@ void ejecutar_PCB(t_pcb *pcb) {
 
     pcb = recibir_pcb_CPU(fd_kernel_cpu_dispatch); // Tener en cuenta la funcion para I/O
 
-    if (pcb == NULL) {
+    if (pcb == NULL)
+    {
         log_error(LOGGER_KERNEL, "Error al recibir PCB de CPU");
-        desalojo_cpu(pcb, hilo_quantum);  // Manejar el desalojo en caso de error
+        desalojo_cpu(pcb, hilo_quantum); // Manejar el desalojo en caso de error
         return;
     }
 
-    desalojo_cpu(pcb, hilo_quantum);  // Manejar el desalojo y finalización del hilo de quantum
+    desalojo_cpu(pcb, hilo_quantum); // Manejar el desalojo y finalización del hilo de quantum
 }
 
-void desalojo_cpu(t_pcb *pcb, pthread_t hilo_quantum_id){
+void desalojo_cpu(t_pcb *pcb, pthread_t hilo_quantum_id)
+{
 
-    if (strcmp(ALGORITMO_PLANIFICACION, "RR") == 0){
+    if (strcmp(ALGORITMO_PLANIFICACION, "RR") == 0)
+    {
         pthread_cancel(hilo_quantum_id);
         pthread_join(hilo_quantum_id, NULL);
     }
 
-    squeue_pop(squeue_exec);        
+    squeue_pop(squeue_exec);
 
     t_motivo_desalojo *motivo_desalojo = malloc(sizeof(t_motivo_desalojo));
     *motivo_desalojo = pcb->contexto_ejecucion->motivo_desalojo;
@@ -195,12 +199,12 @@ void desalojo_cpu(t_pcb *pcb, pthread_t hilo_quantum_id){
         break;
     case INTERRUPCION_BLOQUEO:
         log_debug(LOGGER_KERNEL, "PID %d - Desalojado por bloqueo", pcb->pid);
-        //cambiar_estado_pcb(pcb, LISTO);
-        //squeue_push(squeue_ready, pcb);
-        //sem_post(&semReady);
+        cambiar_estado_pcb(pcb, BLOQUEADO);
+        squeue_push(squeue_blocked, pcb);
+        sem_post(&semBlocked);
         break;
     case INTERRUPCION_FINALIZACION:
-        // log_info(LOGGER_KERNEL, "Finaliza el proceso %d - Motivo: %s", pcb->pid, motivo_finalizacion_to_string(pcb->contexto_ejecucion->motivo_finalizacion));
+        log_info(LOGGER_KERNEL, "Finaliza el proceso %d - Motivo: %s", pcb->pid, motivo_finalizacion_to_string(pcb->contexto_ejecucion->motivo_finalizacion));
         log_info(LOGGER_KERNEL, "Finaliza el proceso %d - Motivo: %s", pcb->pid, "Finalizacion");
         cambiar_estado_pcb(pcb, FINALIZADO);
         squeue_push(squeue_exit, pcb);
@@ -218,10 +222,20 @@ void desalojo_cpu(t_pcb *pcb, pthread_t hilo_quantum_id){
     }
 
     free(motivo_desalojo);
-
 }
 
-void atender_quantum(void *arg) {
+void atender_interrupcionBloqueo(t_pcb *pcb)
+{
+    t_interrupcion *interrupcion = malloc(sizeof(t_interrupcion));
+    interrupcion->motivo_interrupcion = INTERRUPCION_BLOQUEO;
+    interrupcion->pid = pcb_ejecutandose->pid;
+
+    enviar_interrupcion(fd_kernel_cpu_interrupt, interrupcion);
+    free(interrupcion);
+}
+
+void atender_quantum(void *arg)
+{
 
     pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
     pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
@@ -249,8 +263,8 @@ t_pcb *recibir_pcb_CPU(int fd_cpu)
         break;
 
     case ENVIAR_INTERFAZ:
-    	pcb_a_interfaz = recibir_interfaz_cpu(fd_cpu, &nombre_interfaz, &unidades_de_trabajo);
-        
+        pcb_a_interfaz = recibir_interfaz_cpu(fd_cpu, &nombre_interfaz, &unidades_de_trabajo);
+
         break;
 
     default:
@@ -258,8 +272,7 @@ t_pcb *recibir_pcb_CPU(int fd_cpu)
         break;
     }
 
-    
-// Quiero mandar ademas del pcb, quiero recibir el nombre de la interfaz y eltiempo de trabaja desde la cpu en instrucciones.c que hago el enviar interfaz, ahi serializo.
+    // Quiero mandar ademas del pcb, quiero recibir el nombre de la interfaz y eltiempo de trabaja desde la cpu en instrucciones.c que hago el enviar interfaz, ahi serializo.
 
     if (pcb_a_interfaz == NULL)
     {
@@ -271,7 +284,7 @@ t_pcb *recibir_pcb_CPU(int fd_cpu)
     return pcb_a_interfaz;
 }
 
-void interrupcion_quantum(){} // NO SE USA
+void interrupcion_quantum() {} // NO SE USA
 /*{
     t_interrupcion *interrupcion = malloc(sizeof(t_interrupcion));
     interrupcion->motivo_interrupcion = INTERRUPCION_FIN_QUANTUM;

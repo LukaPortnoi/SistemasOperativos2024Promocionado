@@ -57,8 +57,8 @@ void execute(t_instruccion *instruccion, int socket)
         loguear_y_sumar_pc(instruccion);
         break;
     case IO_GEN_SLEEP:
-        pcb_actual->contexto_ejecucion->motivo_desalojo = INTERRUPCION_BLOQUEO;
         loguear_y_sumar_pc(instruccion);
+        pcb_actual->contexto_ejecucion->motivo_desalojo = INTERRUPCION_BLOQUEO;
         _io_gen_sleep(instruccion->parametro1, instruccion->parametro2, socket);
         break;
     case EXIT:

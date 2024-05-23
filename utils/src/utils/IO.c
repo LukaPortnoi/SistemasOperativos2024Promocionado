@@ -54,7 +54,7 @@ void serializar_IO_instruccion(t_paquete *paquete, t_pcb *pcb, int unidades_de_t
 }
 
 
-t_pcb *recibir_interfaz_cpu(int socket_cliente, char *nombre_interfaz, int unidades_de_trabajo)
+t_pcb *recibir_interfaz_cpu(int socket_cliente, char **nombre_interfaz, int *unidades_de_trabajo)
 {
     t_paquete *paquete = recibir_paquete(socket_cliente);
     t_pcb *pcb =  deserializar_interfaz(paquete->buffer, nombre_interfaz, unidades_de_trabajo);
