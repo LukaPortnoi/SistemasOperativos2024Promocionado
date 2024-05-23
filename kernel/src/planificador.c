@@ -204,7 +204,7 @@ void desalojo_cpu(t_pcb *pcb, pthread_t hilo_quantum_id)
         sem_post(&semBlocked);
         break;
     case INTERRUPCION_FINALIZACION:
-        log_info(LOGGER_KERNEL, "Finaliza el proceso %d - Motivo: %s", pcb->pid, motivo_finalizacion_to_string(pcb->contexto_ejecucion->motivo_finalizacion));
+        //log_info(LOGGER_KERNEL, "Finaliza el proceso %d - Motivo: %s", pcb->pid, motivo_finalizacion_to_string(pcb->contexto_ejecucion->motivo_finalizacion));
         log_info(LOGGER_KERNEL, "Finaliza el proceso %d - Motivo: %s", pcb->pid, "Finalizacion");
         cambiar_estado_pcb(pcb, FINALIZADO);
         squeue_push(squeue_exit, pcb);

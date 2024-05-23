@@ -57,7 +57,6 @@ static void procesar_conexion_dispatch(void *void_args)
 				ejecutar_ciclo_instruccion(cliente_socket);
 			}
 
-			// obtener_motivo_desalojo();
 			log_debug(LOGGER_CPU, "PID: %d - Estado: %s, Contexto: %s\n", pcb_actual->pid, estado_to_string(pcb_actual->estado), motivo_desalojo_to_string(pcb_actual->contexto_ejecucion->motivo_desalojo));
 
 			// Envia el PCB actualizado
@@ -65,13 +64,13 @@ static void procesar_conexion_dispatch(void *void_args)
 			{
 				enviar_pcb(pcb_actual, cliente_socket);
 			}
+
 			esSyscall = false;
 			pcb_actual = NULL;
 
 			pthread_mutex_lock(&mutex_interrupt);
 			limpiar_interrupciones();
 			pthread_mutex_unlock(&mutex_interrupt);
-			// liberar_contexto(contexto_actual);
 			break;
 		// ---------------
 		// -- ERRORES --
