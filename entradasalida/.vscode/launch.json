@@ -8,7 +8,7 @@
       "type": "cppdbg",
       "request": "launch",
       "program": "${workspaceFolder}/bin/${workspaceFolderBasename}",
-      "args": ["./cfgs/generica.config", "./cfgs/stdin.config", "./cfgs/stdout.config", "./cfgs/dialfs.config"],
+      "args": ["Interfaz_1", "./cfgs/generica.config"], //"./cfgs/generica.config", "./cfgs/stdin.config", "./cfgs/stdout.config", "./cfgs/dialfs.config"
       "stopAtEntry": false,
       "cwd": "${workspaceFolder}",
       "environment": [],

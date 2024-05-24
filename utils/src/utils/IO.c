@@ -118,3 +118,46 @@ t_pcb *deserializar_interfaz(t_buffer *buffer, char **nombre_interfaz, int *unid
 
     return pcb;
 }
+
+interfaz *recibir_datos_interfaz(int socket_cliente)
+{
+    t_paquete *paquete = recibir_paquete(socket_cliente);
+	printf("LLEGO BIEN \n");
+    interfaz *interfaz_received = deserializar_interfaz_recibida(paquete->buffer);
+    eliminar_paquete(paquete);
+    return interfaz_received;
+}
+
+interfaz *deserializar_interfaz_recibida(t_buffer *buffer)
+{
+    interfaz *interfaz_received = malloc(sizeof(interfaz));
+
+	if(interfaz_received == NULL)
+	{
+		return NULL;
+	}
+
+    void *stream = buffer->stream;
+    int desplazamiento = 0;
+
+    uint32_t longitud_nombre_interfaz;                                              // Cambio aquí
+    memcpy(&(longitud_nombre_interfaz), stream + desplazamiento, sizeof(uint32_t)); // Cambio aquí
+    desplazamiento += sizeof(uint32_t);
+
+    uint32_t longitud_tipo_interfaz;                                              // Cambio aquí
+    memcpy(&(longitud_tipo_interfaz), stream + desplazamiento, sizeof(uint32_t)); // Cambio aquí
+    desplazamiento += sizeof(uint32_t);
+
+    interfaz_received->nombre_interfaz = malloc(longitud_nombre_interfaz + 1);
+    memcpy(interfaz_received->nombre_interfaz, stream + desplazamiento, longitud_nombre_interfaz);
+    desplazamiento += longitud_nombre_interfaz;
+
+	printf("Durante la deserializacion el nombre es %s \n", interfaz_received->nombre_interfaz);
+
+    interfaz_received->tipo_interfaz = malloc(longitud_tipo_interfaz + 1);
+    memcpy(interfaz_received->tipo_interfaz, stream + desplazamiento, longitud_tipo_interfaz);
+
+	printf("Durante la deserializacion el tipo es %s \n", interfaz_received->tipo_interfaz);
+
+    return interfaz_received;
+}

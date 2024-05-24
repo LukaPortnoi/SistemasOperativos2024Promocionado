@@ -35,6 +35,13 @@ typedef struct
     pthread_mutex_t *mutex;
 } t_squeue;
 
+typedef struct{
+    char* nombre_interfaz_recibida;
+    char* tipo_interfaz_recibida;
+    int socket_interfaz_recibida;
+    t_squeue* cola_procesos_bloqueados;
+} interfaz_recibida;
+
 extern t_log *LOGGER_KERNEL;
 extern t_config *CONFIG_KERNEL;
 
