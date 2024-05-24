@@ -3,7 +3,6 @@
 
 #include "./gestor.h"
 
-
 void _set(char *registro, char *valor);
 void _mov_in(char *registro, char *direc_logica);
 void _mov_out(char *direc_logica, char *registro);

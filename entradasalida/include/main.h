@@ -8,7 +8,4 @@ void inicializar_config(char *config_path);
 void iniciar_conexiones();
 void finalizar_io();
 
-
-
-
-#endif //MAIN_H
+#endif // MAIN_H

@@ -34,5 +34,8 @@ void iniciar_colas_y_semaforos(void);
 uint32_t asignar_pid(void);
 void cambiar_estado_pcb(t_pcb *pcb, t_estado_proceso estado);
 void mostrar_procesos_en_squeue(t_squeue *squeue);
+void finalizar_proceso(t_pcb *pcb);
+bool consultar_existencia_instruccion(int socket_interfaz, nombre_instruccion instruccion);
+void ejecutar_intruccion_io(t_pcb *pcb_recibido);
 
 #endif // PLANIFICADOR_H_

@@ -61,7 +61,7 @@ t_proceso_memoria *obtener_proceso_pid(uint32_t pid_pedido)
     }
 
     pthread_mutex_lock(&mutex_procesos);
-    proceso = list_find(procesos_totales, id_process); // SOPORTE: TENEMOS UN PROBLEMA DE SINCRONIZACION, CONDICION DE CARRERA EN AGREGAR PROCESOS Y ENCONTRARLOS
+    proceso = list_find(procesos_totales, id_process);
     pthread_mutex_unlock(&mutex_procesos);
 
     return proceso;
@@ -262,7 +262,6 @@ t_instruccion *armar_estructura_instruccion(nombre_instruccion instruccion, char
     estructura->longitud_parametro1 = strlen(estructura->parametro1) + 1;
     estructura->longitud_parametro2 = strlen(estructura->parametro2) + 1;
 
-    // printf("%s - %s - %s \n", instruccion_to_string(estructura->nombre), estructura->parametro1, estructura->parametro2); // printea instrucciones
     return estructura;
 }
 

@@ -14,6 +14,7 @@ sem_t semFinalizado;
 sem_t semExit;
 
 t_list *procesosEnSistema;
+t_list *interfaces_conectadas;
 
 t_squeue *squeue_new;
 t_squeue *squeue_ready;
@@ -150,7 +151,6 @@ void planificar_PCB_cortoPlazo()
 
 void ejecutar_PCB(t_pcb *pcb)
 {
-
     cambiar_estado_pcb(pcb, EJECUTANDO);
     squeue_push(squeue_exec, pcb);
 
@@ -173,6 +173,39 @@ void ejecutar_PCB(t_pcb *pcb)
     }
 
     desalojo_cpu(pcb, hilo_quantum); // Manejar el desalojo y finalización del hilo de quantum
+}
+
+t_pcb *recibir_pcb_CPU(int fd_cpu)
+{
+    op_cod cop;
+    t_pcb *pcb_recibido;
+
+    recv(fd_cpu, &cop, sizeof(op_cod), 0);
+
+    switch (cop)
+    {
+    case PCB:
+        pcb_recibido = recibir_pcb(fd_cpu);
+        break;
+
+    case ENVIAR_INTERFAZ:
+        pcb_recibido = recibir_pcb_para_interfaz(fd_cpu, &nombre_interfaz, &unidades_de_trabajo, &instruccion_de_IO_a_ejecutar);
+        ejecutar_intruccion_io(pcb_recibido);
+        break;
+
+    default:
+        log_error(LOGGER_KERNEL, "No se pudo recibir el pcb");
+        break;
+    }
+
+    if (pcb_recibido == NULL)
+    {
+        log_error(LOGGER_KERNEL, "Error al recibir PCB de CPU");
+        return NULL;
+    }
+
+    log_debug(LOGGER_KERNEL, "Se recibio el PCB con PID %d de CPU", pcb_recibido->pid);
+    return pcb_recibido;
 }
 
 void desalojo_cpu(t_pcb *pcb, pthread_t hilo_quantum_id)
@@ -203,11 +236,7 @@ void desalojo_cpu(t_pcb *pcb, pthread_t hilo_quantum_id)
         sem_post(&semBlocked);
         break;
     case INTERRUPCION_FINALIZACION:
-        log_info(LOGGER_KERNEL, "Finaliza el proceso %d - Motivo: %s", pcb->pid, motivo_finalizacion_to_string(pcb->contexto_ejecucion->motivo_finalizacion));
-        //log_info(LOGGER_KERNEL, "Finaliza el proceso %d - Motivo: %s", pcb->pid, "Finalizacion");
-        cambiar_estado_pcb(pcb, FINALIZADO);
-        squeue_push(squeue_exit, pcb);
-        sem_post(&semMultiprogramacion);
+        finalizar_proceso(pcb);
 
         int sem_value;
         if (sem_getvalue(&semMultiprogramacion, &sem_value) == 0)
@@ -246,40 +275,6 @@ void atender_quantum(void *arg)
 
     enviar_interrupcion(fd_kernel_cpu_interrupt, interrupcion);
     free(interrupcion);
-}
-
-t_pcb *recibir_pcb_CPU(int fd_cpu)
-{
-    op_cod cop;
-
-    recv(fd_cpu, &cop, sizeof(op_cod), 0);
-
-    switch (cop)
-    {
-    case PCB:
-        pcb_a_interfaz = recibir_pcb(fd_cpu);
-        break;
-
-    case ENVIAR_INTERFAZ:
-        pcb_a_interfaz = recibir_interfaz_cpu(fd_cpu, &nombre_interfaz, &unidades_de_trabajo);
-
-        break;
-
-    default:
-        log_error(LOGGER_KERNEL, "no se pudo recibir el pcb");
-        break;
-    }
-
-    // Quiero mandar ademas del pcb, quiero recibir el nombre de la interfaz y eltiempo de trabaja desde la cpu en instrucciones.c que hago el enviar interfaz, ahi serializo.
-
-    if (pcb_a_interfaz == NULL)
-    {
-        log_error(LOGGER_KERNEL, "Error al recibir PCB de CPU");
-        return NULL;
-    }
-
-    log_debug(LOGGER_KERNEL, "Se recibio el PCB con PID %d de CPU", pcb_a_interfaz->pid);
-    return pcb_a_interfaz;
 }
 
 // MANEJO DE SQUEUES
@@ -351,6 +346,7 @@ void iniciar_colas_y_semaforos()
     sem_init(&semExit, 0, 0);
 
     procesosEnSistema = list_create();
+    interfaces_conectadas = list_create();
 
     squeue_new = squeue_create();
     squeue_ready = squeue_create();
@@ -404,4 +400,78 @@ void mostrar_procesos_en_squeue(t_squeue *squeue)
             log_info(LOGGER_KERNEL, "PID: %d", proceso->pid);
         }
     }
+}
+
+void finalizar_proceso(t_pcb *pcb)
+{
+    log_info(LOGGER_KERNEL, "Finaliza el proceso %d - Motivo: %s", pcb->pid, motivo_finalizacion_to_string(pcb->contexto_ejecucion->motivo_finalizacion));
+    cambiar_estado_pcb(pcb, FINALIZADO);
+    squeue_push(squeue_exit, pcb);
+    sem_post(&semMultiprogramacion);
+}
+
+void ejecutar_intruccion_io(t_pcb *pcb_recibido)
+{
+    bool comparar_nombre_interfaz(void *elemento)
+    {
+        return strcmp(((t_interfaz_recibida *)elemento)->nombre_interfaz_recibida, nombre_interfaz) == 0;
+    }
+
+    t_interfaz_recibida *interfaz_a_utilizar = list_find(interfaces_conectadas, (void *)comparar_nombre_interfaz);
+
+    if (interfaz_a_utilizar)
+    {
+        // TODO: CONSULTAR_EXISTENCIA_INSTRUCCION
+        bool admite_instruccion = consultar_existencia_instruccion(interfaz_a_utilizar->socket_interfaz_recibida, instruccion_de_IO_a_ejecutar);
+        //va a ser bloqueante pq envia un mensaje a la interfaz y espera respuesta, depende esa respeusta va a seguir o no
+        if (admite_instruccion)
+        {
+            // TODO: ENVIAR UN PAQUETE DISTINTO POR CADA TIPO DE INTERFAZ (CADA UNA NECESITA UNA ESTRUCTURA DIFERENTE) EN BASE A instruccion_de_IO_a_ejecutar
+            switch (interfaz_a_utilizar->tipo_interfaz_recibida)
+            {
+            case GENERICA:
+                /* code */
+                break;
+            case STDIN:
+                /* code */
+                break;
+            case STDOUT:
+                /* code */
+                break;
+
+            case DIALFS:
+                /* code */
+                break;
+
+            default:
+                break;
+            }
+        }
+        else
+        {
+            log_error(LOGGER_KERNEL, "La interfaz %s no admite la operacion solicitada", nombre_interfaz);
+            finalizar_proceso(pcb_recibido);
+        }
+    }
+    else
+    {
+        log_error(LOGGER_KERNEL, "No se encontro la interfaz %s", nombre_interfaz);
+        finalizar_proceso(pcb_recibido);
+    }
+}
+
+bool consultar_existencia_instruccion(int socket_interfaz, nombre_instruccion instruccion)  //TODO REVISARLA, LA HIZO COPILOT
+{
+    t_paquete *paquete_consulta = crear_paquete_con_codigo_de_operacion(CONSULTAR_EXISTENCIA_INSTRUCCION);
+    serializar_consultar_existencia_instruccion(paquete_consulta, instruccion);
+
+    enviar_paquete(paquete_consulta, socket_interfaz);
+
+    t_paquete *paquete_respuesta = recibir_paquete(socket_interfaz);
+    bool admite_instruccion = deserializar_respuesta_consultar_existencia_instruccion(paquete_respuesta);
+
+    eliminar_paquete(paquete_consulta);
+    eliminar_paquete(paquete_respuesta);
+
+    return admite_instruccion;
 }

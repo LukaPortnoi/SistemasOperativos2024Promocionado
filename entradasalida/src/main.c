@@ -14,23 +14,33 @@ int fd_io_kernel;
 
 t_log *LOGGER_INPUT_OUTPUT;
 t_config *CONFIG_INPUT_OUTPUT;
-interfaz *interfaz_actual;
+t_interfaz *interfaz_actual;
 
 int main(int argc, char** argv)
 {
-    inicializar_config(argv[2]);
+    inicializar_config(argv[2]); //argv[2] es el path del archivo de configuracion
     log_info(LOGGER_INPUT_OUTPUT, "Iniciando la interfaz I/O %s de tipo %s", argv[1], TIPO_INTERFAZ);
-    interfaz_actual = malloc(sizeof(interfaz));
-    interfaz_actual->longitud_nombre_interfaz = strlen(argv[1]) + 1;
-    interfaz_actual->nombre_interfaz = argv[1];
-    interfaz_actual->longitud_tipo_interfaz = strlen(TIPO_INTERFAZ) + 1;
-    interfaz_actual->tipo_interfaz = TIPO_INTERFAZ;
+    interfaz_actual = malloc(sizeof(t_interfaz)); //creamos la interfaz actual
+    interfaz_actual->tamanio_nombre_interfaz = strlen(argv[1]) + 1; //argv[1] es el nombre de la interfaz
+    interfaz_actual->nombre_interfaz = argv[1]; //asignamos el nombre de la interfaz
+
+    if (strcmp(TIPO_INTERFAZ, "GENERICA") == 0) {
+        interfaz_actual->tipo_interfaz = GENERICA;
+    } else if (strcmp(TIPO_INTERFAZ, "STDIN") == 0) {
+        interfaz_actual->tipo_interfaz = STDIN;
+    } else if (strcmp(TIPO_INTERFAZ, "STDOUT") == 0) {
+        interfaz_actual->tipo_interfaz = STDOUT;
+    } else if (strcmp(TIPO_INTERFAZ, "DIALFS") == 0) {
+        interfaz_actual->tipo_interfaz = DIALFS;
+    } else {
+        log_error(LOGGER_INPUT_OUTPUT, "Tipo de interfaz no reconocido");
+    }
+    
     iniciar_conexiones();
     procesar_conexion_IO(fd_io_kernel, LOGGER_INPUT_OUTPUT);
 
-
     finalizar_io();
-} 
+}
 
 void inicializar_config(char *config_path)
 {
@@ -51,12 +61,10 @@ void iniciar_conexiones()
 {   
     //conexion como cliente a MEMORIA
     fd_io_memoria = crear_conexion(IP_MEMORIA, PUERTO_MEMORIA);
-    //enviar_mensaje("Mensaje de I/O para memoria", fd_io_memoria);
 
     //conexion como cliente a KERNEL
     fd_io_kernel = crear_conexion(IP_KERNEL, PUERTO_KERNEL);
     enviar_datos_interfaz(interfaz_actual, fd_io_kernel);
-    //enviar_mensaje("Mensaje de I/O para KERNEL", fd_io_kernel);
 }
 
 void finalizar_io()

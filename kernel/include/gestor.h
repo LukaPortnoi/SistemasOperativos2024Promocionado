@@ -28,19 +28,19 @@
 #include "../../utils/include/pcb.h"
 #include "../../utils/include/IO.h"
 
-
 typedef struct
 {
     t_queue *cola;
     pthread_mutex_t *mutex;
 } t_squeue;
 
-typedef struct{
-    char* nombre_interfaz_recibida;
-    char* tipo_interfaz_recibida;
+typedef struct
+{
+    char *nombre_interfaz_recibida;
+    t_tipo_interfaz tipo_interfaz_recibida;
     int socket_interfaz_recibida;
-    t_squeue* cola_procesos_bloqueados;
-} interfaz_recibida;
+    t_squeue *cola_procesos_bloqueados;
+} t_interfaz_recibida;
 
 extern t_log *LOGGER_KERNEL;
 extern t_config *CONFIG_KERNEL;
@@ -57,8 +57,6 @@ extern char **RECURSOS;
 extern char **INSTANCIAS_RECURSOS;
 extern int GRADO_MULTIPROGRAMACION;
 extern char *IP_KERNEL;
-extern char *nombre_interfaz;
-
 
 extern int fd_kernel;
 extern int fd_kernel_memoria;
@@ -66,10 +64,13 @@ extern int fd_kernel_cpu_dispatch;
 extern int fd_kernel_cpu_interrupt;
 
 extern uint32_t PID_GLOBAL;
-extern int unidades_de_trabajo;
-extern t_pcb *pcb_ejecutandose;
-extern t_pcb *pcb_a_interfaz;
 
+extern t_list *interfaces_conectadas;
+extern char *nombre_interfaz;
+extern int unidades_de_trabajo;
+extern nombre_instruccion instruccion_de_IO_a_ejecutar;
+
+extern t_pcb *pcb_ejecutandose;
 
 extern sem_t semMultiprogramacion;
 extern sem_t semNew;

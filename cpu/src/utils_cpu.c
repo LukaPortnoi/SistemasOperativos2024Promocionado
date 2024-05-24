@@ -16,15 +16,12 @@ t_instruccion *fetch(uint32_t pid, uint32_t pc)
 
     op_cod codigo_op = recibir_operacion(fd_cpu_memoria);
 
-    log_trace(LOGGER_CPU, "Operacion recibida en FETCH: %d", codigo_op);
-
     t_instruccion *instruccion;
 
     if (codigo_op == INSTRUCCION)
     {
         instruccion = deserializar_instruccion(fd_cpu_memoria);
-        
-    }
+        }
     else
     {
         log_warning(LOGGER_CPU, "Operación desconocida. No se pudo recibir la instruccion de memoria.");
@@ -59,6 +56,7 @@ void execute(t_instruccion *instruccion, int socket)
     case IO_GEN_SLEEP:
         loguear_y_sumar_pc(instruccion);
         pcb_actual->contexto_ejecucion->motivo_desalojo = INTERRUPCION_BLOQUEO;
+        esSyscall = true;
         _io_gen_sleep(instruccion->parametro1, instruccion->parametro2, socket);
         break;
     case EXIT:

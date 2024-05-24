@@ -11,21 +11,21 @@ char *PUERTO_CPU_DISPATCH;
 char *PUERTO_CPU_INTERRUPT;
 char *ALGORITMO_PLANIFICACION;
 uint32_t QUANTUM;
-//uint32_t PID_GLOBAL;
-int unidades_de_trabajo;
 char **RECURSOS;
 char **INSTANCIAS_RECURSOS;
 int GRADO_MULTIPROGRAMACION;
 char *IP_KERNEL;
-char *nombre_interfaz;
 
 int fd_kernel;
 int fd_kernel_memoria;
 int fd_kernel_cpu_dispatch;
 int fd_kernel_cpu_interrupt;
 
+char *nombre_interfaz;
+int unidades_de_trabajo;
+nombre_instruccion instruccion_de_IO_a_ejecutar;
+
 t_pcb *pcb_ejecutandose;
-t_pcb *pcb_a_interfaz;
 
 pthread_t hilo_server_kernel;
 
