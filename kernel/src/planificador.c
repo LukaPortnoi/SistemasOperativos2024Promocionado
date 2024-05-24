@@ -177,7 +177,6 @@ void ejecutar_PCB(t_pcb *pcb)
 
 void desalojo_cpu(t_pcb *pcb, pthread_t hilo_quantum_id)
 {
-
     if (strcmp(ALGORITMO_PLANIFICACION, "RR") == 0)
     {
         pthread_cancel(hilo_quantum_id);
@@ -204,8 +203,8 @@ void desalojo_cpu(t_pcb *pcb, pthread_t hilo_quantum_id)
         sem_post(&semBlocked);
         break;
     case INTERRUPCION_FINALIZACION:
-        //log_info(LOGGER_KERNEL, "Finaliza el proceso %d - Motivo: %s", pcb->pid, motivo_finalizacion_to_string(pcb->contexto_ejecucion->motivo_finalizacion));
-        log_info(LOGGER_KERNEL, "Finaliza el proceso %d - Motivo: %s", pcb->pid, "Finalizacion");
+        log_info(LOGGER_KERNEL, "Finaliza el proceso %d - Motivo: %s", pcb->pid, motivo_finalizacion_to_string(pcb->contexto_ejecucion->motivo_finalizacion));
+        //log_info(LOGGER_KERNEL, "Finaliza el proceso %d - Motivo: %s", pcb->pid, "Finalizacion");
         cambiar_estado_pcb(pcb, FINALIZADO);
         squeue_push(squeue_exit, pcb);
         sem_post(&semMultiprogramacion);
@@ -236,7 +235,6 @@ void atender_interrupcionBloqueo(t_pcb *pcb)
 
 void atender_quantum(void *arg)
 {
-
     pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
     pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
 
@@ -284,24 +282,7 @@ t_pcb *recibir_pcb_CPU(int fd_cpu)
     return pcb_a_interfaz;
 }
 
-void interrupcion_quantum() {} // NO SE USA
-/*{
-    t_interrupcion *interrupcion = malloc(sizeof(t_interrupcion));
-    interrupcion->motivo_interrupcion = INTERRUPCION_FIN_QUANTUM;
-    interrupcion->pid = -1; // ????
-    while (1)
-    {
-        usleep(QUANTUM * 1000);
-        if (strcmp(ALGORITMO_PLANIFICACION, "RR") == 0)
-        {
-            enviar_interrupcion(fd_kernel_cpu_interrupt, interrupcion);
-        }
-    }
-    free(interrupcion);
-}*/
-
 // MANEJO DE SQUEUES
-
 t_squeue *squeue_create()
 {
     t_squeue *squeue = malloc(sizeof(t_squeue));
@@ -354,7 +335,6 @@ void *squeue_peek(t_squeue *squeue)
 }
 
 // OTRAS FUNCIONES
-
 void iniciar_colas_y_semaforos()
 {
     pthread_mutex_init(&procesoMutex, NULL);

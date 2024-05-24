@@ -59,21 +59,21 @@ typedef struct
     t_motivo_desalojo motivo_interrupcion;
     int pid;
 } t_interrupcion;
-
-typedef struct
+typedef enum
 {
-    t_registros *registros;
-    t_motivo_desalojo motivo_desalojo;
-    // t_motivo_finalizacion motivo_finalizacion;
-} t_contexto_ejecucion;
-
-typedef enum {
+    FINALIZACION_SIN_MOTIVO,
     SUCCESS,
     INVALID_RESOURCE,
     INVALID_INTERFACE,
     OUT_OF_MEMORY,
     INTERRUPTED_BY_USER
 } t_motivo_finalizacion;
+typedef struct
+{
+    t_registros *registros;
+    t_motivo_desalojo motivo_desalojo;
+    t_motivo_finalizacion motivo_finalizacion;
+} t_contexto_ejecucion;
 
 char *motivo_desalojo_to_string(t_motivo_desalojo motivo);
 char *motivo_finalizacion_to_string(t_motivo_finalizacion motivo);

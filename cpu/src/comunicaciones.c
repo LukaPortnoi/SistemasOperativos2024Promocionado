@@ -52,7 +52,9 @@ static void procesar_conexion_dispatch(void *void_args)
 		case PCB:
 			pcb_actual = recibir_pcb(cliente_socket);
 
-			while (!hayInterrupciones() && pcb_actual != NULL && !esSyscall && pcb_actual->contexto_ejecucion->motivo_desalojo != INTERRUPCION_BLOQUEO /*pcb_actual->estado != FINALIZADO && !page_fault*/) // Aca deberia ir el check_interrupt()
+			while (!hayInterrupciones() && pcb_actual != NULL && !esSyscall &&
+				   pcb_actual->contexto_ejecucion->motivo_desalojo != INTERRUPCION_BLOQUEO
+				   /*pcb_actual->estado != FINALIZADO && !page_fault*/) // Aca deberia ir el check_interrupt()
 			{
 				ejecutar_ciclo_instruccion(cliente_socket);
 			}

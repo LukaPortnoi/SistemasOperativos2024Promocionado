@@ -8,6 +8,7 @@ void inicializar_contexto_y_registros(t_pcb *pcb)
     pcb->contexto_ejecucion->registros = malloc(sizeof(t_registros));
     memset(pcb->contexto_ejecucion->registros, 0, sizeof(t_registros));
     pcb->contexto_ejecucion->motivo_desalojo = SIN_MOTIVO;
+    pcb->contexto_ejecucion->motivo_finalizacion = FINALIZACION_SIN_MOTIVO;
 }
 
 // Funciones PCB
@@ -43,7 +44,8 @@ t_buffer *crear_buffer_pcb(t_pcb *pcb)
                    sizeof(t_estado_proceso) +
                    sizeof(uint32_t) +
                    tam_registros +
-                   sizeof(t_motivo_desalojo);
+                   sizeof(t_motivo_desalojo) +
+                   sizeof(t_motivo_finalizacion);
 
     buffer->stream = malloc(buffer->size);
     int desplazamiento = 0;
@@ -61,6 +63,9 @@ t_buffer *crear_buffer_pcb(t_pcb *pcb)
     desplazamiento += tam_registros;
 
     memcpy(buffer->stream + desplazamiento, &(pcb->contexto_ejecucion->motivo_desalojo), sizeof(t_motivo_desalojo));
+    desplazamiento += sizeof(t_motivo_desalojo);
+
+    memcpy(buffer->stream + desplazamiento, &(pcb->contexto_ejecucion->motivo_finalizacion), sizeof(t_motivo_finalizacion));
 
     return buffer;
 }
@@ -112,6 +117,9 @@ t_pcb *deserializar_pcb(t_buffer *buffer)
     desplazamiento += sizeof(t_registros);
 
     memcpy(&(pcb->contexto_ejecucion->motivo_desalojo), stream + desplazamiento, sizeof(t_motivo_desalojo));
+    desplazamiento += sizeof(t_motivo_desalojo);
+
+    memcpy(&(pcb->contexto_ejecucion->motivo_finalizacion), stream + desplazamiento, sizeof(t_motivo_finalizacion));
 
     return pcb;
 }
