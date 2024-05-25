@@ -9,7 +9,6 @@ static void procesar_conexion_memoria(void *void_args)
 	free(args);
 
 	op_cod cop;
-	t_list *lista;
 	while (cliente_socket != -1)
 	{
 		if (recv(cliente_socket, &cop, sizeof(op_cod), 0) != sizeof(op_cod))
@@ -22,11 +21,6 @@ static void procesar_conexion_memoria(void *void_args)
 		{
 		case MENSAJE:
 			recibir_mensaje(cliente_socket, logger);
-			break;
-		case PAQUETE:
-			lista = recibir_paquete(cliente_socket);
-			log_info(logger, "Me llegaron los siguientes valores:");
-			list_iterate(lista, (void *)iterator);
 			break;
 
 		// ----------------------
@@ -58,7 +52,7 @@ static void procesar_conexion_memoria(void *void_args)
 			proceso_memoria = obtener_proceso_pid(pid);
 			if (proceso_memoria == NULL)
 			{
-				log_error(logger, "No se encontro el proceso con PID %d", pid);		//ACA ERROR
+				log_error(logger, "No se encontro el proceso con PID %d", pid); // ACA ERROR
 				break;
 			}
 			else
@@ -86,7 +80,7 @@ static void procesar_conexion_memoria(void *void_args)
 		// ---------------
 		// -- ERRORES --
 		// ---------------
-		case ERROROPCODE:		//NO TIENEN QUE HABER NEGATIVOS, NO VA AENTRAR NUNCA
+		case ERROROPCODE: // NO TIENEN QUE HABER NEGATIVOS, NO VA AENTRAR NUNCA
 			log_error(logger, "Cliente desconectado de %s... con cop -1", server_name);
 			break; // hay un return, voy a probar un break
 		default:

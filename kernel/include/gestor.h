@@ -25,14 +25,9 @@
 #include "../../utils/include/sockets_client.h"
 #include "../../utils/include/sockets_utils.h"
 #include "../../utils/include/sockets_common.h"
+#include "../../utils/include/squeue.h"
 #include "../../utils/include/pcb.h"
 #include "../../utils/include/IO.h"
-
-typedef struct
-{
-    t_queue *cola;
-    pthread_mutex_t *mutex;
-} t_squeue;
 
 typedef struct
 {
@@ -87,11 +82,12 @@ extern pthread_mutex_t procesoMutex;
 extern pthread_mutex_t procesosEnSistemaMutex;
 extern pthread_mutex_t mutex_pid;
 extern pthread_mutex_t mutex_lista_interfaces;
+extern pthread_mutex_t mutex_lista_blocked;
 
 extern t_squeue *squeue_new;
 extern t_squeue *squeue_ready;
 extern t_squeue *squeue_exec;
-extern t_squeue *squeue_blocked;
+extern t_list *list_blocked;
 extern t_squeue *squeue_exit;
 
 extern pthread_t hilo_quantum;

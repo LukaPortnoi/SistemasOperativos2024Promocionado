@@ -4,6 +4,7 @@ pthread_mutex_t procesoMutex;
 pthread_mutex_t procesosEnSistemaMutex;
 pthread_mutex_t mutex_pid;
 pthread_mutex_t mutex_lista_interfaces;
+pthread_mutex_t mutex_lista_blocked;
 
 sem_t semMultiprogramacion;
 sem_t semNew;
@@ -20,7 +21,7 @@ t_list *interfaces_conectadas;
 t_squeue *squeue_new;
 t_squeue *squeue_ready;
 t_squeue *squeue_exec;
-t_squeue *squeue_blocked;
+t_list *list_blocked;
 t_squeue *squeue_exit;
 
 uint32_t PID_GLOBAL = 1;
@@ -191,7 +192,6 @@ t_pcb *recibir_pcb_CPU(int fd_cpu)
 
     case ENVIAR_INTERFAZ:
         pcb_recibido = recibir_pcb_para_interfaz(fd_cpu, &nombre_interfaz, &unidades_de_trabajo, &instruccion_de_IO_a_ejecutar);
-        ejecutar_intruccion_io(pcb_recibido);   //yo creo que esto deberia ir ACACACA (BUSCAR EN EL CODIGO ACACACA)
         break;
 
     default:
@@ -232,9 +232,7 @@ void desalojo_cpu(t_pcb *pcb, pthread_t hilo_quantum_id)
         break;
     case INTERRUPCION_BLOQUEO:
         log_debug(LOGGER_KERNEL, "PID %d - Desalojado por bloqueo", pcb->pid);
-        cambiar_estado_pcb(pcb, BLOQUEADO);
-        squeue_push(squeue_blocked, pcb);
-        //ACACACA
+        ejecutar_intruccion_io(pcb);
         sem_post(&semBlocked);
         break;
     case INTERRUPCION_FINALIZACION:
@@ -279,64 +277,14 @@ void atender_quantum(void *arg)
     free(interrupcion);
 }
 
-// MANEJO DE SQUEUES
-t_squeue *squeue_create()
-{
-    t_squeue *squeue = malloc(sizeof(t_squeue));
-    squeue->cola = queue_create();
-    squeue->mutex = malloc(sizeof(pthread_mutex_t));
-    pthread_mutex_init(squeue->mutex, NULL);
-    return squeue;
-}
-
-void squeue_destroy(t_squeue *squeue)
-{
-    queue_destroy(squeue->cola);
-    pthread_mutex_destroy(squeue->mutex);
-    free(squeue);
-}
-
-void *squeue_pop(t_squeue *squeue)
-{
-    void *elemento;
-    pthread_mutex_lock(squeue->mutex);
-    elemento = queue_pop(squeue->cola);
-    pthread_mutex_unlock(squeue->mutex);
-    return elemento;
-}
-
-void squeue_push(t_squeue *squeue, void *elemento)
-{
-    /* if (squeue == squeue_ready)
-    {
-        log_info(LOGGER_KERNEL, "Ingreso a Cola Ready:");
-        mostrar_procesos_en_squeue(squeue);
-    } */
-    // COLA READY PLUS DEL VRR
-    /* if (squeue == squeue_readyPlus) {
-        log_info(LOGGER_KERNEL, "Ingreso a Cola Ready+:);
-        mostrar_procesos_en_squeue(squeue);
-    } */
-    pthread_mutex_lock(squeue->mutex);
-    queue_push(squeue->cola, elemento);
-    pthread_mutex_unlock(squeue->mutex);
-}
-
-void *squeue_peek(t_squeue *squeue)
-{
-    void *elemento;
-    pthread_mutex_lock(squeue->mutex);
-    elemento = queue_peek(squeue->cola);
-    pthread_mutex_unlock(squeue->mutex);
-    return elemento;
-}
-
 // OTRAS FUNCIONES
 void iniciar_colas_y_semaforos()
 {
     pthread_mutex_init(&procesoMutex, NULL);
     pthread_mutex_init(&procesosEnSistemaMutex, NULL);
     pthread_mutex_init(&mutex_pid, NULL);
+    pthread_mutex_init(&mutex_lista_interfaces, NULL);
+    pthread_mutex_init(&mutex_lista_blocked, NULL);
 
     sem_init(&semMultiprogramacion, 0, GRADO_MULTIPROGRAMACION);
     sem_init(&semNew, 0, 0);
@@ -353,7 +301,7 @@ void iniciar_colas_y_semaforos()
     squeue_new = squeue_create();
     squeue_ready = squeue_create();
     squeue_exec = squeue_create();
-    squeue_blocked = squeue_create();
+    list_blocked = list_create();
     squeue_exit = squeue_create();
 }
 
@@ -380,30 +328,6 @@ void cambiar_estado_pcb(t_pcb *pcb, t_estado_proceso estado)
     pthread_mutex_unlock(&procesoMutex);
 }
 
-void mostrar_procesos_en_squeue(t_squeue *squeue)
-{
-    t_list *temp_list = list_create();
-
-    if (queue_is_empty(squeue->cola))
-    {
-        log_info(LOGGER_KERNEL, "No hay procesos en la cola");
-    }
-    else
-    {
-        while (!queue_is_empty(squeue->cola))
-        {
-            t_pcb *proceso = squeue_pop(squeue);
-            list_add(temp_list, proceso);
-        }
-
-        for (int i = 0; i < list_size(temp_list); i++)
-        {
-            t_pcb *proceso = list_get(temp_list, i);
-            log_info(LOGGER_KERNEL, "PID: %d", proceso->pid);
-        }
-    }
-}
-
 void finalizar_proceso(t_pcb *pcb)
 {
     log_info(LOGGER_KERNEL, "Finaliza el proceso %d - Motivo: %s", pcb->pid, motivo_finalizacion_to_string(pcb->contexto_ejecucion->motivo_finalizacion));
@@ -412,49 +336,101 @@ void finalizar_proceso(t_pcb *pcb)
     sem_post(&semMultiprogramacion);
 }
 
-void ejecutar_intruccion_io(t_pcb *pcb_recibido)
+void bloquear_proceso(t_pcb *pcb)
 {
-    bool comparar_nombre_interfaz(void *elemento)
+    cambiar_estado_pcb(pcb, BLOQUEADO);
+    pthread_mutex_lock(&mutex_lista_blocked);
+    list_add(list_blocked, pcb);
+    pthread_mutex_unlock(&mutex_lista_blocked);
+}
+
+void desbloquear_proceso(uint32_t pid)
+{
+    bool comparar_pid(void *elemento)
     {
-        return strcmp(((t_interfaz_recibida *)elemento)->nombre_interfaz_recibida, nombre_interfaz) == 0;
+        return ((t_pcb *)elemento)->pid == pid;
     }
 
-    pthread_mutex_lock(&mutex_lista_interfaces);
-    t_interfaz_recibida *interfaz_a_utilizar = list_find(interfaces_conectadas, (void *)comparar_nombre_interfaz);
-    pthread_mutex_unlock(&mutex_lista_interfaces);
+    pthread_mutex_lock(&mutex_lista_blocked);
+    t_pcb *pcb = list_remove_by_condition(list_blocked, (void *)comparar_pid);
+    pthread_mutex_unlock(&mutex_lista_blocked);
+
+    // SACAR DE LA COLA DE LA INTERFAZ
+
+    if (pcb)
+    {
+        cambiar_estado_pcb(pcb, LISTO);
+        squeue_push(squeue_ready, pcb);
+        sem_post(&semReady);
+    }
+}
+
+void ejecutar_intruccion_io(t_pcb *pcb_recibido)
+{
+    t_interfaz_recibida *interfaz_a_utilizar = buscar_interfaz_por_nombre(nombre_interfaz);
 
     if (interfaz_a_utilizar)
     {
-        // TODO: CONSULTAR_EXISTENCIA_INSTRUCCION
-        bool admite_instruccion = consultar_existencia_instruccion(interfaz_a_utilizar->socket_interfaz_recibida, instruccion_de_IO_a_ejecutar);
-        //va a ser bloqueante pq envia un mensaje a la interfaz y espera respuesta, depende esa respeusta va a seguir o no
-        if (admite_instruccion)
+        switch (interfaz_a_utilizar->tipo_interfaz_recibida)
         {
-            // TODO: ENVIAR UN PAQUETE DISTINTO POR CADA TIPO DE INTERFAZ (CADA UNA NECESITA UNA ESTRUCTURA DIFERENTE) EN BASE A instruccion_de_IO_a_ejecutar
-            switch (interfaz_a_utilizar->tipo_interfaz_recibida)
+        case GENERICA:
+            if (instruccion_de_IO_a_ejecutar == IO_GEN_SLEEP)
             {
-            case GENERICA:
-                enviarInterfazGenerica(interfaz_a_utilizar->socket_interfaz_recibida, unidades_de_trabajo);
-                break;
-            case STDIN:
-                /* code */
-                break;
-            case STDOUT:
-                /* code */
-                break;
-
-            case DIALFS:
-                /* code */
-                break;
-
-            default:
-                break;
+                bloquear_proceso(pcb_recibido);
+                //squeue_push(interfaz_a_utilizar->cola_procesos_bloqueados, pcb_recibido);
+                enviar_InterfazGenerica(interfaz_a_utilizar->socket_interfaz_recibida, unidades_de_trabajo, pcb_recibido->pid, interfaz_a_utilizar->nombre_interfaz_recibida);
             }
-        }
-        else
-        {
-            log_error(LOGGER_KERNEL, "La interfaz %s no admite la operacion solicitada", nombre_interfaz);
-            finalizar_proceso(pcb_recibido);
+            else
+            {
+                log_error(LOGGER_KERNEL, "Instruccion %s no reconocida", nombre_instruccion_to_string(instruccion_de_IO_a_ejecutar));
+                finalizar_proceso(pcb_recibido);
+            }
+            break;
+
+        case STDIN:
+            if (instruccion_de_IO_a_ejecutar == IO_STDIN_READ)
+            {
+                bloquear_proceso(pcb_recibido);
+                // Enviar interfaz STDIN
+            }
+            else
+            {
+                log_error(LOGGER_KERNEL, "Instruccion %s no reconocida", nombre_instruccion_to_string(instruccion_de_IO_a_ejecutar));
+                finalizar_proceso(pcb_recibido);
+            }
+            break;
+
+        case STDOUT:
+            if (instruccion_de_IO_a_ejecutar == IO_STDOUT_WRITE)
+            {
+                bloquear_proceso(pcb_recibido);
+                // Enviar interfaz STDOUT
+            }
+            else
+            {
+                log_error(LOGGER_KERNEL, "Instruccion %s no reconocida", nombre_instruccion_to_string(instruccion_de_IO_a_ejecutar));
+                finalizar_proceso(pcb_recibido);
+            }
+            break;
+
+        case DIALFS:
+            if (instruccion_de_IO_a_ejecutar == IO_FS_CREATE || instruccion_de_IO_a_ejecutar == IO_FS_DELETE ||
+                instruccion_de_IO_a_ejecutar == IO_FS_TRUNCATE || instruccion_de_IO_a_ejecutar == IO_FS_WRITE ||
+                instruccion_de_IO_a_ejecutar == IO_FS_READ)
+            {
+                bloquear_proceso(pcb_recibido);
+                // Enviar interfaz DIALFS
+            }
+            else
+            {
+                log_error(LOGGER_KERNEL, "Instruccion %s no reconocida", nombre_instruccion_to_string(instruccion_de_IO_a_ejecutar));
+                finalizar_proceso(pcb_recibido);
+            }
+            break;
+
+        default:
+            log_error(LOGGER_KERNEL, "Tipo de interfaz no reconocido");
+            break;
         }
     }
     else
@@ -462,84 +438,18 @@ void ejecutar_intruccion_io(t_pcb *pcb_recibido)
         log_error(LOGGER_KERNEL, "No se encontro la interfaz %s", nombre_interfaz);
         finalizar_proceso(pcb_recibido);
     }
+}
 
-    bool termino_IO = false;
-    recv(interfaz_a_utilizar->socket_interfaz_recibida, &termino_IO, sizeof(bool), 0);
-
-    if (termino_IO)
+t_interfaz_recibida *buscar_interfaz_por_nombre(char *nombre_interfaz)
+{
+    bool comparar_nombre_interfaz(void *elemento)
     {
-        cambiar_estado_pcb(pcb_recibido, LISTO);
-        squeue_push(squeue_ready, pcb_recibido);
-        sem_post(&semReady);
+        return strcmp(((t_interfaz_recibida *)elemento)->nombre_interfaz_recibida, nombre_interfaz) == 0;
     }
 
-}
+    pthread_mutex_lock(&mutex_lista_interfaces);
+    t_interfaz_recibida *interfaz = list_find(interfaces_conectadas, (void *)comparar_nombre_interfaz);
+    pthread_mutex_unlock(&mutex_lista_interfaces);
 
-bool consultar_existencia_instruccion(int socket_interfaz, nombre_instruccion instruccion)  //TODO REVISARLA, LA HIZO COPILOT
-{
-    t_paquete *paquete_consulta;
-    switch (instruccion)
-    {
-    case IO_GEN_SLEEP:
-        paquete_consulta = crear_paquete_solo_codigo_de_operacion(PEDIDO_IO_SLEEP);
-        break;
-    case IO_STDIN_READ:
-        paquete_consulta = crear_paquete_solo_codigo_de_operacion(PEDIDO_IO_STDIN);
-        break;
-    default:
-        log_error(LOGGER_KERNEL, "Instruccion no reconocida");
-        break;
-    }
-    
-    enviar_paquete(paquete_consulta, socket_interfaz);
-
-    t_paquete *paquete_respuesta = recibir_paquete(socket_interfaz);
-    bool admite_instruccion = deserializar_respuesta_consultar_existencia_instruccion(paquete_respuesta);
-
-    eliminar_paquete(paquete_consulta);
-    eliminar_paquete(paquete_respuesta);
-
-    return admite_instruccion;
-}
-
-void enviarInterfazGenerica(int socket, int unidades_trabajo)
-{
-    t_paquete *paquete = crear_paquete_InterfazGenerica(unidades_trabajo);
-	enviar_paquete(paquete, socket);
-	eliminar_paquete(paquete);
-}
-
-
-t_paquete *crear_paquete_InterfazGenerica(int unidades_trabajo)
-{
-    t_paquete *paquete = malloc(sizeof(t_paquete));
-    paquete->buffer = crear_buffer_InterfazGenerica(unidades_trabajo);
-    return paquete;
-}
-
-t_buffer *crear_buffer_InterfazGenerica(int unidades_trabajo)
-{
-    t_buffer *buffer = malloc(sizeof(t_buffer));
-    buffer->size = sizeof(int);
-
-    buffer->stream = malloc(buffer->size);
-
-    memcpy(buffer->stream, &(unidades_trabajo), sizeof(int));
-
-    return buffer;
-}
-
-
-bool deserializar_respuesta_consultar_existencia_instruccion(t_paquete *paquete)
-{
-    bool admite_instruccion;
-    memcpy(&admite_instruccion, paquete->buffer->stream, sizeof(bool));
-    return admite_instruccion;
-}
-
-t_paquete *crear_paquete_solo_codigo_de_operacion(op_cod codigo)
-{
-    t_paquete *paquete = malloc(sizeof(t_paquete));
-    paquete->codigo_operacion = codigo;
-    return paquete;
+    return interfaz;
 }

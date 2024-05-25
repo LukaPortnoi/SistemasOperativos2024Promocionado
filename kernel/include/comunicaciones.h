@@ -2,6 +2,7 @@
 #define COMUNICACIONES_H_
 
 #include "./gestor.h"
+#include "./planificador.h"
 
 typedef struct
 {

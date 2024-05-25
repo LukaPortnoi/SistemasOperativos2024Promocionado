@@ -1,5 +1,7 @@
 #include "../include/IO.h"
 
+// Envia el nombre interfaz , las unidades de trabajo y el pcb de cpu a kernel
+
 void enviar_interfaz_IO(t_pcb *pcb_actual, char *interfaz, int unidades_de_trabajo, int socket_cliente, nombre_instruccion IO)
 {
     t_paquete *paquete = crear_paquete_con_codigo_de_operacion(ENVIAR_INTERFAZ);
@@ -8,8 +10,7 @@ void enviar_interfaz_IO(t_pcb *pcb_actual, char *interfaz, int unidades_de_traba
     eliminar_paquete(paquete);
 }
 
-void serializar_IO_instruccion(t_paquete *paquete, t_pcb *pcb, int unidades_de_trabajo, char *interfaz, nombre_instruccion IO)
-{
+void serializar_IO_instruccion(t_paquete *paquete, t_pcb *pcb, int unidades_de_trabajo, char *interfaz, nombre_instruccion IO){
     uint32_t interfaz_length = strlen(interfaz) + 1;
 
     size_t tam_registros = sizeof(uint32_t) +
@@ -125,28 +126,23 @@ t_pcb *deserializar_pcb_para_interfaz(t_buffer *buffer, char **nombre_interfaz, 
     desplazamiento += long_interfaz;
 
     memcpy(IO, stream + desplazamiento, sizeof(nombre_instruccion));
-    
+
     return pcb;
 }
 
-void enviar_datos_interfaz(t_interfaz *interfaz, int socket_server){
+// Envia la interfaaz que se va a conectar y que existe a kernel
+
+void enviar_datos_interfaz(t_interfaz *interfaz, int socket_server)
+{
     t_paquete *paquete = crear_paquete_interfaz(interfaz);
     enviar_paquete(paquete, socket_server);
     eliminar_paquete(paquete);
 }
 
-t_interfaz *recibir_datos_interfaz(int socket_cliente)
-{
-    t_paquete *paquete = recibir_paquete(socket_cliente);
-    t_interfaz *interfaz_received = deserializar_interfaz_recibida(paquete->buffer);
-    eliminar_paquete(paquete);
-    return interfaz_received;
-}
-
 t_paquete *crear_paquete_interfaz(t_interfaz *interfaz)
 {
     t_paquete *paquete = malloc(sizeof(t_paquete));
-    paquete->codigo_operacion = DATOS_INTERFAZ;
+    paquete->codigo_operacion = CONEXION_INTERFAZ;
     paquete->buffer = crear_buffer_interfaz(interfaz);
     return paquete;
 }
@@ -174,6 +170,16 @@ t_buffer *crear_buffer_interfaz(t_interfaz *interfaz)
     return buffer;
 }
 
+// Recibir la interfaaz que se va a conectar y que existe en kernel
+
+t_interfaz *recibir_datos_interfaz(int socket_cliente)
+{
+    t_paquete *paquete = recibir_paquete(socket_cliente);
+    t_interfaz *interfaz_received = deserializar_interfaz_recibida(paquete->buffer);
+    eliminar_paquete(paquete);
+    return interfaz_received;
+}
+
 t_interfaz *deserializar_interfaz_recibida(t_buffer *buffer)
 {
     t_interfaz *interfaz_received = malloc(sizeof(t_interfaz));
@@ -187,7 +193,7 @@ t_interfaz *deserializar_interfaz_recibida(t_buffer *buffer)
     int desplazamiento = 0;
 
     uint32_t tamanio_nombre_interfaz;
-    
+
     memcpy(&(tamanio_nombre_interfaz), stream + desplazamiento, sizeof(uint32_t));
     desplazamiento += sizeof(uint32_t);
 
@@ -203,7 +209,106 @@ t_interfaz *deserializar_interfaz_recibida(t_buffer *buffer)
     memcpy(interfaz_received->nombre_interfaz, stream + desplazamiento, tamanio_nombre_interfaz);
     desplazamiento += tamanio_nombre_interfaz;
 
-    memcpy(&(interfaz_received->tipo_interfaz), stream + desplazamiento, sizeof(t_tipo_interfaz));    
+    memcpy(&(interfaz_received->tipo_interfaz), stream + desplazamiento, sizeof(t_tipo_interfaz));
 
     return interfaz_received;
+}
+
+// Envia de kernel a Entrada/salida las interfaces para hacerles el sleep
+void enviar_InterfazGenerica(int socket, int unidades_trabajo, uint32_t pid, char *nombre_interfaz)
+{
+    t_interfaz_gen *interfaz = malloc(sizeof(t_interfaz_gen));
+    interfaz->unidades_de_trabajo = unidades_trabajo;
+    interfaz->pidPcb = pid;
+    interfaz->nombre_interfaz = nombre_interfaz;
+    t_paquete *paquete = crear_paquete_InterfazGenericaCodOp(interfaz, PEDIDO_IO_GEN_SLEEP);
+    enviar_paquete(paquete, socket);
+    eliminar_paquete(paquete);
+}
+
+t_paquete *crear_paquete_InterfazGenerica(t_interfaz_gen *interfaz) //NO SE USA
+{
+    t_paquete *paquete = malloc(sizeof(t_paquete));
+    paquete->buffer = crear_buffer_InterfazGenerica(interfaz);
+    return paquete;
+}
+
+t_buffer *crear_buffer_InterfazGenerica(t_interfaz_gen *interfaz)
+{
+    uint32_t tamanio_nombre_interfaz = strlen(interfaz->nombre_interfaz) + 1;
+
+    t_buffer *buffer = malloc(sizeof(t_buffer));
+    buffer->size = sizeof(int) + sizeof(uint32_t) * 2 + tamanio_nombre_interfaz;
+
+    buffer->stream = malloc(buffer->size);
+    int desplazamiento = 0;
+
+    memcpy(buffer->stream + desplazamiento, &(interfaz->unidades_de_trabajo), sizeof(int));
+    desplazamiento += sizeof(int);
+
+    memcpy(buffer->stream + desplazamiento, &(interfaz->pidPcb), sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+    memcpy(buffer->stream + desplazamiento, &(tamanio_nombre_interfaz), sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t); // Corrección aquí
+
+    memcpy(buffer->stream + desplazamiento, interfaz->nombre_interfaz, tamanio_nombre_interfaz);
+
+    return buffer;
+}
+
+// Recibe en Entrada/salida las interfaces para hacerles el sleep
+t_interfaz_gen *recibir_InterfazGenerica(int socket_cliente)
+{
+    t_paquete *paquete = recibir_paquete(socket_cliente);
+    t_interfaz_gen *interfaz = deserializar_InterfazGenerica(paquete->buffer);
+    eliminar_paquete(paquete);
+    return interfaz;
+}
+
+t_interfaz_gen *deserializar_InterfazGenerica(t_buffer *buffer)
+{
+    t_interfaz_gen *interfaz = malloc(sizeof(t_interfaz_gen));
+    if (interfaz == NULL)
+    {
+        return NULL;
+    }
+
+    uint32_t long_interfaz;
+    void *stream = buffer->stream;
+    int desplazamiento = 0;
+
+    memcpy(&(interfaz->unidades_de_trabajo), stream + desplazamiento, sizeof(int));
+    desplazamiento += sizeof(int);
+
+    memcpy(&(interfaz->pidPcb), stream + desplazamiento, sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+    memcpy(&(long_interfaz), stream + desplazamiento, sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+    interfaz->nombre_interfaz = malloc(long_interfaz);
+
+    memcpy(interfaz->nombre_interfaz, stream + desplazamiento, long_interfaz);
+
+    return interfaz;
+}
+
+void enviar_InterfazGenericaConCodigoOP(int socket, int unidades_trabajo, uint32_t pid, char *nombre_interfaz)
+{
+    t_interfaz_gen *interfaz = malloc(sizeof(t_interfaz_gen));
+    interfaz->unidades_de_trabajo = unidades_trabajo;
+    interfaz->pidPcb = pid;
+    interfaz->nombre_interfaz = nombre_interfaz;
+    t_paquete *paquete = crear_paquete_InterfazGenericaCodOp(interfaz, FINALIZACION_INTERFAZ);
+    enviar_paquete(paquete, socket);
+    eliminar_paquete(paquete);
+}
+
+t_paquete *crear_paquete_InterfazGenericaCodOp(t_interfaz_gen *interfaz, op_cod codigo_operacion)
+{
+    t_paquete *paquete = malloc(sizeof(t_paquete));
+    paquete->codigo_operacion = codigo_operacion;
+    paquete->buffer = crear_buffer_InterfazGenerica(interfaz);
+    return paquete;
 }

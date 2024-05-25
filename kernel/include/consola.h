@@ -24,5 +24,6 @@ void detener_planificacion(void);
 void cambiar_multiprogramacion(char *grado_multiprogramacion_string);
 void mostrar_listado_estados_procesos(void);
 void mostrar_procesos_en_cola(t_squeue *squeue, const char *nombre_cola);
+void mostrar_procesos_en_lista(t_list *lista, const char *nombre_cola);
 
 #endif /* CONSOLA_H_ */

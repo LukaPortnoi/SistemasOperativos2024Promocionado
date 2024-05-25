@@ -77,5 +77,6 @@ typedef struct
 
 char *motivo_desalojo_to_string(t_motivo_desalojo motivo);
 char *motivo_finalizacion_to_string(t_motivo_finalizacion motivo);
+char *nombre_instruccion_to_string(nombre_instruccion instruccion);
 
 #endif // CONTEXTO_H_

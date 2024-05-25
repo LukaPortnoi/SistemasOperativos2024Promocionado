@@ -3,7 +3,7 @@
 void procesar_conexion_IO(int server_socket, t_log *logger)
 {
 	op_cod cop;
-	while (1)
+	while (server_socket != -1)
 	{
 		if (recv(server_socket, &cop, sizeof(op_cod), 0) != sizeof(op_cod))
 		{
@@ -17,13 +17,11 @@ void procesar_conexion_IO(int server_socket, t_log *logger)
 		{
 			switch (cop)
 			{
-			case PEDIDO_IO_SLEEP:
-				aviso_de_confirmacion_instruccion(server_socket, logger); // TODO
+			case PEDIDO_IO_GEN_SLEEP:
 				procesar_sleep(server_socket, logger);
 				break;
 			default:
 				log_info(logger, "Codigo de operacion no reconocido: %d", cop);
-				// enviar_no_admite_operacion(server_socket);
 				break;
 			}
 		}
@@ -31,13 +29,11 @@ void procesar_conexion_IO(int server_socket, t_log *logger)
 		{
 			switch (cop)
 			{
-			case PEDIDO_IO_STDIN:
-				aviso_de_confirmacion_instruccion(server_socket, logger); // TODO
-				//procesar_stdin(server_socket, logger);
+			case PEDIDO_IO_STDIN_READ:
+				// procesar_stdin(server_socket, logger);
 				break;
 			default:
 				log_info(logger, "Codigo de operacion no reconocido: %d", cop);
-				// enviar_no_admite_operacion(server_socket);
 				break;
 			}
 		}
@@ -45,8 +41,7 @@ void procesar_conexion_IO(int server_socket, t_log *logger)
 		{
 			switch (cop)
 			{
-			case PEDIDO_IO_STDOUT:
-				aviso_de_confirmacion_instruccion(server_socket, logger); // TODO
+			case PEDIDO_IO_STDOUT_WRITE:
 				procesar_stdout(server_socket, logger);
 				break;
 			default:
@@ -59,8 +54,7 @@ void procesar_conexion_IO(int server_socket, t_log *logger)
 		{
 			switch (cop)
 			{
-			case PEDIDO_IO_DIALFS:
-				aviso_de_confirmacion_instruccion(server_socket, logger); // TODO
+			case PEDIDO_IO_FS_CREATE:
 				procesar_dialfs(server_socket, logger);
 				break;
 			default:
@@ -71,7 +65,7 @@ void procesar_conexion_IO(int server_socket, t_log *logger)
 		}*/
 		else
 		{
-			aviso_de_rechazo_instruccion(server_socket, logger); // TODO
+			log_info(logger, "Tipo de interfaz no reconocido: %s", TIPO_INTERFAZ);
 		}
 	}
 }
