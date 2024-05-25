@@ -3,7 +3,10 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <readline/readline.h>
+#include <sys/socket.h>
+#include <unistd.h>
 
 #include <commons/log.h>
 #include <commons/string.h>
@@ -12,6 +15,7 @@
 #include "../../utils/include/sockets_server.h"
 #include "../../utils/include/sockets_client.h"
 #include "../../utils/include/sockets_utils.h"
+#include "../../utils/include/IO.h"
 
 extern char *TIPO_INTERFAZ;
 extern int TIEMPO_UNIDAD_TRABAJO;

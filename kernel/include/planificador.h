@@ -19,20 +19,18 @@ void ejecutar_PCB(t_pcb *pcb);
 void desalojo_cpu(t_pcb *pcb, pthread_t hilo_quantum);
 t_pcb *recibir_pcb_CPU(int socket);
 void atender_quantum(void* arg);
-void interrupcion_quantum(void);
-
-// MANEJO DE SQUEUES
-t_squeue *squeue_create();
-void squeue_destroy(t_squeue *squeue);
-void *squeue_pop(t_squeue *squeue);
-void squeue_push(t_squeue *squeue, void *elemento);
-void *squeue_peek(t_squeue *squeue);
-t_pcb *squeue_pop_pcb(t_squeue *squeue);
+void atender_interrupcionBloqueo(t_pcb *pcb);
 
 // OTRAS FUNCIONES
 void iniciar_colas_y_semaforos(void);
 uint32_t asignar_pid(void);
 void cambiar_estado_pcb(t_pcb *pcb, t_estado_proceso estado);
-void mostrar_procesos_en_squeue(t_squeue *squeue);
+void finalizar_proceso(t_pcb *pcb);
+void bloquear_proceso(t_pcb *pcb);
+void desbloquear_proceso(uint32_t pid);
+
+// INTERFACES
+void ejecutar_intruccion_io(t_pcb *pcb_recibido);
+t_interfaz_recibida *buscar_interfaz_por_nombre(char *nombre_interfaz);
 
 #endif // PLANIFICADOR_H_

@@ -21,7 +21,12 @@ int fd_kernel_memoria;
 int fd_kernel_cpu_dispatch;
 int fd_kernel_cpu_interrupt;
 
+char *nombre_interfaz;
+int unidades_de_trabajo;
+nombre_instruccion instruccion_de_IO_a_ejecutar;
+
 t_pcb *pcb_ejecutandose;
+
 pthread_t hilo_server_kernel;
 
 int main()

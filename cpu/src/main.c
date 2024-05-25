@@ -16,6 +16,7 @@ int fd_cpu_interrupt;
 int fd_cpu_memoria;
 
 
+
 t_pcb *pcb_actual;
 
 pthread_t hilo_interrupt;

@@ -84,7 +84,7 @@ void ejecutar_comando(char *comando)
   }
   else if (strcmp(comando_separado[0], "FINALIZAR_PROCESO") == 0)
   {
-    finalizar_proceso(comando_separado[1]);
+    finalizar_proceso_consola(comando_separado[1]);
   }
   else if (strcmp(comando_separado[0], "DETENER_PLANIFICACION") == 0)
   {
@@ -202,7 +202,7 @@ void iniciar_proceso(char *path_proceso)
   crear_proceso(path_proceso);
 }
 
-void finalizar_proceso(char *pid_string) {}
+void finalizar_proceso_consola(char *pid_string) {}
 /* {
   int pid = atoi(pid_string);
 
@@ -240,8 +240,8 @@ void finalizar_proceso(char *pid_string) {}
   sem_post(&semFinalizado);
 } */
 
-t_pcb *buscar_proceso_en_colas(int pid) // TODO: revisar q no este haciendo cagadas
-{
+t_pcb *buscar_proceso_en_colas(int pid) {} // TODO: revisar q no este haciendo cagadas
+/* {
   t_pcb *proceso = NULL;
 
   if (!queue_is_empty(squeue_new->cola))
@@ -265,7 +265,7 @@ t_pcb *buscar_proceso_en_colas(int pid) // TODO: revisar q no este haciendo caga
   }
 
   return proceso;
-}
+} */
 
 t_pcb *buscar_proceso_en_cola(t_squeue *squeue, int pid) {}
 /* {
@@ -307,7 +307,7 @@ void mostrar_listado_estados_procesos()
   mostrar_procesos_en_cola(squeue_new, "NEW");
   mostrar_procesos_en_cola(squeue_ready, "READY");
   mostrar_procesos_en_cola(squeue_exec, "EXECUTING");
-  mostrar_procesos_en_cola(squeue_blocked, "BLOCKED");
+  mostrar_procesos_en_lista(list_blocked, "BLOCKED");
   mostrar_procesos_en_cola(squeue_exit, "FINISHED");
 }
 
@@ -338,4 +338,21 @@ void mostrar_procesos_en_cola(t_squeue *squeue, const char *nombre_cola)
   }
 
   list_destroy(temp_list);
+}
+
+void mostrar_procesos_en_lista(t_list *lista, const char *nombre_cola)
+{
+  if (list_is_empty(lista))
+  {
+    log_info(LOGGER_KERNEL, "No hay procesos en la cola %s", nombre_cola);
+  }
+  else
+  {
+    log_info(LOGGER_KERNEL, "Procesos en estado %s:", nombre_cola);
+    for (int i = 0; i < list_size(lista); i++)
+    {
+      t_pcb *proceso = list_get(lista, i);
+      log_info(LOGGER_KERNEL, "PID: %d - Estado: %s", proceso->pid, estado_to_string(proceso->estado));
+    }
+  }
 }

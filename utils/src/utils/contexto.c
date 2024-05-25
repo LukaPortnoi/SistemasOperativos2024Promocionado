@@ -39,3 +39,30 @@ char *motivo_finalizacion_to_string(t_motivo_finalizacion motivo)
 		return "ERROR";
 	}
 }
+
+char *nombre_instruccion_to_string(nombre_instruccion instruccion)
+{
+	switch (instruccion)
+	{
+	case IO_GEN_SLEEP:
+		return "IO_GEN_SLEEP";
+	case IO_STDIN_READ:
+		return "IO_STDIN_READ";
+	case IO_STDOUT_WRITE:
+		return "IO_STDOUT_WRITE";
+	case IO_FS_CREATE:
+		return "IO_FS_CREATE";
+	case IO_FS_DELETE:
+		return "IO_FS_DELETE";
+	case IO_FS_TRUNCATE:
+		return "IO_FS_TRUNCATE";
+	case IO_FS_WRITE:
+		return "IO_FS_WRITE";
+	case IO_FS_READ:
+		return "IO_FS_READ";
+	case EXIT:
+		return "EXIT";
+	default:
+		return "ERROR";
+	}
+}

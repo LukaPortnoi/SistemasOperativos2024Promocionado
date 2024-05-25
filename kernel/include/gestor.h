@@ -25,13 +25,17 @@
 #include "../../utils/include/sockets_client.h"
 #include "../../utils/include/sockets_utils.h"
 #include "../../utils/include/sockets_common.h"
+#include "../../utils/include/squeue.h"
 #include "../../utils/include/pcb.h"
+#include "../../utils/include/IO.h"
 
 typedef struct
 {
-    t_queue *cola;
-    pthread_mutex_t *mutex;
-} t_squeue;
+    char *nombre_interfaz_recibida;
+    t_tipo_interfaz tipo_interfaz_recibida;
+    int socket_interfaz_recibida;
+    t_squeue *cola_procesos_bloqueados;
+} t_interfaz_recibida;
 
 extern t_log *LOGGER_KERNEL;
 extern t_config *CONFIG_KERNEL;
@@ -55,6 +59,12 @@ extern int fd_kernel_cpu_dispatch;
 extern int fd_kernel_cpu_interrupt;
 
 extern uint32_t PID_GLOBAL;
+
+extern t_list *interfaces_conectadas;
+extern char *nombre_interfaz;
+extern int unidades_de_trabajo;
+extern nombre_instruccion instruccion_de_IO_a_ejecutar;
+
 extern t_pcb *pcb_ejecutandose;
 
 extern sem_t semMultiprogramacion;
@@ -71,11 +81,13 @@ extern t_list *procesosEnSistema;
 extern pthread_mutex_t procesoMutex;
 extern pthread_mutex_t procesosEnSistemaMutex;
 extern pthread_mutex_t mutex_pid;
+extern pthread_mutex_t mutex_lista_interfaces;
+extern pthread_mutex_t mutex_lista_blocked;
 
 extern t_squeue *squeue_new;
 extern t_squeue *squeue_ready;
 extern t_squeue *squeue_exec;
-extern t_squeue *squeue_blocked;
+extern t_list *list_blocked;
 extern t_squeue *squeue_exit;
 
 extern pthread_t hilo_quantum;

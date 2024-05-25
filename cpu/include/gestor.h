@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <ctype.h>
 #include <string.h>
 #include <pthread.h>
 #include <inttypes.h>
@@ -35,12 +36,14 @@ extern char *ALGORITMO_TLB;
 extern t_log *LOGGER_CPU;
 extern t_config *CONFIG;
 
+
 extern int fd_cpu_dispatch;
 extern int fd_cpu_interrupt;
 extern int fd_cpu_memoria;
 
 extern t_pcb *pcb_actual;
 extern bool esSyscall;
+
 extern pthread_mutex_t mutex_interrupt;
 
 #endif /* GESTOR_H_ */

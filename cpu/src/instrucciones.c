@@ -1,4 +1,5 @@
 #include "../include/instrucciones.h"
+#include <ctype.h>
 
 // (Registro, Valor): Asigna al registro el valor pasado como parámetro.
 void _set(char *registro, char *valor)
@@ -61,62 +62,66 @@ void _mov_out(char *direc_logica, char *registro)
 
 // (Registro Destino, Registro Origen): Suma al Registro Destino el
 // Registro Origen y deja el resultado en el Registro Destino.
-void _sum(char *registro_destino, char *registro_origen)
-{
-    uint8_t *destino;
-    uint8_t *origen;
+void _sum(char *registro_destino, char *registro_origen) {
+    uint8_t *destino8 = NULL;
+    uint32_t *destino32 = NULL;
+    uint8_t *origen8 = NULL;
+    uint32_t *origen32 = NULL;
+    int is_destino_8bit = revisar_registro(registro_destino);
+    int is_origen_8bit = revisar_registro(registro_origen);
 
-    if (revisar_registro(registro_destino))
-    {
-        destino = get_registry8(registro_destino);
-    }
-    else
-    {
-        uint32_t *destino = (uint32_t *)destino;
-        destino = get_registry32(registro_destino);
-    }
-
-    if (revisar_registro(registro_origen))
-    {
-        origen = get_registry8(registro_origen);
-    }
-    else
-    {
-        uint32_t *origen = (uint32_t *)origen;
-        origen = get_registry32(registro_origen);
+    if (is_destino_8bit) {
+        destino8 = get_registry8(registro_destino);
+    } else {
+        destino32 = get_registry32(registro_destino);
     }
 
-    *(destino) = *(destino) + *(origen);
+    if (is_origen_8bit) {
+        origen8 = get_registry8(registro_origen);
+    } else {
+        origen32 = get_registry32(registro_origen);
+    }
+
+    if (is_destino_8bit && is_origen_8bit) {
+        *destino8 = *destino8 + *origen8;
+    } else if (!is_destino_8bit && !is_origen_8bit) {
+        *destino32 = *destino32 + *origen32;
+    } else {
+        // Manejo de error si los registros son de tamaños diferentes
+        printf("Error: registros de diferentes tamaños no pueden ser sumados.\n");
+    }
 }
 
 // (Registro Destino, Registro Origen): Resta al Registro Destino
 // el Registro Origen y deja el resultado en el Registro Destino
-void _sub(char *registro_destino, char *registro_origen)
-{
-    uint8_t *destino;
-    uint8_t *origen;
+void _sub(char *registro_destino, char *registro_origen) {
+    uint8_t *destino8 = NULL;
+    uint32_t *destino32 = NULL;
+    uint8_t *origen8 = NULL;
+    uint32_t *origen32 = NULL;
+    int is_destino_8bit = revisar_registro(registro_destino);
+    int is_origen_8bit = revisar_registro(registro_origen);
 
-    if (revisar_registro(registro_destino))
-    {
-        destino = get_registry8(registro_destino);
-    }
-    else
-    {
-        uint32_t *destino = (uint32_t *)destino;
-        destino = get_registry32(registro_destino);
-    }
-
-    if (revisar_registro(registro_origen))
-    {
-        origen = get_registry8(registro_origen);
-    }
-    else
-    {
-        uint32_t *origen = (uint32_t *)origen;
-        origen = get_registry32(registro_origen);
+    if (is_destino_8bit) {
+        destino8 = get_registry8(registro_destino);
+    } else {
+        destino32 = get_registry32(registro_destino);
     }
 
-    *(destino) = *(destino) - *(origen);
+    if (is_origen_8bit) {
+        origen8 = get_registry8(registro_origen);
+    } else {
+        origen32 = get_registry32(registro_origen);
+    }
+
+    if (is_destino_8bit && is_origen_8bit) {
+        *destino8 = *destino8 - *origen8;
+    } else if (!is_destino_8bit && !is_origen_8bit) {
+        *destino32 = *destino32 - *origen32;
+    } else {
+        // Manejo de error si los registros son de tamaños diferentes
+        printf("Error: registros de diferentes tamaños no pueden ser restados.\n");
+    }
 }
 
 // (Registro, Instrucción): Si el valor del registro es distinto de cero,
@@ -147,10 +152,10 @@ void _jnz(char *registro, char *instruccion)
     free(regis);
 }
 
-void _io_gen_sleep(char *interfaz, int unidades_de_trabajo, int cliente_socket)
+void _io_gen_sleep(char *interfaz, char *unidades_de_trabajo, int cliente_socket)
 {
-    // sleep
-    enviar_interfaz_IO(pcb_actual, interfaz, unidades_de_trabajo, cliente_socket);
+    int unidades_de_trabajoNum = atoi(unidades_de_trabajo);
+    enviar_interfaz_IO(pcb_actual, interfaz, unidades_de_trabajoNum, cliente_socket, IO_GEN_SLEEP);
 }
 
 uint32_t *get_registry32(char *registro)

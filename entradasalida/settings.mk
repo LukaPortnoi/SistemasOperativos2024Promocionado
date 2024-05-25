@@ -9,7 +9,8 @@ CDEBUG=-g -Wall -DDEBUG -fdiagnostics-color=always
 CRELEASE=-O3 -Wall -DNDEBUG -fcommon
 
 # Arguments when executing with start, memcheck or helgrind
-ARGS=
+#"./cfgs/generica.config", "./cfgs/stdin.config", "./cfgs/stdout.config", "./cfgs/dialfs.config"
+ARGS=Interfaz2 ./cfgs/generica.config
 
 # Valgrind flags
 MEMCHECK_FLAGS=--track-origins=yes
