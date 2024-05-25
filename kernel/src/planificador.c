@@ -430,7 +430,7 @@ void ejecutar_intruccion_io(t_pcb *pcb_recibido)
             switch (interfaz_a_utilizar->tipo_interfaz_recibida)
             {
             case GENERICA:
-                /* code */
+                enviarInterfazGenerica(interfaz_a_utilizar->socket_interfaz_recibida, unidades_de_trabajo);
                 break;
             case STDIN:
                 /* code */
@@ -474,4 +474,31 @@ bool consultar_existencia_instruccion(int socket_interfaz, nombre_instruccion in
     eliminar_paquete(paquete_respuesta);
 
     return admite_instruccion;
+}
+
+void enviarInterfazGenerica(int socket, int unidades_trabajo)
+{
+    t_paquete *paquete = crear_paquete_InterfazGenerica(interrupcion);
+	enviar_paquete(paquete, socket_cliente);
+	eliminar_paquete(paquete);
+}
+
+
+t_paquete *crear_paquete_InterfazGenerica(int unidades_trabajo)
+{
+    t_paquete *paquete = malloc(sizeof(t_paquete));
+    paquete->buffer = crear_buffer_InterfazGenerica(unidades_trabajo);
+    return paquete;
+}
+
+t_buffer *crear_buffer_InterfazGenerica(int unidades_trabajo)
+{
+    t_buffer *buffer = malloc(sizeof(t_buffer));
+    buffer->size = sizeof(int);
+
+    buffer->stream = malloc(buffer->size);
+
+    memcpy(buffer->stream + desplazamiento, &(unidades_trabajo), sizeof(int));
+
+    return buffer;
 }
