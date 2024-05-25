@@ -50,8 +50,8 @@ static void procesar_conexion_kernel(void *void_args)
 		case DATOS_INTERFAZ:
 			interfaz_recibida_de_IO = recibir_datos_interfaz(cliente_socket);
 			agregar_interfaz_a_lista(interfaz_recibida_de_IO, cliente_socket);
-			printf("Cantiad de elementos en la lista de interfaces: %d", list_size(interfaces));
-
+			log_info(logger,"Cantiad de elementos en la lista de interfaces: %d", list_size(interfaces_conectadas));
+			//TODO eliminar la interfaz de la lista cuando se desconecta
 			break;
 		// -------------------
 		// -- Nombre recibido de IO_GEN_SLEEP   --
@@ -99,7 +99,7 @@ void agregar_interfaz_a_lista(t_interfaz *interfaz_recibida, int cliente_socket)
 	interfaz_aux->tipo_interfaz_recibida = interfaz_recibida->tipo_interfaz;
 	interfaz_aux->socket_interfaz_recibida = cliente_socket;
 	interfaz_aux->cola_procesos_bloqueados = malloc(sizeof(t_squeue));
-	interfaz_aux->cola_procesos_bloqueados->cola = squeue_create();
+	interfaz_aux->cola_procesos_bloqueados->cola = squeue_create(); //TODO no la conoce
 	interfaz_aux->cola_procesos_bloqueados->mutex = malloc(sizeof(pthread_mutex_t));
 	pthread_mutex_init(interfaz_aux->cola_procesos_bloqueados->mutex, NULL);
 

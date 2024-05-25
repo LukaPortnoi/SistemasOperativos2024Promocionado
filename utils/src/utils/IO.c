@@ -129,7 +129,7 @@ t_pcb *deserializar_pcb_para_interfaz(t_buffer *buffer, char **nombre_interfaz, 
     return pcb;
 }
 
-void enviar_datos_interfaz(interfaz *interfaz, int socket_server){
+void enviar_datos_interfaz(t_interfaz *interfaz, int socket_server){
     t_paquete *paquete = crear_paquete_interfaz(interfaz);
     enviar_paquete(paquete, socket_server);
     eliminar_paquete(paquete);
@@ -143,7 +143,7 @@ t_interfaz *recibir_datos_interfaz(int socket_cliente)
     return interfaz_received;
 }
 
-t_paquete *crear_paquete_interfaz(interfaz *interfaz)
+t_paquete *crear_paquete_interfaz(t_interfaz *interfaz)
 {
     t_paquete *paquete = malloc(sizeof(t_paquete));
     paquete->codigo_operacion = DATOS_INTERFAZ;
@@ -151,23 +151,23 @@ t_paquete *crear_paquete_interfaz(interfaz *interfaz)
     return paquete;
 }
 
-t_buffer *crear_buffer_interfaz(interfaz *interfaz)
+t_buffer *crear_buffer_interfaz(t_interfaz *interfaz)
 {
-    interfaz->tam_nombre_interfaz = strlen(interfaz->nombre_interfaz) + 1;
+    interfaz->tamanio_nombre_interfaz = strlen(interfaz->nombre_interfaz) + 1;
 
     t_buffer *buffer = malloc(sizeof(t_buffer));
 
-    buffer->size = interfaz->tam_nombre_interfaz + sizeof(t_tipo_interfaz) + sizeof(uint32_t);
+    buffer->size = interfaz->tamanio_nombre_interfaz + sizeof(t_tipo_interfaz) + sizeof(uint32_t);
 
     buffer->stream = malloc(buffer->size);
 
     int desplazamiento = 0;
 
-    memcpy(buffer->stream + desplazamiento, &(interfaz->tam_nombre_interfaz), sizeof(uint32_t));
+    memcpy(buffer->stream + desplazamiento, &(interfaz->tamanio_nombre_interfaz), sizeof(uint32_t));
     desplazamiento += sizeof(uint32_t);
 
-    memcpy(buffer->stream + desplazamiento, interfaz->nombre_interfaz, interfaz->tam_nombre_interfaz);
-    desplazamiento += interfaz->tam_nombre_interfaz;
+    memcpy(buffer->stream + desplazamiento, interfaz->nombre_interfaz, interfaz->tamanio_nombre_interfaz);
+    desplazamiento += interfaz->tamanio_nombre_interfaz;
 
     memcpy(buffer->stream + desplazamiento, &(interfaz->tipo_interfaz), sizeof(t_tipo_interfaz));
 
@@ -186,22 +186,22 @@ t_interfaz *deserializar_interfaz_recibida(t_buffer *buffer)
     void *stream = buffer->stream;
     int desplazamiento = 0;
 
-    uint32_t tam_nombre_interfaz;
+    uint32_t tamanio_nombre_interfaz;
     
-    memcpy(&(tam_nombre_interfaz), stream + desplazamiento, sizeof(uint32_t));
+    memcpy(&(tamanio_nombre_interfaz), stream + desplazamiento, sizeof(uint32_t));
     desplazamiento += sizeof(uint32_t);
 
-    interfaz_received->tam_nombre_interfaz = tam_nombre_interfaz;
+    interfaz_received->tamanio_nombre_interfaz = tamanio_nombre_interfaz;
 
-    interfaz_received->nombre_interfaz = malloc(tam_nombre_interfaz);
+    interfaz_received->nombre_interfaz = malloc(tamanio_nombre_interfaz);
     if (interfaz_received->nombre_interfaz == NULL)
     {
         free(interfaz_received);
         return NULL;
     }
 
-    memcpy(interfaz_received->nombre_interfaz, stream + desplazamiento, tam_nombre_interfaz);
-    desplazamiento += tam_nombre_interfaz;
+    memcpy(interfaz_received->nombre_interfaz, stream + desplazamiento, tamanio_nombre_interfaz);
+    desplazamiento += tamanio_nombre_interfaz;
 
     memcpy(&(interfaz_received->tipo_interfaz), stream + desplazamiento, sizeof(t_tipo_interfaz));    
 

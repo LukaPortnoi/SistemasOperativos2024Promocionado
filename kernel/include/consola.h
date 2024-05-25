@@ -14,7 +14,7 @@ void inicializar_readline();
 
 void ejecutar_script(char *path);
 void iniciar_proceso(char *path_proceso);
-void finalizar_proceso(char *pid_string);
+void finalizar_proceso_consola(char *pid_string);
 t_pcb *buscar_proceso_en_colas(int pid);
 t_pcb *buscar_proceso_en_cola(t_squeue *squeue, int pid);
 

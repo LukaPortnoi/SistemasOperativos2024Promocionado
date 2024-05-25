@@ -11,6 +11,6 @@ typedef struct
 } t_procesar_conexion_args;
 
 int server_escuchar(t_log *logger, char *server_name, int server_socket);
-void agregar_interfaz_a_lista(interfaz *interfaz_recibida, int cliente_socket);
+void agregar_interfaz_a_lista(t_interfaz *interfaz_recibida, int cliente_socket);
 
 #endif // COMUNICACIONES_H_

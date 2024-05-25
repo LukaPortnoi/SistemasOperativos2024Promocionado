@@ -84,7 +84,7 @@ void ejecutar_comando(char *comando)
   }
   else if (strcmp(comando_separado[0], "FINALIZAR_PROCESO") == 0)
   {
-    finalizar_proceso(comando_separado[1]);
+    finalizar_proceso_consola(comando_separado[1]);
   }
   else if (strcmp(comando_separado[0], "DETENER_PLANIFICACION") == 0)
   {
@@ -202,7 +202,7 @@ void iniciar_proceso(char *path_proceso)
   crear_proceso(path_proceso);
 }
 
-void finalizar_proceso(char *pid_string) {}
+void finalizar_proceso_consola(char *pid_string) {}
 /* {
   int pid = atoi(pid_string);
 

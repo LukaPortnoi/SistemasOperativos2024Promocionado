@@ -33,7 +33,7 @@ void procesar_conexion_IO(int server_socket, t_log *logger)
 			{
 			case PEDIDO_IO_STDIN:
 				aviso_de_confirmacion_instruccion(server_socket, logger); // TODO
-				procesar_stdin(server_socket, logger);
+				//procesar_stdin(server_socket, logger);
 				break;
 			default:
 				log_info(logger, "Codigo de operacion no reconocido: %d", cop);

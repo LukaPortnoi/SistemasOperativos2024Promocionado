@@ -504,8 +504,8 @@ bool consultar_existencia_instruccion(int socket_interfaz, nombre_instruccion in
 
 void enviarInterfazGenerica(int socket, int unidades_trabajo)
 {
-    t_paquete *paquete = crear_paquete_InterfazGenerica(interrupcion);
-	enviar_paquete(paquete, socket_cliente);
+    t_paquete *paquete = crear_paquete_InterfazGenerica(unidades_trabajo);
+	enviar_paquete(paquete, socket);
 	eliminar_paquete(paquete);
 }
 
@@ -524,7 +524,7 @@ t_buffer *crear_buffer_InterfazGenerica(int unidades_trabajo)
 
     buffer->stream = malloc(buffer->size);
 
-    memcpy(buffer->stream + desplazamiento, &(unidades_trabajo), sizeof(int));
+    memcpy(buffer->stream, &(unidades_trabajo), sizeof(int));
 
     return buffer;
 }
