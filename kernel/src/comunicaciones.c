@@ -103,5 +103,7 @@ void agregar_interfaz_a_lista(t_interfaz *interfaz_recibida, int cliente_socket)
 	interfaz_aux->cola_procesos_bloqueados->mutex = malloc(sizeof(pthread_mutex_t));
 	pthread_mutex_init(interfaz_aux->cola_procesos_bloqueados->mutex, NULL);
 
+	pthread_mutex_lock(&mutex_lista_interfaces);
 	list_add(interfaces_conectadas, interfaz_aux);
+	pthread_mutex_unlock(&mutex_lista_interfaces);
 }

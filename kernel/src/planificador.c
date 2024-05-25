@@ -3,6 +3,7 @@
 pthread_mutex_t procesoMutex;
 pthread_mutex_t procesosEnSistemaMutex;
 pthread_mutex_t mutex_pid;
+pthread_mutex_t mutex_lista_interfaces;
 
 sem_t semMultiprogramacion;
 sem_t semNew;
@@ -190,7 +191,7 @@ t_pcb *recibir_pcb_CPU(int fd_cpu)
 
     case ENVIAR_INTERFAZ:
         pcb_recibido = recibir_pcb_para_interfaz(fd_cpu, &nombre_interfaz, &unidades_de_trabajo, &instruccion_de_IO_a_ejecutar);
-        ejecutar_intruccion_io(pcb_recibido);
+        ejecutar_intruccion_io(pcb_recibido);   //yo creo que esto deberia ir ACACACA (BUSCAR EN EL CODIGO ACACACA)
         break;
 
     default:
@@ -233,6 +234,7 @@ void desalojo_cpu(t_pcb *pcb, pthread_t hilo_quantum_id)
         log_debug(LOGGER_KERNEL, "PID %d - Desalojado por bloqueo", pcb->pid);
         cambiar_estado_pcb(pcb, BLOQUEADO);
         squeue_push(squeue_blocked, pcb);
+        //ACACACA
         sem_post(&semBlocked);
         break;
     case INTERRUPCION_FINALIZACION:
@@ -417,7 +419,9 @@ void ejecutar_intruccion_io(t_pcb *pcb_recibido)
         return strcmp(((t_interfaz_recibida *)elemento)->nombre_interfaz_recibida, nombre_interfaz) == 0;
     }
 
+    pthread_mutex_lock(&mutex_lista_interfaces);
     t_interfaz_recibida *interfaz_a_utilizar = list_find(interfaces_conectadas, (void *)comparar_nombre_interfaz);
+    pthread_mutex_unlock(&mutex_lista_interfaces);
 
     if (interfaz_a_utilizar)
     {
@@ -458,13 +462,35 @@ void ejecutar_intruccion_io(t_pcb *pcb_recibido)
         log_error(LOGGER_KERNEL, "No se encontro la interfaz %s", nombre_interfaz);
         finalizar_proceso(pcb_recibido);
     }
+
+    bool termino_IO = false;
+    recv(interfaz_a_utilizar->socket_interfaz_recibida, &termino_IO, sizeof(bool), 0);
+
+    if (termino_IO)
+    {
+        cambiar_estado_pcb(pcb_recibido, LISTO);
+        squeue_push(squeue_ready, pcb_recibido);
+        sem_post(&semReady);
+    }
+
 }
 
 bool consultar_existencia_instruccion(int socket_interfaz, nombre_instruccion instruccion)  //TODO REVISARLA, LA HIZO COPILOT
 {
-    t_paquete *paquete_consulta = crear_paquete_con_codigo_de_operacion(CONSULTAR_EXISTENCIA_INSTRUCCION);
-    serializar_consultar_existencia_instruccion(paquete_consulta, instruccion);
-
+    t_paquete *paquete_consulta;
+    switch (instruccion)
+    {
+    case IO_GEN_SLEEP:
+        paquete_consulta = crear_paquete_solo_codigo_de_operacion(PEDIDO_IO_SLEEP);
+        break;
+    case IO_STDIN_READ:
+        paquete_consulta = crear_paquete_solo_codigo_de_operacion(PEDIDO_IO_STDIN);
+        break;
+    default:
+        log_error(LOGGER_KERNEL, "Instruccion no reconocida");
+        break;
+    }
+    
     enviar_paquete(paquete_consulta, socket_interfaz);
 
     t_paquete *paquete_respuesta = recibir_paquete(socket_interfaz);
@@ -501,4 +527,19 @@ t_buffer *crear_buffer_InterfazGenerica(int unidades_trabajo)
     memcpy(buffer->stream + desplazamiento, &(unidades_trabajo), sizeof(int));
 
     return buffer;
+}
+
+
+bool deserializar_respuesta_consultar_existencia_instruccion(t_paquete *paquete)
+{
+    bool admite_instruccion;
+    memcpy(&admite_instruccion, paquete->buffer->stream, sizeof(bool));
+    return admite_instruccion;
+}
+
+t_paquete *crear_paquete_solo_codigo_de_operacion(op_cod codigo)
+{
+    t_paquete *paquete = malloc(sizeof(t_paquete));
+    paquete->codigo_operacion = codigo;
+    return paquete;
 }

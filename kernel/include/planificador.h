@@ -35,7 +35,14 @@ uint32_t asignar_pid(void);
 void cambiar_estado_pcb(t_pcb *pcb, t_estado_proceso estado);
 void mostrar_procesos_en_squeue(t_squeue *squeue);
 void finalizar_proceso(t_pcb *pcb);
+
+// INTERFACES
 bool consultar_existencia_instruccion(int socket_interfaz, nombre_instruccion instruccion);
 void ejecutar_intruccion_io(t_pcb *pcb_recibido);
+void enviarInterfazGenerica(int socket, int unidades_trabajo);
+t_paquete *crear_paquete_InterfazGenerica(int unidades_trabajo);
+t_buffer *crear_buffer_InterfazGenerica(int unidades_trabajo);
+bool deserializar_respuesta_consultar_existencia_instruccion(t_paquete *paquete);
+t_paquete *crear_paquete_solo_codigo_de_operacion(op_cod codigo);
 
 #endif // PLANIFICADOR_H_

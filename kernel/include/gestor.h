@@ -86,6 +86,7 @@ extern t_list *procesosEnSistema;
 extern pthread_mutex_t procesoMutex;
 extern pthread_mutex_t procesosEnSistemaMutex;
 extern pthread_mutex_t mutex_pid;
+extern pthread_mutex_t mutex_lista_interfaces;
 
 extern t_squeue *squeue_new;
 extern t_squeue *squeue_ready;

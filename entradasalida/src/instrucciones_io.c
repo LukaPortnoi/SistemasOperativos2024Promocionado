@@ -8,8 +8,18 @@ void procesar_sleep(int socket_cliente, t_log *logger)
     log_info(logger, "Durmiendo %d segundos", tiempo);
     sleep(tiempo);
     log_info(logger, "Instrucción sleep finalizada");
-    // TODO Envío que termine la instrucción de sleep a kernel
+    // Le aviso al cliente que terminé
+    bool terminado = true;
+    send(socket_cliente, &terminado, sizeof(bool), 0);
 }
 
-void aviso_de_confirmacion_instruccion(int server_socket, t_log *logger){}
-void aviso_de_rechazo_instruccion(int server_socket, t_log *logger){}
+void aviso_de_confirmacion_instruccion(int server_socket, t_log *logger){
+    //tengoo que mandarle un bool confirmando que puedo seguir con la instruccion
+    bool confirmacion = true;
+    send(server_socket, &confirmacion, sizeof(bool), 0);
+}
+void aviso_de_rechazo_instruccion(int server_socket, t_log *logger){
+    //tengoo que mandarle un bool confirmando que puedo seguir con la instruccion
+    bool confirmacion = false;
+    send(server_socket, &confirmacion, sizeof(bool), 0);
+}

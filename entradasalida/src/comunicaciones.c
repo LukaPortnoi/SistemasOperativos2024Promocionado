@@ -41,7 +41,7 @@ void procesar_conexion_IO(int server_socket, t_log *logger)
 				break;
 			}
 		}
-		else if (strcmp(TIPO_INTERFAZ, "STDOUT") == 0)
+		/*else if (strcmp(TIPO_INTERFAZ, "STDOUT") == 0)
 		{
 			switch (cop)
 			{
@@ -68,7 +68,7 @@ void procesar_conexion_IO(int server_socket, t_log *logger)
 				// enviar_no_admite_operacion(server_socket);
 				break;
 			}
-		}
+		}*/
 		else
 		{
 			aviso_de_rechazo_instruccion(server_socket, logger); // TODO
