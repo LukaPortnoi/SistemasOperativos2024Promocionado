@@ -51,7 +51,6 @@ void crear_proceso(char *path_proceso)
 
     enviar_proceso_a_memoria(pcb->pid, path_proceso);
 
-    // sem_post(&semMultiprogramacion); // CAMBIAR A CONTADOR
     sem_post(&semNew);
 }
 
@@ -59,18 +58,6 @@ void chequear_grado_de_multiprogramacion()
 {
     while (1)
     {
-        /* sem_wait(&semNew);
-        sem_wait(&semMultiprogramacion); // ESTE SEMAFORO NO ES SUFICIENTE, REVISAR CHEQUEAR GRADO
-        log_trace(LOGGER_KERNEL, "Chequeando grado de multiprogramacion!");
-        if (list_size(procesosEnSistema) < GRADO_MULTIPROGRAMACION)
-        {
-            t_pcb *pcb_a_mover = squeue_pop(squeue_new); // CHEQUEAR TEMA BLOQUEADOS
-            cambiar_estado_pcb(pcb_a_mover, LISTO);      // previamente tendria que hablar con memoria antes de pasar a ready, tengo que esperar respuesta de que memoria todo en orden
-            squeue_push(squeue_ready, pcb_a_mover);
-
-            sem_post(&semReady);
-        } */
-
         sem_wait(&semNew);
         sem_wait(&semMultiprogramacion);
 
@@ -80,8 +67,8 @@ void chequear_grado_de_multiprogramacion()
             log_trace(LOGGER_KERNEL, "Valor semaforo multiprogramacion: %d", sem_value);
         }
 
-        t_pcb *pcb_a_mover = squeue_pop(squeue_new); // CHEQUEAR TEMA BLOQUEADOS
-        cambiar_estado_pcb(pcb_a_mover, LISTO);      // previamente tendria que hablar con memoria antes de pasar a ready, tengo que esperar respuesta de que memoria todo en orden
+        t_pcb *pcb_a_mover = squeue_pop(squeue_new);
+        cambiar_estado_pcb(pcb_a_mover, LISTO); // previamente tendria que hablar con memoria antes de pasar a ready, tengo que esperar respuesta de que memoria todo en orden
         squeue_push(squeue_ready, pcb_a_mover);
         sem_post(&semReady);
     }
@@ -252,16 +239,6 @@ void desalojo_cpu(t_pcb *pcb, pthread_t hilo_quantum_id)
     free(motivo_desalojo);
 }
 
-void atender_interrupcionBloqueo(t_pcb *pcb)
-{
-    t_interrupcion *interrupcion = malloc(sizeof(t_interrupcion));
-    interrupcion->motivo_interrupcion = INTERRUPCION_BLOQUEO;
-    interrupcion->pid = pcb_ejecutandose->pid;
-
-    enviar_interrupcion(fd_kernel_cpu_interrupt, interrupcion);
-    free(interrupcion);
-}
-
 void atender_quantum(void *arg)
 {
     pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
@@ -333,6 +310,7 @@ void finalizar_proceso(t_pcb *pcb)
     log_info(LOGGER_KERNEL, "Finaliza el proceso %d - Motivo: %s", pcb->pid, motivo_finalizacion_to_string(pcb->contexto_ejecucion->motivo_finalizacion));
     cambiar_estado_pcb(pcb, FINALIZADO);
     squeue_push(squeue_exit, pcb);
+    // liberar_estructuras_memoria(pcb->pid); // TODO: Liberar estructuras de memoria
     sem_post(&semMultiprogramacion);
 }
 
