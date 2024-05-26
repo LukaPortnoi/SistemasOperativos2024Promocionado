@@ -336,12 +336,13 @@ void finalizar_proceso(t_pcb *pcb)
     sem_post(&semMultiprogramacion);
 }
 
-void bloquear_proceso(t_pcb *pcb)
+void bloquear_proceso(t_pcb *pcb, char *motivo)
 {
     cambiar_estado_pcb(pcb, BLOQUEADO);
     pthread_mutex_lock(&mutex_lista_blocked);
     list_add(list_blocked, pcb);
     pthread_mutex_unlock(&mutex_lista_blocked);
+    log_info(LOGGER_KERNEL, "PID %d - Bloqueado por: %s", pcb->pid, motivo);
 }
 
 void desbloquear_proceso(uint32_t pid)
@@ -354,8 +355,6 @@ void desbloquear_proceso(uint32_t pid)
     pthread_mutex_lock(&mutex_lista_blocked);
     t_pcb *pcb = list_remove_by_condition(list_blocked, (void *)comparar_pid);
     pthread_mutex_unlock(&mutex_lista_blocked);
-
-    // SACAR DE LA COLA DE LA INTERFAZ
 
     if (pcb)
     {
@@ -376,8 +375,8 @@ void ejecutar_intruccion_io(t_pcb *pcb_recibido)
         case GENERICA:
             if (instruccion_de_IO_a_ejecutar == IO_GEN_SLEEP)
             {
-                bloquear_proceso(pcb_recibido);
-                //squeue_push(interfaz_a_utilizar->cola_procesos_bloqueados, pcb_recibido);
+                bloquear_proceso(pcb_recibido, interfaz_a_utilizar->nombre_interfaz_recibida);
+                squeue_push(interfaz_a_utilizar->cola_procesos_bloqueados, pcb_recibido);
                 enviar_InterfazGenerica(interfaz_a_utilizar->socket_interfaz_recibida, unidades_de_trabajo, pcb_recibido->pid, interfaz_a_utilizar->nombre_interfaz_recibida);
             }
             else
@@ -390,7 +389,8 @@ void ejecutar_intruccion_io(t_pcb *pcb_recibido)
         case STDIN:
             if (instruccion_de_IO_a_ejecutar == IO_STDIN_READ)
             {
-                bloquear_proceso(pcb_recibido);
+                bloquear_proceso(pcb_recibido, interfaz_a_utilizar->nombre_interfaz_recibida);
+                squeue_push(interfaz_a_utilizar->cola_procesos_bloqueados, pcb_recibido);
                 // Enviar interfaz STDIN
             }
             else
@@ -403,7 +403,8 @@ void ejecutar_intruccion_io(t_pcb *pcb_recibido)
         case STDOUT:
             if (instruccion_de_IO_a_ejecutar == IO_STDOUT_WRITE)
             {
-                bloquear_proceso(pcb_recibido);
+                bloquear_proceso(pcb_recibido, interfaz_a_utilizar->nombre_interfaz_recibida);
+                squeue_push(interfaz_a_utilizar->cola_procesos_bloqueados, pcb_recibido);
                 // Enviar interfaz STDOUT
             }
             else
@@ -418,7 +419,8 @@ void ejecutar_intruccion_io(t_pcb *pcb_recibido)
                 instruccion_de_IO_a_ejecutar == IO_FS_TRUNCATE || instruccion_de_IO_a_ejecutar == IO_FS_WRITE ||
                 instruccion_de_IO_a_ejecutar == IO_FS_READ)
             {
-                bloquear_proceso(pcb_recibido);
+                bloquear_proceso(pcb_recibido, interfaz_a_utilizar->nombre_interfaz_recibida);
+                squeue_push(interfaz_a_utilizar->cola_procesos_bloqueados, pcb_recibido);
                 // Enviar interfaz DIALFS
             }
             else

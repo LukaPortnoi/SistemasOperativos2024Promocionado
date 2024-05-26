@@ -10,7 +10,8 @@ void enviar_interfaz_IO(t_pcb *pcb_actual, char *interfaz, int unidades_de_traba
     eliminar_paquete(paquete);
 }
 
-void serializar_IO_instruccion(t_paquete *paquete, t_pcb *pcb, int unidades_de_trabajo, char *interfaz, nombre_instruccion IO){
+void serializar_IO_instruccion(t_paquete *paquete, t_pcb *pcb, int unidades_de_trabajo, char *interfaz, nombre_instruccion IO)
+{
     uint32_t interfaz_length = strlen(interfaz) + 1;
 
     size_t tam_registros = sizeof(uint32_t) +
@@ -226,7 +227,7 @@ void enviar_InterfazGenerica(int socket, int unidades_trabajo, uint32_t pid, cha
     eliminar_paquete(paquete);
 }
 
-t_paquete *crear_paquete_InterfazGenerica(t_interfaz_gen *interfaz) //NO SE USA
+t_paquete *crear_paquete_InterfazGenerica(t_interfaz_gen *interfaz) // NO SE USA
 {
     t_paquete *paquete = malloc(sizeof(t_paquete));
     paquete->buffer = crear_buffer_InterfazGenerica(interfaz);

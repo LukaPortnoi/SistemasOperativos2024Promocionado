@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <pthread.h>
+#include <unistd.h>
 #include <inttypes.h>
 #include <semaphore.h>
 #include <sys/socket.h>

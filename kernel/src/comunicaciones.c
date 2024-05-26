@@ -29,10 +29,6 @@ static void procesar_conexion_kernel(void *void_args)
 			break;
 
 		// -------------------
-		// -- CPU - KERNEL --
-		// -------------------
-
-		// -------------------
 		// -- I/O - KERNEL --
 		// -------------------
 		case HANDSHAKE_in_out:
@@ -43,7 +39,7 @@ static void procesar_conexion_kernel(void *void_args)
 		case CONEXION_INTERFAZ:
 			t_interfaz *interfaz_recibida_de_IO = recibir_datos_interfaz(cliente_socket);
 			agregar_interfaz_a_lista(interfaz_recibida_de_IO, cliente_socket);
-			log_info(logger, "Cantiad de elementos en la lista de interfaces: %d", list_size(interfaces_conectadas));
+			log_debug(logger, "Cantiad de elementos en la lista de interfaces: %d", list_size(interfaces_conectadas));
 			break;
 
 		case DESCONEXION_INTERFAZ:
@@ -56,9 +52,11 @@ static void procesar_conexion_kernel(void *void_args)
 			break;
 
 		case FINALIZACION_INTERFAZ:
-			log_info(logger, "Finalizacion de la interfaz");
+			log_trace(logger, "Finalizacion de instruccion de interfaz");
 			t_interfaz_gen *interfazRecibidaIO = recibir_InterfazGenerica(cliente_socket);
 			desbloquear_proceso(interfazRecibidaIO->pidPcb);
+			t_interfaz_recibida *interfaz_recibida = buscar_interfaz_por_nombre(interfazRecibidaIO->nombre_interfaz);
+			squeue_pop(interfaz_recibida->cola_procesos_bloqueados);
 			break;
 
 		// ---------------
@@ -98,10 +96,7 @@ void agregar_interfaz_a_lista(t_interfaz *interfaz_recibida, int cliente_socket)
 	interfaz_aux->nombre_interfaz_recibida = interfaz_recibida->nombre_interfaz;
 	interfaz_aux->tipo_interfaz_recibida = interfaz_recibida->tipo_interfaz;
 	interfaz_aux->socket_interfaz_recibida = cliente_socket;
-	interfaz_aux->cola_procesos_bloqueados = malloc(sizeof(t_squeue));
-	interfaz_aux->cola_procesos_bloqueados->cola = squeue_create(); // TODO no la conoce
-	interfaz_aux->cola_procesos_bloqueados->mutex = malloc(sizeof(pthread_mutex_t));
-	pthread_mutex_init(interfaz_aux->cola_procesos_bloqueados->mutex, NULL);
+	interfaz_aux->cola_procesos_bloqueados = squeue_create();
 
 	pthread_mutex_lock(&mutex_lista_interfaces);
 	list_add(interfaces_conectadas, interfaz_aux);

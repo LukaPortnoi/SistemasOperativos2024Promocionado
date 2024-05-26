@@ -18,7 +18,7 @@ void planificar_PCB_cortoPlazo(void);
 void ejecutar_PCB(t_pcb *pcb);
 void desalojo_cpu(t_pcb *pcb, pthread_t hilo_quantum);
 t_pcb *recibir_pcb_CPU(int socket);
-void atender_quantum(void* arg);
+void atender_quantum(void *arg);
 void atender_interrupcionBloqueo(t_pcb *pcb);
 
 // OTRAS FUNCIONES
@@ -26,7 +26,7 @@ void iniciar_colas_y_semaforos(void);
 uint32_t asignar_pid(void);
 void cambiar_estado_pcb(t_pcb *pcb, t_estado_proceso estado);
 void finalizar_proceso(t_pcb *pcb);
-void bloquear_proceso(t_pcb *pcb);
+void bloquear_proceso(t_pcb *pcb, char *motivo);
 void desbloquear_proceso(uint32_t pid);
 
 // INTERFACES

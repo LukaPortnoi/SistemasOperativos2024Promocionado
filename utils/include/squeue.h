@@ -15,7 +15,6 @@ void squeue_destroy(t_squeue *squeue);
 void *squeue_pop(t_squeue *squeue);
 void squeue_push(t_squeue *squeue, void *elemento);
 void *squeue_peek(t_squeue *squeue);
-t_pcb *squeue_pop_pcb(t_squeue *squeue);
 
 void mostrar_procesos_en_squeue(t_squeue *squeue, t_log *LOGGER);
 

@@ -292,13 +292,14 @@ t_pcb *buscar_proceso_en_cola(t_squeue *squeue, int pid) {}
   return proceso;
 } */
 
-void iniciar_planificacion() {}
 void detener_planificacion() {}
+void iniciar_planificacion() {}
 
 void cambiar_multiprogramacion(char *grado_multiprogramacion_string)
 {
   int numero = atoi(grado_multiprogramacion_string);
   GRADO_MULTIPROGRAMACION = numero;
+  log_debug(LOGGER_KERNEL, "Grado de multiprogramacion cambiado a: %d", GRADO_MULTIPROGRAMACION);
 }
 
 void mostrar_listado_estados_procesos()

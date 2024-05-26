@@ -19,7 +19,7 @@ t_interfaz *interfaz_actual;
 int main(int argc, char** argv)
 {
     inicializar_config(argv[2]); //argv[2] es el path del archivo de configuracion
-    log_info(LOGGER_INPUT_OUTPUT, "Iniciando la interfaz I/O %s de tipo %s", argv[1], TIPO_INTERFAZ);
+    log_debug(LOGGER_INPUT_OUTPUT, "Iniciando la interfaz %s de tipo %s", argv[1], TIPO_INTERFAZ);
     interfaz_actual = malloc(sizeof(t_interfaz)); //creamos la interfaz actual
     interfaz_actual->tamanio_nombre_interfaz = strlen(argv[1]) + 1; //argv[1] es el nombre de la interfaz
     interfaz_actual->nombre_interfaz = argv[1]; //asignamos el nombre de la interfaz
