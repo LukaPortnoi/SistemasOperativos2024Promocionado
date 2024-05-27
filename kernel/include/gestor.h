@@ -86,6 +86,7 @@ extern pthread_mutex_t mutex_lista_interfaces;
 
 extern t_squeue *squeue_new;
 extern t_squeue *squeue_ready;
+extern t_squeue *squeue_readyPlus;
 extern t_squeue *squeue_exec;
 extern t_squeue *squeue_blocked;
 extern t_squeue *squeue_exit;

@@ -27,16 +27,6 @@ void *squeue_pop(t_squeue *squeue)
 
 void squeue_push(t_squeue *squeue, void *elemento)
 {
-    /* if (squeue == squeue_ready)
-    {
-        log_info(LOGGER_KERNEL, "Ingreso a Cola Ready:");
-        mostrar_procesos_en_squeue(squeue);
-    } */
-    // COLA READY PLUS DEL VRR
-    /* if (squeue == squeue_readyPlus) {
-        log_info(LOGGER_KERNEL, "Ingreso a Cola Ready+:);
-        mostrar_procesos_en_squeue(squeue);
-    } */
     pthread_mutex_lock(squeue->mutex);
     list_add(squeue->cola, elemento);
     pthread_mutex_unlock(squeue->mutex);

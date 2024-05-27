@@ -19,6 +19,7 @@ t_list *interfaces_conectadas;
 
 t_squeue *squeue_new;
 t_squeue *squeue_ready;
+t_squeue *squeue_readyPlus;
 t_squeue *squeue_exec;
 t_squeue *squeue_blocked;
 t_squeue *squeue_exit;
@@ -69,6 +70,8 @@ void chequear_grado_de_multiprogramacion()
         t_pcb *pcb_a_mover = squeue_pop(squeue_new);
         cambiar_estado_pcb(pcb_a_mover, LISTO); // previamente tendria que hablar con memoria antes de pasar a ready, tengo que esperar respuesta de que memoria todo en orden
         squeue_push(squeue_ready, pcb_a_mover);
+        log_info(LOGGER_KERNEL, "Cola Ready:");
+        mostrar_procesos_en_squeue(squeue_ready, LOGGER_KERNEL);
         sem_post(&semReady);
     }
 }
@@ -212,9 +215,11 @@ void desalojo_cpu(t_pcb *pcb, pthread_t hilo_quantum_id)
     switch (*motivo_desalojo)
     {
     case INTERRUPCION_FIN_QUANTUM:
-        log_info(LOGGER_KERNEL, "PID %d - Desalojado por fin de Quantum", pcb->pid);
+        log_info(LOGGER_KERNEL, "PID: %d - Desalojado por fin de Quantum", pcb->pid);
         cambiar_estado_pcb(pcb, LISTO);
         squeue_push(squeue_ready, pcb);
+        log_info(LOGGER_KERNEL, "Cola Ready:");
+        mostrar_procesos_en_squeue(squeue_ready, LOGGER_KERNEL);
         sem_post(&semReady);
         break;
     case INTERRUPCION_BLOQUEO:
@@ -240,7 +245,7 @@ void desalojo_cpu(t_pcb *pcb, pthread_t hilo_quantum_id)
         }
         break;
     default:
-        log_error(LOGGER_KERNEL, "PID %d - Desalojado por motivo desconocido", pcb->pid);
+        log_error(LOGGER_KERNEL, "PID: %d - Desalojado por motivo desconocido", pcb->pid);
         break;
     }
 
@@ -284,6 +289,7 @@ void iniciar_colas_y_semaforos()
 
     squeue_new = squeue_create();
     squeue_ready = squeue_create();
+    squeue_readyPlus = squeue_create();
     squeue_exec = squeue_create();
     squeue_blocked = squeue_create();
     squeue_exit = squeue_create();
@@ -341,6 +347,8 @@ void desbloquear_proceso(uint32_t pid)
     {
         cambiar_estado_pcb(pcb, LISTO);
         squeue_push(squeue_ready, pcb);
+        log_info(LOGGER_KERNEL, "Cola Ready:");
+        mostrar_procesos_en_squeue(squeue_ready, LOGGER_KERNEL);
         sem_post(&semReady);
     }
 }
