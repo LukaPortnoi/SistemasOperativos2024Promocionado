@@ -19,7 +19,7 @@ t_pcb *buscar_proceso_en_colas(uint32_t pid);
 t_pcb *buscar_proceso_en_cola(t_squeue *squeue, uint32_t pid);
 
 void iniciar_planificacion(void);
-void detener_planificacion(void);
+
 
 void cambiar_multiprogramacion(char *grado_multiprogramacion_string);
 void mostrar_listado_estados_procesos(void);
