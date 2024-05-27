@@ -26,6 +26,7 @@ int unidades_de_trabajo;
 nombre_instruccion instruccion_de_IO_a_ejecutar;
 
 t_pcb *pcb_ejecutandose;
+t_pcb *pcb_a_finalizar = NULL;
 
 pthread_t hilo_server_kernel;
 
@@ -81,7 +82,8 @@ void iniciar_conexiones()
 
 void escuchar_kernel()
 {
-	while (server_escuchar(LOGGER_KERNEL, "KERNEL", fd_kernel));
+	while (server_escuchar(LOGGER_KERNEL, "KERNEL", fd_kernel))
+		;
 }
 
 void finalizar_kernel()

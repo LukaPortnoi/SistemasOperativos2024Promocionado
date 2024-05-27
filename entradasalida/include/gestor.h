@@ -7,6 +7,7 @@
 #include <readline/readline.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#include <signal.h>
 
 #include <commons/log.h>
 #include <commons/string.h>

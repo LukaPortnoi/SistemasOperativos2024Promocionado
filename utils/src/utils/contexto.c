@@ -12,6 +12,8 @@ char *motivo_desalojo_to_string(t_motivo_desalojo motivo)
 		return "INTERRUPCION BLOQUEO";
 	case INTERRUPCION_FINALIZACION:
 		return "INTERRUPCION FINALIZACION";
+	case FINALIZACION:
+		return "FINALIZACION";
 	case INTERRUPCION_ERROR:
 		return "INTERRUPCION ERROR";
 	case INTERRUPCION_SYSCALL:

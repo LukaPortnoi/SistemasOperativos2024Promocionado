@@ -202,95 +202,96 @@ void iniciar_proceso(char *path_proceso)
   crear_proceso(path_proceso);
 }
 
-void finalizar_proceso_consola(char *pid_string) {}
-/* {
-  int pid = atoi(pid_string);
+void finalizar_proceso_consola(char *pid_string)
+{
+  uint32_t pid = atoi(pid_string);
 
+  // Si se esta ejecutando, enviar interrupcion a CPU
   if (pcb_ejecutandose != NULL && pcb_ejecutandose->pid == pid)
   {
-    // debemos mandar una interrupcion a la cpu
     t_interrupcion *interrupcion = malloc(sizeof(t_interrupcion));
     interrupcion->motivo_interrupcion = INTERRUPCION_FINALIZACION;
     interrupcion->pid = pid;
     enviar_interrupcion(fd_kernel_cpu_interrupt, interrupcion);
   }
-
-  t_pcb *proceso = buscar_proceso_en_colas(pid);
-
-  if (proceso->estado == NUEVO)
+  else
   {
-    squeue_remove(squeue_new, proceso);
-  }
-  else if (proceso->estado == LISTO)
-  {
-    squeue_remove(squeue_ready, proceso);
-  }
-  else if (proceso->estado == EJECUTANDO)
-  {
-    squeue_remove(squeue_exec, proceso);
-  }
-  else if (proceso->estado == BLOQUEADO)
-  {
-    squeue_remove(squeue_blocked, proceso);
-  }
+    t_pcb *proceso = buscar_proceso_en_colas(pid);
 
-  squeue_push(squeue_exit, proceso);
-  cambiar_estado_pcb(proceso, FINALIZADO);
+    if (proceso == NULL)
+    {
+      log_error(LOGGER_KERNEL, "No se encontro el proceso con PID: %d", pid);
+      return;
+    }
 
-  sem_post(&semFinalizado);
-} */
+    if (proceso->estado == NUEVO)
+    {
+      squeue_remove_element(squeue_new, proceso);
+    }
+    else if (proceso->estado == LISTO)
+    {
+      squeue_remove_element(squeue_ready, proceso);
+    }
+    else if (proceso->estado == BLOQUEADO)
+    {
+      squeue_remove_element(squeue_blocked, proceso);
+      pcb_a_finalizar = proceso;
+      proceso->contexto_ejecucion->motivo_finalizacion = INTERRUPTED_BY_USER;
+      log_warning(LOGGER_KERNEL, "El proceso esta en Entrada/Salida y sera finalizado cuando termine");
+    }
 
-t_pcb *buscar_proceso_en_colas(int pid) {} // TODO: revisar q no este haciendo cagadas
-/* {
+    if (proceso->estado != FINALIZADO)
+    {
+      proceso->contexto_ejecucion->motivo_finalizacion = INTERRUPTED_BY_USER;
+      finalizar_proceso(proceso);
+    }
+    else
+    {
+      log_warning(LOGGER_KERNEL, "El proceso ya finalizo");
+    }
+  }
+}
+
+t_pcb *buscar_proceso_en_colas(uint32_t pid)
+{
   t_pcb *proceso = NULL;
 
-  if (!queue_is_empty(squeue_new->cola))
-  {
-    proceso = buscar_proceso_en_cola(squeue_new, pid);
-  }
+  proceso = buscar_proceso_en_cola(squeue_new, pid);
+  if (proceso != NULL)
+    return proceso;
 
-  if (proceso == NULL && !queue_is_empty(squeue_ready->cola))
-  {
-    proceso = buscar_proceso_en_cola(squeue_ready, pid);
-  }
+  proceso = buscar_proceso_en_cola(squeue_ready, pid);
+  if (proceso != NULL)
+    return proceso;
 
-  if (proceso == NULL && !queue_is_empty(squeue_exec->cola))
-  {
-    proceso = buscar_proceso_en_cola(squeue_exec, pid);
-  }
+  proceso = buscar_proceso_en_cola(squeue_blocked, pid);
+  if (proceso != NULL)
+    return proceso;
 
-  if (proceso == NULL && !queue_is_empty(squeue_blocked->cola))
-  {
-    proceso = buscar_proceso_en_cola(squeue_blocked, pid);
-  }
+  proceso = buscar_proceso_en_cola(squeue_exit, pid);
+  if (proceso != NULL)
+    return proceso;
 
-  return proceso;
-} */
+  return NULL;
+}
 
-t_pcb *buscar_proceso_en_cola(t_squeue *squeue, int pid) {}
-/* {
+t_pcb *buscar_proceso_en_cola(t_squeue *squeue, uint32_t pid)
+{
   t_pcb *proceso = NULL;
-  t_list *temp = list_create();
 
-  while (!queue_is_empty(squeue->cola))
+  for (int i = 0; i < list_size(squeue->cola); i++)
   {
-    t_pcb *proceso_actual = squeue_pop(squeue);
-    list_add(temp, proceso_actual);
+    t_pcb *proceso_actual = list_get(squeue->cola, i);
 
     if (proceso_actual->pid == pid)
     {
       proceso = proceso_actual;
+      break;
     }
   }
 
-  for (int i = 0; i < list_size(temp); i++)
-  {
-    squeue_push(squeue, list_get(temp, i));
-  }
-
-  list_destroy(temp);
   return proceso;
-} */
+}
 
 void detener_planificacion() {}
 void iniciar_planificacion() {}
@@ -308,52 +309,19 @@ void mostrar_listado_estados_procesos()
   mostrar_procesos_en_cola(squeue_new, "NEW");
   mostrar_procesos_en_cola(squeue_ready, "READY");
   mostrar_procesos_en_cola(squeue_exec, "EXECUTING");
-  mostrar_procesos_en_lista(list_blocked, "BLOCKED");
+  mostrar_procesos_en_cola(squeue_blocked, "BLOCKED");
   mostrar_procesos_en_cola(squeue_exit, "FINISHED");
 }
 
 void mostrar_procesos_en_cola(t_squeue *squeue, const char *nombre_cola)
 {
-  t_list *temp_list = list_create();
-
-  if (queue_is_empty(squeue->cola))
+  if (list_is_empty(squeue->cola))
   {
     log_info(LOGGER_KERNEL, "No hay procesos en la cola %s", nombre_cola);
   }
   else
   {
-    while (!queue_is_empty(squeue->cola))
-    {
-      t_pcb *proceso = squeue_pop(squeue);
-      list_add(temp_list, proceso);
-    }
-
-    log_info(LOGGER_KERNEL, "Procesos en estado %s:", nombre_cola);
-    for (int i = 0; i < list_size(temp_list); i++)
-    {
-      t_pcb *proceso = list_get(temp_list, i);
-      log_info(LOGGER_KERNEL, "PID: %d - Estado: %s", proceso->pid, estado_to_string(proceso->estado));
-
-      squeue_push(squeue, proceso);
-    }
-  }
-
-  list_destroy(temp_list);
-}
-
-void mostrar_procesos_en_lista(t_list *lista, const char *nombre_cola)
-{
-  if (list_is_empty(lista))
-  {
-    log_info(LOGGER_KERNEL, "No hay procesos en la cola %s", nombre_cola);
-  }
-  else
-  {
-    log_info(LOGGER_KERNEL, "Procesos en estado %s:", nombre_cola);
-    for (int i = 0; i < list_size(lista); i++)
-    {
-      t_pcb *proceso = list_get(lista, i);
-      log_info(LOGGER_KERNEL, "PID: %d - Estado: %s", proceso->pid, estado_to_string(proceso->estado));
-    }
+    log_info(LOGGER_KERNEL, "Procesos en la cola %s:", nombre_cola);
+    mostrar_procesos_en_squeue(squeue, LOGGER_KERNEL);
   }
 }

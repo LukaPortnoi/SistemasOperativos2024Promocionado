@@ -131,19 +131,18 @@ t_pcb *deserializar_pcb_para_interfaz(t_buffer *buffer, char **nombre_interfaz, 
     return pcb;
 }
 
-// Envia la interfaaz que se va a conectar y que existe a kernel
-
-void enviar_datos_interfaz(t_interfaz *interfaz, int socket_server)
+// Envia la interfaz que se va a conectar y que existe a kernel
+void enviar_datos_interfaz(t_interfaz *interfaz, int socket_server, op_cod codigo_operacion)
 {
-    t_paquete *paquete = crear_paquete_interfaz(interfaz);
+    t_paquete *paquete = crear_paquete_interfaz(interfaz, codigo_operacion);
     enviar_paquete(paquete, socket_server);
     eliminar_paquete(paquete);
 }
 
-t_paquete *crear_paquete_interfaz(t_interfaz *interfaz)
+t_paquete *crear_paquete_interfaz(t_interfaz *interfaz, op_cod codigo_operacion)
 {
     t_paquete *paquete = malloc(sizeof(t_paquete));
-    paquete->codigo_operacion = CONEXION_INTERFAZ;
+    paquete->codigo_operacion = codigo_operacion;
     paquete->buffer = crear_buffer_interfaz(interfaz);
     return paquete;
 }

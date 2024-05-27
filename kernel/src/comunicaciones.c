@@ -39,24 +39,36 @@ static void procesar_conexion_kernel(void *void_args)
 		case CONEXION_INTERFAZ:
 			t_interfaz *interfaz_recibida_de_IO = recibir_datos_interfaz(cliente_socket);
 			agregar_interfaz_a_lista(interfaz_recibida_de_IO, cliente_socket);
-			log_debug(logger, "Cantiad de elementos en la lista de interfaces: %d", list_size(interfaces_conectadas));
+			log_debug(logger, "Cantidad de elementos en la lista de interfaces: %d", list_size(interfaces_conectadas));
 			break;
 
 		case DESCONEXION_INTERFAZ:
 			log_info(logger, "Desconexion de la interfaz");
 			t_interfaz *interfaz_desconectada = recibir_datos_interfaz(cliente_socket);
-
-			pthread_mutex_lock(&mutex_lista_interfaces);
-			list_remove_element(interfaces_conectadas, interfaz_desconectada);
-			pthread_mutex_unlock(&mutex_lista_interfaces);
+			eliminar_interfaz_de_lista(interfaz_desconectada->nombre_interfaz);
+			log_debug(logger, "Cantidad de elementos en la lista de interfaces: %d", list_size(interfaces_conectadas));
 			break;
 
 		case FINALIZACION_INTERFAZ:
 			log_trace(logger, "Finalizacion de instruccion de interfaz");
 			t_interfaz_gen *interfazRecibidaIO = recibir_InterfazGenerica(cliente_socket);
-			desbloquear_proceso(interfazRecibidaIO->pidPcb);
-			t_interfaz_recibida *interfaz_recibida = buscar_interfaz_por_nombre(interfazRecibidaIO->nombre_interfaz);
-			squeue_pop(interfaz_recibida->cola_procesos_bloqueados);
+			if (pcb_a_finalizar == NULL)
+			{
+				desbloquear_proceso(interfazRecibidaIO->pidPcb);
+				t_interfaz_recibida *interfaz_recibida = buscar_interfaz_por_nombre(interfazRecibidaIO->nombre_interfaz);
+				squeue_pop(interfaz_recibida->cola_procesos_bloqueados);
+			}
+			else if (interfazRecibidaIO->pidPcb != pcb_a_finalizar->pid)
+			{
+				desbloquear_proceso(interfazRecibidaIO->pidPcb);
+				t_interfaz_recibida *interfaz_recibida = buscar_interfaz_por_nombre(interfazRecibidaIO->nombre_interfaz);
+				squeue_pop(interfaz_recibida->cola_procesos_bloqueados);
+			}
+			else if (interfazRecibidaIO->pidPcb == pcb_a_finalizar->pid)
+			{
+				finalizar_proceso(pcb_a_finalizar);
+				log_trace(logger, "Se finalizo el proceso luego de I/O %d", pcb_a_finalizar->pid);
+			}
 			break;
 
 		// ---------------
@@ -101,4 +113,18 @@ void agregar_interfaz_a_lista(t_interfaz *interfaz_recibida, int cliente_socket)
 	pthread_mutex_lock(&mutex_lista_interfaces);
 	list_add(interfaces_conectadas, interfaz_aux);
 	pthread_mutex_unlock(&mutex_lista_interfaces);
+}
+
+void eliminar_interfaz_de_lista(char *nombre_interfaz)
+{
+	bool _buscar_interfaz_por_nombre(t_interfaz_recibida * interfaz)
+	{
+		return string_equals_ignore_case(interfaz->nombre_interfaz_recibida, nombre_interfaz);
+	}
+
+	pthread_mutex_lock(&mutex_lista_interfaces);
+	t_interfaz_recibida *interfaz_a_eliminar = list_remove_by_condition(interfaces_conectadas, (void *)_buscar_interfaz_por_nombre);
+	pthread_mutex_unlock(&mutex_lista_interfaces);
+
+	free(interfaz_a_eliminar);
 }

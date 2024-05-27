@@ -4,7 +4,6 @@ pthread_mutex_t procesoMutex;
 pthread_mutex_t procesosEnSistemaMutex;
 pthread_mutex_t mutex_pid;
 pthread_mutex_t mutex_lista_interfaces;
-pthread_mutex_t mutex_lista_blocked;
 
 sem_t semMultiprogramacion;
 sem_t semNew;
@@ -21,7 +20,7 @@ t_list *interfaces_conectadas;
 t_squeue *squeue_new;
 t_squeue *squeue_ready;
 t_squeue *squeue_exec;
-t_list *list_blocked;
+t_squeue *squeue_blocked;
 t_squeue *squeue_exit;
 
 uint32_t PID_GLOBAL = 1;
@@ -209,6 +208,7 @@ void desalojo_cpu(t_pcb *pcb, pthread_t hilo_quantum_id)
     t_motivo_desalojo *motivo_desalojo = malloc(sizeof(t_motivo_desalojo));
     *motivo_desalojo = pcb->contexto_ejecucion->motivo_desalojo;
 
+    int sem_value;
     switch (*motivo_desalojo)
     {
     case INTERRUPCION_FIN_QUANTUM:
@@ -222,10 +222,18 @@ void desalojo_cpu(t_pcb *pcb, pthread_t hilo_quantum_id)
         ejecutar_intruccion_io(pcb);
         sem_post(&semBlocked);
         break;
-    case INTERRUPCION_FINALIZACION:
+    case FINALIZACION:
         finalizar_proceso(pcb);
 
-        int sem_value;
+        if (sem_getvalue(&semMultiprogramacion, &sem_value) == 0)
+        {
+            log_trace(LOGGER_KERNEL, "Se libera un espacio de multiprogramacion, semaforo: %d", sem_value);
+        }
+        break;
+    case INTERRUPCION_FINALIZACION:
+        pcb->contexto_ejecucion->motivo_finalizacion = INTERRUPTED_BY_USER;
+        finalizar_proceso(pcb);
+
         if (sem_getvalue(&semMultiprogramacion, &sem_value) == 0)
         {
             log_trace(LOGGER_KERNEL, "Se libera un espacio de multiprogramacion, semaforo: %d", sem_value);
@@ -261,7 +269,6 @@ void iniciar_colas_y_semaforos()
     pthread_mutex_init(&procesosEnSistemaMutex, NULL);
     pthread_mutex_init(&mutex_pid, NULL);
     pthread_mutex_init(&mutex_lista_interfaces, NULL);
-    pthread_mutex_init(&mutex_lista_blocked, NULL);
 
     sem_init(&semMultiprogramacion, 0, GRADO_MULTIPROGRAMACION);
     sem_init(&semNew, 0, 0);
@@ -278,7 +285,7 @@ void iniciar_colas_y_semaforos()
     squeue_new = squeue_create();
     squeue_ready = squeue_create();
     squeue_exec = squeue_create();
-    list_blocked = list_create();
+    squeue_blocked = squeue_create();
     squeue_exit = squeue_create();
 }
 
@@ -317,9 +324,7 @@ void finalizar_proceso(t_pcb *pcb)
 void bloquear_proceso(t_pcb *pcb, char *motivo)
 {
     cambiar_estado_pcb(pcb, BLOQUEADO);
-    pthread_mutex_lock(&mutex_lista_blocked);
-    list_add(list_blocked, pcb);
-    pthread_mutex_unlock(&mutex_lista_blocked);
+    squeue_push(squeue_blocked, pcb);
     log_info(LOGGER_KERNEL, "PID %d - Bloqueado por: %s", pcb->pid, motivo);
 }
 
@@ -330,9 +335,7 @@ void desbloquear_proceso(uint32_t pid)
         return ((t_pcb *)elemento)->pid == pid;
     }
 
-    pthread_mutex_lock(&mutex_lista_blocked);
-    t_pcb *pcb = list_remove_by_condition(list_blocked, (void *)comparar_pid);
-    pthread_mutex_unlock(&mutex_lista_blocked);
+    t_pcb *pcb = squeue_remove_by_condition(squeue_blocked, (void *)comparar_pid);
 
     if (pcb)
     {

@@ -66,6 +66,7 @@ extern int unidades_de_trabajo;
 extern nombre_instruccion instruccion_de_IO_a_ejecutar;
 
 extern t_pcb *pcb_ejecutandose;
+extern t_pcb *pcb_a_finalizar;
 
 extern sem_t semMultiprogramacion;
 extern sem_t semNew;
@@ -82,12 +83,11 @@ extern pthread_mutex_t procesoMutex;
 extern pthread_mutex_t procesosEnSistemaMutex;
 extern pthread_mutex_t mutex_pid;
 extern pthread_mutex_t mutex_lista_interfaces;
-extern pthread_mutex_t mutex_lista_blocked;
 
 extern t_squeue *squeue_new;
 extern t_squeue *squeue_ready;
 extern t_squeue *squeue_exec;
-extern t_list *list_blocked;
+extern t_squeue *squeue_blocked;
 extern t_squeue *squeue_exit;
 
 extern pthread_t hilo_quantum;

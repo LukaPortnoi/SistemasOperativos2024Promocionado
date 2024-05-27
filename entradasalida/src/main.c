@@ -18,6 +18,8 @@ t_interfaz *interfaz_actual;
 
 int main(int argc, char** argv)
 {
+    signal(SIGINT, manejador_signals);
+
     inicializar_config(argv[2]); //argv[2] es el path del archivo de configuracion
     log_debug(LOGGER_INPUT_OUTPUT, "Iniciando la interfaz %s de tipo %s", argv[1], TIPO_INTERFAZ);
     interfaz_actual = malloc(sizeof(t_interfaz)); //creamos la interfaz actual
@@ -64,7 +66,7 @@ void iniciar_conexiones()
 
     //conexion como cliente a KERNEL
     fd_io_kernel = crear_conexion(IP_KERNEL, PUERTO_KERNEL);
-    enviar_datos_interfaz(interfaz_actual, fd_io_kernel);
+    enviar_datos_interfaz(interfaz_actual, fd_io_kernel, CONEXION_INTERFAZ);
 }
 
 void finalizar_io()
@@ -73,4 +75,34 @@ void finalizar_io()
     config_destroy(CONFIG_INPUT_OUTPUT);
     liberar_conexion(fd_io_memoria);
     liberar_conexion(fd_io_kernel);
+}
+
+void manejador_signals(int signum)
+{
+	switch (signum)
+	{
+	case SIGUSR1:
+		log_trace(LOGGER_INPUT_OUTPUT, "Se recibio la señal SIGUSR1\n");
+		break;
+
+	case SIGUSR2:
+		log_trace(LOGGER_INPUT_OUTPUT, "Se recibio la señal SIGUSR2\n");
+		break;
+
+	case SIGINT:
+		log_trace(LOGGER_INPUT_OUTPUT, "Se recibio la señal SIGINT\n");
+        log_trace(LOGGER_INPUT_OUTPUT, "Se recibió SIGINT, cerrando conexiones y liberando recursos...");
+        enviar_datos_interfaz(interfaz_actual, fd_io_kernel, DESCONEXION_INTERFAZ);
+        finalizar_io();
+        exit(0);
+		break;
+
+	case SIGTERM:
+		log_trace(LOGGER_INPUT_OUTPUT, "Se recibio la señal SIGTERM\n");
+		break;
+
+	default:
+		log_trace(LOGGER_INPUT_OUTPUT, "Se recibio una señal no manejada\n");
+		break;
+	}
 }

@@ -128,28 +128,25 @@ void _sub(char *registro_destino, char *registro_origen) {
 // actualiza el program counter al número de instrucción pasada por parámetro.
 void _jnz(char *registro, char *instruccion)
 {
-    uint8_t *regis;
+    uint8_t *regis8 = NULL;
+    uint32_t *regis32 = NULL;
+    int is_regis_8bit = revisar_registro(registro);
 
-    if (revisar_registro(registro))
-    {
-        regis = get_registry8(registro);
+    if (is_regis_8bit) {
+        regis8 = get_registry8(registro);
+        if (*regis8 != 0) {
+            pcb_actual->contexto_ejecucion->registros->program_counter = str_to_uint32(instruccion);
+        } else {
+            log_warning(LOGGER_CPU, "El registro %s es igual a cero, no se actualiza el IP", registro);
+        }
+    } else {
+        regis32 = get_registry32(registro);
+        if (*regis32 != 0) {
+            pcb_actual->contexto_ejecucion->registros->program_counter = str_to_uint32(instruccion);
+        } else {
+            log_warning(LOGGER_CPU, "El registro %s es igual a cero, no se actualiza el IP", registro);
+        }
     }
-    else
-    {
-        uint32_t *regis = (uint32_t *)regis;
-        regis = get_registry32(registro);
-    }
-
-    if (regis != 0)
-    {
-        pcb_actual->contexto_ejecucion->registros->program_counter = str_to_uint32(instruccion);
-    }
-    else
-    {
-        log_warning(LOGGER_CPU, "El registro %s es igual a cero, no se actualiza el IP", registro);
-    }
-
-    free(regis);
 }
 
 void _io_gen_sleep(char *interfaz, char *unidades_de_trabajo, int cliente_socket)
