@@ -27,9 +27,6 @@ void cambiar_estado_pcb(t_pcb *pcb, t_estado_proceso estado);
 void finalizar_proceso(t_pcb *pcb);
 void bloquear_proceso(t_pcb *pcb, char *motivo);
 void desbloquear_proceso(uint32_t pid);
-void detener_planificador();
-void iniciar_planificador();
-
 
 // INTERFACES
 void ejecutar_intruccion_io(t_pcb *pcb_recibido);

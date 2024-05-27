@@ -25,17 +25,15 @@ t_squeue *squeue_blocked;
 t_squeue *squeue_exit;
 
 uint32_t PID_GLOBAL = 1;
-int contadorEjecutando = 0;
 
 pthread_t hilo_quantum;
-pthread_t hilo_largo_plazo;
-pthread_t hilo_corto_plazo;
 
 int sem_value; // VARIABLE PARA VERIFICAR EL VALOR DEL SEMAFORO MULTIPROGRAMACION
 
 // PLANIFICADOR LARGO PLAZO
 void iniciar_planificador_largo_plazo()
 {
+    pthread_t hilo_largo_plazo;
     log_debug(LOGGER_KERNEL, "Inicia Planificador Largo Plazo");
     pthread_create(&hilo_largo_plazo, NULL, (void *)chequear_grado_de_multiprogramacion, NULL);
     pthread_detach(hilo_largo_plazo);
@@ -62,8 +60,6 @@ void chequear_grado_de_multiprogramacion()
 {
     while (1)
     {
-        pthread_testcancel();
-
         sem_wait(&semNew);
 
         if (list_size(squeue_new->cola) == 0)
@@ -133,37 +129,29 @@ void serializar_inicializar_proceso(t_paquete *paquete, int pid_nuevo, char *pat
 void iniciar_planificador_corto_plazo()
 {
     log_debug(LOGGER_KERNEL, "Inicia Planificador Corto Plazo");
+    pthread_t hilo_corto_plazo;
+
     pthread_create(&hilo_corto_plazo, NULL, (void *)planificar_PCB_cortoPlazo, NULL);
     pthread_detach(hilo_corto_plazo);
 }
 
 void planificar_PCB_cortoPlazo()
 {
-    t_pcb *pcb;
     while (1)
     {
-        pthread_testcancel();
-        if (contadorEjecutando == 0)
+        sem_wait(&semReady);
+        if (list_size(squeue_ready->cola) == 0)
         {
-            sem_wait(&semReady);
-            if (list_size(squeue_ready->cola) == 0)
-            {
-                log_debug(LOGGER_KERNEL, "No hay procesos en Ready");
-                continue;
-            }
-            pcb = squeue_pop(squeue_ready);
+            log_debug(LOGGER_KERNEL, "No hay procesos en Ready");
+            continue;
         }
-        else
-        {   
-            pcb = squeue_pop(squeue_exec);
-        }
+        t_pcb *pcb = squeue_pop(squeue_ready);
         ejecutar_PCB(pcb);
     }
 }
 
 void ejecutar_PCB(t_pcb *pcb)
 {
-    contadorEjecutando = 0;
     cambiar_estado_pcb(pcb, EJECUTANDO);
     squeue_push(squeue_exec, pcb);
 
@@ -283,29 +271,6 @@ void atender_quantum(void *arg)
 }
 
 // OTRAS FUNCIONES
-void detener_planificador()
-{
-    contadorEjecutando = list_size(squeue_exec->cola);
-    t_interrupcion *interrupcion = malloc(sizeof(t_interrupcion));
-    interrupcion->motivo_interrupcion = INTERRUPCION_FINALIZACION;
-    interrupcion->pid = pcb_ejecutandose->pid;
-
-    enviar_interrupcion(fd_kernel_cpu_interrupt, interrupcion);
-    pthread_cancel(hilo_largo_plazo);
-    pthread_cancel(hilo_corto_plazo);
-    pthread_cancel(hilo_quantum);
-    pthread_join(hilo_largo_plazo, NULL);
-    pthread_join(hilo_corto_plazo, NULL);
-    pthread_join(hilo_quantum, NULL);
-    free(interrupcion);
-}
-
-void iniciar_planificador()
-{
-    iniciar_planificador_largo_plazo();
-    iniciar_planificador_corto_plazo();
-}
-
 void iniciar_colas_y_semaforos()
 {
     pthread_mutex_init(&procesoMutex, NULL);
