@@ -243,7 +243,18 @@ void finalizar_proceso_consola(char *pid_string)
     if (proceso->estado != FINALIZADO)
     {
       proceso->contexto_ejecucion->motivo_finalizacion = INTERRUPTED_BY_USER;
-      finalizar_proceso(proceso);
+      if (proceso->estado == NUEVO)
+      {
+        // FINALIZAR_PROCESO sin post a multiprogramacion
+        log_info(LOGGER_KERNEL, "Finaliza el proceso %d - Motivo: %s", proceso->pid, motivo_finalizacion_to_string(proceso->contexto_ejecucion->motivo_finalizacion));
+        cambiar_estado_pcb(proceso, FINALIZADO);
+        squeue_push(squeue_exit, proceso);
+        // liberar_estructuras_memoria(proceso->pid); // TODO: Liberar estructuras de memoria
+      }
+      else
+      {
+        finalizar_proceso(proceso);
+      }
     }
     else
     {
@@ -301,6 +312,7 @@ void cambiar_multiprogramacion(char *grado_multiprogramacion_string)
   int numero = atoi(grado_multiprogramacion_string);
   GRADO_MULTIPROGRAMACION = numero;
   log_debug(LOGGER_KERNEL, "Grado de multiprogramacion cambiado a: %d", GRADO_MULTIPROGRAMACION);
+  sem_init(&semMultiprogramacion, 0, GRADO_MULTIPROGRAMACION);
 }
 
 void mostrar_listado_estados_procesos()

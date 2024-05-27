@@ -28,6 +28,8 @@ uint32_t PID_GLOBAL = 1;
 
 pthread_t hilo_quantum;
 
+int sem_value; // VARIABLE PARA VERIFICAR EL VALOR DEL SEMAFORO MULTIPROGRAMACION
+
 // PLANIFICADOR LARGO PLAZO
 void iniciar_planificador_largo_plazo()
 {
@@ -59,6 +61,13 @@ void chequear_grado_de_multiprogramacion()
     while (1)
     {
         sem_wait(&semNew);
+
+        if (list_size(squeue_new->cola) == 0)
+        {
+            log_warning(LOGGER_KERNEL, "No hay procesos en NEW");
+            continue;
+        }
+
         sem_wait(&semMultiprogramacion);
 
         int sem_value;
@@ -81,9 +90,6 @@ void enviar_proceso_a_memoria(int pid_nuevo, char *path_proceso)
     t_paquete *paquete_nuevo_proceso = crear_paquete_con_codigo_de_operacion(INICIALIZAR_PROCESO);
     serializar_inicializar_proceso(paquete_nuevo_proceso, pid_nuevo, path_proceso);
     enviar_paquete(paquete_nuevo_proceso, fd_kernel_memoria);
-
-    log_debug(LOGGER_KERNEL, "El PID %d se envio a MEMORIA", pid_nuevo);
-
     eliminar_paquete(paquete_nuevo_proceso);
 }
 
@@ -134,8 +140,12 @@ void planificar_PCB_cortoPlazo()
     while (1)
     {
         sem_wait(&semReady);
+        if (list_size(squeue_ready->cola) == 0)
+        {
+            log_debug(LOGGER_KERNEL, "No hay procesos en Ready");
+            continue;
+        }
         t_pcb *pcb = squeue_pop(squeue_ready);
-        log_debug(LOGGER_KERNEL, "Se planifica el PID %d por %s", pcb->pid, ALGORITMO_PLANIFICACION);
         ejecutar_PCB(pcb);
     }
 }
@@ -146,7 +156,7 @@ void ejecutar_PCB(t_pcb *pcb)
     squeue_push(squeue_exec, pcb);
 
     enviar_pcb(pcb, fd_kernel_cpu_dispatch);
-    log_debug(LOGGER_KERNEL, "El PCB con PID %d se envio a CPU", pcb->pid);
+
     pcb_ejecutandose = pcb;
 
     if (strcmp(ALGORITMO_PLANIFICACION, "RR") == 0)
@@ -194,7 +204,6 @@ t_pcb *recibir_pcb_CPU(int fd_cpu)
         return NULL;
     }
 
-    log_debug(LOGGER_KERNEL, "Se recibio el PCB con PID %d de CPU", pcb_recibido->pid);
     return pcb_recibido;
 }
 
@@ -211,7 +220,6 @@ void desalojo_cpu(t_pcb *pcb, pthread_t hilo_quantum_id)
     t_motivo_desalojo *motivo_desalojo = malloc(sizeof(t_motivo_desalojo));
     *motivo_desalojo = pcb->contexto_ejecucion->motivo_desalojo;
 
-    int sem_value;
     switch (*motivo_desalojo)
     {
     case INTERRUPCION_FIN_QUANTUM:
@@ -229,11 +237,6 @@ void desalojo_cpu(t_pcb *pcb, pthread_t hilo_quantum_id)
         break;
     case FINALIZACION:
         finalizar_proceso(pcb);
-
-        if (sem_getvalue(&semMultiprogramacion, &sem_value) == 0)
-        {
-            log_trace(LOGGER_KERNEL, "Se libera un espacio de multiprogramacion, semaforo: %d", sem_value);
-        }
         break;
     case INTERRUPCION_FINALIZACION:
         pcb->contexto_ejecucion->motivo_finalizacion = INTERRUPTED_BY_USER;
@@ -325,6 +328,10 @@ void finalizar_proceso(t_pcb *pcb)
     squeue_push(squeue_exit, pcb);
     // liberar_estructuras_memoria(pcb->pid); // TODO: Liberar estructuras de memoria
     sem_post(&semMultiprogramacion);
+    if (sem_getvalue(&semMultiprogramacion, &sem_value) == 0)
+    {
+        log_trace(LOGGER_KERNEL, "Se libera un espacio de multiprogramacion, semaforo: %d", sem_value);
+    }
 }
 
 void bloquear_proceso(t_pcb *pcb, char *motivo)
@@ -427,6 +434,7 @@ void ejecutar_intruccion_io(t_pcb *pcb_recibido)
     else
     {
         log_error(LOGGER_KERNEL, "No se encontro la interfaz %s", nombre_interfaz);
+        pcb_recibido->contexto_ejecucion->motivo_finalizacion = INVALID_INTERFACE;
         finalizar_proceso(pcb_recibido);
     }
 }

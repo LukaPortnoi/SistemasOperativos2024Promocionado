@@ -39,14 +39,12 @@ static void procesar_conexion_kernel(void *void_args)
 		case CONEXION_INTERFAZ:
 			t_interfaz *interfaz_recibida_de_IO = recibir_datos_interfaz(cliente_socket);
 			agregar_interfaz_a_lista(interfaz_recibida_de_IO, cliente_socket);
-			log_debug(logger, "Cantidad de elementos en la lista de interfaces: %d", list_size(interfaces_conectadas));
 			break;
 
 		case DESCONEXION_INTERFAZ:
-			log_info(logger, "Desconexion de la interfaz");
 			t_interfaz *interfaz_desconectada = recibir_datos_interfaz(cliente_socket);
+			log_debug(logger, "Desconexion de %s", interfaz_desconectada->nombre_interfaz);
 			eliminar_interfaz_de_lista(interfaz_desconectada->nombre_interfaz);
-			log_debug(logger, "Cantidad de elementos en la lista de interfaces: %d", list_size(interfaces_conectadas));
 			break;
 
 		case FINALIZACION_INTERFAZ:
