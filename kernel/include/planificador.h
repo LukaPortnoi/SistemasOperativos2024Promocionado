@@ -28,6 +28,9 @@ void finalizar_proceso(t_pcb *pcb);
 void bloquear_proceso(t_pcb *pcb, char *motivo);
 void desbloquear_proceso(uint32_t pid);
 
+void detener_planificador();
+void iniciar_planificador();
+
 // INTERFACES
 void ejecutar_intruccion_io(t_pcb *pcb_recibido);
 t_interfaz_recibida *buscar_interfaz_por_nombre(char *nombre_interfaz);
