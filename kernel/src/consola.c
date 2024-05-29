@@ -304,13 +304,8 @@ t_pcb *buscar_proceso_en_cola(t_squeue *squeue, uint32_t pid)
   return proceso;
 }
 
-void detener_planificacion() {
-   detener_planificador();
-}
-void iniciar_planificacion() {
-   iniciar_planificador();
-
-}
+void detener_planificacion() {}
+void iniciar_planificacion() {}
 
 void cambiar_multiprogramacion(char *grado_multiprogramacion_string)
 {
