@@ -1,4 +1,5 @@
 INICIAR_PROCESO script_io_basico_1
-INICIAR_PROCESO script_io_basico_2
 INICIAR_PROCESO script_solo_cpu_2
-INICIAR_PROCESO script_solo_cpu_3
+INICIAR_PROCESO script_io_basico_2
+INICIAR_PROCESO script_io_basico_3
+INICIAR_PROCESO script_solo_cpu_1
