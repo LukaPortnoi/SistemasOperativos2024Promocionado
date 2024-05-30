@@ -5,6 +5,8 @@ pthread_mutex_t procesosEnSistemaMutex;
 pthread_mutex_t mutex_pid;
 pthread_mutex_t mutex_lista_interfaces;
 
+sem_t sem_planificador_largo_plazo;
+sem_t sem_planificador_corto_plazo;
 sem_t semMultiprogramacion;
 sem_t semNew;
 sem_t semReady;
@@ -29,6 +31,8 @@ uint32_t PID_GLOBAL = 1;
 pthread_t hilo_quantum;
 
 int sem_value; // VARIABLE PARA VERIFICAR EL VALOR DEL SEMAFORO MULTIPROGRAMACION
+
+volatile int planificar = 1;
 
 // PLANIFICADOR LARGO PLAZO
 void iniciar_planificador_largo_plazo()
@@ -58,9 +62,14 @@ void crear_proceso(char *path_proceso)
 
 void chequear_grado_de_multiprogramacion()
 {
-    while (1)
+    while (planificar)
     {
         sem_wait(&semNew);
+        sem_wait(&sem_planificador_largo_plazo);
+
+        int largo_plazo;
+        sem_getvalue(&sem_planificador_largo_plazo, &largo_plazo);
+        log_trace(LOGGER_KERNEL, "Valor semaforo LARGO plazo en su hilo: %d", largo_plazo);
 
         if (list_size(squeue_new->cola) == 0)
         {
@@ -82,6 +91,7 @@ void chequear_grado_de_multiprogramacion()
         log_info(LOGGER_KERNEL, "Cola Ready:");
         mostrar_procesos_en_squeue(squeue_ready, LOGGER_KERNEL);
         sem_post(&semReady);
+        sem_post(&sem_planificador_largo_plazo);
     }
 }
 
@@ -137,9 +147,15 @@ void iniciar_planificador_corto_plazo()
 
 void planificar_PCB_cortoPlazo()
 {
-    while (1)
+    while (planificar)
     {
         sem_wait(&semReady);
+        sem_wait(&sem_planificador_corto_plazo);
+
+        int corto_plazo;
+        sem_getvalue(&sem_planificador_corto_plazo, &corto_plazo);
+        log_trace(LOGGER_KERNEL, "Valor semaforo CORTO plazo en su hilo: %d", corto_plazo);
+
         if (list_size(squeue_ready->cola) == 0)
         {
             log_debug(LOGGER_KERNEL, "No hay procesos en Ready");
@@ -147,6 +163,7 @@ void planificar_PCB_cortoPlazo()
         }
         t_pcb *pcb = squeue_pop(squeue_ready);
         ejecutar_PCB(pcb);
+        sem_post(&sem_planificador_corto_plazo);
     }
 }
 
@@ -271,6 +288,53 @@ void atender_quantum(void *arg)
 }
 
 // OTRAS FUNCIONES
+void detener_planificadores()
+{
+    planificar = 0;
+    
+    int largo_plazo;
+    int corto_plazo;
+
+    sem_getvalue(&sem_planificador_largo_plazo, &largo_plazo);
+    sem_getvalue(&sem_planificador_corto_plazo, &corto_plazo);
+
+    if (largo_plazo == 1 && corto_plazo == 1)
+    {
+        sem_wait(&sem_planificador_corto_plazo);
+        sem_wait(&sem_planificador_largo_plazo);
+    }
+
+    sem_getvalue(&sem_planificador_largo_plazo, &largo_plazo);
+    sem_getvalue(&sem_planificador_corto_plazo, &corto_plazo);
+    log_trace(LOGGER_KERNEL, "Valor semaforo LARGO plazo: %d", largo_plazo);
+    log_trace(LOGGER_KERNEL, "Valor semaforo CORTO plazo: %d", corto_plazo);
+
+    log_debug(LOGGER_KERNEL, "Planificacion detenida");
+}
+
+void iniciar_planificadores()
+{
+    int largo_plazo;
+    int corto_plazo;
+    sem_getvalue(&sem_planificador_largo_plazo, &largo_plazo);
+    sem_getvalue(&sem_planificador_corto_plazo, &corto_plazo);
+
+    planificar = 1;
+
+    if (largo_plazo == 0 && corto_plazo == 0)
+    {
+        sem_post(&sem_planificador_corto_plazo);
+        sem_post(&sem_planificador_largo_plazo);
+    }
+
+    sem_getvalue(&sem_planificador_largo_plazo, &largo_plazo);
+    sem_getvalue(&sem_planificador_corto_plazo, &corto_plazo);
+    log_trace(LOGGER_KERNEL, "Valor semaforo LARGO plazo: %d", largo_plazo);
+    log_trace(LOGGER_KERNEL, "Valor semaforo CORTO plazo: %d", corto_plazo);
+
+    log_debug(LOGGER_KERNEL, "Planificacion iniciada");
+}
+
 void iniciar_colas_y_semaforos()
 {
     pthread_mutex_init(&procesoMutex, NULL);
@@ -278,6 +342,8 @@ void iniciar_colas_y_semaforos()
     pthread_mutex_init(&mutex_pid, NULL);
     pthread_mutex_init(&mutex_lista_interfaces, NULL);
 
+    sem_init(&sem_planificador_largo_plazo, 0, 1);
+    sem_init(&sem_planificador_corto_plazo, 0, 1);
     sem_init(&semMultiprogramacion, 0, GRADO_MULTIPROGRAMACION);
     sem_init(&semNew, 0, 0);
     sem_init(&semReady, 0, 0);

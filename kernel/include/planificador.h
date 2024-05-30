@@ -21,6 +21,8 @@ t_pcb *recibir_pcb_CPU(int socket);
 void atender_quantum(void *arg);
 
 // OTRAS FUNCIONES
+void detener_planificadores();
+void iniciar_planificadores();
 void iniciar_colas_y_semaforos(void);
 uint32_t asignar_pid(void);
 void cambiar_estado_pcb(t_pcb *pcb, t_estado_proceso estado);

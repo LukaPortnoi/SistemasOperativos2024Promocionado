@@ -68,6 +68,8 @@ extern nombre_instruccion instruccion_de_IO_a_ejecutar;
 extern t_pcb *pcb_ejecutandose;
 extern t_pcb *pcb_a_finalizar;
 
+extern sem_t sem_planificador_largo_plazo;
+extern sem_t sem_planificador_corto_plazo;
 extern sem_t semMultiprogramacion;
 extern sem_t semNew;
 extern sem_t semReady;
