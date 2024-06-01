@@ -5,7 +5,7 @@ char *IP_CPU;
 char *PUERTO_MEMORIA;
 char *PUERTO_ESCUCHA_DISPATCH;
 char *PUERTO_ESCUCHA_INTERRUPT;
-char *CANTIDAD_ENTRADAS_TLB;
+int CANTIDAD_ENTRADAS_TLB;
 char *ALGORITMO_TLB;
 
 t_log *LOGGER_CPU;
@@ -28,6 +28,7 @@ int main()
 {
     inicializar_config();
     iniciar_semaforos_etc();
+    inicializar_tlb();
 
     iniciar_conexiones();
 
@@ -45,7 +46,7 @@ void inicializar_config()
     PUERTO_MEMORIA = config_get_string_value(CONFIG, "PUERTO_MEMORIA");
     PUERTO_ESCUCHA_DISPATCH = config_get_string_value(CONFIG, "PUERTO_ESCUCHA_DISPATCH");
     PUERTO_ESCUCHA_INTERRUPT = config_get_string_value(CONFIG, "PUERTO_ESCUCHA_INTERRUPT");
-    CANTIDAD_ENTRADAS_TLB = config_get_string_value(CONFIG, "CANTIDAD_ENTRADAS_TLB");
+    CANTIDAD_ENTRADAS_TLB = config_get_int_value(CONFIG, "CANTIDAD_ENTRADAS_TLB");
     ALGORITMO_TLB = config_get_string_value(CONFIG, "ALGORITMO_TLB");
 }
 
