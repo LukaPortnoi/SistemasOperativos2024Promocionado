@@ -16,10 +16,18 @@ int fd_memoria;
 pthread_mutex_t mutex_comunicacion_procesos;
 pthread_mutex_t mutex_procesos;
 
+void *memoriaUsuario;
+uint32_t tamanioMemoria;
+
+t_list *tablaPaginas;
+t_list *marcosPaginas;
+t_list *procesos_totales;
+
 int main(void)
 {
 	inicializar_config();
 	iniciar_semaforos();
+	iniciar_memoria_usuario();
 
 	fd_memoria = iniciar_servidor(LOGGER_MEMORIA, "MEMORIA", IP_MEMORIA, PUERTO_ESCUCHA_MEMORIA);
 
@@ -32,7 +40,6 @@ int main(void)
 
 void inicializar_config()
 {
-	procesos_totales = list_create();
 	LOGGER_MEMORIA = iniciar_logger("memoria.log", "Servidor Memoria");
 	CONFIG_MEMORIA = iniciar_config("./memoria.config", "MEMORIA");
 	PUERTO_ESCUCHA_MEMORIA = config_get_string_value(CONFIG_MEMORIA, "PUERTO_ESCUCHA");
@@ -41,4 +48,33 @@ void inicializar_config()
 	PATH_INSTRUCCIONES = config_get_string_value(CONFIG_MEMORIA, "PATH_INSTRUCCIONES");
 	RETARDO_RESPUESTA = config_get_int_value(CONFIG_MEMORIA, "RETARDO_RESPUESTA");
 	IP_MEMORIA = config_get_string_value(CONFIG_MEMORIA, "IP_MEMORIA");
+}
+
+void iniciar_memoria_usuario()
+{
+	memoriaUsuario = malloc(TAM_MEMORIA);
+	memset(memoriaUsuario, 0, TAM_MEMORIA);
+	tamanioMemoria = TAM_MEMORIA;
+	if (memoriaUsuario == NULL)
+	{
+		log_error(LOGGER_MEMORIA, "Error al reservar memoria para el usuario");
+		exit(EXIT_FAILURE);
+	}
+
+	log_debug(LOGGER_MEMORIA, "Memoria reservada para el usuario");
+	
+	tablaPaginas = list_create();
+	marcosPaginas = list_create();
+	procesos_totales = list_create();
+
+	iniciar_marcos();
+}
+
+void iniciar_marcos()
+{
+	uint32_t cantidadMarcos = TAM_MEMORIA / TAM_PAGINA;
+	for (int i = 0; i < cantidadMarcos; i++)
+	{
+		// Creo un marco de pagina y todas esas cosas
+	}
 }

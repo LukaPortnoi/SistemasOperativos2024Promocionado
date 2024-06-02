@@ -1,6 +1,5 @@
 #include "../include/utils_memoria.h"
 
-t_list *procesos_totales;
 t_proceso_memoria *proceso_memoria;
 
 t_proceso_memoria *recibir_proceso_memoria(int socket_cliente)
@@ -190,15 +189,14 @@ t_buffer *crear_buffer_instruccion(t_instruccion *instruccion)
     return buffer;
 }
 
-// NO ME CIERRA LA FUNCION, SE REVISARA MAS TARDE (MAS QUE NADA AL DEVOLVER EL PROCESO_NUEVO, YA QUE SE INICIALIZA PREVIAMENTE Y NO SE DESARROLLO LA FUNCION POR EL TEMA DE LA ESTRUCTURA DE LOS PROCESOS EN MEMORIA)
 t_proceso_memoria *iniciar_proceso_path(t_proceso_memoria *proceso_nuevo)
 {
     pthread_mutex_lock(&mutex_procesos);
+    proceso_nuevo->tabla_paginas = list_create();
     proceso_nuevo->instrucciones = parsear_instrucciones(proceso_nuevo->path);
     log_debug(LOGGER_MEMORIA, "Instrucciones bien parseadas para el proceso PID [%d]", proceso_nuevo->pid);
-    list_add(procesos_totales, proceso_nuevo); // SOPORTE: ACA ESTARIA AGREGANDO EL PROCESO
+    list_add(procesos_totales, proceso_nuevo);
     pthread_mutex_unlock(&mutex_procesos);
-    // inicializar_nuevo_proceso(proceso_nuevo); -> Se usa para inicializar las estructuras de memoria del proceso. Se agregara despues si es que no hay drama con la funcion actual. Si genera problema, se eliminara y buscara otra alternativa
     return proceso_nuevo;
 }
 

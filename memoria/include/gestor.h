@@ -26,6 +26,7 @@ typedef struct
     uint32_t pid;
     char *path;
     t_list *instrucciones;
+    t_list *tabla_paginas;
 } t_proceso_memoria;
 
 extern char *PUERTO_ESCUCHA_MEMORIA;
@@ -41,9 +42,14 @@ extern t_config *CONFIG_MEMORIA;
 
 extern int fd_memoria;
 
-extern t_list *procesos_totales;
 extern pthread_mutex_t mutex_procesos;
 extern pthread_mutex_t mutex_comunicacion_procesos;
 extern t_proceso_memoria *proceso_memoria;
+
+extern void *memoriaUsuario;
+extern uint32_t tamanioMemoria;
+extern t_list *tablaPaginas;
+extern t_list *marcosPaginas;
+extern t_list *procesos_totales;
 
 #endif /* GESTOR_H_ */
