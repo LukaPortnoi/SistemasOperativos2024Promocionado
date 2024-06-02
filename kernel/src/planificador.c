@@ -33,8 +33,6 @@ pthread_t hilo_quantum;
 int sem_value;
 t_temporal *temporizador;
 
-volatile int planificar = 1;
-
 // PLANIFICADOR LARGO PLAZO
 void iniciar_planificador_largo_plazo()
 {
@@ -63,10 +61,10 @@ void crear_proceso(char *path_proceso)
 
 void chequear_grado_de_multiprogramacion()
 {
-    while (planificar)
+    while (1)
     {
         sem_wait(&semNew);
-        sem_wait(&sem_planificador_largo_plazo);
+        // sem_wait(&sem_planificador_largo_plazo);
 
         int largo_plazo;
         sem_getvalue(&sem_planificador_largo_plazo, &largo_plazo);
@@ -92,7 +90,7 @@ void chequear_grado_de_multiprogramacion()
         log_info(LOGGER_KERNEL, "Cola Ready:");
         mostrar_procesos_en_squeue(squeue_ready, LOGGER_KERNEL);
         sem_post(&semReady);
-        sem_post(&sem_planificador_largo_plazo);
+        // sem_post(&sem_planificador_largo_plazo);
     }
 }
 
@@ -148,10 +146,10 @@ void iniciar_planificador_corto_plazo()
 
 void planificar_PCB_cortoPlazo()
 {
-    while (planificar)
+    while (1)
     {
         sem_wait(&semReady);
-        sem_wait(&sem_planificador_corto_plazo);
+        // sem_wait(&sem_planificador_corto_plazo);
 
         t_pcb *pcb;
 
@@ -171,7 +169,7 @@ void planificar_PCB_cortoPlazo()
         }
 
         ejecutar_PCB(pcb);
-        sem_post(&sem_planificador_corto_plazo);
+        // sem_post(&sem_planificador_corto_plazo);
     }
 }
 
@@ -251,7 +249,7 @@ void desalojo_cpu(t_pcb *pcb, pthread_t hilo_quantum_id)
         pthread_cancel(hilo_quantum_id);
         pthread_join(hilo_quantum_id, NULL);
         temporal_stop(temporizador);
-        pcb->tiempo_q= temporal_gettime(temporizador);
+        pcb->tiempo_q = temporal_gettime(temporizador);
         temporal_destroy(temporizador);
     }
 
@@ -314,7 +312,7 @@ void atender_quantum(void *arg)
 // OTRAS FUNCIONES
 void detener_planificadores()
 {
-    planificar = 0;
+    // planificar = 0;
 
     int largo_plazo;
     int corto_plazo;
@@ -343,7 +341,7 @@ void iniciar_planificadores()
     sem_getvalue(&sem_planificador_largo_plazo, &largo_plazo);
     sem_getvalue(&sem_planificador_corto_plazo, &corto_plazo);
 
-    planificar = 1;
+    // planificar = 1;
 
     if (largo_plazo == 0 && corto_plazo == 0)
     {
