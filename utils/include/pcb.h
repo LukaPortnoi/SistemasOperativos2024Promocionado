@@ -21,6 +21,7 @@ typedef struct
     uint32_t pid;
     t_estado_proceso estado;
     uint32_t quantum;
+    uint64_t tiempo_q;
     t_contexto_ejecucion *contexto_ejecucion;
 } t_pcb;
 

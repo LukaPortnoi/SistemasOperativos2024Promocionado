@@ -31,7 +31,6 @@ uint32_t PID_GLOBAL = 1;
 pthread_t hilo_quantum;
 
 int sem_value;
-int tiempo_quantum;
 t_temporal *temporizador;
 
 volatile int planificar = 1;
@@ -154,26 +153,23 @@ void planificar_PCB_cortoPlazo()
         sem_wait(&semReady);
         sem_wait(&sem_planificador_corto_plazo);
 
-        int corto_plazo;
-        sem_getvalue(&sem_planificador_corto_plazo, &corto_plazo);
-        log_trace(LOGGER_KERNEL, "Valor semaforo CORTO plazo en su hilo: %d", corto_plazo);
+        t_pcb *pcb;
 
         if (strcmp(ALGORITMO_PLANIFICACION, "VRR") == 0 && list_size(squeue_readyPlus->cola) > 0)
         {
-            t_pcb *pcb = squeue_pop(squeue_readyPlus);
-            list_add_in_index(squeue_ready->cola, 0, pcb);
-            sem_post(&semReady);
-            sem_post(&sem_planificador_corto_plazo);
-            continue;
+            pcb = squeue_pop(squeue_readyPlus);
         }
-
-        if (list_size(squeue_ready->cola) == 0)
+        else
         {
-            log_debug(LOGGER_KERNEL, "No hay procesos en Ready");
-            continue;
+            if (list_size(squeue_ready->cola) == 0)
+            {
+                log_debug(LOGGER_KERNEL, "No hay procesos en Ready");
+                sem_post(&sem_planificador_corto_plazo);
+                continue;
+            }
+            pcb = squeue_pop(squeue_ready);
         }
 
-        t_pcb *pcb = squeue_pop(squeue_ready);
         ejecutar_PCB(pcb);
         sem_post(&sem_planificador_corto_plazo);
     }
@@ -255,7 +251,7 @@ void desalojo_cpu(t_pcb *pcb, pthread_t hilo_quantum_id)
         pthread_cancel(hilo_quantum_id);
         pthread_join(hilo_quantum_id, NULL);
         temporal_stop(temporizador);
-        tiempo_quantum = temporal_gettime(temporizador);
+        pcb->tiempo_q= temporal_gettime(temporizador);
         temporal_destroy(temporizador);
     }
 
@@ -319,7 +315,7 @@ void atender_quantum(void *arg)
 void detener_planificadores()
 {
     planificar = 0;
-    
+
     int largo_plazo;
     int corto_plazo;
 
@@ -446,24 +442,30 @@ void desbloquear_proceso(uint32_t pid)
 
     if (pcb)
     {
-        if(strcmp(ALGORITMO_PLANIFICACION, "VRR") == 0){     
-            if(tiempo_quantum < pcb->quantum){
-                pcb->quantum -= tiempo_quantum;
+        if (strcmp(ALGORITMO_PLANIFICACION, "VRR") == 0)
+        {
+            if (pcb->tiempo_q < pcb->quantum)
+            {
+                pcb->quantum -= pcb->tiempo_q;
                 squeue_push(squeue_readyPlus, pcb);
                 sem_post(&semReady);
-            }else {
+            }
+            else
+            {
                 cambiar_estado_pcb(pcb, LISTO);
                 squeue_push(squeue_ready, pcb);
                 log_info(LOGGER_KERNEL, "Cola Ready:");
                 mostrar_procesos_en_squeue(squeue_ready, LOGGER_KERNEL);
                 sem_post(&semReady);
             }
-        } else {
-        cambiar_estado_pcb(pcb, LISTO);
-        squeue_push(squeue_ready, pcb);
-        log_info(LOGGER_KERNEL, "Cola Ready:");
-        mostrar_procesos_en_squeue(squeue_ready, LOGGER_KERNEL);
-        sem_post(&semReady);
+        }
+        else
+        {
+            cambiar_estado_pcb(pcb, LISTO);
+            squeue_push(squeue_ready, pcb);
+            log_info(LOGGER_KERNEL, "Cola Ready:");
+            mostrar_procesos_en_squeue(squeue_ready, LOGGER_KERNEL);
+            sem_post(&semReady);
         }
     }
 }

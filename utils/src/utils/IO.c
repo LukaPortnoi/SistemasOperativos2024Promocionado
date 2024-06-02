@@ -25,6 +25,7 @@ void serializar_IO_instruccion(t_paquete *paquete, t_pcb *pcb, int unidades_de_t
                             sizeof(t_motivo_desalojo) +
                             sizeof(t_motivo_finalizacion) +
                             sizeof(int) +
+                            sizeof(uint64_t) +
                             sizeof(uint32_t) +
                             interfaz_length +
                             sizeof(nombre_instruccion);
@@ -40,6 +41,9 @@ void serializar_IO_instruccion(t_paquete *paquete, t_pcb *pcb, int unidades_de_t
 
     memcpy(paquete->buffer->stream + desplazamiento, &(pcb->quantum), sizeof(uint32_t));
     desplazamiento += sizeof(uint32_t);
+
+    memcpy(paquete->buffer->stream + desplazamiento, &(pcb->tiempo_q), sizeof(uint64_t));
+    desplazamiento += sizeof(uint64_t);
 
     memcpy(paquete->buffer->stream + desplazamiento, pcb->contexto_ejecucion->registros, tam_registros);
     desplazamiento += tam_registros;
@@ -90,6 +94,9 @@ t_pcb *deserializar_pcb_para_interfaz(t_buffer *buffer, char **nombre_interfaz, 
 
     memcpy(&(pcb->quantum), stream + desplazamiento, sizeof(uint32_t));
     desplazamiento += sizeof(uint32_t);
+
+    memcpy(&(pcb->tiempo_q), stream + desplazamiento, sizeof(uint64_t));
+    desplazamiento += sizeof(uint64_t);
 
     pcb->contexto_ejecucion = malloc(sizeof(t_contexto_ejecucion));
     if (pcb->contexto_ejecucion == NULL)

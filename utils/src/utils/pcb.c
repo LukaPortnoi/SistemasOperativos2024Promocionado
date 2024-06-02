@@ -1,5 +1,16 @@
 #include "../include/pcb.h"
 
+/*  siempre que trabaje con PCBs va a ser de esta forma
+typedef struct
+{
+    uint32_t pid;
+    t_estado_proceso estado;
+    uint32_t quantum;
+    uint64_t tiempo_q;
+    t_contexto_ejecucion *contexto_ejecucion;
+} t_pcb;
+*/
+
 // Inicializar Registros
 
 void inicializar_contexto_y_registros(t_pcb *pcb)
@@ -19,6 +30,7 @@ t_pcb *crear_pcb(uint32_t pid, t_estado_proceso estado, uint32_t quantum)
     pcb->pid = pid;
     pcb->estado = estado;
     pcb->quantum = quantum;
+    pcb->tiempo_q = 0;
     inicializar_contexto_y_registros(pcb);
     return pcb;
 }
@@ -43,6 +55,7 @@ t_buffer *crear_buffer_pcb(t_pcb *pcb)
     buffer->size = sizeof(uint32_t) +
                    sizeof(t_estado_proceso) +
                    sizeof(uint32_t) +
+                   sizeof(uint64_t) +
                    tam_registros +
                    sizeof(t_motivo_desalojo) +
                    sizeof(t_motivo_finalizacion);
@@ -58,6 +71,9 @@ t_buffer *crear_buffer_pcb(t_pcb *pcb)
 
     memcpy(buffer->stream + desplazamiento, &(pcb->quantum), sizeof(uint32_t));
     desplazamiento += sizeof(uint32_t);
+
+    memcpy(buffer->stream + desplazamiento, &(pcb->tiempo_q), sizeof(uint64_t));
+    desplazamiento += sizeof(uint64_t);
 
     memcpy(buffer->stream + desplazamiento, pcb->contexto_ejecucion->registros, tam_registros);
     desplazamiento += tam_registros;
@@ -97,6 +113,9 @@ t_pcb *deserializar_pcb(t_buffer *buffer)
 
     memcpy(&(pcb->quantum), stream + desplazamiento, sizeof(uint32_t));
     desplazamiento += sizeof(uint32_t);
+
+    memcpy(&(pcb->tiempo_q), stream + desplazamiento, sizeof(uint64_t));
+    desplazamiento += sizeof(uint64_t);
 
     pcb->contexto_ejecucion = malloc(sizeof(t_contexto_ejecucion));
     if (pcb->contexto_ejecucion == NULL)
@@ -191,6 +210,9 @@ t_pcb *recibir_pcbTOP(int socket_cliente)
 
     memcpy(&(pcb->quantum), buffer + desplazamiento, sizeof(uint32_t));
     desplazamiento += sizeof(uint32_t);
+
+    memcpy(&(pcb->tiempo_q), buffer + desplazamiento, sizeof(uint64_t));
+    desplazamiento += sizeof(uint64_t);
 
     pcb->contexto_ejecucion = malloc(sizeof(t_contexto_ejecucion));
     pcb->contexto_ejecucion->registros = malloc(sizeof(t_registros));
