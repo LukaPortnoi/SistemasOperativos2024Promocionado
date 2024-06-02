@@ -16,6 +16,7 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 
+#include <commons/temporal.h>
 #include <commons/log.h>
 #include <commons/string.h>
 #include <commons/config.h>

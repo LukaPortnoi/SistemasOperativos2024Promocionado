@@ -30,7 +30,9 @@ uint32_t PID_GLOBAL = 1;
 
 pthread_t hilo_quantum;
 
-int sem_value; // VARIABLE PARA VERIFICAR EL VALOR DEL SEMAFORO MULTIPROGRAMACION
+int sem_value;
+int tiempo_quantum;
+temporal temporizador;
 
 volatile int planificar = 1;
 
@@ -161,6 +163,13 @@ void planificar_PCB_cortoPlazo()
             log_debug(LOGGER_KERNEL, "No hay procesos en Ready");
             continue;
         }
+        if (strcmp(ALGORITMO_PLANIFICACION, "VRR") == 0 && list_size(squeue_readyPlus->cola) > 0)
+        {
+            t_pcb *pcb = squeue_pop(squeue_readyPlus);
+            list_add_in_index(squeue_ready->cola, 0, pcb);
+            sem_post(&semReady);
+            continue;
+        }
         t_pcb *pcb = squeue_pop(squeue_ready);
         ejecutar_PCB(pcb);
         sem_post(&sem_planificador_corto_plazo);
@@ -178,6 +187,12 @@ void ejecutar_PCB(t_pcb *pcb)
 
     if (strcmp(ALGORITMO_PLANIFICACION, "RR") == 0)
     {
+        pthread_create(&hilo_quantum, NULL, (void *)atender_quantum, NULL);
+    }
+
+    if (strcmp(ALGORITMO_PLANIFICACION, "VRR") == 0)
+    {
+        temporizador = temporal_create();
         pthread_create(&hilo_quantum, NULL, (void *)atender_quantum, NULL);
     }
 
@@ -232,6 +247,15 @@ void desalojo_cpu(t_pcb *pcb, pthread_t hilo_quantum_id)
         pthread_join(hilo_quantum_id, NULL);
     }
 
+    if (strcmp(ALGORITMO_PLANIFICACION, "VRR") == 0)
+    {
+        pthread_cancel(hilo_quantum_id);
+        pthread_join(hilo_quantum_id, NULL);
+        temporal_stop(temporizador);
+        tiempo_quantum = temporal_gettime(temporizador);
+        temporal_destroy(temporizador);
+    }
+
     squeue_pop(squeue_exec);
 
     t_motivo_desalojo *motivo_desalojo = malloc(sizeof(t_motivo_desalojo));
@@ -277,7 +301,7 @@ void atender_quantum(void *arg)
     pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
     pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
 
-    sleep(QUANTUM / 1000);
+    sleep(pcb_ejecutandose->quantum / 1000);
 
     t_interrupcion *interrupcion = malloc(sizeof(t_interrupcion));
     interrupcion->motivo_interrupcion = INTERRUPCION_FIN_QUANTUM;
@@ -418,11 +442,19 @@ void desbloquear_proceso(uint32_t pid)
 
     if (pcb)
     {
+        if(strcmp(ALGORITMO_PLANIFICACION, "VRR") == 0){            
+            if(tiempo_quantum < pcb->quantum){
+                pcb->quantum -= tiempo_quantum;
+                squeue_push(squeue_readyPlus, pcb);
+            }
+        }
+        else {
         cambiar_estado_pcb(pcb, LISTO);
         squeue_push(squeue_ready, pcb);
         log_info(LOGGER_KERNEL, "Cola Ready:");
         mostrar_procesos_en_squeue(squeue_ready, LOGGER_KERNEL);
         sem_post(&semReady);
+        }
     }
 }
 
