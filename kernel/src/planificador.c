@@ -85,11 +85,7 @@ void chequear_grado_de_multiprogramacion()
         }
 
         t_pcb *pcb_a_mover = squeue_pop(squeue_new);
-        cambiar_estado_pcb(pcb_a_mover, LISTO); // previamente tendria que hablar con memoria antes de pasar a ready, tengo que esperar respuesta de que memoria todo en orden
-        squeue_push(squeue_ready, pcb_a_mover);
-        log_info(LOGGER_KERNEL, "Cola Ready:");
-        mostrar_procesos_en_squeue(squeue_ready, LOGGER_KERNEL);
-        sem_post(&semReady);
+        proceso_listo(pcb_a_mover, false);
         // sem_post(&sem_planificador_largo_plazo);
     }
 }
@@ -263,11 +259,7 @@ void desalojo_cpu(t_pcb *pcb, pthread_t hilo_quantum_id)
     case INTERRUPCION_FIN_QUANTUM:
         log_info(LOGGER_KERNEL, "PID: %d - Desalojado por fin de Quantum", pcb->pid);
         pcb->quantum = QUANTUM;
-        cambiar_estado_pcb(pcb, LISTO);
-        squeue_push(squeue_ready, pcb);
-        log_info(LOGGER_KERNEL, "Cola Ready:");
-        mostrar_procesos_en_squeue(squeue_ready, LOGGER_KERNEL);
-        sem_post(&semReady);
+        proceso_listo(pcb, false);
         break;
     case INTERRUPCION_BLOQUEO:
         log_debug(LOGGER_KERNEL, "PID %d - Desalojado por bloqueo", pcb->pid);
@@ -409,6 +401,24 @@ void cambiar_estado_pcb(t_pcb *pcb, t_estado_proceso estado)
     pthread_mutex_unlock(&procesoMutex);
 }
 
+void proceso_listo(t_pcb *pcb, bool es_ready_plus)
+{
+    cambiar_estado_pcb(pcb, LISTO); // TODO: previamente tendria que hablar con memoria antes de pasar a ready, tengo que esperar respuesta de que memoria todo en orden
+    if (es_ready_plus)
+    {
+        squeue_push(squeue_readyPlus, pcb);
+        log_info(LOGGER_KERNEL, "Cola Ready Plus:");
+        mostrar_procesos_en_squeue(squeue_readyPlus, LOGGER_KERNEL);
+    }
+    else
+    {
+        squeue_push(squeue_ready, pcb);
+        log_info(LOGGER_KERNEL, "Cola Ready:");
+        mostrar_procesos_en_squeue(squeue_ready, LOGGER_KERNEL);
+    }
+    sem_post(&semReady);
+}
+
 void finalizar_proceso(t_pcb *pcb)
 {
     log_info(LOGGER_KERNEL, "Finaliza el proceso %d - Motivo: %s", pcb->pid, motivo_finalizacion_to_string(pcb->contexto_ejecucion->motivo_finalizacion));
@@ -445,25 +455,16 @@ void desbloquear_proceso(uint32_t pid)
             if (pcb->tiempo_q < pcb->quantum)
             {
                 pcb->quantum -= pcb->tiempo_q;
-                squeue_push(squeue_readyPlus, pcb);
-                sem_post(&semReady);
+                proceso_listo(pcb, true);
             }
             else
             {
-                cambiar_estado_pcb(pcb, LISTO);
-                squeue_push(squeue_ready, pcb);
-                log_info(LOGGER_KERNEL, "Cola Ready:");
-                mostrar_procesos_en_squeue(squeue_ready, LOGGER_KERNEL);
-                sem_post(&semReady);
+                proceso_listo(pcb, false);
             }
         }
         else
         {
-            cambiar_estado_pcb(pcb, LISTO);
-            squeue_push(squeue_ready, pcb);
-            log_info(LOGGER_KERNEL, "Cola Ready:");
-            mostrar_procesos_en_squeue(squeue_ready, LOGGER_KERNEL);
-            sem_post(&semReady);
+            proceso_listo(pcb, false);
         }
     }
 }
