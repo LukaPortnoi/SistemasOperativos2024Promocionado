@@ -3,6 +3,7 @@
 
 #include "./gestor.h"
 #include "../../utils/include/contexto.h"
+#include "./manejo_memoria.h"
 
 t_proceso_memoria *recibir_proceso_memoria(int socket);
 t_proceso_memoria *deserializar_proceso(t_buffer *buffer);
@@ -19,6 +20,8 @@ t_list *parsear_instrucciones(char *path);
 t_instruccion *armar_estructura_instruccion(nombre_instruccion instruccion, char *parametro1, char *parametro2);
 char *leer_archivo(char *path);
 void deserializar_pedido_instruccion(uint32_t *pid, uint32_t *pc, t_buffer *buffer);
+void recibir_pedido_resize(uint32_t *pid, uint32_t *nueva_cantidad_paginas, int socket);
+void deserializar_pedido_resize(uint32_t *pid, uint32_t *nueva_cantidad_paginas, t_buffer *buffer);
 void iniciar_semaforos();
 
 #endif // UTILS_MEMORIA_H

@@ -18,22 +18,27 @@ void _set(char *registro, char *valor)
 // la Dirección Lógica que se encuentra en el Registro Dirección y lo almacena en el Registro Datos.
 void _mov_in(char *registro, char *direc_logica)
 {
-    uint8_t *regis;
+    uint32_t direccionLogica;
 
-    if (revisar_registro(registro))
+    if (revisar_registro(direc_logica))
     {
-        regis = get_registry8(registro);
+        direccionLogica = str_to_uint8(direc_logica);
     }
     else
     {
-        uint32_t *regis = (uint32_t *)regis;
-        regis = get_registry32(registro);
+        direccionLogica = str_to_uint32(direc_logica);
     }
 
-    uint32_t valor = 0;
-    if (valor != -1)
+    uint32_t direccionFisica = traducir_direccion(pcb_actual->pid, direccionLogica, TAM_PAGINA);
+    char *valorObtenido = obtener_valor_direccion_fisica(direccionFisica);
+
+    if (revisar_registro(registro))
     {
-        *(regis) = valor;
+        *(get_registry8(registro)) = get_registry8(valorObtenido);
+    }
+    else
+    {
+        *(get_registry8(registro)) = get_registry32(valorObtenido);
     }
 }
 
@@ -41,28 +46,36 @@ void _mov_in(char *registro, char *direc_logica)
 // la dirección física de memoria obtenida a partir de la Dirección Lógica almacenada en el Registro Dirección.
 void _mov_out(char *direc_logica, char *registro)
 {
-    uint8_t *regis;
 
-    if (revisar_registro(registro))
+    uint32_t direccionLogica;
+
+    if (revisar_registro(direc_logica))
     {
-        regis = get_registry8(registro);
+        direccionLogica = str_to_uint8(direc_logica);
     }
     else
     {
-        uint32_t *regis = (uint32_t *)regis;
-        regis = get_registry32(registro);
+        direccionLogica = str_to_uint32(direc_logica);
     }
 
-    uint32_t valor = 0;
-    if (valor != -1)
+    uint32_t direccionFisica = traducir_direccion(pcb_actual->pid, direccionLogica, TAM_PAGINA);
+    char *valorObtenido = obtener_valor_direccion_fisica(direccionFisica);
+
+    if (revisar_registro(registro))
     {
-        *(regis) = valor;
+        *(get_registry8(valorObtenido)) = get_registry8(registro);
+        ;
+    }
+    else
+    {
+        *(get_registry32(valorObtenido)) = get_registry32(registro);
     }
 }
 
 // (Registro Destino, Registro Origen): Suma al Registro Destino el
 // Registro Origen y deja el resultado en el Registro Destino.
-void _sum(char *registro_destino, char *registro_origen) {
+void _sum(char *registro_destino, char *registro_origen)
+{
     uint8_t *destino8 = NULL;
     uint32_t *destino32 = NULL;
     uint8_t *origen8 = NULL;
@@ -70,23 +83,34 @@ void _sum(char *registro_destino, char *registro_origen) {
     int is_destino_8bit = revisar_registro(registro_destino);
     int is_origen_8bit = revisar_registro(registro_origen);
 
-    if (is_destino_8bit) {
+    if (is_destino_8bit)
+    {
         destino8 = get_registry8(registro_destino);
-    } else {
+    }
+    else
+    {
         destino32 = get_registry32(registro_destino);
     }
 
-    if (is_origen_8bit) {
+    if (is_origen_8bit)
+    {
         origen8 = get_registry8(registro_origen);
-    } else {
+    }
+    else
+    {
         origen32 = get_registry32(registro_origen);
     }
 
-    if (is_destino_8bit && is_origen_8bit) {
+    if (is_destino_8bit && is_origen_8bit)
+    {
         *destino8 = *destino8 + *origen8;
-    } else if (!is_destino_8bit && !is_origen_8bit) {
+    }
+    else if (!is_destino_8bit && !is_origen_8bit)
+    {
         *destino32 = *destino32 + *origen32;
-    } else {
+    }
+    else
+    {
         // Manejo de error si los registros son de tamaños diferentes
         printf("Error: registros de diferentes tamaños no pueden ser sumados.\n");
     }
@@ -94,7 +118,8 @@ void _sum(char *registro_destino, char *registro_origen) {
 
 // (Registro Destino, Registro Origen): Resta al Registro Destino
 // el Registro Origen y deja el resultado en el Registro Destino
-void _sub(char *registro_destino, char *registro_origen) {
+void _sub(char *registro_destino, char *registro_origen)
+{
     uint8_t *destino8 = NULL;
     uint32_t *destino32 = NULL;
     uint8_t *origen8 = NULL;
@@ -102,23 +127,34 @@ void _sub(char *registro_destino, char *registro_origen) {
     int is_destino_8bit = revisar_registro(registro_destino);
     int is_origen_8bit = revisar_registro(registro_origen);
 
-    if (is_destino_8bit) {
+    if (is_destino_8bit)
+    {
         destino8 = get_registry8(registro_destino);
-    } else {
+    }
+    else
+    {
         destino32 = get_registry32(registro_destino);
     }
 
-    if (is_origen_8bit) {
+    if (is_origen_8bit)
+    {
         origen8 = get_registry8(registro_origen);
-    } else {
+    }
+    else
+    {
         origen32 = get_registry32(registro_origen);
     }
 
-    if (is_destino_8bit && is_origen_8bit) {
+    if (is_destino_8bit && is_origen_8bit)
+    {
         *destino8 = *destino8 - *origen8;
-    } else if (!is_destino_8bit && !is_origen_8bit) {
+    }
+    else if (!is_destino_8bit && !is_origen_8bit)
+    {
         *destino32 = *destino32 - *origen32;
-    } else {
+    }
+    else
+    {
         // Manejo de error si los registros son de tamaños diferentes
         printf("Error: registros de diferentes tamaños no pueden ser restados.\n");
     }
@@ -132,18 +168,27 @@ void _jnz(char *registro, char *instruccion)
     uint32_t *regis32 = NULL;
     int is_regis_8bit = revisar_registro(registro);
 
-    if (is_regis_8bit) {
+    if (is_regis_8bit)
+    {
         regis8 = get_registry8(registro);
-        if (*regis8 != 0) {
+        if (*regis8 != 0)
+        {
             pcb_actual->contexto_ejecucion->registros->program_counter = str_to_uint32(instruccion);
-        } else {
+        }
+        else
+        {
             log_warning(LOGGER_CPU, "El registro %s es igual a cero, no se actualiza el IP", registro);
         }
-    } else {
+    }
+    else
+    {
         regis32 = get_registry32(registro);
-        if (*regis32 != 0) {
+        if (*regis32 != 0)
+        {
             pcb_actual->contexto_ejecucion->registros->program_counter = str_to_uint32(instruccion);
-        } else {
+        }
+        else
+        {
             log_warning(LOGGER_CPU, "El registro %s es igual a cero, no se actualiza el IP", registro);
         }
     }
@@ -153,6 +198,33 @@ void _io_gen_sleep(char *interfaz, char *unidades_de_trabajo, int cliente_socket
 {
     int unidades_de_trabajoNum = atoi(unidades_de_trabajo);
     enviar_interfaz_IO(pcb_actual, interfaz, unidades_de_trabajoNum, cliente_socket, IO_GEN_SLEEP);
+}
+
+void enviar_resize(char *tamanioAReasignar)
+{
+    uint32_t tamanioAReasignarNum = str_to_uint32(tamanioAReasignar);
+    enviar_resize_a_memoria(pcb_actual, tamanioAReasignarNum);
+}
+
+void enviar_resize_a_memoria(t_pcb *pcb, uint32_t tamanioAReasignar)
+{
+    t_paquete *paquete = crear_paquete_con_codigo_de_operacion(PEDIDO_RESIZE);
+    serializar_resize(pcb, tamanioAReasignar, paquete);
+    enviar_paquete(paquete, fd_cpu_memoria);
+    eliminar_paquete(paquete);
+}
+
+void serializar_resize(t_pcb *pcb, uint32_t tamanioAReasignar, t_paquete *paquete)
+{
+    paquete->buffer->size = sizeof(uint32_t) + sizeof(uint32_t);
+
+    paquete->buffer->stream = malloc(paquete->buffer->size);
+    int offset = 0;
+
+    memcpy(paquete->buffer->stream + offset, &(pcb->pid), sizeof(uint32_t));
+    offset += sizeof(uint32_t);
+
+    memcpy(paquete->buffer->stream + offset, &tamanioAReasignar, sizeof(uint32_t));
 }
 
 uint32_t *get_registry32(char *registro)
@@ -268,3 +340,5 @@ bool revisar_registro(char *registro)
         return false;
     }
 }
+
+// en memoria

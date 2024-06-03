@@ -192,11 +192,11 @@ t_buffer *crear_buffer_instruccion(t_instruccion *instruccion)
 t_proceso_memoria *iniciar_proceso_path(t_proceso_memoria *proceso_nuevo)
 {
     pthread_mutex_lock(&mutex_procesos);
-    proceso_nuevo->tabla_paginas = list_create();
     proceso_nuevo->instrucciones = parsear_instrucciones(proceso_nuevo->path);
     log_debug(LOGGER_MEMORIA, "Instrucciones bien parseadas para el proceso PID [%d]", proceso_nuevo->pid);
     list_add(procesos_totales, proceso_nuevo);
     pthread_mutex_unlock(&mutex_procesos);
+    iniciar_estructura_proceso_memoria(proceso_nuevo);
     return proceso_nuevo;
 }
 
@@ -229,6 +229,10 @@ t_list *parsear_instrucciones(char *path)
         {
             list_add(instrucciones, armar_estructura_instruccion(JNZ, palabras[1], palabras[2]));
         }
+        else if (string_equals_ignore_case(palabras[0], "RESIZE"))
+        {
+            list_add(instrucciones, armar_estructura_instruccion(RESIZE, palabras[1], ""));
+        }        
         else if (string_equals_ignore_case(palabras[0], "IO_GEN_SLEEP"))
         {
             list_add(instrucciones, armar_estructura_instruccion(IO_GEN_SLEEP, palabras[1], palabras[2]));
@@ -299,8 +303,70 @@ char *leer_archivo(char *path)
     return cadena;
 }
 
+void recibir_pedido_resize(uint32_t *pid, uint32_t *nueva_cantidad_paginas, int socket)
+{
+    t_paquete *paquete = recibir_paquete(socket);
+    deserializar_pedido_resize(pid, nueva_cantidad_paginas, paquete->buffer);
+    eliminar_paquete(paquete);
+}
+
+void deserializar_pedido_resize(uint32_t *pid, uint32_t *tamanio, t_buffer *buffer)
+{
+    int desplazamiento = 0;
+    memcpy(pid, buffer->stream + desplazamiento, sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+    memcpy(tamanio, buffer->stream + desplazamiento, sizeof(uint32_t));
+}
+
 void iniciar_semaforos()
 {
     pthread_mutex_init(&mutex_procesos, NULL);
     pthread_mutex_init(&mutex_comunicacion_procesos, NULL);
 }
+
+void recibir_mov_in_cpu(int *dir_fisica, int socket)
+{
+	int size;
+	void *buffer = recibir_buffer(&size, socket);
+	int offset = 0;
+
+	// printf("size del stream a deserializar \n%d", size);
+	memcpy(dir_fisica, buffer + offset, sizeof(int));
+
+	free(buffer);
+}
+
+/*
+void enviar_valor_mov_in_cpu(uint32_t valor, int socket)
+{
+	t_paquete *paquete_mov_in = crear_paquete_con_codigo_de_operacion(MOV_IN_CPU);
+	paquete_mov_in->buffer->size += sizeof(uint32_t);
+	paquete_mov_in->buffer->stream = realloc(paquete_mov_in->buffer->stream, paquete_mov_in->buffer->size);
+	memcpy(paquete_mov_in->buffer->stream, &(valor), sizeof(uint32_t));
+	enviar_paquete(paquete_mov_in, socket);
+	eliminar_paquete(paquete_mov_in);
+} 
+
+uint32_t leer_memoria_cpu(uint32_t dir_fisica)
+{
+	uint32_t valor_leido = 0;
+	pthread_mutex_lock(&mutex_memoria_usuario);
+	memcpy(&valor_leido, memoria_usuario + dir_fisica, sizeof(uint32_t));
+	pthread_mutex_unlock(&mutex_memoria_usuario);
+
+	t_marco *marco = marco_desde_df(dir_fisica);
+	// TODO -- VALIDAR -- cuando hago un F_READ debo marcar la pagina que tiene el marco como modificada
+	t_proceso_memoria *proceso = obtener_proceso_pid((uint32_t)marco->pid);
+	t_list *paginas_en_memoria = obtener_entradas_con_bit_presencia_1(proceso);
+	t_entrada_tabla_pag *pagina_modificada = obtener_entrada_con_marco(paginas_en_memoria, marco->num_de_marco);
+	actualizo_entrada_para_futuro_reemplazo(pagina_modificada);
+
+	if (config_valores_memoria.retardo_respuesta / 1000 > 0)
+		sleep(config_valores_memoria.retardo_respuesta / 1000);
+	else
+		sleep(1);
+	usleep(config_valores_memoria.retardo_respuesta * 1000);
+	log_info(logger_memoria_info, "***** ACCESO A ESPACIO USUARIO - CPU - PID [%d] - ACCION: [LEER] - DIRECCION FISICA: [%d]", marco->pid, dir_fisica); // LOG OBLIGATORIO
+
+	return valor_leido;
+}*/

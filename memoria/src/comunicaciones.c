@@ -52,7 +52,7 @@ static void procesar_conexion_memoria(void *void_args)
 			proceso_memoria = obtener_proceso_pid(pid);
 			if (proceso_memoria == NULL)
 			{
-				log_error(logger, "No se encontro el proceso con PID %d", pid); // ACA ERROR
+				log_error(logger, "No se encontro el proceso con PID %d", pid);
 				break;
 			}
 			else
@@ -70,6 +70,23 @@ static void procesar_conexion_memoria(void *void_args)
 				break;
 			}
 
+		case PEDIDO_RESIZE:
+			uint32_t pidResize, tamanio;
+			recibir_pedido_resize(&pidResize, &tamanio, cliente_socket);
+			log_debug(logger, "Se recibio un pedido de resize para el PID %d y %d tamanio", pidResize, tamanio);
+			proceso_memoria = obtener_proceso_pid(pidResize);
+			if (proceso_memoria == NULL)
+			{
+				log_error(logger, "No se encontro el proceso con PID %d", pidResize);
+				break;
+			}
+			else
+			{
+				uint32_t response = resize_proceso_memoria(proceso_memoria, tamanio);
+				//enviar_respuesta_resize(cliente_socket, response);
+				break;
+			}
+
 		// -------------------
 		// -- I/O - MEMORIA --
 		// -------------------
@@ -80,13 +97,13 @@ static void procesar_conexion_memoria(void *void_args)
 		// ---------------
 		// -- ERRORES --
 		// ---------------
-		case ERROROPCODE: // NO TIENEN QUE HABER NEGATIVOS, NO VA AENTRAR NUNCA
+		case ERROROPCODE:
 			log_error(logger, "Cliente desconectado de %s... con cop -1", server_name);
-			break; // hay un return, voy a probar un break
+			break;
 		default:
 			log_error(logger, "Algo anduvo mal en el server de %s", server_name);
 			log_info(logger, "Cop: %d", cop);
-			break; // hay un return, voy a probar un break
+			break;
 		}
 	}
 

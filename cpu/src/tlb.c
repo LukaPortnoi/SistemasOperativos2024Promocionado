@@ -29,7 +29,7 @@ uint32_t buscar_en_tlb(uint32_t pid, uint32_t pagina)
     {
         if (tlb->entradas[i].pid == pid && tlb->entradas[i].pagina == pagina)
         {
-            return tlb->entradas[i].marcos; // TLB-HIT
+            return tlb->entradas[i].marco; // TLB-HIT
         }
     }
     return -1; // TLB-MISS
@@ -44,11 +44,11 @@ void reemplazo_algoritmo_FIFO(uint32_t pid, uint32_t pagina, uint32_t marco)
     }
     tlb->entradas[tlb->size_actual_tlb - 1].pid = pid;
     tlb->entradas[tlb->size_actual_tlb - 1].pagina = pagina;
-    tlb->entradas[tlb->size_actual_tlb - 1].marcos = marco;
+    tlb->entradas[tlb->size_actual_tlb - 1].marco = marco;
 }
 
 // Reemplazo por LRU
-void reemplazo_algoritmo_LRU(uint32_t pid, uint32_t pagina, uint32_t marco, uint32_t tiempo_transcurrido)
+void reemplazo_algoritmo_LRU(uint32_t pid, uint32_t pagina, uint32_t marco)
 {
     int lruIndex = 0;
     for (int i = 1; i < tlb->size_actual_tlb; i++)
@@ -60,19 +60,19 @@ void reemplazo_algoritmo_LRU(uint32_t pid, uint32_t pagina, uint32_t marco, uint
     }
     tlb->entradas[lruIndex].pid = pid;
     tlb->entradas[lruIndex].pagina = pagina;
-    tlb->entradas[lruIndex].marcos = marco;
-    tlb->entradas[lruIndex].tiempo_lru = tiempo_transcurrido;
+    tlb->entradas[lruIndex].marco = marco;
+    // tlb->entradas[lruIndex].tiempo_lru = tiempo_transcurrido;
 }
 
 // Actualizar TLB
-void actualizar_TLB(uint32_t pid, uint32_t pagina, uint32_t marco, uint32_t tiempo_transcurrido)
+void actualizar_TLB(uint32_t pid, uint32_t pagina, uint32_t marco)
 {
     if (tlb->size_actual_tlb < tlb->size_tlb)
     {
         tlb->entradas[tlb->size_actual_tlb].pid = pid;
         tlb->entradas[tlb->size_actual_tlb].pagina = pagina;
-        tlb->entradas[tlb->size_actual_tlb].marcos = marco;
-        tlb->entradas[tlb->size_actual_tlb].tiempo_lru = tiempo_transcurrido;
+        tlb->entradas[tlb->size_actual_tlb].marco = marco;
+        // tlb->entradas[tlb->size_actual_tlb].tiempo_lru = tiempo_transcurrido;
         tlb->size_actual_tlb++;
     }
     else
@@ -83,7 +83,126 @@ void actualizar_TLB(uint32_t pid, uint32_t pagina, uint32_t marco, uint32_t tiem
         }
         else
         {
-            reemplazo_algoritmo_LRU(pid, pagina, marco, tiempo_transcurrido);
+            reemplazo_algoritmo_LRU(pid, pagina, marco);
         }
     }
+}
+
+int traducir_direccion(uint32_t pid, uint32_t logicalAddress, uint32_t pageSize)
+{
+    uint32_t pagina = logicalAddress / pageSize;
+    uint32_t offset = logicalAddress - pagina * pageSize;
+    uint32_t direccionFisica = 0;
+    // Buscar en la TLB
+
+    uint32_t marco = buscar_en_tlb(pid, pagina);
+    if (marco != -1)
+    {
+        // TLB Hit
+        printf("TLB Hit\n");
+        direccionFisica = marco * pageSize + offset;
+        return direccionFisica;
+    }
+    else
+    {
+        // TLB Miss
+        printf("TLB Miss\n");
+
+        // pido marco a memoria enviando la pagina y el pid y me devuelve un marco
+        enviar_Pid_Pagina_Memoria(pid, pagina);
+        // marco = list_get(tabla_paginas, pagina);
+        actualizar_TLB(pid, pagina, marco);
+        direccionFisica = marco * pageSize + offset;
+        return direccionFisica;
+    }
+}
+
+void enviar_Pid_Pagina_Memoria(uint32_t pid_proceso, uint32_t pagina_nueva)
+{
+    t_paquete *paquete_nueva_pagina = crear_paquete_con_codigo_de_operacion(ENVIAR_PAGINA);
+    serializar_nueva_pagina(paquete_nueva_pagina, pid_proceso, pagina_nueva);
+    enviar_paquete(paquete_nueva_pagina, fd_cpu_memoria);
+    eliminar_paquete(paquete_nueva_pagina);
+}
+
+void serializar_nueva_pagina(t_paquete *paquete, uint32_t pid_proceso, uint32_t pagina_nueva)
+{
+    int buffer_size = sizeof(uint32_t) + sizeof(uint32_t);
+    void *stream = malloc(buffer_size);
+    if (stream == NULL)
+    {
+        return;
+    }
+
+    int offset = 0;
+    memcpy(stream + offset, &pid_proceso, sizeof(uint32_t));
+    offset += sizeof(uint32_t);
+
+    memcpy(stream + offset, &pagina_nueva, sizeof(uint32_t));
+
+    t_buffer *buffer = malloc(sizeof(t_buffer));
+    if (buffer == NULL)
+    {
+        free(stream);
+        return;
+    }
+
+    buffer->size = buffer_size;
+    buffer->stream = stream;
+
+    paquete->buffer = buffer;
+}
+
+char *obtener_valor_direccion_fisica(uint32_t direccion_fisica)
+{
+
+    if (direccion_fisica == -1)
+    {
+        return direccion_fisica;
+    }
+
+    enviar_direccion_fisica_memoria(direccion_fisica);
+
+    //char resultado = recibir_direccion_fisica(fd_cpu_memoria);
+
+
+   char valor="AX";
+
+   // log_info(cpu_logger_info, "PID: %d - Acción: LEER - Dirección Física: %d - Valor: %d", contexto_actual->pid, df, valor);
+
+    return valor;
+}
+
+void enviar_direccion_fisica_memoria(uint32_t direccion_fisica)
+{
+    t_paquete *paquete_direccion_fisica = crear_paquete_con_codigo_de_operacion(ENVIAR_DIRECCION_FISICA);
+    serializar_direccion_fisica(paquete_direccion_fisica, direccion_fisica);
+    enviar_paquete(paquete_direccion_fisica, fd_cpu_memoria);
+    eliminar_paquete(paquete_direccion_fisica);
+}
+
+void serializar_direccion_fisica(t_paquete *paquete, uint32_t direccion_fisica)
+{
+    int buffer_size = sizeof(uint32_t);
+    void *stream = malloc(buffer_size);
+    if (stream == NULL)
+    {
+        return;
+    }
+
+    int offset = 0;
+    memcpy(stream + offset, &direccion_fisica, sizeof(uint32_t));
+
+
+    t_buffer *buffer = malloc(sizeof(t_buffer));
+    if (buffer == NULL)
+    {
+        free(stream);
+        return;
+    }
+
+    buffer->size = buffer_size;
+    buffer->stream = stream;
+
+    paquete->buffer = buffer;
 }

@@ -32,6 +32,7 @@ extern char *PUERTO_ESCUCHA_DISPATCH;
 extern char *PUERTO_ESCUCHA_INTERRUPT;
 extern int CANTIDAD_ENTRADAS_TLB;
 extern char *ALGORITMO_TLB;
+extern uint32_t TAM_PAGINA;
 
 extern t_log *LOGGER_CPU;
 extern t_config *CONFIG;

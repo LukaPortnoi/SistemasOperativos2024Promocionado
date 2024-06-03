@@ -10,12 +10,11 @@ char *ALGORITMO_TLB;
 
 t_log *LOGGER_CPU;
 t_config *CONFIG;
+uint32_t TAM_PAGINA;
 
 int fd_cpu_dispatch;
 int fd_cpu_interrupt;
 int fd_cpu_memoria;
-
-
 
 t_pcb *pcb_actual;
 
@@ -32,7 +31,8 @@ int main()
 
     iniciar_conexiones();
 
-    while (server_escuchar(LOGGER_CPU, "CPU_DISPATCH", fd_cpu_dispatch));
+    while (server_escuchar(LOGGER_CPU, "CPU_DISPATCH", fd_cpu_dispatch))
+        ;
 
     finalizar_cpu();
 }
@@ -48,6 +48,7 @@ void inicializar_config()
     PUERTO_ESCUCHA_INTERRUPT = config_get_string_value(CONFIG, "PUERTO_ESCUCHA_INTERRUPT");
     CANTIDAD_ENTRADAS_TLB = config_get_int_value(CONFIG, "CANTIDAD_ENTRADAS_TLB");
     ALGORITMO_TLB = config_get_string_value(CONFIG, "ALGORITMO_TLB");
+    TAM_PAGINA = config_get_int_value(CONFIG, "TAM_PAGINA");
 }
 
 void iniciar_conexiones()

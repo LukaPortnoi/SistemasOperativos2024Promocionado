@@ -21,12 +21,25 @@
 #include "../../utils/include/sockets_client.h"
 #include "../../utils/include/sockets_utils.h"
 
+
+typedef struct
+{
+	uint32_t numeroMarco;
+	uint32_t pid;
+} t_marco;
+typedef struct
+{
+    t_list *tabla;
+    pthread_mutex_t *mutex;
+} t_tabla_paginas;
 typedef struct
 {
     uint32_t pid;
     char *path;
+    uint32_t tamanio;
     t_list *instrucciones;
     t_list *tabla_paginas;
+    // t_tabla_paginas *tabla_paginas;
 } t_proceso_memoria;
 
 extern char *PUERTO_ESCUCHA_MEMORIA;
@@ -48,7 +61,6 @@ extern t_proceso_memoria *proceso_memoria;
 
 extern void *memoriaUsuario;
 extern uint32_t tamanioMemoria;
-extern t_list *tablaPaginas;
 extern t_list *marcosPaginas;
 extern t_list *procesos_totales;
 

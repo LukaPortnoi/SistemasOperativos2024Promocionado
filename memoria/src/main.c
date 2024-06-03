@@ -19,7 +19,6 @@ pthread_mutex_t mutex_procesos;
 void *memoriaUsuario;
 uint32_t tamanioMemoria;
 
-t_list *tablaPaginas;
 t_list *marcosPaginas;
 t_list *procesos_totales;
 
@@ -63,18 +62,20 @@ void iniciar_memoria_usuario()
 
 	log_debug(LOGGER_MEMORIA, "Memoria reservada para el usuario");
 	
-	tablaPaginas = list_create();
 	marcosPaginas = list_create();
 	procesos_totales = list_create();
 
 	iniciar_marcos();
 }
 
-void iniciar_marcos()
-{
-	uint32_t cantidadMarcos = TAM_MEMORIA / TAM_PAGINA;
+void iniciar_marcos(){
+
+	int cantidadMarcos = TAM_MEMORIA / TAM_PAGINA;
 	for (int i = 0; i < cantidadMarcos; i++)
 	{
-		// Creo un marco de pagina y todas esas cosas
+		t_marco *marco = malloc(sizeof(t_marco));
+		marco->numeroMarco = i;
+		marco->pid = -1;
+		list_add(marcosPaginas, marco);
 	}
 }
