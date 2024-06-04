@@ -18,5 +18,6 @@
 #include <commons/string.h>
 #include <commons/collections/queue.h>
 #include <commons/collections/list.h>
+#include <../include/sockets_client.h>
 
 #endif /* GESTOR_H_ */

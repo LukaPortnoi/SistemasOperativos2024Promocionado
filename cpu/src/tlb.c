@@ -111,6 +111,7 @@ int traducir_direccion(uint32_t pid, uint32_t logicalAddress, uint32_t pageSize)
         // pido marco a memoria enviando la pagina y el pid y me devuelve un marco
         enviar_Pid_Pagina_Memoria(pid, pagina);
         marco = recibir_marco_memoria(fd_cpu_memoria);
+        printf("Marco recibido: %d\n", marco);
         actualizar_TLB(pid, pagina, marco);
         direccionFisica = marco * pageSize + offset;
         return direccionFisica;
@@ -153,7 +154,7 @@ void serializar_nueva_pagina(t_paquete *paquete, uint32_t pid_proceso, uint32_t 
     paquete->buffer = buffer;
 }
 
-char *obtener_valor_direccion_fisica(uint32_t direccion_fisica)
+/*uint32_t obtener_valor_direccion_fisica(uint32_t direccion_fisica)
 {
 
     if (direccion_fisica == -1)
@@ -163,7 +164,7 @@ char *obtener_valor_direccion_fisica(uint32_t direccion_fisica)
 
     enviar_direccion_fisica_memoria(direccion_fisica);
 
-    char resultado = recibir_direccion_fisica(fd_cpu_memoria);
+    uint32_t resultado = recibir_direccion_fisica(fd_cpu_memoria);
 
 
    //char valor="AX";
@@ -171,12 +172,13 @@ char *obtener_valor_direccion_fisica(uint32_t direccion_fisica)
    // log_info(cpu_logger_info, "PID: %d - Acción: LEER - Dirección Física: %d - Valor: %d", contexto_actual->pid, df, valor);
 
     return resultado;
-}
+}*/
 
-uint32_t recibir_direccion_fisica(int socket_cliente)
+/*uint32_t recibir_direccion_fisica(int socket_cliente)
 {
     t_paquete *paquete = recibir_paquete(socket_cliente);
-    uint32_t valor_direccion_fisica = deserializar_direccion_fisica(paquete->buffer, direccion_fisica);
+    //Creo que "deserializar_direccion_fisica()" no existe. SI EXISTEN
+    uint32_t valor_direccion_fisica = deserializar_direccion_fisica(paquete->buffer, direccion_fisica); //????? Estan tratando de obtener el valor de la df con la df??
     eliminar_paquete(paquete);
     return valor_direccion_fisica;
 }
@@ -185,12 +187,14 @@ uint32_t recibir_direccion_fisica(int socket_cliente)
 void enviar_direccion_fisica_memoria(uint32_t direccion_fisica)
 {
     t_paquete *paquete_direccion_fisica = crear_paquete_con_codigo_de_operacion(ENVIAR_DIRECCION_FISICA);
+    //Creeria que la funcion "serializar_direccion_fisica()" no existe.   SI EXISTEN
     serializar_direccion_fisica(paquete_direccion_fisica, direccion_fisica);
     enviar_paquete(paquete_direccion_fisica, fd_cpu_memoria);
     eliminar_paquete(paquete_direccion_fisica);
-}
+}*/
 
 
+//Esto no podria usarlo en el comuniaciones.c de CPU??? Al haber TLB-miss le avisa a memoria y esta se la devuelve a CPU (Se me ocurre teorizando en el momento)
 uint32_t recibir_marco_memoria(int fd_cpu_memoria){
     op_cod cop;
     uint32_t marcoRecibido;
@@ -203,14 +207,16 @@ uint32_t recibir_marco_memoria(int fd_cpu_memoria){
         break;
 
     default:
-        log_error(LOGGER_KERNEL, "No se pudo recibir el marco");
+        log_error(LOGGER_CPU, "No se pudo recibir el marco");
         break;
     }
 
-    if (marcoRecibido == NULL)
+    printf("Marco recibido: %d\n", marcoRecibido);
+
+    if (marcoRecibido < 0)
     {
-        log_error(LOGGER_KERNEL, "Error al recibir MARCO de MEMORIA");
-        return NULL;
+        log_error(LOGGER_CPU, "Error al recibir MARCO de MEMORIA");
+        return -1;
     }
 
     return marcoRecibido;
@@ -229,16 +235,13 @@ uint32_t recibir_marco(int socket_cliente)
 
 uint32_t deserializar_marco(t_buffer *buffer)
 {
-    uint32_t marco = malloc(sizeof(uint32_t));
-
-    if (marco == NULL)
-    {
-        return NULL;
-    }
+    uint32_t marco;
 
     void *stream = buffer->stream;
 
-    memcpy(&marco, buffer->stream, sizeof(uint32_t));
+    memcpy(&(marco), stream , sizeof(uint32_t));
+
+    printf("Marco deserializado: %d\n", marco);
     return marco;
 }
 

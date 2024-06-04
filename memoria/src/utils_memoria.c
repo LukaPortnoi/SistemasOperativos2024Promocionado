@@ -232,6 +232,10 @@ t_list *parsear_instrucciones(char *path)
         else if (string_equals_ignore_case(palabras[0], "RESIZE"))
         {
             list_add(instrucciones, armar_estructura_instruccion(RESIZE, palabras[1], ""));
+        }
+        else if (string_equals_ignore_case(palabras[0], "MOV_IN"))
+        {
+            list_add(instrucciones, armar_estructura_instruccion(MOV_IN, palabras[1], palabras[2]));
         }        
         else if (string_equals_ignore_case(palabras[0], "IO_GEN_SLEEP"))
         {
@@ -324,24 +328,21 @@ void iniciar_semaforos()
     pthread_mutex_init(&mutex_comunicacion_procesos, NULL);
 }
 
-
 void enviar_valor_mov_in_cpu(uint32_t valor, int socket)
 {
-	t_paquete *paquete = crear_paquete_con_codigo_de_operacion(MOV_IN_CPU);
-	serializar_direccion_fisica(paquete, valor);
+	t_paquete *paquete_mov_in = crear_paquete_con_codigo_de_operacion(MOV_IN_CPU);
+	serializar_direccion_fisica(paquete_mov_in, valor);
 	enviar_paquete(paquete_mov_in, socket);
 	eliminar_paquete(paquete_mov_in);
 } 
 
-uint32_t recibir_mov_in_cpu(int socket_cliente, uint32_t direccion_fisica)
+uint32_t recibir_mov_in_cpu(int socket_cliente, uint32_t *direccion_fisica)
 {
     t_paquete *paquete = recibir_paquete(socket_cliente);
-    uint32_t valor_direccion_fisica = deserializar_direccion_fisica(paquete->buffer, direccion_fisica);
+    deserializar_direccion_fisica(paquete->buffer, direccion_fisica);
     eliminar_paquete(paquete);
-    return valor_direccion_fisica;
+    return direccion_fisica;
 }
-
-
 
 void recibir_pedido_marco(uint32_t *pagina , uint32_t *pid_proceso, int socket)
 {
@@ -360,16 +361,16 @@ void deserializar_pedido_marco(uint32_t *pagina, uint32_t *pid_proceso, t_buffer
 
 void enviar_marco(int socket, uint32_t marco)
 {
-    t_paquete *paquete = crear_paquete_con_codigo_de_operacion(ENVIAR_MARCO);
-    s(paquete, marco);
-    serializar_marco(paquete, socket);
+    t_paquete *paquete = crear_paquete_con_codigo_de_operacion(ENVIAR_MARCO);// ??????
+    serializar_marco(paquete, marco);
+    enviar_paquete(paquete, socket);
 	eliminar_paquete(paquete);
-
 }
 
 void serializar_marco(t_paquete *paquete, uint32_t marco)
 {
     paquete->buffer->size = sizeof(uint32_t);
+    paquete->buffer->stream = malloc(paquete->buffer->size);
     memcpy(paquete->buffer->stream, &(marco), sizeof(uint32_t));
 }
 

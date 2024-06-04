@@ -24,7 +24,7 @@ void recibir_pedido_resize(uint32_t *pid, uint32_t *nueva_cantidad_paginas, int 
 void deserializar_pedido_resize(uint32_t *pid, uint32_t *nueva_cantidad_paginas, t_buffer *buffer);
 void iniciar_semaforos();
 void enviar_valor_mov_in_cpu(uint32_t valor, int socket);
-uint32_t recibir_mov_in_cpu(int socket_cliente, uint32_t direccion_fisica);
+uint32_t recibir_mov_in_cpu(int socket_cliente, uint32_t *direccion_fisica);
 void recibir_pedido_marco(uint32_t *pagina , uint32_t *pid_proceso, int socket);
 void deserializar_pedido_marco(uint32_t *pagina, uint32_t *pid_proceso, t_buffer *buffer);
 void enviar_marco(int socket, uint32_t marco);

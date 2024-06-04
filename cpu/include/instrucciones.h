@@ -17,4 +17,5 @@ uint32_t *get_registry32(char *registro);
 uint8_t *get_registry8(char *registro);
 char *instruccion_to_string(nombre_instruccion nombre);
 bool revisar_registro(char *registro);
+void _resize(char *tamanioAReasignar);
 #endif // INSTRUCCIONES_H_

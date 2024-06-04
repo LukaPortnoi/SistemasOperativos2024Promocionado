@@ -48,7 +48,7 @@ static void procesar_conexion_memoria(void *void_args)
 		case PEDIDO_INSTRUCCION:
 			uint32_t pid, pc;
 			recibir_pedido_instruccion(&pid, &pc, cliente_socket);
-			log_debug(logger, "Se recibio un pedido de instruccion para el PID %d y PC %d", pid, pc);
+			// log_debug(logger, "Se recibio un pedido de instruccion para el PID %d y PC %d", pid, pc);
 			proceso_memoria = obtener_proceso_pid(pid);
 			if (proceso_memoria == NULL)
 			{
@@ -61,7 +61,7 @@ static void procesar_conexion_memoria(void *void_args)
 				if (instruccion != NULL)
 				{
 					enviar_instruccion(cliente_socket, instruccion);
-					log_debug(logger, "Se envia la instruccion a CPU de PC %d para el PID %d y es: %s - %s - %s", pc, pid, instruccion_to_string(instruccion->nombre), instruccion->parametro1, instruccion->parametro2);
+					// log_debug(logger, "Se envia la instruccion a CPU de PC %d para el PID %d y es: %s - %s - %s", pc, pid, instruccion_to_string(instruccion->nombre), instruccion->parametro1, instruccion->parametro2);
 				}
 				else
 				{
@@ -83,41 +83,45 @@ static void procesar_conexion_memoria(void *void_args)
 			else
 			{
 				uint32_t response = resize_proceso_memoria(proceso_memoria, tamanio);
-				//enviar_respuesta_resize(cliente_socket, response);
+				// enviar_respuesta_resize(cliente_socket, response);
 				break;
 			}
 
-		case MOV_IN_CPU: // Lee el valor del marco y lo devuelve para guardarlo en el registro (se pide la direccion) - recibo direccion fisica
-            int direccion_fisica;
-            recibir_mov_in_cpu(&direccion_fisica, cliente_socket);
-            uint32_t valor_direccion_fisica = leer_memoria_cpu(direccion_fisica);
-            enviar_valor_mov_in_cpu(valor_direccion_fisica, cliente_socket); // MOV_IN_CPU
-            break;
+		case PEDIDO_MOV_IN: // Lee el valor del marco y lo devuelve para guardarlo en el registro (se pide la direccion) - recibo direccion fisica
+			/*int direccion_fisica_mov_in;
+			recibir_mov_in_cpu(&direccion_fisica_mov_in, cliente_socket);
+			//Creo que "leer_memoria_cpu()" no existe
+			uint32_t valor_direccion_fisica_mov_in = leer_memoria_cpu(direccion_fisica_mov_in);
+			enviar_valor_mov_in_cpu(valor_direccion_fisica_mov_in, cliente_socket); // MOV_IN_CPU  */
+			break;
 
-		case MOV_OUT_CPU: // me pasa por parametro un uint32_t y tengo que guardarlo en el marco que me dice
-            uint32_t valor_direccion_fisica;
-            int direccion_fisica;
-            recibir_mov_out_cpu(&valor_direccion_fisica, &dir_fisica, sockecliente_sockett_cpu_int);
-            escribir_memoria_cpu(direccion_fisica, valor_direccion_fisica);
-            break;
-			
-		case PEDIDO_MARCO: 
+		case PEDIDO_MOV_OUT: // me pasa por parametro un uint32_t y tengo que guardarlo en el marco que me dice
+			/*uint32_t valor_direccion_fisica_mov_out;
+			int direccion_fisica_mov_out;
+			//Creeria que la funcion "recibir_mov_out()" no existe
+			recibir_mov_out_cpu(&valor_direccion_fisica_mov_out, cliente_socket); //antes decia esto en el tercer argumento "sockecliente_sockett_cpu_int". ¿Que es "&dir_fisica" en el segundo argumento y de donde sale?
+			//Creo que la funcion "escribir_memoria_cpu()" tampoco existe
+			escribir_memoria_cpu(direccion_fisica_mov_out, valor_direccion_fisica_mov_out);*/
+			break;
+
+		case PEDIDO_MARCO:
 			uint32_t pid_proceso, pagina;
-			recibir_pedido_marco( &pagina, &pid_proceso, cliente_socket);
+			recibir_pedido_marco(&pagina, &pid_proceso, cliente_socket);
 			log_debug(logger, "Se recibio un pedido de marco para el PID %d y pagina %d", pid_proceso, pagina);
 			proceso_memoria = obtener_proceso_pid(pid_proceso);
 			if (proceso_memoria == NULL)
 			{
-				log_error(logger, "No se encontro el proceso con PID %d", pidMarco);
+				log_error(logger, "No se encontro el proceso con PID %d", pid_proceso); // El parametro decia "pidMarco" y se cambio a "pid_proceso" porque no existia, consultar que se quiso hacer ahi
 				break;
 			}
 			else
 			{
-				uint32_t marco = obtener_marco(proceso_memoria, pagina);
+				uint32_t marco = obtener_marco_de_pagina(proceso_memoria, pagina);
+				printf("El marco es: %d\n", marco);
 				enviar_marco(cliente_socket, marco);
 				break;
 			}
-			
+
 		// -------------------
 		// -- I/O - MEMORIA --
 		// -------------------

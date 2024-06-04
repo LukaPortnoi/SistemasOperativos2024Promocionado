@@ -60,8 +60,12 @@ void execute(t_instruccion *instruccion, int socket)
         _io_gen_sleep(instruccion->parametro1, instruccion->parametro2, socket);
         break;
     case RESIZE:
-        enviar_resize(instruccion->parametro1);
+        _resize(instruccion->parametro1);
         //esperar_respuesta_resize();
+        loguear_y_sumar_pc(instruccion);
+        break;
+    case MOV_IN:
+        _mov_in(instruccion->parametro1, instruccion->parametro2);
         loguear_y_sumar_pc(instruccion);
         break;
     case EXIT:

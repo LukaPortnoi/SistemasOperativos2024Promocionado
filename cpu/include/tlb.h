@@ -33,7 +33,7 @@ void actualizar_TLB(uint32_t pid, uint32_t pagina, uint32_t marco);
 int traducir_direccion(uint32_t pid, uint32_t logicalAddress, uint32_t pageSize);
 void enviar_Pid_Pagina_Memoria(uint32_t pid_proceso, uint32_t pagina_nueva);
 void serializar_nueva_pagina(t_paquete *paquete, uint32_t pid_proceso, uint32_t pagina_nueva);
-char *obtener_valor_direccion_fisica(uint32_t direccion_fisica);
+uint32_t obtener_valor_direccion_fisica(uint32_t direccion_fisica);
 void enviar_direccion_fisica_memoria(uint32_t direccion_fisica);
 uint32_t recibir_direccion_fisica(int socket_cliente);
 uint32_t recibir_marco_memoria(int fd_cpu_memoria);

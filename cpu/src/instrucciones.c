@@ -18,28 +18,28 @@ void _set(char *registro, char *valor)
 // la Dirección Lógica que se encuentra en el Registro Dirección y lo almacena en el Registro Datos.
 void _mov_in(char *registro, char *direc_logica)
 {
-    uint32_t direccionLogica;
+    uint32_t direccionLogica32; 
 
     if (revisar_registro(direc_logica))
     {
-        direccionLogica = str_to_uint8(direc_logica);
+        direccionLogica32 = *(get_registry8(direc_logica));
     }
     else
     {
-        direccionLogica = str_to_uint32(direc_logica);
+         direccionLogica32 = *(get_registry32(direc_logica));
     }
 
-    uint32_t direccionFisica = traducir_direccion(pcb_actual->pid, direccionLogica, TAM_PAGINA);
-    char *valorObtenido = obtener_valor_direccion_fisica(direccionFisica);
+    uint32_t direccionFisica = traducir_direccion(pcb_actual->pid, direccionLogica32, TAM_PAGINA);
+    //char *valorObtenido = obtener_valor_direccion_fisica(direccionFisica);
 
-    if (revisar_registro(registro))
+    /*if (revisar_registro(registro))
     {
         *(get_registry8(registro)) = get_registry8(valorObtenido);
     }
     else
     {
         *(get_registry8(registro)) = get_registry32(valorObtenido);
-    }
+    }*/
 }
 
 //(Registro Dirección, Registro Datos): Lee el valor del Registro Datos y lo escribe en
@@ -47,29 +47,29 @@ void _mov_in(char *registro, char *direc_logica)
 void _mov_out(char *direc_logica, char *registro)
 {
 
-    uint32_t direccionLogica;
+   uint32_t direccionLogica32; 
 
     if (revisar_registro(direc_logica))
     {
-        direccionLogica = str_to_uint8(direc_logica);
+        direccionLogica32 = *(get_registry8(direc_logica));
     }
     else
     {
-        direccionLogica = str_to_uint32(direc_logica);
+         direccionLogica32 = *(get_registry32(direc_logica));
     }
 
-    uint32_t direccionFisica = traducir_direccion(pcb_actual->pid, direccionLogica, TAM_PAGINA);
-    char *valorObtenido = obtener_valor_direccion_fisica(direccionFisica);
+    uint32_t direccionFisica = traducir_direccion(pcb_actual->pid, direccionLogica32, TAM_PAGINA);
+    //char *valorObtenido = obtener_valor_direccion_fisica(direccionFisica);
 
-    if (revisar_registro(registro))
+    /*if (revisar_registro(registro))
     {
         *(get_registry8(valorObtenido)) = get_registry8(registro);
-        ;
+        
     }
     else
     {
         *(get_registry32(valorObtenido)) = get_registry32(registro);
-    }
+    }*/
 }
 
 // (Registro Destino, Registro Origen): Suma al Registro Destino el
@@ -200,7 +200,7 @@ void _io_gen_sleep(char *interfaz, char *unidades_de_trabajo, int cliente_socket
     enviar_interfaz_IO(pcb_actual, interfaz, unidades_de_trabajoNum, cliente_socket, IO_GEN_SLEEP);
 }
 
-void enviar_resize(char *tamanioAReasignar)
+void _resize(char *tamanioAReasignar)
 {
     uint32_t tamanioAReasignarNum = str_to_uint32(tamanioAReasignar);
     enviar_resize_a_memoria(pcb_actual, tamanioAReasignarNum);
@@ -283,6 +283,10 @@ char *instruccion_to_string(nombre_instruccion nombre)
         return "RESIZE";
     case COPY_STRING:
         return "COPY_STRING";
+    case MOV_IN:
+        return "MOV_IN";
+    case MOV_OUT:
+        return "MOV_OUT";
     case WAIT:
         return "WAIT";
     case SIGNAL:
@@ -340,5 +344,6 @@ bool revisar_registro(char *registro)
         return false;
     }
 }
+
 
 // en memoria

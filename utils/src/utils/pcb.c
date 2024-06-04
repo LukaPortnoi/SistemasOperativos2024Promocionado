@@ -164,7 +164,7 @@ uint32_t str_to_uint32(char *str)
 {
     char *endptr;
     uint32_t result = (uint32_t)strtoul(str, &endptr, 10);
-
+    
     // Comprobar si hubo errores durante la conversión
     if (*endptr != '\0')
     {
