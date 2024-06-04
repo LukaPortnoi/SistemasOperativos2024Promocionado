@@ -36,7 +36,8 @@ typedef enum
     ENVIAR_PAGINA,
     ENVIAR_DIRECCION_FISICA,
     MOV_IN_CPU,
-    MOV_OUT_CPU
+    MOV_OUT_CPU,
+    PEDIDO_MARCO
 } op_cod;
 
 #endif // SOCKETS_COMMON_H_

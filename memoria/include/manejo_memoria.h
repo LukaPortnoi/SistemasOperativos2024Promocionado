@@ -13,5 +13,6 @@ uint32_t disminuir_tamanio_proceso_memoria(t_proceso_memoria *proceso_memoria, u
 uint32_t cantidad_paginas_disponibles_memoria();
 uint32_t obtener_nro_marco_disponible();
 void liberar_marco(uint32_t nro_marco);
+uint32_t obtener_marco_de_pagina(t_proceso_memoria *proceso_memoria, uint32_t nro_pagina);
 
 #endif // MANEJO_MEMORIA_H_

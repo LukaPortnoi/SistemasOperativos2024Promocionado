@@ -20,6 +20,7 @@
 #include "../../utils/include/sockets_server.h"
 #include "../../utils/include/sockets_client.h"
 #include "../../utils/include/sockets_utils.h"
+#include "../../utils/include/memoria.h"
 
 
 typedef struct

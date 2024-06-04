@@ -324,45 +324,62 @@ void iniciar_semaforos()
     pthread_mutex_init(&mutex_comunicacion_procesos, NULL);
 }
 
-void recibir_mov_in_cpu(int *dir_fisica, int socket)
-{
-	int size;
-	void *buffer = recibir_buffer(&size, socket);
-	int offset = 0;
-
-	// printf("size del stream a deserializar \n%d", size);
-	memcpy(dir_fisica, buffer + offset, sizeof(int));
-
-	free(buffer);
-}
-
 
 void enviar_valor_mov_in_cpu(uint32_t valor, int socket)
 {
 	t_paquete *paquete = crear_paquete_con_codigo_de_operacion(MOV_IN_CPU);
-	serializar_MOV_IN(paquete, valor);
+	serializar_direccion_fisica(paquete, valor);
 	enviar_paquete(paquete_mov_in, socket);
 	eliminar_paquete(paquete_mov_in);
 } 
 
-void serializar_MOV_IN(t_paquete *paquete, uint32_t valor){
-    t_buffer *buffer = malloc(sizeof(t_buffer));
-    paquete->buffer->size  = sizeof(uint32_t);
-    memcpy(paquete->buffer->stream, &(valor), sizeof(uint32_t));
-}
-
-/*void recibir_mov_in_cpu(int direccion_fisica, int socket)
+uint32_t recibir_mov_in_cpu(int socket_cliente, uint32_t direccion_fisica)
 {
-    int size;
-    voidbuffer = recibir_buffer(&size, socket);
-    int offset = 0;
-
-    // printf("size del stream a deserializar \n%d", size);
-    memcpy(direccion_fisica, buffer + offset, sizeof(int));
-
-    free(buffer);
+    t_paquete *paquete = recibir_paquete(socket_cliente);
+    uint32_t valor_direccion_fisica = deserializar_direccion_fisica(paquete->buffer, direccion_fisica);
+    eliminar_paquete(paquete);
+    return valor_direccion_fisica;
 }
 
+
+
+void recibir_pedido_marco(uint32_t *pagina , uint32_t *pid_proceso, int socket)
+{
+    t_paquete *paquete = recibir_paquete(socket);
+    deserializar_pedido_marco(pagina , pid_proceso, paquete->buffer);
+    eliminar_paquete(paquete);
+}
+
+void deserializar_pedido_marco(uint32_t *pagina, uint32_t *pid_proceso, t_buffer *buffer)
+{
+    int desplazamiento = 0;
+    memcpy(pid_proceso, buffer->stream + desplazamiento, sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+    memcpy(pagina, buffer->stream + desplazamiento, sizeof(uint32_t));
+}
+
+void enviar_marco(int socket, uint32_t marco)
+{
+    t_paquete *paquete = crear_paquete_con_codigo_de_operacion(ENVIAR_MARCO);
+    s(paquete, marco);
+    serializar_marco(paquete, socket);
+	eliminar_paquete(paquete);
+
+}
+
+void serializar_marco(t_paquete *paquete, uint32_t marco)
+{
+    paquete->buffer->size = sizeof(uint32_t);
+    memcpy(paquete->buffer->stream, &(marco), sizeof(uint32_t));
+}
+
+
+
+
+
+
+
+/*
 uint32_t leer_memoria_cpu(uint32_t dir_fisica)
 {
 	uint32_t valor_leido = 0;

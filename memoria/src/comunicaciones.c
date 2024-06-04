@@ -101,6 +101,23 @@ static void procesar_conexion_memoria(void *void_args)
             escribir_memoria_cpu(direccion_fisica, valor_direccion_fisica);
             break;
 			
+		case PEDIDO_MARCO: 
+			uint32_t pid_proceso, pagina;
+			recibir_pedido_marco( &pagina, &pid_proceso, cliente_socket);
+			log_debug(logger, "Se recibio un pedido de marco para el PID %d y pagina %d", pid_proceso, pagina);
+			proceso_memoria = obtener_proceso_pid(pid_proceso);
+			if (proceso_memoria == NULL)
+			{
+				log_error(logger, "No se encontro el proceso con PID %d", pidMarco);
+				break;
+			}
+			else
+			{
+				uint32_t marco = obtener_marco(proceso_memoria, pagina);
+				enviar_marco(cliente_socket, marco);
+				break;
+			}
+			
 		// -------------------
 		// -- I/O - MEMORIA --
 		// -------------------

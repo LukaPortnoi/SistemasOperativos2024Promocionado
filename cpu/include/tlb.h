@@ -35,6 +35,11 @@ void enviar_Pid_Pagina_Memoria(uint32_t pid_proceso, uint32_t pagina_nueva);
 void serializar_nueva_pagina(t_paquete *paquete, uint32_t pid_proceso, uint32_t pagina_nueva);
 char *obtener_valor_direccion_fisica(uint32_t direccion_fisica);
 void enviar_direccion_fisica_memoria(uint32_t direccion_fisica);
-void serializar_direccion_fisica(t_paquete *paquete, uint32_t direccion_fisica);
+uint32_t recibir_direccion_fisica(int socket_cliente);
+uint32_t recibir_marco_memoria(int fd_cpu_memoria);
+uint32_t recibir_marco(int socket_cliente);
+uint32_t deserializar_marco(t_buffer *buffer);
+
+
 
 #endif // TLB_H_

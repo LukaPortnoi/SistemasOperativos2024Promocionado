@@ -110,7 +110,7 @@ int traducir_direccion(uint32_t pid, uint32_t logicalAddress, uint32_t pageSize)
 
         // pido marco a memoria enviando la pagina y el pid y me devuelve un marco
         enviar_Pid_Pagina_Memoria(pid, pagina);
-        // marco = list_get(tabla_paginas, pagina);
+        marco = recibir_marco_memoria(fd_cpu_memoria);
         actualizar_TLB(pid, pagina, marco);
         direccionFisica = marco * pageSize + offset;
         return direccionFisica;
@@ -119,7 +119,7 @@ int traducir_direccion(uint32_t pid, uint32_t logicalAddress, uint32_t pageSize)
 
 void enviar_Pid_Pagina_Memoria(uint32_t pid_proceso, uint32_t pagina_nueva)
 {
-    t_paquete *paquete_nueva_pagina = crear_paquete_con_codigo_de_operacion(ENVIAR_PAGINA);
+    t_paquete *paquete_nueva_pagina = crear_paquete_con_codigo_de_operacion(PEDIDO_MARCO);
     serializar_nueva_pagina(paquete_nueva_pagina, pid_proceso, pagina_nueva);
     enviar_paquete(paquete_nueva_pagina, fd_cpu_memoria);
     eliminar_paquete(paquete_nueva_pagina);
@@ -163,15 +163,24 @@ char *obtener_valor_direccion_fisica(uint32_t direccion_fisica)
 
     enviar_direccion_fisica_memoria(direccion_fisica);
 
-    //char resultado = recibir_direccion_fisica(fd_cpu_memoria);
+    char resultado = recibir_direccion_fisica(fd_cpu_memoria);
 
 
-   char valor="AX";
+   //char valor="AX";
 
    // log_info(cpu_logger_info, "PID: %d - Acción: LEER - Dirección Física: %d - Valor: %d", contexto_actual->pid, df, valor);
 
-    return valor;
+    return resultado;
 }
+
+uint32_t recibir_direccion_fisica(int socket_cliente)
+{
+    t_paquete *paquete = recibir_paquete(socket_cliente);
+    uint32_t valor_direccion_fisica = deserializar_direccion_fisica(paquete->buffer, direccion_fisica);
+    eliminar_paquete(paquete);
+    return valor_direccion_fisica;
+}
+
 
 void enviar_direccion_fisica_memoria(uint32_t direccion_fisica)
 {
@@ -181,28 +190,56 @@ void enviar_direccion_fisica_memoria(uint32_t direccion_fisica)
     eliminar_paquete(paquete_direccion_fisica);
 }
 
-void serializar_direccion_fisica(t_paquete *paquete, uint32_t direccion_fisica)
-{
-    int buffer_size = sizeof(uint32_t);
-    void *stream = malloc(buffer_size);
-    if (stream == NULL)
+
+uint32_t recibir_marco_memoria(int fd_cpu_memoria){
+    op_cod cop;
+    uint32_t marcoRecibido;
+
+    recv(fd_cpu_memoria, &cop, sizeof(op_cod), 0);
+    switch (cop)
     {
-        return;
+    case ENVIAR_MARCO:
+        marcoRecibido = recibir_marco(fd_cpu_memoria);
+        break;
+
+    default:
+        log_error(LOGGER_KERNEL, "No se pudo recibir el marco");
+        break;
     }
 
-    int offset = 0;
-    memcpy(stream + offset, &direccion_fisica, sizeof(uint32_t));
-
-
-    t_buffer *buffer = malloc(sizeof(t_buffer));
-    if (buffer == NULL)
+    if (marcoRecibido == NULL)
     {
-        free(stream);
-        return;
+        log_error(LOGGER_KERNEL, "Error al recibir MARCO de MEMORIA");
+        return NULL;
     }
 
-    buffer->size = buffer_size;
-    buffer->stream = stream;
+    return marcoRecibido;
 
-    paquete->buffer = buffer;
 }
+    
+
+uint32_t recibir_marco(int socket_cliente)
+{
+    t_paquete *paquete = recibir_paquete(socket_cliente);
+    uint32_t marco = deserializar_marco(paquete->buffer);
+    eliminar_paquete(paquete);
+    return marco;
+}
+
+
+uint32_t deserializar_marco(t_buffer *buffer)
+{
+    uint32_t marco = malloc(sizeof(uint32_t));
+
+    if (marco == NULL)
+    {
+        return NULL;
+    }
+
+    void *stream = buffer->stream;
+
+    memcpy(&marco, buffer->stream, sizeof(uint32_t));
+    return marco;
+}
+
+

@@ -12,7 +12,7 @@ void iniciar_estructura_proceso_memoria(t_proceso_memoria *proceso_memoria)
 void liberar_estructura_proceso_memoria(t_proceso_memoria *proceso_memoria)
 {
     list_destroy(proceso_memoria->tabla_paginas);
-    // log obligario  “PID: <PID> - Tamaño: <CANTIDAD_PAGINAS>”
+    // log obligatorio  “PID: <PID> - Tamaño: <CANTIDAD_PAGINAS>”
     log_info(LOGGER_MEMORIA, "PID: %d - Tamaño: %d", proceso_memoria->pid, proceso_memoria->tamanio);
 }
 
@@ -174,4 +174,10 @@ void liberar_marco(uint32_t nro_marco)
 {
     // Establecer el valor del marco en la lista de marcos a -1, indicando que está disponible
     list_replace(marcosPaginas, nro_marco, (void *)-1);
+}
+
+
+uint32_t obtener_marco_de_pagina(t_proceso_memoria *proceso_memoria, uint32_t nro_pagina)
+{
+    return (uint32_t)list_get(proceso_memoria->tabla_paginas, nro_pagina);
 }
