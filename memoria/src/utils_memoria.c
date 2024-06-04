@@ -336,16 +336,32 @@ void recibir_mov_in_cpu(int *dir_fisica, int socket)
 	free(buffer);
 }
 
-/*
+
 void enviar_valor_mov_in_cpu(uint32_t valor, int socket)
 {
-	t_paquete *paquete_mov_in = crear_paquete_con_codigo_de_operacion(MOV_IN_CPU);
-	paquete_mov_in->buffer->size += sizeof(uint32_t);
-	paquete_mov_in->buffer->stream = realloc(paquete_mov_in->buffer->stream, paquete_mov_in->buffer->size);
-	memcpy(paquete_mov_in->buffer->stream, &(valor), sizeof(uint32_t));
+	t_paquete *paquete = crear_paquete_con_codigo_de_operacion(MOV_IN_CPU);
+	serializar_MOV_IN(paquete, valor);
 	enviar_paquete(paquete_mov_in, socket);
 	eliminar_paquete(paquete_mov_in);
 } 
+
+void serializar_MOV_IN(t_paquete *paquete, uint32_t valor){
+    t_buffer *buffer = malloc(sizeof(t_buffer));
+    paquete->buffer->size  = sizeof(uint32_t);
+    memcpy(paquete->buffer->stream, &(valor), sizeof(uint32_t));
+}
+
+/*void recibir_mov_in_cpu(int direccion_fisica, int socket)
+{
+    int size;
+    voidbuffer = recibir_buffer(&size, socket);
+    int offset = 0;
+
+    // printf("size del stream a deserializar \n%d", size);
+    memcpy(direccion_fisica, buffer + offset, sizeof(int));
+
+    free(buffer);
+}
 
 uint32_t leer_memoria_cpu(uint32_t dir_fisica)
 {

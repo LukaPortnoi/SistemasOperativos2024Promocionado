@@ -87,6 +87,20 @@ static void procesar_conexion_memoria(void *void_args)
 				break;
 			}
 
+		case MOV_IN_CPU: // Lee el valor del marco y lo devuelve para guardarlo en el registro (se pide la direccion) - recibo direccion fisica
+            int direccion_fisica;
+            recibir_mov_in_cpu(&direccion_fisica, cliente_socket);
+            uint32_t valor_direccion_fisica = leer_memoria_cpu(direccion_fisica);
+            enviar_valor_mov_in_cpu(valor_direccion_fisica, cliente_socket); // MOV_IN_CPU
+            break;
+
+		case MOV_OUT_CPU: // me pasa por parametro un uint32_t y tengo que guardarlo en el marco que me dice
+            uint32_t valor_direccion_fisica;
+            int direccion_fisica;
+            recibir_mov_out_cpu(&valor_direccion_fisica, &dir_fisica, sockecliente_sockett_cpu_int);
+            escribir_memoria_cpu(direccion_fisica, valor_direccion_fisica);
+            break;
+			
 		// -------------------
 		// -- I/O - MEMORIA --
 		// -------------------

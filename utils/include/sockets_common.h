@@ -35,6 +35,8 @@ typedef enum
     PEDIDO_IO_FS_READ,
     ENVIAR_PAGINA,
     ENVIAR_DIRECCION_FISICA,
+    MOV_IN_CPU,
+    MOV_OUT_CPU
 } op_cod;
 
 #endif // SOCKETS_COMMON_H_
