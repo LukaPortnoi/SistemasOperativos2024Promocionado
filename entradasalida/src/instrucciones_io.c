@@ -10,3 +10,32 @@ void procesar_sleep(int socket_cliente, t_log *logger)
 
     enviar_InterfazGenericaConCodigoOP(socket_cliente, interfazRecibida->unidades_de_trabajo, interfazRecibida->pidPcb, interfazRecibida->nombre_interfaz);
 }
+
+
+void procesar_stdin(int socket_cliente, t_log *logger)
+{
+    t_interfaz_stdin *interfazRecibida = recibir_InterfazStdin(socket_cliente);
+    log_info(logger, "PID: %d - Operacion: IO_STDIN_READ", interfazRecibida->pidPcb);
+
+    char *datoRecibido;
+    datoRecibido = procesarIngresoUsuario(interfazRecibida->tamanioMaximo);
+    //senviar_dato_stdin(fd_io_memoria, interfazRecibida->direccionFisica, datoRecibido);
+    enviar_InterfazStdinConCodigoOP(socket_cliente, interfazRecibida->direccionFisica, interfazRecibida->tamanioMaximo, interfazRecibida->pidPcb, interfazRecibida->nombre_interfaz);
+}
+
+
+char *procesarIngresoUsuario(uint32_t tamanioMaximo)
+{
+    char *leido = readline("> ");
+    int longitud_bytes = strlen(leido);
+
+    while (longitud_bytes > tamanioMaximo)
+    {
+        log_error(logger, "El dato ingresado supera el tamanio maximo permitido");
+        free(leido);
+        
+        leido = readline("> ");
+        longitud_bytes = strlen(leido);
+    }
+    return leido;
+}

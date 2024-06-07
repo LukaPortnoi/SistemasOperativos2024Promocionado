@@ -27,6 +27,8 @@ extern char *PUERTO_MEMORIA;
 extern char *PATH_BASE_DIALFS;
 extern int BLOCK_SIZE;
 extern int BLOCK_COUNT;
+extern int fd_io_memoria;
+extern int fd_io_kernel;
 
 extern t_log *LOGGER_INPUT_OUTPUT;
 extern t_config *CONFIG_INPUT_OUTPUT;

@@ -18,7 +18,7 @@ void procesar_conexion_IO(int server_socket, t_log *logger)
 			break;
 
 		case PEDIDO_IO_STDIN_READ:
-			// procesar_stdin(server_socket, logger);
+			procesar_stdin(server_socket, logger);
 			break;
 
 		case PEDIDO_IO_STDOUT_WRITE:

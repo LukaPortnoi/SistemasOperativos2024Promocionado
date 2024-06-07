@@ -32,6 +32,12 @@
 
 typedef struct
 {
+    char *nombre_recurso;
+    int instancias;
+    t_squeue *cola_procesos_bloqueados;
+} t_recurso;
+typedef struct
+{
     char *nombre_interfaz_recibida;
     t_tipo_interfaz tipo_interfaz_recibida;
     int socket_interfaz_recibida;
@@ -61,10 +67,17 @@ extern int fd_kernel_cpu_interrupt;
 
 extern uint32_t PID_GLOBAL;
 
+// GLOBALES PARA MANEJO DE RECURSOS
+extern t_list *RECURSOS_DISPONIBLES;
+extern char *RECURSO_A_USAR;
+extern nombre_instruccion INSTRUCCION_RECURSO_A_USAR;
+
 extern t_list *interfaces_conectadas;
+
+// GLOBALES PARA MANEJO DE INTERFACES
 extern char *nombre_interfaz;
-extern int unidades_de_trabajo;
 extern nombre_instruccion instruccion_de_IO_a_ejecutar;
+extern int unidades_de_trabajo;
 
 extern t_pcb *pcb_ejecutandose;
 extern t_pcb *pcb_a_finalizar;

@@ -31,8 +31,7 @@ int main()
 
     iniciar_conexiones();
 
-    while (server_escuchar(LOGGER_CPU, "CPU_DISPATCH", fd_cpu_dispatch))
-        ;
+    while (server_escuchar(LOGGER_CPU, "CPU_DISPATCH", fd_cpu_dispatch));
 
     finalizar_cpu();
 }

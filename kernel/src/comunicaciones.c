@@ -68,7 +68,28 @@ static void procesar_conexion_kernel(void *void_args)
 				log_trace(logger, "Se finalizo el proceso luego de I/O %d", pcb_a_finalizar->pid);
 			}
 			break;
-
+			
+		case FINALIZACION_INTERFAZ_STDIN:
+			log_trace(logger, "Finalizacion de instruccion de interfaz");
+			t_interfaz_stdin *interfazRecibidaIO = recibir_InterfazStdin(cliente_socket);
+			if (pcb_a_finalizar == NULL)
+			{
+				desbloquear_proceso(interfazRecibidaIO->pidPcb);
+				t_interfaz_recibida *interfaz_recibida = buscar_interfaz_por_nombre(interfazRecibidaIO->nombre_interfaz);
+				squeue_pop(interfaz_recibida->cola_procesos_bloqueados);
+			}
+			else if (interfazRecibidaIO->pidPcb != pcb_a_finalizar->pid)
+			{
+				desbloquear_proceso(interfazRecibidaIO->pidPcb);
+				t_interfaz_recibida *interfaz_recibida = buscar_interfaz_por_nombre(interfazRecibidaIO->nombre_interfaz);
+				squeue_pop(interfaz_recibida->cola_procesos_bloqueados);
+			}
+			else if (interfazRecibidaIO->pidPcb == pcb_a_finalizar->pid)
+			{
+				finalizar_proceso(pcb_a_finalizar);
+				log_trace(logger, "Se finalizo el proceso luego de I/O %d", pcb_a_finalizar->pid);
+			}
+			break;
 		// ---------------
 		// -- ERRORES --
 		// ---------------

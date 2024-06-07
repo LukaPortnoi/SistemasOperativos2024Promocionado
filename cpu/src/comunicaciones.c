@@ -51,8 +51,8 @@ static void procesar_conexion_dispatch(void *void_args)
 
 			log_debug(LOGGER_CPU, "PID: %d - Estado: %s, Contexto: %s\n", pcb_actual->pid, estado_to_string(pcb_actual->estado), motivo_desalojo_to_string(pcb_actual->contexto_ejecucion->motivo_desalojo));
 
-			// Envia el PCB actualizado si no ejecuto una syscall de IO
-			if (pcb_actual->contexto_ejecucion->motivo_desalojo != INTERRUPCION_BLOQUEO)
+			// Envia el PCB actualizado si no ejecuto una syscall de pedido de recurso o IO
+			if (pcb_actual->contexto_ejecucion->motivo_desalojo != INTERRUPCION_BLOQUEO || pcb_actual->contexto_ejecucion->motivo_desalojo != INTERRUPCION_SYSCALL)
 			{
 				enviar_pcb(pcb_actual, cliente_socket);
 			}

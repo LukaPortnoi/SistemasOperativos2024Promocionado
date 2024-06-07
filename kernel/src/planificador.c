@@ -214,8 +214,22 @@ t_pcb *recibir_pcb_CPU(int fd_cpu)
         pcb_recibido = recibir_pcb(fd_cpu);
         break;
 
+    case PEDIDO_WAIT:
+        pcb_recibido = recibir_pcb_para_manejo_recurso(fd_cpu, &RECURSO_A_USAR);
+        INSTRUCCION_RECURSO_A_USAR = WAIT;
+        break;
+
+    case PEDIDO_SIGNAL:
+        pcb_recibido = recibir_pcb_para_manejo_recurso(fd_cpu, &RECURSO_A_USAR);
+        INSTRUCCION_RECURSO_A_USAR = SIGNAL;
+        break;
+
     case ENVIAR_INTERFAZ:
         pcb_recibido = recibir_pcb_para_interfaz(fd_cpu, &nombre_interfaz, &unidades_de_trabajo, &instruccion_de_IO_a_ejecutar);
+        break;
+
+    case ENVIAR_INTERFAZ_STDIN:
+        pcb_recibido = recibir_pcb_para_interfaz_stdin(fd_cpu, &nombre_interfaz, &direccion_logica, &tamanioMaximo, &instruccion_de_IO_a_ejecutar);
         break;
 
     default:
@@ -261,10 +275,13 @@ void desalojo_cpu(t_pcb *pcb, pthread_t hilo_quantum_id)
         pcb->quantum = QUANTUM;
         proceso_listo(pcb, false);
         break;
+    case INTERRUPCION_SYSCALL: // MANEJO RECURSO
+        log_debug(LOGGER_KERNEL, "PID %d - Desalojado por manejo de recurso", pcb->pid);
+        asignar_recurso(pcb, RECURSO_A_USAR);
+        break;
     case INTERRUPCION_BLOQUEO:
         log_debug(LOGGER_KERNEL, "PID %d - Desalojado por bloqueo", pcb->pid);
         ejecutar_intruccion_io(pcb);
-        sem_post(&semBlocked);
         break;
     case FINALIZACION:
         finalizar_proceso(pcb);
@@ -369,6 +386,9 @@ void iniciar_colas_y_semaforos()
 
     procesosEnSistema = list_create();
     interfaces_conectadas = list_create();
+    RECURSOS_DISPONIBLES = list_create();
+
+    inicializar_recursos();
 
     squeue_new = squeue_create();
     squeue_ready = squeue_create();
@@ -376,6 +396,19 @@ void iniciar_colas_y_semaforos()
     squeue_exec = squeue_create();
     squeue_blocked = squeue_create();
     squeue_exit = squeue_create();
+}
+
+void inicializar_recursos()
+{
+    int i = 0;
+    while (RECURSOS[i] != NULL)
+    {
+        t_recurso *recurso = malloc(sizeof(t_recurso));
+        recurso->nombre_recurso = RECURSOS[i];
+        recurso->instancias = atoi(INSTANCIAS_RECURSOS[i]);
+        list_add(RECURSOS_DISPONIBLES, recurso);
+        i++;
+    }
 }
 
 uint32_t asignar_pid()
@@ -403,7 +436,8 @@ void cambiar_estado_pcb(t_pcb *pcb, t_estado_proceso estado)
 
 void proceso_listo(t_pcb *pcb, bool es_ready_plus)
 {
-    cambiar_estado_pcb(pcb, LISTO); // TODO: previamente tendria que hablar con memoria antes de pasar a ready, tengo que esperar respuesta de que memoria todo en orden
+    // proceso_ready_memoria(pcb); // TODO: previamente tendria que hablar con memoria antes de pasar a ready, tengo que esperar respuesta de que memoria todo en orden
+    cambiar_estado_pcb(pcb, LISTO);
     if (es_ready_plus)
     {
         squeue_push(squeue_readyPlus, pcb);
@@ -469,6 +503,74 @@ void desbloquear_proceso(uint32_t pid)
     }
 }
 
+// REVISAR
+void recibir_pcb_para_manejo_recurso(int socket, char **recurso)
+{
+    t_paquete *paquete = recibir_paquete(socket);
+    void *stream = paquete->buffer->stream;
+    int desplazamiento = 0;
+
+    int tamanio_recurso;
+    memcpy(&tamanio_recurso, stream + desplazamiento, sizeof(int));
+    desplazamiento += sizeof(int);
+
+    *recurso = malloc(tamanio_recurso);
+    memcpy(*recurso, stream + desplazamiento, tamanio_recurso);
+
+    eliminar_paquete(paquete);
+}
+
+void asignar_recurso(t_pcb *pcb, char *recurso)
+{
+    t_recurso *recurso_a_utilizar = encontrar_recurso(recurso);
+    if (recurso_a_utilizar)
+    {
+        switch (INSTRUCCION_RECURSO_A_USAR)
+        {
+        case WAIT:
+            if (recurso_a_utilizar->instancias > 0)
+            {
+                recurso_a_utilizar->instancias--;
+                proceso_listo(pcb, false);
+            }
+            else
+            {
+                bloquear_proceso(pcb, recurso);
+                squeue_push(recurso_a_utilizar->cola_procesos_bloqueados, pcb);
+            }
+            break;
+        case SIGNAL:
+            recurso_a_utilizar->instancias++;
+            if (recurso_a_utilizar->instancias > 0 && !list_is_empty(recurso_a_utilizar->cola_procesos_bloqueados->cola))
+            {
+                t_pcb *pcb_desbloquear = squeue_pop(recurso_a_utilizar->cola_procesos_bloqueados);
+                desbloquear_proceso(pcb_desbloquear->pid);
+                proceso_listo(pcb_desbloquear, false);
+            }
+            break;
+        default:
+            log_error(LOGGER_KERNEL, "Instruccion %s no reconocida", nombre_instruccion_to_string(instruccion_recurso_a_usar));
+            break;
+        }
+    }
+    else
+    {
+        log_error(LOGGER_KERNEL, "PID %d - Recurso %s no existe", pcb->pid, recurso);
+        pcb->contexto_ejecucion->motivo_finalizacion = INVALID_RESOURCE;
+        finalizar_proceso(pcb);
+    }
+}
+
+t_recurso *encontrar_recurso(char *recurso)
+{
+    bool _es_el_recurso(t_recurso * r)
+    {
+        return strcmp(r->nombre, recurso) == 0;
+    }
+
+    return list_find(RECURSOS_DISPONIBLES, (void *)_es_el_recurso);
+}
+
 void ejecutar_intruccion_io(t_pcb *pcb_recibido)
 {
     t_interfaz_recibida *interfaz_a_utilizar = buscar_interfaz_por_nombre(nombre_interfaz);
@@ -496,6 +598,8 @@ void ejecutar_intruccion_io(t_pcb *pcb_recibido)
             {
                 bloquear_proceso(pcb_recibido, interfaz_a_utilizar->nombre_interfaz_recibida);
                 squeue_push(interfaz_a_utilizar->cola_procesos_bloqueados, pcb_recibido);
+                enviar_InterfazStdin(interfaz_a_utilizar->socket_interfaz_recibida, direccion_fisica, tamanioMaximo, pcb_recibido->pid, interfaz_a_utilizar->nombre_interfaz_recibida);
+
                 // Enviar interfaz STDIN
             }
             else

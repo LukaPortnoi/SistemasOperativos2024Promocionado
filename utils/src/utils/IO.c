@@ -233,13 +233,6 @@ void enviar_InterfazGenerica(int socket, int unidades_trabajo, uint32_t pid, cha
     eliminar_paquete(paquete);
 }
 
-t_paquete *crear_paquete_InterfazGenerica(t_interfaz_gen *interfaz) // NO SE USA
-{
-    t_paquete *paquete = malloc(sizeof(t_paquete));
-    paquete->buffer = crear_buffer_InterfazGenerica(interfaz);
-    return paquete;
-}
-
 t_buffer *crear_buffer_InterfazGenerica(t_interfaz_gen *interfaz)
 {
     uint32_t tamanio_nombre_interfaz = strlen(interfaz->nombre_interfaz) + 1;
@@ -319,3 +312,281 @@ t_paquete *crear_paquete_InterfazGenericaCodOp(t_interfaz_gen *interfaz, op_cod 
     paquete->buffer = crear_buffer_InterfazGenerica(interfaz);
     return paquete;
 }
+
+// INTERFAZ STDIN
+void enviar_interfaz_IO_stdin(t_pcb *pcb_actual, char *interfaz, uint32_t direccionFisica, uint32_t tamanioMaximoAingresar, int socket_cliente, nombre_instruccion IO)
+{
+    t_paquete *paquete = crear_paquete_con_codigo_de_operacion(ENVIAR_INTERFAZ_STDIN);
+    serializar_IO_instruccion_stdin(paquete, pcb_actual, interfaz, direccionFisica, tamanioMaximoAingresar, IO);
+    enviar_paquete(paquete, socket_cliente);
+    eliminar_paquete(paquete);
+}
+
+void serializar_IO_instruccion_stdin(t_paquete *paquete, t_pcb *pcb, char *interfaz, uint32_t direccionFisica, uint32_t tamanioMaximoAingresar, nombre_instruccion IO)
+{
+    uint32_t interfaz_length = strlen(interfaz) + 1;
+
+    size_t tam_registros = sizeof(uint32_t) +
+                           sizeof(uint8_t) * 4 +
+                           sizeof(uint32_t) * 6;
+
+    paquete->buffer->size = sizeof(uint32_t) +
+                            sizeof(t_estado_proceso) +
+                            sizeof(uint32_t) +
+                            tam_registros +
+                            sizeof(t_motivo_desalojo) +
+                            sizeof(t_motivo_finalizacion) +
+                            sizeof(uint32_t) +
+                            sizeof(uint64_t) +
+                            sizeof(uint32_t) +
+                            sizeof(uint32_t) +
+                            interfaz_length +
+                            sizeof(nombre_instruccion);
+
+    paquete->buffer->stream = malloc(paquete->buffer->size);
+    int desplazamiento = 0;
+
+    memcpy(paquete->buffer->stream + desplazamiento, &(pcb->pid), sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+    memcpy(paquete->buffer->stream + desplazamiento, &(pcb->estado), sizeof(t_estado_proceso));
+    desplazamiento += sizeof(t_estado_proceso);
+
+    memcpy(paquete->buffer->stream + desplazamiento, &(pcb->quantum), sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+    memcpy(paquete->buffer->stream + desplazamiento, &(pcb->tiempo_q), sizeof(uint64_t));
+    desplazamiento += sizeof(uint64_t);
+
+    memcpy(paquete->buffer->stream + desplazamiento, pcb->contexto_ejecucion->registros, tam_registros);
+    desplazamiento += tam_registros;
+
+    memcpy(paquete->buffer->stream + desplazamiento, &(pcb->contexto_ejecucion->motivo_desalojo), sizeof(t_motivo_desalojo));
+    desplazamiento += sizeof(t_motivo_desalojo);
+
+    memcpy(paquete->buffer->stream + desplazamiento, &(pcb->contexto_ejecucion->motivo_finalizacion), sizeof(t_motivo_finalizacion));
+    desplazamiento += sizeof(t_motivo_finalizacion);
+
+    memcpy(paquete->buffer->stream + desplazamiento, &(direccionFisica), sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+    memcpy(paquete->buffer->stream + desplazamiento, &(tamanioMaximoAingresar), sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+    memcpy(paquete->buffer->stream + desplazamiento, &(interfaz_length), sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+    memcpy(paquete->buffer->stream + desplazamiento, interfaz, interfaz_length);
+    desplazamiento += interfaz_length;
+
+    memcpy(paquete->buffer->stream + desplazamiento, &IO, sizeof(nombre_instruccion));
+}
+t_pcb *recibir_pcb_para_interfaz_stdin(int socket_cliente, char **nombre_interfaz, uint32_t *direccionFisica, uint32_t *tamanioMaximoAingresar, nombre_instruccion *IO)
+{
+    t_paquete *paquete = recibir_paquete(socket_cliente);
+    t_pcb *pcb = deserializar_pcb_para_interfaz_stdin(paquete->buffer, nombre_interfaz, direccionFisica, tamanioMaximoAingresar, IO);
+    eliminar_paquete(paquete);
+    return pcb;
+}
+
+t_pcb *deserializar_pcb_para_interfaz_stdin(t_buffer *buffer, char **nombre_interfaz, uint32_t *direccionFisica, uint32_t *tamanioMaximoAingresar, nombre_instruccion *IO)
+{
+    t_pcb *pcb = malloc(sizeof(t_pcb));
+    if (pcb == NULL)
+    {
+        return NULL;
+    }
+
+    uint32_t long_interfaz;
+    void *stream = buffer->stream;
+    int desplazamiento = 0;
+
+    memcpy(&(pcb->pid), stream + desplazamiento, sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+    memcpy(&(pcb->estado), stream + desplazamiento, sizeof(t_estado_proceso));
+    desplazamiento += sizeof(t_estado_proceso);
+
+    memcpy(&(pcb->quantum), stream + desplazamiento, sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+    memcpy(&(pcb->tiempo_q), stream + desplazamiento, sizeof(uint64_t));
+    desplazamiento += sizeof(uint64_t);
+
+    pcb->contexto_ejecucion = malloc(sizeof(t_contexto_ejecucion));
+    if (pcb->contexto_ejecucion == NULL)
+    {
+        free(pcb);
+        return NULL;
+    }
+
+    pcb->contexto_ejecucion->registros = malloc(sizeof(t_registros));
+    if (pcb->contexto_ejecucion->registros == NULL)
+    {
+        free(pcb->contexto_ejecucion);
+        free(pcb);
+        return NULL;
+    }
+
+    memcpy(pcb->contexto_ejecucion->registros, stream + desplazamiento, sizeof(t_registros));
+    desplazamiento += sizeof(t_registros);
+
+    memcpy(&(pcb->contexto_ejecucion->motivo_desalojo), stream + desplazamiento, sizeof(t_motivo_desalojo));
+    desplazamiento += sizeof(t_motivo_desalojo);
+
+    memcpy(&(pcb->contexto_ejecucion->motivo_finalizacion), stream + desplazamiento, sizeof(t_motivo_finalizacion));
+    desplazamiento += sizeof(t_motivo_finalizacion);
+
+    memcpy(direccionFisica, stream + desplazamiento, sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+    memcpy(tamanioMaximoAingresar, stream + desplazamiento, sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+    memcpy(&(long_interfaz), stream + desplazamiento, sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+    *nombre_interfaz = malloc(long_interfaz);
+
+    memcpy(*nombre_interfaz, stream + desplazamiento, long_interfaz);
+    desplazamiento += long_interfaz;
+
+    memcpy(IO, stream + desplazamiento, sizeof(nombre_instruccion));
+
+    return pcb;
+}
+
+void enviar_InterfazStdin(int socket, uint32_t direccionFisica, uint32_t tamanioMaximo, uint32_t pid, char *nombre_interfaz)
+{
+    t_interfaz_stdin *interfaz = malloc(sizeof(t_interfaz_stdin));
+    interfaz->direccionFisica = direccionFisica;
+    interfaz->tamanioMaximo = tamanioMaximo;
+    interfaz->pidPcb = pid;
+    interfaz->nombre_interfaz = nombre_interfaz;
+    t_paquete *paquete = crear_paquete_InterfazstdinCodOp(interfaz, PEDIDO_IO_STDIN_READ);
+    enviar_paquete(paquete, socket);
+    eliminar_paquete(paquete);
+}
+
+t_paquete *crear_paquete_InterfazstdinCodOp(t_interfaz_stdin *interfaz, op_cod codigo_operacion)
+{
+    t_paquete *paquete = malloc(sizeof(t_paquete));
+    paquete->codigo_operacion = codigo_operacion;
+    paquete->buffer = crear_buffer_InterfazStdin(interfaz);
+    return paquete;
+}
+
+t_buffer *crear_buffer_InterfazStdin(t_interfaz_stdin *interfaz)
+{
+    uint32_t tamanio_nombre_interfaz = strlen(interfaz->nombre_interfaz) + 1;
+
+    t_buffer *buffer = malloc(sizeof(t_buffer));
+    buffer->size = sizeof(uint32_t) * 3 + tamanio_nombre_interfaz;
+
+    buffer->stream = malloc(buffer->size);
+    int desplazamiento = 0;
+
+    memcpy(buffer->stream + desplazamiento, &(interfaz->direccionFisica), sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+    memcpy(buffer->stream + desplazamiento, &(interfaz->tamanioMaximo), sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+    memcpy(buffer->stream + desplazamiento, &(interfaz->pidPcb), sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+    memcpy(buffer->stream + desplazamiento, &(tamanio_nombre_interfaz), sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+    memcpy(buffer->stream + desplazamiento, interfaz->nombre_interfaz, tamanio_nombre_interfaz);
+
+    return buffer;
+}
+
+t_interfaz_stdin *recibir_InterfazStdin(int socket_cliente)
+{
+    t_paquete *paquete = recibir_paquete(socket_cliente);
+    t_interfaz_stdin *interfaz = deserializar_InterfazStdin(paquete->buffer);
+    eliminar_paquete(paquete);
+    return interfaz;
+}
+
+t_interfaz_stdin *deserializar_InterfazStdin(t_buffer *buffer)
+{
+    t_interfaz_stdin *interfaz = malloc(sizeof(t_interfaz_stdin));
+    if (interfaz == NULL)
+    {
+        return NULL;
+    }
+
+    uint32_t long_interfaz;
+    void *stream = buffer->stream;
+    int desplazamiento = 0;
+
+    memcpy(&(interfaz->direccionFisica), stream + desplazamiento, sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+    memcpy(&(interfaz->tamanioMaximo), stream + desplazamiento, sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+    memcpy(&(interfaz->pidPcb), stream + desplazamiento, sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+    memcpy(&(long_interfaz), stream + desplazamiento, sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+    interfaz->nombre_interfaz = malloc(long_interfaz);
+
+    memcpy(interfaz->nombre_interfaz, stream + desplazamiento, long_interfaz);
+
+    return interfaz;
+}
+
+/* void enviar_dato_stdin(int socket, uint32_t direccionFisica, char *datoRecibido)
+{
+    t_paquete *paquete = crear_paquete_dato_stdin(direccionFisica, datoRecibido, RECIBIR_DATO_STDIN);
+    enviar_paquete(paquete, socket);
+    eliminar_paquete(paquete);
+}
+
+t_paquete *crear_paquete_dato_stdin(uint32_t direccionFisica, char *datoRecibido, op_cod codigo_operacion)
+{
+    t_paquete *paquete = malloc(sizeof(t_paquete));
+    paquete->codigo_operacion = codigo_operacion;
+    paquete->buffer = crear_buffer_dato_stdin(direccionFisica, datoRecibido);
+    return paquete;
+}
+
+t_buffer *crear_buffer_dato_stdin(uint32_t direccionFisica, char *datoRecibido)
+{
+    uint32_t tamanio_dato = strlen(datoRecibido) + 1;
+
+    t_buffer *buffer = malloc(sizeof(t_buffer));
+    buffer->size = sizeof(uint32_t) + tamanio_nombre_interfaz;
+
+    buffer->stream = malloc(buffer->size);
+    int desplazamiento = 0;
+
+    memcpy(buffer->stream + desplazamiento, &(direccionFisica), sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+    memcpy(buffer->stream + desplazamiento, &(tamanio_dato), sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+    memcpy(buffer->stream + desplazamiento, datoRecibido, tamanio_dato);
+
+    return buffer;
+} */
+
+void enviar_InterfazStdinConCodigoOP(int socket, uint32_t direccionFisica, uint32_t tamanioMaximo, uint32_t pid, char *nombre_interfaz)
+{
+    t_interfaz_stdin *interfaz = malloc(sizeof(t_interfaz_stdin));
+    interfaz->direccionFisica = direccionFisica;
+    interfaz->tamanioMaximo = tamanioMaximo;
+    interfaz->pidPcb = pid;
+    interfaz->nombre_interfaz = nombre_interfaz;
+    t_paquete *paquete = crear_paquete_InterfazstdinCodOp(interfaz, FINALIZACION_INTERFAZ_STDIN);
+    enviar_paquete(paquete, socket);
+    eliminar_paquete(paquete);
+}
+

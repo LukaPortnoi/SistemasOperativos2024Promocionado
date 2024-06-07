@@ -21,7 +21,7 @@ t_instruccion *fetch(uint32_t pid, uint32_t pc)
     if (codigo_op == INSTRUCCION)
     {
         instruccion = deserializar_instruccion(fd_cpu_memoria);
-        }
+    }
     else
     {
         log_warning(LOGGER_CPU, "Operación desconocida. No se pudo recibir la instruccion de memoria.");
@@ -53,20 +53,42 @@ void execute(t_instruccion *instruccion, int socket)
         _jnz(instruccion->parametro1, instruccion->parametro2);
         loguear_y_sumar_pc(instruccion);
         break;
+    case WAIT:
+        loguear_y_sumar_pc(instruccion);
+        pcb_actual->contexto_ejecucion->motivo_desalojo = INTERRUPCION_SYSCALL;
+        esSyscall = true;
+        _wait(instruccion->parametro1, socket);
+        break;
+    case SIGNAL:
+        loguear_y_sumar_pc(instruccion);
+        pcb_actual->contexto_ejecucion->motivo_desalojo = INTERRUPCION_SYSCALL;
+        esSyscall = true;
+        _signal(instruccion->parametro1, socket);
+        break;
+    case RESIZE:
+        _resize(instruccion->parametro1);
+        // esperar_respuesta_resize();
+        loguear_y_sumar_pc(instruccion);
+        break;
+    case MOV_IN:
+        _mov_in(instruccion->parametro1, instruccion->parametro2);
+        loguear_y_sumar_pc(instruccion);
+        break;
+    case MOV_OUT:
+        _mov_out(instruccion->parametro1, instruccion->parametro2);
+        loguear_y_sumar_pc(instruccion);
+        break;
     case IO_GEN_SLEEP:
         loguear_y_sumar_pc(instruccion);
         pcb_actual->contexto_ejecucion->motivo_desalojo = INTERRUPCION_BLOQUEO;
         esSyscall = true;
         _io_gen_sleep(instruccion->parametro1, instruccion->parametro2, socket);
         break;
-    case RESIZE:
-        _resize(instruccion->parametro1);
-        //esperar_respuesta_resize();
+    case IO_FS_READ:
         loguear_y_sumar_pc(instruccion);
-        break;
-    case MOV_IN:
-        _mov_in(instruccion->parametro1, instruccion->parametro2);
-        loguear_y_sumar_pc(instruccion);
+        pcb_actual->contexto_ejecucion->motivo_desalojo = INTERRUPCION_BLOQUEO;
+        esSyscall = true;
+        _io_stdin_read(instruccion->parametro1, instruccion->parametro2 , instruccion->parametro3, socket);
         break;
     case EXIT:
         log_info(LOGGER_CPU, "PID: %d - Ejecutando: %s", pcb_actual->pid, instruccion_to_string(instruccion->nombre));

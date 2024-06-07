@@ -330,7 +330,7 @@ void iniciar_semaforos()
 
 void enviar_valor_mov_in_cpu(uint32_t valor, int socket)
 {
-	t_paquete *paquete_mov_in = crear_paquete_con_codigo_de_operacion(MOV_IN_CPU);
+	t_paquete *paquete_mov_in = crear_paquete_con_codigo_de_operacion(PEDIDO_MOV_IN);
 	serializar_direccion_fisica(paquete_mov_in, valor);
 	enviar_paquete(paquete_mov_in, socket);
 	eliminar_paquete(paquete_mov_in);

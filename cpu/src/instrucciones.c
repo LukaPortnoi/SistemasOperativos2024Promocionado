@@ -18,7 +18,7 @@ void _set(char *registro, char *valor)
 // la Dirección Lógica que se encuentra en el Registro Dirección y lo almacena en el Registro Datos.
 void _mov_in(char *registro, char *direc_logica)
 {
-    uint32_t direccionLogica32; 
+    uint32_t direccionLogica32;
 
     if (revisar_registro(direc_logica))
     {
@@ -26,11 +26,11 @@ void _mov_in(char *registro, char *direc_logica)
     }
     else
     {
-         direccionLogica32 = *(get_registry32(direc_logica));
+        direccionLogica32 = *(get_registry32(direc_logica));
     }
 
     uint32_t direccionFisica = traducir_direccion(pcb_actual->pid, direccionLogica32, TAM_PAGINA);
-    //char *valorObtenido = obtener_valor_direccion_fisica(direccionFisica);
+    // char *valorObtenido = obtener_valor_direccion_fisica(direccionFisica);
 
     /*if (revisar_registro(registro))
     {
@@ -47,7 +47,7 @@ void _mov_in(char *registro, char *direc_logica)
 void _mov_out(char *direc_logica, char *registro)
 {
 
-   uint32_t direccionLogica32; 
+    uint32_t direccionLogica32;
 
     if (revisar_registro(direc_logica))
     {
@@ -55,16 +55,16 @@ void _mov_out(char *direc_logica, char *registro)
     }
     else
     {
-         direccionLogica32 = *(get_registry32(direc_logica));
+        direccionLogica32 = *(get_registry32(direc_logica));
     }
 
     uint32_t direccionFisica = traducir_direccion(pcb_actual->pid, direccionLogica32, TAM_PAGINA);
-    //char *valorObtenido = obtener_valor_direccion_fisica(direccionFisica);
+    // char *valorObtenido = obtener_valor_direccion_fisica(direccionFisica);
 
     /*if (revisar_registro(registro))
     {
         *(get_registry8(valorObtenido)) = get_registry8(registro);
-        
+
     }
     else
     {
@@ -194,16 +194,68 @@ void _jnz(char *registro, char *instruccion)
     }
 }
 
+void _resize(char *tamanioAReasignar)
+{
+    uint32_t tamanioAReasignarNum = str_to_uint32(tamanioAReasignar);
+    enviar_resize_a_memoria(pcb_actual, tamanioAReasignarNum);
+}
+
+void _copy_string(char *tamanio) {}
+
+void _wait(char *recurso, int cliente_socket)
+{
+    enviar_recurso(pcb_actual, recurso, cliente_socket, PEDIDO_WAIT);
+}
+
+void _signal(char *recurso, int cliente_socket)
+{
+    enviar_recurso(pcb_actual, recurso, cliente_socket, PEDIDO_SIGNAL);
+}
+
 void _io_gen_sleep(char *interfaz, char *unidades_de_trabajo, int cliente_socket)
 {
     int unidades_de_trabajoNum = atoi(unidades_de_trabajo);
     enviar_interfaz_IO(pcb_actual, interfaz, unidades_de_trabajoNum, cliente_socket, IO_GEN_SLEEP);
 }
 
-void _resize(char *tamanioAReasignar)
+void _io_stdin_read(char *interfaz, char *direc_logica, char *tamanio, int cliente_socket)
 {
-    uint32_t tamanioAReasignarNum = str_to_uint32(tamanioAReasignar);
-    enviar_resize_a_memoria(pcb_actual, tamanioAReasignarNum);
+    uint32_t direccionLogica32;
+
+    if (revisar_registro(direc_logica))
+    {
+        direccionLogica32 = *(get_registry8(direc_logica));
+    }
+    else
+    {
+        direccionLogica32 = *(get_registry32(direc_logica));
+    }
+
+    uint32_t direccionFisica = traducir_direccion(pcb_actual->pid, direccionLogica32, TAM_PAGINA);
+    uint32_t tamanioMaximoAingresar = str_to_uint32(tamanio);
+    enviar_interfaz_IO_stdin(pcb_actual, interfaz, direccionFisica, tamanioMaximoAingresar, cliente_socket, IO_STDIN_READ);
+}
+
+
+// ENVIOS
+
+void enviar_recurso(t_pcb *pcb, char *recurso, int cliente_socket, op_cod codigo_operacion)
+{
+    t_paquete *paquete = crear_paquete_con_codigo_de_operacion(codigo_operacion);
+    serializar_recurso(pcb, recurso, paquete);
+    enviar_paquete(paquete, cliente_socket);
+    eliminar_paquete(paquete);
+}
+
+// REVISAR
+void serializar_recurso(t_pcb *pcb, char *recurso, t_paquete *paquete)
+{
+    paquete->buffer->size = sizeof(uint32_t) + strlen(recurso) + 1;
+    paquete->buffer->stream = malloc(paquete->buffer->size);
+    int offset = 0;
+    memcpy(paquete->buffer->stream + offset, &(pcb->pid), sizeof(uint32_t));
+    offset += sizeof(uint32_t);
+    memcpy(paquete->buffer->stream + offset, recurso, strlen(recurso) + 1);
 }
 
 void enviar_resize_a_memoria(t_pcb *pcb, uint32_t tamanioAReasignar)
@@ -217,13 +269,10 @@ void enviar_resize_a_memoria(t_pcb *pcb, uint32_t tamanioAReasignar)
 void serializar_resize(t_pcb *pcb, uint32_t tamanioAReasignar, t_paquete *paquete)
 {
     paquete->buffer->size = sizeof(uint32_t) + sizeof(uint32_t);
-
     paquete->buffer->stream = malloc(paquete->buffer->size);
     int offset = 0;
-
     memcpy(paquete->buffer->stream + offset, &(pcb->pid), sizeof(uint32_t));
     offset += sizeof(uint32_t);
-
     memcpy(paquete->buffer->stream + offset, &tamanioAReasignar, sizeof(uint32_t));
 }
 
@@ -344,6 +393,3 @@ bool revisar_registro(char *registro)
         return false;
     }
 }
-
-
-// en memoria
