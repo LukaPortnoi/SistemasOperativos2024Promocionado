@@ -31,7 +31,7 @@ char *procesarIngresoUsuario(uint32_t tamanioMaximo)
 
     while (longitud_bytes > tamanioMaximo)
     {
-        log_error(logger, "El dato ingresado supera el tamanio maximo permitido");
+        log_error(LOGGER_INPUT_OUTPUT, "El dato ingresado supera el tamanio maximo permitido");
         free(leido);
         
         leido = readline("> ");

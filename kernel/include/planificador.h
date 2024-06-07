@@ -34,7 +34,9 @@ void desbloquear_proceso(uint32_t pid);
 
 // RECURSOS
 void asignar_recurso(t_pcb *pcb, char *recurso);
-int encontrar_recurso(char *recurso);
+//int encontrar_recurso(char *recurso);
+t_recurso *encontrar_recurso(char *recurso);
+
 
 
 // INTERFACES

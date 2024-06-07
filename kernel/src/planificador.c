@@ -229,7 +229,7 @@ t_pcb *recibir_pcb_CPU(int fd_cpu)
         break;
 
     case ENVIAR_INTERFAZ_STDIN:
-        pcb_recibido = recibir_pcb_para_interfaz_stdin(fd_cpu, &nombre_interfaz, &direccion_logica, &tamanioMaximo, &instruccion_de_IO_a_ejecutar);
+        pcb_recibido = recibir_pcb_para_interfaz_stdin(fd_cpu, &nombre_interfaz, &direccion_fisica, &tamanioMaximo, &instruccion_de_IO_a_ejecutar);
         break;
 
     default:
@@ -549,7 +549,7 @@ void asignar_recurso(t_pcb *pcb, char *recurso)
             }
             break;
         default:
-            log_error(LOGGER_KERNEL, "Instruccion %s no reconocida", nombre_instruccion_to_string(instruccion_recurso_a_usar));
+            log_error(LOGGER_KERNEL, "Instruccion %s no reconocida", nombre_instruccion_to_string(INSTRUCCION_RECURSO_A_USAR));
             break;
         }
     }
@@ -565,7 +565,7 @@ t_recurso *encontrar_recurso(char *recurso)
 {
     bool _es_el_recurso(t_recurso * r)
     {
-        return strcmp(r->nombre, recurso) == 0;
+        return strcmp(r->nombre_recurso, recurso) == 0;
     }
 
     return list_find(RECURSOS_DISPONIBLES, (void *)_es_el_recurso);

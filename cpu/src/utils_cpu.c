@@ -57,13 +57,13 @@ void execute(t_instruccion *instruccion, int socket)
         loguear_y_sumar_pc(instruccion);
         pcb_actual->contexto_ejecucion->motivo_desalojo = INTERRUPCION_SYSCALL;
         esSyscall = true;
-        _wait(instruccion->parametro1, socket);
+        //_wait(instruccion->parametro1, socket);
         break;
     case SIGNAL:
         loguear_y_sumar_pc(instruccion);
         pcb_actual->contexto_ejecucion->motivo_desalojo = INTERRUPCION_SYSCALL;
         esSyscall = true;
-        _signal(instruccion->parametro1, socket);
+        //_signal(instruccion->parametro1, socket);
         break;
     case RESIZE:
         _resize(instruccion->parametro1);

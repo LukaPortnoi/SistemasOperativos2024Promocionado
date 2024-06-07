@@ -202,7 +202,7 @@ void _resize(char *tamanioAReasignar)
 
 void _copy_string(char *tamanio) {}
 
-void _wait(char *recurso, int cliente_socket)
+/*void _wait(char *recurso, int cliente_socket)
 {
     enviar_recurso(pcb_actual, recurso, cliente_socket, PEDIDO_WAIT);
 }
@@ -210,7 +210,7 @@ void _wait(char *recurso, int cliente_socket)
 void _signal(char *recurso, int cliente_socket)
 {
     enviar_recurso(pcb_actual, recurso, cliente_socket, PEDIDO_SIGNAL);
-}
+}*/
 
 void _io_gen_sleep(char *interfaz, char *unidades_de_trabajo, int cliente_socket)
 {
