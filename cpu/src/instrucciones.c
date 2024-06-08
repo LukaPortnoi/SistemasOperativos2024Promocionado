@@ -31,7 +31,7 @@ void _mov_in(char *registro, char *direc_logica, int socket)
 
     uint32_t direccionFisica = traducir_direccion(pcb_actual->pid, direccionLogica32, TAM_PAGINA);
     enviar_valor_mov_in_cpu(direccionFisica, socket);
-    char *valorObtenido = recibir_valor_mov_in_memoria(socket);
+    //char *valorObtenido = recibir_valor_mov_in_memoria(socket);
 
 
     
@@ -472,10 +472,6 @@ char* deserializar_valor_mov_in_memoria( t_buffer *buffer)
 {
     char *valor;
 
-    if (valor == NULL)
-    {
-        return NULL;
-    }
 
     uint32_t long_char;
     void *stream = buffer->stream;

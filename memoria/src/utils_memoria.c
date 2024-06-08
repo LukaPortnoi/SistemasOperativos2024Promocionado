@@ -342,31 +342,30 @@ void iniciar_semaforos()
     pthread_mutex_init(&mutex_comunicacion_procesos, NULL);
 }
 
-void recibir_mov_out_cpu(uint32_t direccion_fisica, char* registro, int cliente_socket)
+void recibir_mov_out_cpu(uint32_t *direccion_fisica, char **registro, int cliente_socket)
 {
     t_paquete *paquete = recibir_paquete(cliente_socket);
     deserializar_datos_mov_out(paquete, direccion_fisica, registro);
     eliminar_paquete(paquete);
 }
 
-void deserializar_datos_mov_out(t_paquete *paquete, uint32_t direccion_fisica, char* registro)
+void deserializar_datos_mov_out(t_paquete *paquete, uint32_t *direccion_fisica, char **registro)
 {
     int desplazamiento = 0;
     memcpy(&direccion_fisica, paquete->buffer->stream, sizeof(uint32_t));
     desplazamiento += sizeof(uint32_t);
-    int char_length = strlen(registro) + 1;
+    int char_length = strlen(*registro) + 1;
     memcpy(&char_length, paquete->buffer->stream, sizeof(int));
     desplazamiento += sizeof(int);
     registro = malloc(char_length);
     memcpy(registro, paquete->buffer->stream, char_length);
 }
 
-uint32_t recibir_mov_in_cpu(int socket_cliente, uint32_t *direccion_fisica)
+void recibir_mov_in_cpu(int socket_cliente, uint32_t *direccion_fisica)
 {
     t_paquete *paquete = recibir_paquete(socket_cliente);
     deserializar_direccion_fisica(paquete->buffer, direccion_fisica);
     eliminar_paquete(paquete);
-    return direccion_fisica;
 }
 
 void recibir_pedido_marco(uint32_t *pagina, uint32_t *pid_proceso, int socket)

@@ -19,7 +19,7 @@ void procesar_stdin(int socket_cliente, t_log *logger)
 
     char *datoRecibido;
     datoRecibido = procesarIngresoUsuario(interfazRecibida->tamanioMaximo);
-    //senviar_dato_stdin(fd_io_memoria, interfazRecibida->direccionFisica, datoRecibido);
+    //enviar_dato_stdin(fd_io_memoria, interfazRecibida->direccionFisica, datoRecibido);
     enviar_InterfazStdinConCodigoOP(socket_cliente, interfazRecibida->direccionFisica, interfazRecibida->tamanioMaximo, interfazRecibida->pidPcb, interfazRecibida->nombre_interfaz);
 }
 

@@ -21,13 +21,13 @@ void deserializar_pedido_instruccion(uint32_t *pid, uint32_t *pc, t_buffer *buff
 void recibir_pedido_resize(uint32_t *pid, uint32_t *nueva_cantidad_paginas, int socket);
 void deserializar_pedido_resize(uint32_t *pid, uint32_t *nueva_cantidad_paginas, t_buffer *buffer);
 void iniciar_semaforos();
-uint32_t recibir_mov_in_cpu(int socket_cliente, uint32_t *direccion_fisica);
+void recibir_mov_in_cpu(int socket_cliente, uint32_t *direccion_fisica);
 void recibir_pedido_marco(uint32_t *pagina , uint32_t *pid_proceso, int socket);
 void deserializar_pedido_marco(uint32_t *pagina, uint32_t *pid_proceso, t_buffer *buffer);
 void enviar_marco(int socket, uint32_t marco);
 void serializar_marco(t_paquete *paquete, uint32_t marco);
-void recibir_mov_out_cpu(uint32_t direccion_fisica, char* registro, int cliente_socket);
-void deserializar_datos_mov_out(t_paquete *paquete, uint32_t direccion_fisica, char* registro);
+void recibir_mov_out_cpu(uint32_t *direccion_fisica, char **registro, int cliente_socket);
+void deserializar_datos_mov_out(t_paquete *paquete, uint32_t *direccion_fisica, char **registro);
 void enviar_valor_mov_in_memoria(char* valor, int socket);
 void serializar_valor_leido_mov_in(t_paquete *paquete, char* valor);
 void escribir_memoria(uint32_t direccion_fisica, char* valor);
