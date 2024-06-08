@@ -3,29 +3,21 @@
 // REVISAR
 void serializar_direccion_fisica(t_paquete *paquete, uint32_t direccion_fisica)
 {
-    int buffer_size = sizeof(uint32_t);
-    void *stream = malloc(buffer_size);
-    if (stream == NULL)
-    {
-        return;
-    }
-
-    memcpy(stream, &direccion_fisica, sizeof(uint32_t));
-
-    t_buffer *buffer = malloc(sizeof(t_buffer));
-    if (buffer == NULL)
-    {
-        free(stream);
-        return;
-    }
-
-    buffer->size = buffer_size;
-    buffer->stream = stream;
-
-    paquete->buffer = buffer;
+    paquete->buffer->size = sizeof(uint32_t);
+    paquete->buffer->stream = malloc(paquete->buffer->size);
+    memcpy(paquete->buffer->stream, &direccion_fisica, sizeof(uint32_t));
 }
 
 void deserializar_direccion_fisica(t_buffer *buffer, uint32_t *direccion_fisica)
 {
-    memcpy(direccion_fisica, buffer->stream, sizeof(uint32_t));
+    uint32_t *df = malloc(sizeof(uint32_t));
+    if (df == NULL)
+    {
+        return;
+    }
+
+    void *stream = buffer->stream;
+    memcpy(df, stream, sizeof(uint32_t));
+    *direccion_fisica = *df;
+    free(df);
 }

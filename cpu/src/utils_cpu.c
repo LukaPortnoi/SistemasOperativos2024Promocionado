@@ -10,7 +10,7 @@ void ejecutar_ciclo_instruccion(int socket)
 
 t_instruccion *fetch(uint32_t pid, uint32_t pc)
 {
-    // TODO -- chequear que en los casos de instruccion con memoria logica puede dar PAGE FAULT y no hay que aumentar el pc (restarlo dentro del decode en esos casos)
+    // TODO -- chequear que en los casos de instruccion con memoria logica puede dar PAGE FAULT y no hay que aumentar el pc (restarlo dentro del decode en esos casos) -- En este TP no hay page fault
     // log_trace(LOGGER_CPU, "PID Y PC PARA PEDIR INSTRUCCION A MEMORIA: %d - %d\n", pid, pc);
     pedir_instruccion_memoria(pid, pc, fd_cpu_memoria);
 
@@ -73,11 +73,11 @@ void execute(t_instruccion *instruccion, int socket)
         loguear_y_sumar_pc(instruccion);
         break;
     case MOV_IN:
-        _mov_in(instruccion->parametro1, instruccion->parametro2, socket);  //ojo con este socket revisarlo
+        _mov_in(instruccion->parametro1, instruccion->parametro2, fd_cpu_memoria);  //ojo con este socket revisarlo (o no, recien lo cambie)
         loguear_y_sumar_pc(instruccion);
         break;
     case MOV_OUT:
-        _mov_out(instruccion->parametro1, instruccion->parametro2, socket); //ojo con este socket revisarlo
+        _mov_out(instruccion->parametro1, instruccion->parametro2, fd_cpu_memoria); //ojo con este socket revisarlo (o no, recien lo cambie)
         loguear_y_sumar_pc(instruccion);
         break;
     case IO_GEN_SLEEP:

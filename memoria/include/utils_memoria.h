@@ -12,9 +12,7 @@ t_proceso_memoria *obtener_proceso_pid(uint32_t pid_pedido);
 t_instruccion *obtener_instruccion_del_proceso_pc(t_proceso_memoria *proceso, uint32_t pc);
 char *instruccion_to_string(nombre_instruccion nombre);
 void enviar_instruccion(int socket, t_instruccion *instruccion);
-t_paquete *crear_paquete_Instruccion(t_instruccion *instruccion);
-void agregar_a_paquete_Instruccion(t_paquete *paquete, t_instruccion *instruccion);
-t_buffer *crear_buffer_instruccion(t_instruccion *instruccion);
+void serializar_instruccion(t_paquete *paquete, t_instruccion *instruccion);
 t_proceso_memoria *iniciar_proceso_path(t_proceso_memoria *proceso_nuevo);
 t_list *parsear_instrucciones(char *path);
 t_instruccion *armar_estructura_instruccion(nombre_instruccion instruccion, char *parametro1, char *parametro2, char *parametro3, char *parametro4, char *parametro5);
@@ -28,5 +26,11 @@ void recibir_pedido_marco(uint32_t *pagina , uint32_t *pid_proceso, int socket);
 void deserializar_pedido_marco(uint32_t *pagina, uint32_t *pid_proceso, t_buffer *buffer);
 void enviar_marco(int socket, uint32_t marco);
 void serializar_marco(t_paquete *paquete, uint32_t marco);
+void recibir_mov_out_cpu(uint32_t direccion_fisica, char* registro, int cliente_socket);
+void deserializar_datos_mov_out(t_paquete *paquete, uint32_t direccion_fisica, char* registro);
+void enviar_valor_mov_in_memoria(char* valor, int socket);
+void serializar_valor_leido_mov_in(t_paquete *paquete, char* valor);
+void escribir_memoria(uint32_t direccion_fisica, char* valor);
+char* leer_memoria(uint32_t dir_fisica);
 
 #endif // UTILS_MEMORIA_H

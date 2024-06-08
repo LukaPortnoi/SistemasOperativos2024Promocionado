@@ -2,6 +2,7 @@
 #define MEMORIA_H_
 
 #include "./gestor.h"
+#include "./sockets_client.h"
 
 
 void serializar_direccion_fisica(t_paquete *paquete, uint32_t direccion_fisica);

@@ -58,6 +58,7 @@ extern int fd_memoria;
 
 extern pthread_mutex_t mutex_procesos;
 extern pthread_mutex_t mutex_comunicacion_procesos;
+extern pthread_mutex_t mutex_memoria_usuario;
 extern t_proceso_memoria *proceso_memoria;
 
 extern void *memoriaUsuario;

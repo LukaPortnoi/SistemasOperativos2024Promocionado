@@ -25,6 +25,8 @@ void serializar_resize(t_pcb *pcb, uint32_t tamanioAReasignar, t_paquete *paquet
 void enviar_valor_mov_in_cpu(uint32_t valor, int socket);
 void enviar_valor_mov_out_cpu(uint32_t direccion_fisica, char* registro_valor ,int socket);
 void serializar_datos_mov_out(t_paquete *paquete, uint32_t direccion_fisica, char *registro);
+char *recibir_valor_mov_in_memoria(int socket);
+char* deserializar_valor_mov_in_memoria( t_buffer *buffer);
 
 // UTILS
 uint32_t *get_registry32(char *registro);

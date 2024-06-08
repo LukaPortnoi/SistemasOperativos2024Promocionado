@@ -15,6 +15,7 @@ int fd_memoria;
 
 pthread_mutex_t mutex_comunicacion_procesos;
 pthread_mutex_t mutex_procesos;
+pthread_mutex_t mutex_memoria_usuario;
 
 void *memoriaUsuario;
 uint32_t tamanioMemoria;

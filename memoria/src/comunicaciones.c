@@ -83,25 +83,22 @@ static void procesar_conexion_memoria(void *void_args)
 			else
 			{
 				uint32_t response = resize_proceso_memoria(proceso_memoria, tamanio);
-				// enviar_respuesta_resize(cliente_socket, response);
+				//enviar_respuesta_resize(cliente_socket, response);
 				break;
 			}
 
 		case PEDIDO_MOV_IN: // Lee el valor del marco y lo devuelve para guardarlo en el registro (se pide la direccion) - recibo direccion fisica
-			/*int direccion_fisica_mov_in;
-			recibir_mov_in_cpu(&direccion_fisica_mov_in, cliente_socket);
-			//Creo que "leer_memoria_cpu()" no existe
-			uint32_t valor_direccion_fisica_mov_in = leer_memoria_cpu(direccion_fisica_mov_in);
-			enviar_valor_mov_in_cpu(valor_direccion_fisica_mov_in, cliente_socket); // MOV_IN_CPU  */
+			uint32_t direccion_fisica_mov_in;
+			recibir_mov_in_cpu(cliente_socket, &direccion_fisica_mov_in);
+			char* valor_leido_mov_in = leer_memoria(direccion_fisica_mov_in);
+			enviar_valor_mov_in_memoria(valor_leido_mov_in, cliente_socket); // MOV_IN_CPU  
 			break;
 
 		case PEDIDO_MOV_OUT: // me pasa por parametro un uint32_t y tengo que guardarlo en el marco que me dice
-			/*uint32_t valor_direccion_fisica_mov_out;
-			int direccion_fisica_mov_out;
-			//Creeria que la funcion "recibir_mov_out()" no existe
-			recibir_mov_out_cpu(&valor_direccion_fisica_mov_out, cliente_socket); //antes decia esto en el tercer argumento "sockecliente_sockett_cpu_int". ¿Que es "&dir_fisica" en el segundo argumento y de donde sale?
-			//Creo que la funcion "escribir_memoria_cpu()" tampoco existe
-			escribir_memoria_cpu(direccion_fisica_mov_out, valor_direccion_fisica_mov_out);*/
+			char* registro_a_escrbir;
+			uint32_t direccion_fisica_mov_out;
+			recibir_mov_out_cpu(direccion_fisica_mov_out, registro_a_escrbir, cliente_socket);
+			escribir_memoria(direccion_fisica_mov_out, registro_a_escrbir);
 			break;
 
 		case PEDIDO_MARCO:

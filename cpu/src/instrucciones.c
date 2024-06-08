@@ -31,8 +31,10 @@ void _mov_in(char *registro, char *direc_logica, int socket)
 
     uint32_t direccionFisica = traducir_direccion(pcb_actual->pid, direccionLogica32, TAM_PAGINA);
     enviar_valor_mov_in_cpu(direccionFisica, socket);
-    // char *valorObtenido = obtener_valor_direccion_fisica(direccionFisica);
+    char *valorObtenido = recibir_valor_mov_in_memoria(socket);
 
+
+    
     /*if (revisar_registro(registro))
     {
         *(get_registry8(registro)) = get_registry8(valorObtenido);
@@ -60,6 +62,7 @@ void _mov_out(char *direc_logica, char *registro, int socket)
     }
 
     uint32_t direccionFisica = traducir_direccion(pcb_actual->pid, direccionLogica32, TAM_PAGINA);
+    enviar_valor_mov_out_cpu(direccionFisica, registro, socket);
     // char *valorObtenido = obtener_valor_direccion_fisica(direccionFisica);
 
     /*if (revisar_registro(registro))
@@ -222,18 +225,33 @@ void _io_gen_sleep(char *interfaz, char *unidades_de_trabajo, int cliente_socket
 void _io_stdin_read(char *interfaz, char *direc_logica, char *tamanio, int cliente_socket)
 {
     uint32_t direccionLogica32;
-
+    
     if (revisar_registro(direc_logica))
-    {
+    {   
         direccionLogica32 = *(get_registry8(direc_logica));
+        printf("Direccion 1 recibido: %d\n", direccionLogica32);
     }
     else
-    {
+    {   
+        
         direccionLogica32 = *(get_registry32(direc_logica));
+        printf("Direccion recibido: %d\n", direccionLogica32);
     }
 
+    uint32_t tamanioMaximoAingresar;
+    if (revisar_registro(tamanio))
+    {   
+        tamanioMaximoAingresar = *(get_registry8(tamanio));
+        printf("TamMaximo 1 recibido: %d\n", tamanioMaximoAingresar);
+    }
+    else
+    {   
+        
+        tamanioMaximoAingresar = *(get_registry32(tamanio));
+        printf("TamMaximo recibido: %d\n", tamanioMaximoAingresar);
+    }
+    
     uint32_t direccionFisica = traducir_direccion(pcb_actual->pid, direccionLogica32, TAM_PAGINA);
-    uint32_t tamanioMaximoAingresar = str_to_uint32(tamanio);
     enviar_interfaz_IO_stdin(pcb_actual, interfaz, direccionFisica, tamanioMaximoAingresar, cliente_socket, IO_STDIN_READ);
 }
 
@@ -432,6 +450,7 @@ bool revisar_registro(char *registro)
     }
 }
 
+// Mover todo esto a otro lado obviamente
 // Estaba en utis_memoria y lo movi aca de manera preliminar, despues se vera donde lo metemos
 void enviar_valor_mov_in_cpu(uint32_t direccion_fisica, int socket)
 {
@@ -439,6 +458,37 @@ void enviar_valor_mov_in_cpu(uint32_t direccion_fisica, int socket)
     serializar_direccion_fisica(paquete_mov_in, direccion_fisica);
     enviar_paquete(paquete_mov_in, socket);
     eliminar_paquete(paquete_mov_in);
+}
+
+char *recibir_valor_mov_in_memoria(int socket)
+{
+    t_paquete *paquete = recibir_paquete(socket);
+    char* valor_recibido = deserializar_valor_mov_in_memoria(paquete->buffer);
+    eliminar_paquete(paquete);
+    return valor_recibido;
+}
+
+char* deserializar_valor_mov_in_memoria( t_buffer *buffer)
+{
+    char *valor;
+
+    if (valor == NULL)
+    {
+        return NULL;
+    }
+
+    uint32_t long_char;
+    void *stream = buffer->stream;
+    int desplazamiento = 0;
+
+    memcpy(&(long_char), stream + desplazamiento, sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+    valor = malloc(long_char);
+
+    memcpy(valor, stream + desplazamiento, long_char);
+    
+    return valor;
 }
 
 void enviar_valor_mov_out_cpu(uint32_t direccion_fisica, char *registro_valor, int socket)
@@ -449,19 +499,19 @@ void enviar_valor_mov_out_cpu(uint32_t direccion_fisica, char *registro_valor, i
     eliminar_paquete(paquete_mov_out);
 }
 
-// Mover todo esto a otro lado obviamente
-void serializar_datos_mov_out(t_paquete *paquete, uint32_t direccion_fisica, char *registro){}
-/* {
+
+void serializar_datos_mov_out(t_paquete *paquete, uint32_t direccion_fisica, char *registro)
+ {
     int char_length = strlen(registro) + 1;
     paquete->buffer->size = sizeof(uint32_t) + char_length;
     paquete->buffer->stream = malloc(paquete->buffer->size);
 
     int desplazamiento = 0;
 
-    memcpy(stream + desplazamiento, &direccion_fisica, sizeof(uint32_t));
+    memcpy(paquete->buffer->stream + desplazamiento, &direccion_fisica, sizeof(uint32_t));
     desplazamiento += sizeof(uint32_t);
-    memcpy(stream + desplazamiento, &char_length, sizeof(int));
+    memcpy(paquete->buffer->stream + desplazamiento, &char_length, sizeof(int));
     desplazamiento += sizeof(int);
-    memcpy(stream + desplazamiento, registro, char_length);
+    memcpy(paquete->buffer->stream + desplazamiento, registro, char_length);
     desplazamiento += sizeof(char_length);
-} */
+} 

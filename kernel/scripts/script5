@@ -1,0 +1,4 @@
+INICIAR_PROCESO script_io_std_1
+INICIAR_PROCESO script_io_basico_1
+INICIAR_PROCESO script_solo_cpu_2
+INICIAR_PROCESO script_io_std_1

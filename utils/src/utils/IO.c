@@ -481,7 +481,7 @@ t_buffer *crear_buffer_InterfazStdin(t_interfaz_stdin *interfaz)
     uint32_t tamanio_nombre_interfaz = strlen(interfaz->nombre_interfaz) + 1;
 
     t_buffer *buffer = malloc(sizeof(t_buffer));
-    buffer->size = sizeof(uint32_t) * 3 + tamanio_nombre_interfaz;
+    buffer->size = sizeof(uint32_t) * 4+ tamanio_nombre_interfaz;
 
     buffer->stream = malloc(buffer->size);
     int desplazamiento = 0;

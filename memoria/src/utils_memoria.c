@@ -122,22 +122,26 @@ char *instruccion_to_string(nombre_instruccion instruccion)
 
 void enviar_instruccion(int socket, t_instruccion *instruccion)
 {
-    t_paquete *paquete = crear_paquete_Instruccion(instruccion);
-    agregar_a_paquete_Instruccion(paquete, instruccion);
+    t_paquete *paquete = crear_paquete_con_codigo_de_operacion(INSTRUCCION);
+    serializar_instruccion(paquete, instruccion);
     enviar_paquete(paquete, socket);
     eliminar_paquete(paquete);
 }
 
-t_paquete *crear_paquete_Instruccion(t_instruccion *instruccion)
-{
-    t_paquete *paquete = malloc(sizeof(t_paquete));
-    paquete->codigo_operacion = INSTRUCCION;
-    paquete->buffer = crear_buffer_instruccion(instruccion);
-    return paquete;
-}
 
-void agregar_a_paquete_Instruccion(t_paquete *paquete, t_instruccion *instruccion)
+
+void serializar_instruccion(t_paquete *paquete, t_instruccion *instruccion)
 {
+    paquete->buffer->size = sizeof(nombre_instruccion) +
+                   sizeof(uint32_t) * 5 +
+                   instruccion->longitud_parametro1 +
+                   instruccion->longitud_parametro2 +
+                   instruccion->longitud_parametro3 +
+                   instruccion->longitud_parametro4 +
+                   instruccion->longitud_parametro5;
+
+    paquete->buffer->stream = malloc(paquete->buffer->size);
+
     int desplazamiento = 0;
 
     memcpy(paquete->buffer->stream + desplazamiento, &(instruccion->nombre), sizeof(nombre_instruccion));
@@ -163,72 +167,19 @@ void agregar_a_paquete_Instruccion(t_paquete *paquete, t_instruccion *instruccio
     memcpy(paquete->buffer->stream + desplazamiento, &longitud_parametro5, sizeof(uint32_t)); // Cambio aquí
     desplazamiento += sizeof(uint32_t);
 
-    memcpy(paquete->buffer->stream + desplazamiento, instruccion->parametro1, instruccion->longitud_parametro1);
+    memcpy(paquete->buffer->stream  + desplazamiento, instruccion->parametro1, instruccion->longitud_parametro1);
     desplazamiento += instruccion->longitud_parametro1;
 
-    memcpy(paquete->buffer->stream + desplazamiento, instruccion->parametro2, instruccion->longitud_parametro2);
+    memcpy(paquete->buffer->stream  + desplazamiento, instruccion->parametro2, instruccion->longitud_parametro2);
     desplazamiento += instruccion->longitud_parametro2;
 
-    memcpy(paquete->buffer->stream + desplazamiento, instruccion->parametro2, instruccion->longitud_parametro3);
+    memcpy(paquete->buffer->stream  + desplazamiento, instruccion->parametro3, instruccion->longitud_parametro3);
     desplazamiento += instruccion->longitud_parametro3;
 
-    memcpy(paquete->buffer->stream + desplazamiento, instruccion->parametro2, instruccion->longitud_parametro4);
+    memcpy(paquete->buffer->stream  + desplazamiento, instruccion->parametro4, instruccion->longitud_parametro4);
     desplazamiento += instruccion->longitud_parametro4;
 
-    memcpy(paquete->buffer->stream + desplazamiento, instruccion->parametro2, instruccion->longitud_parametro5);
-    desplazamiento += instruccion->longitud_parametro5;
-}
-
-t_buffer *crear_buffer_instruccion(t_instruccion *instruccion)
-{
-    t_buffer *buffer = malloc(sizeof(t_buffer));
-
-    buffer->size = sizeof(nombre_instruccion) +
-                   sizeof(uint32_t) * 5 +
-                   instruccion->longitud_parametro1 +
-                   instruccion->longitud_parametro2 +
-                   instruccion->longitud_parametro3 +
-                   instruccion->longitud_parametro4 +
-                   instruccion->longitud_parametro5;
-
-    buffer->stream = malloc(buffer->size);
-
-    int desplazamiento = 0;
-
-    memcpy(buffer->stream + desplazamiento, &(instruccion->nombre), sizeof(nombre_instruccion));
-    desplazamiento += sizeof(nombre_instruccion);
-
-    memcpy(buffer->stream + desplazamiento, &(instruccion->longitud_parametro1), sizeof(uint32_t));
-    desplazamiento += sizeof(uint32_t);
-
-    memcpy(buffer->stream + desplazamiento, &(instruccion->longitud_parametro2), sizeof(uint32_t));
-    desplazamiento += sizeof(uint32_t);
-
-    memcpy(buffer->stream + desplazamiento, &(instruccion->longitud_parametro3), sizeof(uint32_t));
-    desplazamiento += sizeof(uint32_t);
-
-    memcpy(buffer->stream + desplazamiento, &(instruccion->longitud_parametro4), sizeof(uint32_t));
-    desplazamiento += sizeof(uint32_t);
-
-    memcpy(buffer->stream + desplazamiento, &(instruccion->longitud_parametro5), sizeof(uint32_t));
-    desplazamiento += sizeof(uint32_t);
-
-    memcpy(buffer->stream + desplazamiento, instruccion->parametro1, instruccion->longitud_parametro1);
-    desplazamiento += instruccion->longitud_parametro1;
-
-    memcpy(buffer->stream + desplazamiento, instruccion->parametro2, instruccion->longitud_parametro2);
-    desplazamiento += instruccion->longitud_parametro2;
-
-    memcpy(buffer->stream + desplazamiento, instruccion->parametro3, instruccion->longitud_parametro3);
-    desplazamiento += instruccion->longitud_parametro3;
-
-    memcpy(buffer->stream + desplazamiento, instruccion->parametro4, instruccion->longitud_parametro4);
-    desplazamiento += instruccion->longitud_parametro4;
-
-    memcpy(buffer->stream + desplazamiento, instruccion->parametro5, instruccion->longitud_parametro5);
-    desplazamiento += instruccion->longitud_parametro5;
-
-    return buffer;
+    memcpy(paquete->buffer->stream  + desplazamiento, instruccion->parametro5, instruccion->longitud_parametro5);
 }
 
 t_proceso_memoria *iniciar_proceso_path(t_proceso_memoria *proceso_nuevo)
@@ -391,6 +342,25 @@ void iniciar_semaforos()
     pthread_mutex_init(&mutex_comunicacion_procesos, NULL);
 }
 
+void recibir_mov_out_cpu(uint32_t direccion_fisica, char* registro, int cliente_socket)
+{
+    t_paquete *paquete = recibir_paquete(cliente_socket);
+    deserializar_datos_mov_out(paquete, direccion_fisica, registro);
+    eliminar_paquete(paquete);
+}
+
+void deserializar_datos_mov_out(t_paquete *paquete, uint32_t direccion_fisica, char* registro)
+{
+    int desplazamiento = 0;
+    memcpy(&direccion_fisica, paquete->buffer->stream, sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+    int char_length = strlen(registro) + 1;
+    memcpy(&char_length, paquete->buffer->stream, sizeof(int));
+    desplazamiento += sizeof(int);
+    registro = malloc(char_length);
+    memcpy(registro, paquete->buffer->stream, char_length);
+}
+
 uint32_t recibir_mov_in_cpu(int socket_cliente, uint32_t *direccion_fisica)
 {
     t_paquete *paquete = recibir_paquete(socket_cliente);
@@ -429,15 +399,48 @@ void serializar_marco(t_paquete *paquete, uint32_t marco)
     memcpy(paquete->buffer->stream, &(marco), sizeof(uint32_t));
 }
 
-/*
-uint32_t leer_memoria_cpu(uint32_t dir_fisica)
+void enviar_valor_mov_in_memoria(char* valor, int socket)
 {
-    uint32_t valor_leido = 0;
+    t_paquete *paquete_mov_in = crear_paquete_con_codigo_de_operacion(PEDIDO_MOV_IN);
+    serializar_valor_leido_mov_in(paquete_mov_in, valor);
+    enviar_paquete(paquete_mov_in, socket);
+    eliminar_paquete(paquete_mov_in);
+}
+
+void serializar_valor_leido_mov_in(t_paquete *paquete, char* valor)
+{
+    uint32_t tamanio_valor = strlen(valor) + 1;
+    paquete->buffer->size = sizeof(uint32_t);
+    paquete->buffer->stream = malloc(paquete->buffer->size);
+    memcpy(paquete->buffer->stream, &tamanio_valor, sizeof(uint32_t));
+}
+
+void escribir_memoria(uint32_t direccion_fisica, char* valor)
+{
+	// log_info(logger_memoria_info, "voy a escribir un valor en memoria usuario"); // TODO BORRAR
+	pthread_mutex_lock(&mutex_memoria_usuario);
+	memcpy(memoriaUsuario + direccion_fisica, &valor, sizeof(uint32_t));
+	pthread_mutex_unlock(&mutex_memoria_usuario);
+
+	// log_error(logger_memoria_info, "ya guarde en memoria"); // TODO BORRAR
+	//t_marco *marco = marco_desde_df(direccion_fisica); //chequear esto
+
+	//marcar_pag_modificada(marco->pid, marco->num_de_marco); //chequear esto
+	
+	usleep(RETARDO_RESPUESTA * 1000);
+}
+
+
+char* leer_memoria(uint32_t dir_fisica)
+{
+    char* valor_leido = 0;
     pthread_mutex_lock(&mutex_memoria_usuario);
-    memcpy(&valor_leido, memoria_usuario + dir_fisica, sizeof(uint32_t));
+    memcpy(&valor_leido, memoriaUsuario + dir_fisica, sizeof(uint32_t));
     pthread_mutex_unlock(&mutex_memoria_usuario);
 
-    t_marco *marco = marco_desde_df(dir_fisica);
+    usleep(RETARDO_RESPUESTA * 1000);
+
+    /*t_marco *marco = marco_desde_df(dir_fisica);
     // TODO -- VALIDAR -- cuando hago un F_READ debo marcar la pagina que tiene el marco como modificada
     t_proceso_memoria *proceso = obtener_proceso_pid((uint32_t)marco->pid);
     t_list *paginas_en_memoria = obtener_entradas_con_bit_presencia_1(proceso);
@@ -450,6 +453,6 @@ uint32_t leer_memoria_cpu(uint32_t dir_fisica)
         sleep(1);
     usleep(config_valores_memoria.retardo_respuesta * 1000);
     log_info(logger_memoria_info, "***** ACCESO A ESPACIO USUARIO - CPU - PID [%d] - ACCION: [LEER] - DIRECCION FISICA: [%d]", marco->pid, dir_fisica); // LOG OBLIGATORIO
-
+    */
     return valor_leido;
-}*/
+}
