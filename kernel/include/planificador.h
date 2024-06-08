@@ -33,11 +33,10 @@ void bloquear_proceso(t_pcb *pcb, char *motivo);
 void desbloquear_proceso(uint32_t pid);
 
 // RECURSOS
+t_pcb *recibir_pcb_para_manejo_recurso(int socket, char **recurso);
+t_pcb *deserializar_pcb_recurso(t_buffer *buffer, char **recurso);
 void asignar_recurso(t_pcb *pcb, char *recurso);
-//int encontrar_recurso(char *recurso);
 t_recurso *encontrar_recurso(char *recurso);
-
-
 
 // INTERFACES
 void ejecutar_intruccion_io(t_pcb *pcb_recibido);

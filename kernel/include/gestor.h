@@ -71,10 +71,10 @@ extern uint32_t PID_GLOBAL;
 extern t_list *RECURSOS_DISPONIBLES;
 extern char *RECURSO_A_USAR;
 extern nombre_instruccion INSTRUCCION_RECURSO_A_USAR;
-
-extern t_list *interfaces_conectadas;
+extern pthread_mutex_t MUTEX_RECURSO;
 
 // GLOBALES PARA MANEJO DE INTERFACES
+extern t_list *interfaces_conectadas;
 extern char *nombre_interfaz;
 extern nombre_instruccion instruccion_de_IO_a_ejecutar;
 extern int unidades_de_trabajo;

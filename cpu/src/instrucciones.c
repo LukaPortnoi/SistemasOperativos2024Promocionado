@@ -16,7 +16,7 @@ void _set(char *registro, char *valor)
 
 // (Registro Datos, Registro Dirección): Lee el valor de memoria correspondiente a
 // la Dirección Lógica que se encuentra en el Registro Dirección y lo almacena en el Registro Datos.
-void _mov_in(char *registro, char *direc_logica)
+void _mov_in(char *registro, char *direc_logica, int socket)
 {
     uint32_t direccionLogica32;
 
@@ -30,6 +30,7 @@ void _mov_in(char *registro, char *direc_logica)
     }
 
     uint32_t direccionFisica = traducir_direccion(pcb_actual->pid, direccionLogica32, TAM_PAGINA);
+    enviar_valor_mov_in_cpu(direccionFisica, socket);
     // char *valorObtenido = obtener_valor_direccion_fisica(direccionFisica);
 
     /*if (revisar_registro(registro))
@@ -44,7 +45,7 @@ void _mov_in(char *registro, char *direc_logica)
 
 //(Registro Dirección, Registro Datos): Lee el valor del Registro Datos y lo escribe en
 // la dirección física de memoria obtenida a partir de la Dirección Lógica almacenada en el Registro Dirección.
-void _mov_out(char *direc_logica, char *registro)
+void _mov_out(char *direc_logica, char *registro, int socket)
 {
 
     uint32_t direccionLogica32;
@@ -202,7 +203,7 @@ void _resize(char *tamanioAReasignar)
 
 void _copy_string(char *tamanio) {}
 
-/*void _wait(char *recurso, int cliente_socket)
+void _wait(char *recurso, int cliente_socket)
 {
     enviar_recurso(pcb_actual, recurso, cliente_socket, PEDIDO_WAIT);
 }
@@ -210,7 +211,7 @@ void _copy_string(char *tamanio) {}
 void _signal(char *recurso, int cliente_socket)
 {
     enviar_recurso(pcb_actual, recurso, cliente_socket, PEDIDO_SIGNAL);
-}*/
+}
 
 void _io_gen_sleep(char *interfaz, char *unidades_de_trabajo, int cliente_socket)
 {
@@ -236,7 +237,6 @@ void _io_stdin_read(char *interfaz, char *direc_logica, char *tamanio, int clien
     enviar_interfaz_IO_stdin(pcb_actual, interfaz, direccionFisica, tamanioMaximoAingresar, cliente_socket, IO_STDIN_READ);
 }
 
-
 // ENVIOS
 
 void enviar_recurso(t_pcb *pcb, char *recurso, int cliente_socket, op_cod codigo_operacion)
@@ -250,12 +250,50 @@ void enviar_recurso(t_pcb *pcb, char *recurso, int cliente_socket, op_cod codigo
 // REVISAR
 void serializar_recurso(t_pcb *pcb, char *recurso, t_paquete *paquete)
 {
-    paquete->buffer->size = sizeof(uint32_t) + strlen(recurso) + 1;
+    uint32_t tamanio_recurso = strlen(recurso) + 1;
+
+    size_t tam_registros = sizeof(uint32_t) +
+                           sizeof(uint8_t) * 4 +
+                           sizeof(uint32_t) * 6;
+
+    paquete->buffer->size = sizeof(uint32_t) +
+                            sizeof(t_estado_proceso) +
+                            sizeof(uint32_t) +
+                            sizeof(uint64_t) +
+                            tam_registros +
+                            sizeof(t_motivo_desalojo) +
+                            sizeof(t_motivo_finalizacion) +
+                            sizeof(uint32_t) +
+                            tamanio_recurso;
+
     paquete->buffer->stream = malloc(paquete->buffer->size);
-    int offset = 0;
-    memcpy(paquete->buffer->stream + offset, &(pcb->pid), sizeof(uint32_t));
-    offset += sizeof(uint32_t);
-    memcpy(paquete->buffer->stream + offset, recurso, strlen(recurso) + 1);
+    int desplazamiento = 0;
+
+    memcpy(paquete->buffer->stream + desplazamiento, &(pcb->pid), sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+    memcpy(paquete->buffer->stream + desplazamiento, &(pcb->estado), sizeof(t_estado_proceso));
+    desplazamiento += sizeof(t_estado_proceso);
+
+    memcpy(paquete->buffer->stream + desplazamiento, &(pcb->quantum), sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+    memcpy(paquete->buffer->stream + desplazamiento, &(pcb->tiempo_q), sizeof(uint64_t));
+    desplazamiento += sizeof(uint64_t);
+
+    memcpy(paquete->buffer->stream + desplazamiento, pcb->contexto_ejecucion->registros, tam_registros);
+    desplazamiento += tam_registros;
+
+    memcpy(paquete->buffer->stream + desplazamiento, &(pcb->contexto_ejecucion->motivo_desalojo), sizeof(t_motivo_desalojo));
+    desplazamiento += sizeof(t_motivo_desalojo);
+
+    memcpy(paquete->buffer->stream + desplazamiento, &(pcb->contexto_ejecucion->motivo_finalizacion), sizeof(t_motivo_finalizacion));
+    desplazamiento += sizeof(t_motivo_finalizacion);
+
+    memcpy(paquete->buffer->stream + desplazamiento, &tamanio_recurso, sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+    memcpy(paquete->buffer->stream + desplazamiento, recurso, tamanio_recurso);
 }
 
 void enviar_resize_a_memoria(t_pcb *pcb, uint32_t tamanioAReasignar)
@@ -393,3 +431,37 @@ bool revisar_registro(char *registro)
         return false;
     }
 }
+
+// Estaba en utis_memoria y lo movi aca de manera preliminar, despues se vera donde lo metemos
+void enviar_valor_mov_in_cpu(uint32_t direccion_fisica, int socket)
+{
+    t_paquete *paquete_mov_in = crear_paquete_con_codigo_de_operacion(PEDIDO_MOV_IN);
+    serializar_direccion_fisica(paquete_mov_in, direccion_fisica);
+    enviar_paquete(paquete_mov_in, socket);
+    eliminar_paquete(paquete_mov_in);
+}
+
+void enviar_valor_mov_out_cpu(uint32_t direccion_fisica, char *registro_valor, int socket)
+{
+    t_paquete *paquete_mov_out = crear_paquete_con_codigo_de_operacion(PEDIDO_MOV_OUT);
+    serializar_datos_mov_out(paquete_mov_out, direccion_fisica, registro_valor);
+    enviar_paquete(paquete_mov_out, socket);
+    eliminar_paquete(paquete_mov_out);
+}
+
+// Mover todo esto a otro lado obviamente
+void serializar_datos_mov_out(t_paquete *paquete, uint32_t direccion_fisica, char *registro){}
+/* {
+    int char_length = strlen(registro) + 1;
+    paquete->buffer->size = sizeof(uint32_t) + char_length;
+    paquete->buffer->stream = malloc(paquete->buffer->size);
+
+    int desplazamiento = 0;
+
+    memcpy(stream + desplazamiento, &direccion_fisica, sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+    memcpy(stream + desplazamiento, &char_length, sizeof(int));
+    desplazamiento += sizeof(int);
+    memcpy(stream + desplazamiento, registro, char_length);
+    desplazamiento += sizeof(char_length);
+} */

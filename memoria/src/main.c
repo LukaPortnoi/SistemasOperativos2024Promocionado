@@ -52,7 +52,7 @@ void inicializar_config()
 void iniciar_memoria_usuario()
 {
 	memoriaUsuario = malloc(TAM_MEMORIA);
-	memset(memoriaUsuario, 0, TAM_MEMORIA);
+	//memset(memoriaUsuario, 0, TAM_MEMORIA);
 	tamanioMemoria = TAM_MEMORIA;
 	if (memoriaUsuario == NULL)
 	{

@@ -24,6 +24,7 @@
 #include "../../utils/include/pcb.h"
 #include "../../utils/include/IO.h"
 #include "../../utils/include/contexto.h"
+#include "../../utils/include/memoria.h"
 
 extern char *IP_MEMORIA;
 extern char *IP_CPU;
@@ -44,6 +45,7 @@ extern int fd_cpu_memoria;
 
 extern t_pcb *pcb_actual;
 extern bool esSyscall;
+extern bool envioPcb;
 
 extern pthread_mutex_t mutex_interrupt;
 

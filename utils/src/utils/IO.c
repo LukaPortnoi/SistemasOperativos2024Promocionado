@@ -589,4 +589,3 @@ void enviar_InterfazStdinConCodigoOP(int socket, uint32_t direccionFisica, uint3
     enviar_paquete(paquete, socket);
     eliminar_paquete(paquete);
 }
-

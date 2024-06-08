@@ -204,13 +204,13 @@ t_buffer *crear_buffer_instruccion(t_instruccion *instruccion)
     memcpy(buffer->stream + desplazamiento, &(instruccion->longitud_parametro2), sizeof(uint32_t));
     desplazamiento += sizeof(uint32_t);
 
-     memcpy(buffer->stream + desplazamiento, &(instruccion->longitud_parametro3), sizeof(uint32_t));
+    memcpy(buffer->stream + desplazamiento, &(instruccion->longitud_parametro3), sizeof(uint32_t));
     desplazamiento += sizeof(uint32_t);
 
-     memcpy(buffer->stream + desplazamiento, &(instruccion->longitud_parametro4), sizeof(uint32_t));
+    memcpy(buffer->stream + desplazamiento, &(instruccion->longitud_parametro4), sizeof(uint32_t));
     desplazamiento += sizeof(uint32_t);
 
-     memcpy(buffer->stream + desplazamiento, &(instruccion->longitud_parametro5), sizeof(uint32_t));
+    memcpy(buffer->stream + desplazamiento, &(instruccion->longitud_parametro5), sizeof(uint32_t));
     desplazamiento += sizeof(uint32_t);
 
     memcpy(buffer->stream + desplazamiento, instruccion->parametro1, instruccion->longitud_parametro1);
@@ -257,39 +257,47 @@ t_list *parsear_instrucciones(char *path)
         char **palabras = string_split(split_instrucciones[indice_split], " ");
         if (string_equals_ignore_case(palabras[0], "SET"))
         {
-            list_add(instrucciones, armar_estructura_instruccion(SET, palabras[1], palabras[2],"","",""));
+            list_add(instrucciones, armar_estructura_instruccion(SET, palabras[1], palabras[2], "", "", ""));
         }
         else if (string_equals_ignore_case(palabras[0], "SUM"))
         {
-            list_add(instrucciones, armar_estructura_instruccion(SUM, palabras[1], palabras[2],"","",""));
+            list_add(instrucciones, armar_estructura_instruccion(SUM, palabras[1], palabras[2], "", "", ""));
         }
         else if (string_equals_ignore_case(palabras[0], "SUB"))
         {
-            list_add(instrucciones, armar_estructura_instruccion(SUB, palabras[1], palabras[2],"","",""));
+            list_add(instrucciones, armar_estructura_instruccion(SUB, palabras[1], palabras[2], "", "", ""));
         }
         else if (string_equals_ignore_case(palabras[0], "JNZ"))
         {
-            list_add(instrucciones, armar_estructura_instruccion(JNZ, palabras[1], palabras[2],"","",""));
+            list_add(instrucciones, armar_estructura_instruccion(JNZ, palabras[1], palabras[2], "", "", ""));
+        }
+        else if (string_equals_ignore_case(palabras[0], "WAIT"))
+        {
+            list_add(instrucciones, armar_estructura_instruccion(WAIT, palabras[1], "", "", "", ""));
+        }
+        else if (string_equals_ignore_case(palabras[0], "SIGNAL"))
+        {
+            list_add(instrucciones, armar_estructura_instruccion(SIGNAL, palabras[1], "", "", "", ""));
         }
         else if (string_equals_ignore_case(palabras[0], "RESIZE"))
         {
-            list_add(instrucciones, armar_estructura_instruccion(RESIZE, palabras[1], "","","",""));
+            list_add(instrucciones, armar_estructura_instruccion(RESIZE, palabras[1], "", "", "", ""));
         }
         else if (string_equals_ignore_case(palabras[0], "MOV_IN"))
         {
-            list_add(instrucciones, armar_estructura_instruccion(MOV_IN, palabras[1], palabras[2],"","",""));
-        }        
+            list_add(instrucciones, armar_estructura_instruccion(MOV_IN, palabras[1], palabras[2], "", "", ""));
+        }
         else if (string_equals_ignore_case(palabras[0], "IO_GEN_SLEEP"))
         {
-            list_add(instrucciones, armar_estructura_instruccion(IO_GEN_SLEEP, palabras[1], palabras[2],"","",""));
+            list_add(instrucciones, armar_estructura_instruccion(IO_GEN_SLEEP, palabras[1], palabras[2], "", "", ""));
         }
         else if (string_equals_ignore_case(palabras[0], "IO_STDIN_READ"))
         {
-            list_add(instrucciones, armar_estructura_instruccion(IO_STDIN_READ, palabras[1], palabras[2], palabras[3],"",""));
+            list_add(instrucciones, armar_estructura_instruccion(IO_STDIN_READ, palabras[1], palabras[2], palabras[3], "", ""));
         }
         else if (string_equals_ignore_case(palabras[0], "EXIT"))
         {
-            list_add(instrucciones, armar_estructura_instruccion(EXIT, "", "","","",""));
+            list_add(instrucciones, armar_estructura_instruccion(EXIT, "", "", "", "", ""));
         }
 
         indice_split++;
@@ -314,19 +322,14 @@ t_instruccion *armar_estructura_instruccion(nombre_instruccion instruccion, char
     estructura->longitud_parametro1 = strlen(estructura->parametro1) + 1;
     estructura->longitud_parametro2 = strlen(estructura->parametro2) + 1;
 
-        estructura->parametro3 = (parametro3[0] != '\0') ? strdup(parametro3) : parametro3; 
-        estructura->longitud_parametro3 = strlen(estructura->parametro3) + 1;
+    estructura->parametro3 = (parametro3[0] != '\0') ? strdup(parametro3) : parametro3;
+    estructura->longitud_parametro3 = strlen(estructura->parametro3) + 1;
 
-    
-        estructura->parametro4 = (parametro4[0] != '\0') ? strdup(parametro4) : parametro4; 
-        estructura->longitud_parametro4 = strlen(estructura->parametro4) + 1;
+    estructura->parametro4 = (parametro4[0] != '\0') ? strdup(parametro4) : parametro4;
+    estructura->longitud_parametro4 = strlen(estructura->parametro4) + 1;
 
-
-        estructura->parametro5 = (parametro5[0] != '\0') ? strdup(parametro5) : parametro5; 
-        estructura->longitud_parametro5 = strlen(estructura->parametro5) + 1;
-
-    
-    
+    estructura->parametro5 = (parametro5[0] != '\0') ? strdup(parametro5) : parametro5;
+    estructura->longitud_parametro5 = strlen(estructura->parametro5) + 1;
 
     return estructura;
 }
@@ -388,14 +391,6 @@ void iniciar_semaforos()
     pthread_mutex_init(&mutex_comunicacion_procesos, NULL);
 }
 
-void enviar_valor_mov_in_cpu(uint32_t valor, int socket)
-{
-	t_paquete *paquete_mov_in = crear_paquete_con_codigo_de_operacion(PEDIDO_MOV_IN);
-	serializar_direccion_fisica(paquete_mov_in, valor);
-	enviar_paquete(paquete_mov_in, socket);
-	eliminar_paquete(paquete_mov_in);
-} 
-
 uint32_t recibir_mov_in_cpu(int socket_cliente, uint32_t *direccion_fisica)
 {
     t_paquete *paquete = recibir_paquete(socket_cliente);
@@ -404,10 +399,10 @@ uint32_t recibir_mov_in_cpu(int socket_cliente, uint32_t *direccion_fisica)
     return direccion_fisica;
 }
 
-void recibir_pedido_marco(uint32_t *pagina , uint32_t *pid_proceso, int socket)
+void recibir_pedido_marco(uint32_t *pagina, uint32_t *pid_proceso, int socket)
 {
     t_paquete *paquete = recibir_paquete(socket);
-    deserializar_pedido_marco(pagina , pid_proceso, paquete->buffer);
+    deserializar_pedido_marco(pagina, pid_proceso, paquete->buffer);
     eliminar_paquete(paquete);
 }
 
@@ -421,10 +416,10 @@ void deserializar_pedido_marco(uint32_t *pagina, uint32_t *pid_proceso, t_buffer
 
 void enviar_marco(int socket, uint32_t marco)
 {
-    t_paquete *paquete = crear_paquete_con_codigo_de_operacion(ENVIAR_MARCO);// ??????
+    t_paquete *paquete = crear_paquete_con_codigo_de_operacion(ENVIAR_MARCO); // ??????
     serializar_marco(paquete, marco);
     enviar_paquete(paquete, socket);
-	eliminar_paquete(paquete);
+    eliminar_paquete(paquete);
 }
 
 void serializar_marco(t_paquete *paquete, uint32_t marco)
@@ -434,33 +429,27 @@ void serializar_marco(t_paquete *paquete, uint32_t marco)
     memcpy(paquete->buffer->stream, &(marco), sizeof(uint32_t));
 }
 
-
-
-
-
-
-
 /*
 uint32_t leer_memoria_cpu(uint32_t dir_fisica)
 {
-	uint32_t valor_leido = 0;
-	pthread_mutex_lock(&mutex_memoria_usuario);
-	memcpy(&valor_leido, memoria_usuario + dir_fisica, sizeof(uint32_t));
-	pthread_mutex_unlock(&mutex_memoria_usuario);
+    uint32_t valor_leido = 0;
+    pthread_mutex_lock(&mutex_memoria_usuario);
+    memcpy(&valor_leido, memoria_usuario + dir_fisica, sizeof(uint32_t));
+    pthread_mutex_unlock(&mutex_memoria_usuario);
 
-	t_marco *marco = marco_desde_df(dir_fisica);
-	// TODO -- VALIDAR -- cuando hago un F_READ debo marcar la pagina que tiene el marco como modificada
-	t_proceso_memoria *proceso = obtener_proceso_pid((uint32_t)marco->pid);
-	t_list *paginas_en_memoria = obtener_entradas_con_bit_presencia_1(proceso);
-	t_entrada_tabla_pag *pagina_modificada = obtener_entrada_con_marco(paginas_en_memoria, marco->num_de_marco);
-	actualizo_entrada_para_futuro_reemplazo(pagina_modificada);
+    t_marco *marco = marco_desde_df(dir_fisica);
+    // TODO -- VALIDAR -- cuando hago un F_READ debo marcar la pagina que tiene el marco como modificada
+    t_proceso_memoria *proceso = obtener_proceso_pid((uint32_t)marco->pid);
+    t_list *paginas_en_memoria = obtener_entradas_con_bit_presencia_1(proceso);
+    t_entrada_tabla_pag *pagina_modificada = obtener_entrada_con_marco(paginas_en_memoria, marco->num_de_marco);
+    actualizo_entrada_para_futuro_reemplazo(pagina_modificada);
 
-	if (config_valores_memoria.retardo_respuesta / 1000 > 0)
-		sleep(config_valores_memoria.retardo_respuesta / 1000);
-	else
-		sleep(1);
-	usleep(config_valores_memoria.retardo_respuesta * 1000);
-	log_info(logger_memoria_info, "***** ACCESO A ESPACIO USUARIO - CPU - PID [%d] - ACCION: [LEER] - DIRECCION FISICA: [%d]", marco->pid, dir_fisica); // LOG OBLIGATORIO
+    if (config_valores_memoria.retardo_respuesta / 1000 > 0)
+        sleep(config_valores_memoria.retardo_respuesta / 1000);
+    else
+        sleep(1);
+    usleep(config_valores_memoria.retardo_respuesta * 1000);
+    log_info(logger_memoria_info, "***** ACCESO A ESPACIO USUARIO - CPU - PID [%d] - ACCION: [LEER] - DIRECCION FISICA: [%d]", marco->pid, dir_fisica); // LOG OBLIGATORIO
 
-	return valor_leido;
+    return valor_leido;
 }*/

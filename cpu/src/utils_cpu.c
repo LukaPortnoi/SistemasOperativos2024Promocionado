@@ -57,13 +57,15 @@ void execute(t_instruccion *instruccion, int socket)
         loguear_y_sumar_pc(instruccion);
         pcb_actual->contexto_ejecucion->motivo_desalojo = INTERRUPCION_SYSCALL;
         esSyscall = true;
-        //_wait(instruccion->parametro1, socket);
+        envioPcb = true;
+        _wait(instruccion->parametro1, socket);
         break;
     case SIGNAL:
         loguear_y_sumar_pc(instruccion);
         pcb_actual->contexto_ejecucion->motivo_desalojo = INTERRUPCION_SYSCALL;
         esSyscall = true;
-        //_signal(instruccion->parametro1, socket);
+        envioPcb = true;
+        _signal(instruccion->parametro1, socket);
         break;
     case RESIZE:
         _resize(instruccion->parametro1);
@@ -71,23 +73,25 @@ void execute(t_instruccion *instruccion, int socket)
         loguear_y_sumar_pc(instruccion);
         break;
     case MOV_IN:
-        _mov_in(instruccion->parametro1, instruccion->parametro2);
+        _mov_in(instruccion->parametro1, instruccion->parametro2, socket);  //ojo con este socket revisarlo
         loguear_y_sumar_pc(instruccion);
         break;
     case MOV_OUT:
-        _mov_out(instruccion->parametro1, instruccion->parametro2);
+        _mov_out(instruccion->parametro1, instruccion->parametro2, socket); //ojo con este socket revisarlo
         loguear_y_sumar_pc(instruccion);
         break;
     case IO_GEN_SLEEP:
         loguear_y_sumar_pc(instruccion);
         pcb_actual->contexto_ejecucion->motivo_desalojo = INTERRUPCION_BLOQUEO;
         esSyscall = true;
+        envioPcb = true;
         _io_gen_sleep(instruccion->parametro1, instruccion->parametro2, socket);
         break;
     case IO_STDIN_READ:
         loguear_y_sumar_pc(instruccion);
         pcb_actual->contexto_ejecucion->motivo_desalojo = INTERRUPCION_BLOQUEO;
         esSyscall = true;
+        envioPcb = true;
         _io_stdin_read(instruccion->parametro1, instruccion->parametro2 , instruccion->parametro3, socket);
         break;
     case EXIT:

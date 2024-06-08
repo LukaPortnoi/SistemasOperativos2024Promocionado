@@ -4,6 +4,7 @@ pthread_mutex_t procesoMutex;
 pthread_mutex_t procesosEnSistemaMutex;
 pthread_mutex_t mutex_pid;
 pthread_mutex_t mutex_lista_interfaces;
+pthread_mutex_t MUTEX_RECURSO;
 
 sem_t sem_planificador_largo_plazo;
 sem_t sem_planificador_corto_plazo;
@@ -372,6 +373,7 @@ void iniciar_colas_y_semaforos()
     pthread_mutex_init(&procesosEnSistemaMutex, NULL);
     pthread_mutex_init(&mutex_pid, NULL);
     pthread_mutex_init(&mutex_lista_interfaces, NULL);
+    pthread_mutex_init(&MUTEX_RECURSO, NULL);
 
     sem_init(&sem_planificador_largo_plazo, 0, 1);
     sem_init(&sem_planificador_corto_plazo, 0, 1);
@@ -406,6 +408,7 @@ void inicializar_recursos()
         t_recurso *recurso = malloc(sizeof(t_recurso));
         recurso->nombre_recurso = RECURSOS[i];
         recurso->instancias = atoi(INSTANCIAS_RECURSOS[i]);
+        recurso->cola_procesos_bloqueados = squeue_create();
         list_add(RECURSOS_DISPONIBLES, recurso);
         i++;
     }
@@ -504,25 +507,77 @@ void desbloquear_proceso(uint32_t pid)
 }
 
 // REVISAR
-void recibir_pcb_para_manejo_recurso(int socket, char **recurso)
+t_pcb *recibir_pcb_para_manejo_recurso(int socket, char **recurso)
 {
     t_paquete *paquete = recibir_paquete(socket);
-    void *stream = paquete->buffer->stream;
+    t_pcb *pcb = deserializar_pcb_recurso(paquete->buffer, recurso);
+    eliminar_paquete(paquete);
+    return pcb;
+}
+
+t_pcb *deserializar_pcb_recurso(t_buffer *buffer, char **recurso)
+{
+
+    t_pcb *pcb = malloc(sizeof(t_pcb));
+    if (pcb == NULL)
+    {
+        return NULL;
+    }
+
+    uint32_t long_recurso;
+    void *stream = buffer->stream;
     int desplazamiento = 0;
 
-    int tamanio_recurso;
-    memcpy(&tamanio_recurso, stream + desplazamiento, sizeof(int));
-    desplazamiento += sizeof(int);
+    memcpy(&(pcb->pid), stream + desplazamiento, sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
 
-    *recurso = malloc(tamanio_recurso);
-    memcpy(*recurso, stream + desplazamiento, tamanio_recurso);
+    memcpy(&(pcb->estado), stream + desplazamiento, sizeof(t_estado_proceso));
+    desplazamiento += sizeof(t_estado_proceso);
 
-    eliminar_paquete(paquete);
+    memcpy(&(pcb->quantum), stream + desplazamiento, sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+    memcpy(&(pcb->tiempo_q), stream + desplazamiento, sizeof(uint64_t));
+    desplazamiento += sizeof(uint64_t);
+
+    pcb->contexto_ejecucion = malloc(sizeof(t_contexto_ejecucion));
+    if (pcb->contexto_ejecucion == NULL)
+    {
+        free(pcb);
+        return NULL;
+    }
+
+    pcb->contexto_ejecucion->registros = malloc(sizeof(t_registros));
+    if (pcb->contexto_ejecucion->registros == NULL)
+    {
+        free(pcb->contexto_ejecucion);
+        free(pcb);
+        return NULL;
+    }
+
+    memcpy(pcb->contexto_ejecucion->registros, stream + desplazamiento, sizeof(t_registros));
+    desplazamiento += sizeof(t_registros);
+
+    memcpy(&(pcb->contexto_ejecucion->motivo_desalojo), stream + desplazamiento, sizeof(t_motivo_desalojo));
+    desplazamiento += sizeof(t_motivo_desalojo);
+
+    memcpy(&(pcb->contexto_ejecucion->motivo_finalizacion), stream + desplazamiento, sizeof(t_motivo_finalizacion));
+    desplazamiento += sizeof(t_motivo_finalizacion);
+
+    memcpy(&long_recurso, stream + desplazamiento, sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+    *recurso = malloc(long_recurso);
+
+    memcpy(*recurso, stream + desplazamiento, long_recurso);
+
+    return pcb;
 }
 
 void asignar_recurso(t_pcb *pcb, char *recurso)
 {
     t_recurso *recurso_a_utilizar = encontrar_recurso(recurso);
+    log_trace(LOGGER_KERNEL, "PID %d - Recurso %s - Instruccion %s", pcb->pid, recurso_a_utilizar->nombre_recurso, nombre_instruccion_to_string(INSTRUCCION_RECURSO_A_USAR));
     if (recurso_a_utilizar)
     {
         switch (INSTRUCCION_RECURSO_A_USAR)
@@ -530,7 +585,9 @@ void asignar_recurso(t_pcb *pcb, char *recurso)
         case WAIT:
             if (recurso_a_utilizar->instancias > 0)
             {
+                pthread_mutex_lock(&MUTEX_RECURSO);
                 recurso_a_utilizar->instancias--;
+                pthread_mutex_unlock(&MUTEX_RECURSO);
                 proceso_listo(pcb, false);
             }
             else
@@ -540,13 +597,15 @@ void asignar_recurso(t_pcb *pcb, char *recurso)
             }
             break;
         case SIGNAL:
+            pthread_mutex_lock(&MUTEX_RECURSO);
             recurso_a_utilizar->instancias++;
+            pthread_mutex_unlock(&MUTEX_RECURSO);
             if (recurso_a_utilizar->instancias > 0 && !list_is_empty(recurso_a_utilizar->cola_procesos_bloqueados->cola))
             {
                 t_pcb *pcb_desbloquear = squeue_pop(recurso_a_utilizar->cola_procesos_bloqueados);
                 desbloquear_proceso(pcb_desbloquear->pid);
-                proceso_listo(pcb_desbloquear, false);
             }
+            proceso_listo(pcb, false);
             break;
         default:
             log_error(LOGGER_KERNEL, "Instruccion %s no reconocida", nombre_instruccion_to_string(INSTRUCCION_RECURSO_A_USAR));
