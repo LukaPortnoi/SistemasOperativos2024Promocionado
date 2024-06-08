@@ -35,6 +35,10 @@ typedef struct
     uint32_t longitud_parametro2;
     char *parametro3;
     char *parametro4;
+    char *parametro5;
+    uint32_t longitud_parametro4;
+    uint32_t longitud_parametro3;
+    uint32_t longitud_parametro5;
 } t_instruccion;
 
 typedef struct

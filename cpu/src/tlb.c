@@ -90,6 +90,7 @@ void actualizar_TLB(uint32_t pid, uint32_t pagina, uint32_t marco)
 
 int traducir_direccion(uint32_t pid, uint32_t logicalAddress, uint32_t pageSize)
 {
+    printf("El número es: %d\n", logicalAddress);
     uint32_t pagina = logicalAddress / pageSize;
     uint32_t offset = logicalAddress - pagina * pageSize;
     uint32_t direccionFisica = 0;

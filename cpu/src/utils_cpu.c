@@ -84,7 +84,7 @@ void execute(t_instruccion *instruccion, int socket)
         esSyscall = true;
         _io_gen_sleep(instruccion->parametro1, instruccion->parametro2, socket);
         break;
-    case IO_FS_READ:
+    case IO_STDIN_READ:
         loguear_y_sumar_pc(instruccion);
         pcb_actual->contexto_ejecucion->motivo_desalojo = INTERRUPCION_BLOQUEO;
         esSyscall = true;
@@ -137,12 +137,36 @@ t_instruccion *deserializar_instruccion(int socket)
     memcpy(&(tamanio_parametro2), stream + desplazamiento, sizeof(uint32_t)); // Cambio aquí
     desplazamiento += sizeof(uint32_t);
 
+    uint32_t tamanio_parametro3;                                              // Cambio aquí
+    memcpy(&(tamanio_parametro3), stream + desplazamiento, sizeof(uint32_t)); // Cambio aquí
+    desplazamiento += sizeof(uint32_t);
+
+    uint32_t tamanio_parametro4;                                              // Cambio aquí
+    memcpy(&(tamanio_parametro4), stream + desplazamiento, sizeof(uint32_t)); // Cambio aquí
+    desplazamiento += sizeof(uint32_t);
+
+    uint32_t tamanio_parametro5;                                              // Cambio aquí
+    memcpy(&(tamanio_parametro5), stream + desplazamiento, sizeof(uint32_t)); // Cambio aquí
+    desplazamiento += sizeof(uint32_t);
+
     instruccion->parametro1 = malloc(tamanio_parametro1);
     memcpy(instruccion->parametro1, stream + desplazamiento, tamanio_parametro1);
     desplazamiento += tamanio_parametro1;
 
     instruccion->parametro2 = malloc(tamanio_parametro2);
     memcpy(instruccion->parametro2, stream + desplazamiento, tamanio_parametro2);
+    desplazamiento += tamanio_parametro2;
+
+    instruccion->parametro3 = malloc(tamanio_parametro3);
+    memcpy(instruccion->parametro3, stream + desplazamiento, tamanio_parametro3);
+    desplazamiento += tamanio_parametro3;
+
+    instruccion->parametro4 = malloc(tamanio_parametro4);
+    memcpy(instruccion->parametro4, stream + desplazamiento, tamanio_parametro4);
+    desplazamiento += tamanio_parametro4;
+
+    instruccion->parametro5 = malloc(tamanio_parametro5);
+    memcpy(instruccion->parametro5, stream + desplazamiento, tamanio_parametro5);
 
     eliminar_paquete(paquete);
 

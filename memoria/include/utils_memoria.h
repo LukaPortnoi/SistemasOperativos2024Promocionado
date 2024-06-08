@@ -17,7 +17,7 @@ void agregar_a_paquete_Instruccion(t_paquete *paquete, t_instruccion *instruccio
 t_buffer *crear_buffer_instruccion(t_instruccion *instruccion);
 t_proceso_memoria *iniciar_proceso_path(t_proceso_memoria *proceso_nuevo);
 t_list *parsear_instrucciones(char *path);
-t_instruccion *armar_estructura_instruccion(nombre_instruccion instruccion, char *parametro1, char *parametro2);
+t_instruccion *armar_estructura_instruccion(nombre_instruccion instruccion, char *parametro1, char *parametro2, char *parametro3, char *parametro4, char *parametro5);
 char *leer_archivo(char *path);
 void deserializar_pedido_instruccion(uint32_t *pid, uint32_t *pc, t_buffer *buffer);
 void recibir_pedido_resize(uint32_t *pid, uint32_t *nueva_cantidad_paginas, int socket);

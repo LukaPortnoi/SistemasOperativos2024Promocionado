@@ -151,11 +151,32 @@ void agregar_a_paquete_Instruccion(t_paquete *paquete, t_instruccion *instruccio
     memcpy(paquete->buffer->stream + desplazamiento, &longitud_parametro2, sizeof(uint32_t)); // Cambio aquí
     desplazamiento += sizeof(uint32_t);
 
+    uint32_t longitud_parametro3 = instruccion->longitud_parametro3;                          // Cambio aquí
+    memcpy(paquete->buffer->stream + desplazamiento, &longitud_parametro3, sizeof(uint32_t)); // Cambio aquí
+    desplazamiento += sizeof(uint32_t);
+
+    uint32_t longitud_parametro4 = instruccion->longitud_parametro4;                          // Cambio aquí
+    memcpy(paquete->buffer->stream + desplazamiento, &longitud_parametro4, sizeof(uint32_t)); // Cambio aquí
+    desplazamiento += sizeof(uint32_t);
+
+    uint32_t longitud_parametro5 = instruccion->longitud_parametro5;                          // Cambio aquí
+    memcpy(paquete->buffer->stream + desplazamiento, &longitud_parametro5, sizeof(uint32_t)); // Cambio aquí
+    desplazamiento += sizeof(uint32_t);
+
     memcpy(paquete->buffer->stream + desplazamiento, instruccion->parametro1, instruccion->longitud_parametro1);
     desplazamiento += instruccion->longitud_parametro1;
 
     memcpy(paquete->buffer->stream + desplazamiento, instruccion->parametro2, instruccion->longitud_parametro2);
     desplazamiento += instruccion->longitud_parametro2;
+
+    memcpy(paquete->buffer->stream + desplazamiento, instruccion->parametro2, instruccion->longitud_parametro3);
+    desplazamiento += instruccion->longitud_parametro3;
+
+    memcpy(paquete->buffer->stream + desplazamiento, instruccion->parametro2, instruccion->longitud_parametro4);
+    desplazamiento += instruccion->longitud_parametro4;
+
+    memcpy(paquete->buffer->stream + desplazamiento, instruccion->parametro2, instruccion->longitud_parametro5);
+    desplazamiento += instruccion->longitud_parametro5;
 }
 
 t_buffer *crear_buffer_instruccion(t_instruccion *instruccion)
@@ -163,9 +184,12 @@ t_buffer *crear_buffer_instruccion(t_instruccion *instruccion)
     t_buffer *buffer = malloc(sizeof(t_buffer));
 
     buffer->size = sizeof(nombre_instruccion) +
-                   sizeof(uint32_t) * 2 +
+                   sizeof(uint32_t) * 5 +
                    instruccion->longitud_parametro1 +
-                   instruccion->longitud_parametro2;
+                   instruccion->longitud_parametro2 +
+                   instruccion->longitud_parametro3 +
+                   instruccion->longitud_parametro4 +
+                   instruccion->longitud_parametro5;
 
     buffer->stream = malloc(buffer->size);
 
@@ -180,11 +204,29 @@ t_buffer *crear_buffer_instruccion(t_instruccion *instruccion)
     memcpy(buffer->stream + desplazamiento, &(instruccion->longitud_parametro2), sizeof(uint32_t));
     desplazamiento += sizeof(uint32_t);
 
+     memcpy(buffer->stream + desplazamiento, &(instruccion->longitud_parametro3), sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+     memcpy(buffer->stream + desplazamiento, &(instruccion->longitud_parametro4), sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+     memcpy(buffer->stream + desplazamiento, &(instruccion->longitud_parametro5), sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
     memcpy(buffer->stream + desplazamiento, instruccion->parametro1, instruccion->longitud_parametro1);
     desplazamiento += instruccion->longitud_parametro1;
 
     memcpy(buffer->stream + desplazamiento, instruccion->parametro2, instruccion->longitud_parametro2);
     desplazamiento += instruccion->longitud_parametro2;
+
+    memcpy(buffer->stream + desplazamiento, instruccion->parametro3, instruccion->longitud_parametro3);
+    desplazamiento += instruccion->longitud_parametro3;
+
+    memcpy(buffer->stream + desplazamiento, instruccion->parametro4, instruccion->longitud_parametro4);
+    desplazamiento += instruccion->longitud_parametro4;
+
+    memcpy(buffer->stream + desplazamiento, instruccion->parametro5, instruccion->longitud_parametro5);
+    desplazamiento += instruccion->longitud_parametro5;
 
     return buffer;
 }
@@ -215,35 +257,39 @@ t_list *parsear_instrucciones(char *path)
         char **palabras = string_split(split_instrucciones[indice_split], " ");
         if (string_equals_ignore_case(palabras[0], "SET"))
         {
-            list_add(instrucciones, armar_estructura_instruccion(SET, palabras[1], palabras[2]));
+            list_add(instrucciones, armar_estructura_instruccion(SET, palabras[1], palabras[2],"","",""));
         }
         else if (string_equals_ignore_case(palabras[0], "SUM"))
         {
-            list_add(instrucciones, armar_estructura_instruccion(SUM, palabras[1], palabras[2]));
+            list_add(instrucciones, armar_estructura_instruccion(SUM, palabras[1], palabras[2],"","",""));
         }
         else if (string_equals_ignore_case(palabras[0], "SUB"))
         {
-            list_add(instrucciones, armar_estructura_instruccion(SUB, palabras[1], palabras[2]));
+            list_add(instrucciones, armar_estructura_instruccion(SUB, palabras[1], palabras[2],"","",""));
         }
         else if (string_equals_ignore_case(palabras[0], "JNZ"))
         {
-            list_add(instrucciones, armar_estructura_instruccion(JNZ, palabras[1], palabras[2]));
+            list_add(instrucciones, armar_estructura_instruccion(JNZ, palabras[1], palabras[2],"","",""));
         }
         else if (string_equals_ignore_case(palabras[0], "RESIZE"))
         {
-            list_add(instrucciones, armar_estructura_instruccion(RESIZE, palabras[1], ""));
+            list_add(instrucciones, armar_estructura_instruccion(RESIZE, palabras[1], "","","",""));
         }
         else if (string_equals_ignore_case(palabras[0], "MOV_IN"))
         {
-            list_add(instrucciones, armar_estructura_instruccion(MOV_IN, palabras[1], palabras[2]));
+            list_add(instrucciones, armar_estructura_instruccion(MOV_IN, palabras[1], palabras[2],"","",""));
         }        
         else if (string_equals_ignore_case(palabras[0], "IO_GEN_SLEEP"))
         {
-            list_add(instrucciones, armar_estructura_instruccion(IO_GEN_SLEEP, palabras[1], palabras[2]));
+            list_add(instrucciones, armar_estructura_instruccion(IO_GEN_SLEEP, palabras[1], palabras[2],"","",""));
+        }
+        else if (string_equals_ignore_case(palabras[0], "IO_STDIN_READ"))
+        {
+            list_add(instrucciones, armar_estructura_instruccion(IO_STDIN_READ, palabras[1], palabras[2], palabras[3],"",""));
         }
         else if (string_equals_ignore_case(palabras[0], "EXIT"))
         {
-            list_add(instrucciones, armar_estructura_instruccion(EXIT, "", ""));
+            list_add(instrucciones, armar_estructura_instruccion(EXIT, "", "","","",""));
         }
 
         indice_split++;
@@ -257,7 +303,7 @@ t_list *parsear_instrucciones(char *path)
     return instrucciones;
 }
 
-t_instruccion *armar_estructura_instruccion(nombre_instruccion instruccion, char *parametro1, char *parametro2)
+t_instruccion *armar_estructura_instruccion(nombre_instruccion instruccion, char *parametro1, char *parametro2, char *parametro3, char *parametro4, char *parametro5)
 {
     t_instruccion *estructura = (t_instruccion *)malloc(sizeof(t_instruccion));
 
@@ -267,6 +313,20 @@ t_instruccion *armar_estructura_instruccion(nombre_instruccion instruccion, char
 
     estructura->longitud_parametro1 = strlen(estructura->parametro1) + 1;
     estructura->longitud_parametro2 = strlen(estructura->parametro2) + 1;
+
+        estructura->parametro3 = (parametro3[0] != '\0') ? strdup(parametro3) : parametro3; 
+        estructura->longitud_parametro3 = strlen(estructura->parametro3) + 1;
+
+    
+        estructura->parametro4 = (parametro4[0] != '\0') ? strdup(parametro4) : parametro4; 
+        estructura->longitud_parametro4 = strlen(estructura->parametro4) + 1;
+
+
+        estructura->parametro5 = (parametro5[0] != '\0') ? strdup(parametro5) : parametro5; 
+        estructura->longitud_parametro5 = strlen(estructura->parametro5) + 1;
+
+    
+    
 
     return estructura;
 }
