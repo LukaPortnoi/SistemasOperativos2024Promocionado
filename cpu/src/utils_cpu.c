@@ -94,6 +94,13 @@ void execute(t_instruccion *instruccion, int socket)
         envioPcb = true;
         _io_stdin_read(instruccion->parametro1, instruccion->parametro2 , instruccion->parametro3, socket);
         break;
+    case IO_STDOUT_WRITE:
+        loguear_y_sumar_pc(instruccion);
+        pcb_actual->contexto_ejecucion->motivo_desalojo = INTERRUPCION_BLOQUEO;
+        esSyscall = true;
+        envioPcb = true;
+        _io_stdout_write(instruccion->parametro1, instruccion->parametro2 , instruccion->parametro3, socket);
+        break;
     case EXIT:
         log_info(LOGGER_CPU, "PID: %d - Ejecutando: %s", pcb_actual->pid, instruccion_to_string(instruccion->nombre));
         esSyscall = true;

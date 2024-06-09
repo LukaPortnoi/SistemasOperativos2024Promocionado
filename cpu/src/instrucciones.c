@@ -255,6 +255,40 @@ void _io_stdin_read(char *interfaz, char *direc_logica, char *tamanio, int clien
     enviar_interfaz_IO_stdin(pcb_actual, interfaz, direccionFisica, tamanioMaximoAingresar, cliente_socket, IO_STDIN_READ);
 }
 
+
+void _io_stdout_write(char *interfaz, char *direc_logica, char *tamanio, int cliente_socket)
+{
+    uint32_t direccionLogica32;
+    
+    if (revisar_registro(direc_logica))
+    {   
+        direccionLogica32 = *(get_registry8(direc_logica));
+        printf("Direccion 1 recibido: %d\n", direccionLogica32);
+    }
+    else
+    {   
+        
+        direccionLogica32 = *(get_registry32(direc_logica));
+        printf("Direccion recibido: %d\n", direccionLogica32);
+    }
+
+    uint32_t tamanioMaximoAingresar;
+    if (revisar_registro(tamanio))
+    {   
+        tamanioMaximoAingresar = *(get_registry8(tamanio));
+        printf("TamMaximo 1 recibido: %d\n", tamanioMaximoAingresar);
+    }
+    else
+    {   
+        
+        tamanioMaximoAingresar = *(get_registry32(tamanio));
+        printf("TamMaximo recibido: %d\n", tamanioMaximoAingresar);
+    }
+    
+    uint32_t direccionFisica = traducir_direccion(pcb_actual->pid, direccionLogica32, TAM_PAGINA);
+    enviar_interfaz_IO_stdin(pcb_actual, interfaz, direccionFisica, tamanioMaximoAingresar, cliente_socket, IO_STDOUT_WRITE);
+}
+
 // ENVIOS
 
 void enviar_recurso(t_pcb *pcb, char *recurso, int cliente_socket, op_cod codigo_operacion)

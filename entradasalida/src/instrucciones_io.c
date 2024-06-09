@@ -39,3 +39,17 @@ char *procesarIngresoUsuario(uint32_t tamanioMaximo)
     }
     return leido;
 }
+
+
+void procesar_stdout(int socket_cliente, t_log *logger)
+{
+    t_interfaz_stdout *interfazRecibida = recibir_InterfazStdout(socket_cliente);
+    log_info(logger, "PID: %d - Operacion: IO_STDIN_READ", interfazRecibida->pidPcb);
+    //enviar_dato_stdout(fd_io_memoria, interfazRecibida->direccionFisica, interfazRecibida->tamanioMaximo);
+    //recibir_dato_stdout(socket_cliente, interfazRecibida->direccionFisica, interfazRecibida->tamanioMaximo, interfazRecibida->pidPcb, interfazRecibida->nombre_interfaz);
+    imprimir_dato_recibido_de_memoria("Hola") ;  
+}
+
+void imprimir_dato_recibido_de_memoria(char *dato){
+        log_info(LOGGER_INPUT_OUTPUT, "Dato encontrado: %s", dato);
+}

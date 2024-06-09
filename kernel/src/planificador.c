@@ -232,6 +232,9 @@ t_pcb *recibir_pcb_CPU(int fd_cpu)
     case ENVIAR_INTERFAZ_STDIN:
         pcb_recibido = recibir_pcb_para_interfaz_stdin(fd_cpu, &nombre_interfaz, &direccion_fisica, &tamanioMaximo, &instruccion_de_IO_a_ejecutar);
         break;
+    case ENVIAR_INTERFAZ_STDOUT:
+        pcb_recibido = recibir_pcb_para_interfaz_stdin(fd_cpu, &nombre_interfaz, &direccion_fisica, &tamanioMaximo, &instruccion_de_IO_a_ejecutar);
+        break;
 
     default:
         log_error(LOGGER_KERNEL, "No se pudo recibir el pcb");
@@ -641,8 +644,7 @@ void ejecutar_intruccion_io(t_pcb *pcb_recibido)
         case GENERICA:
             if (instruccion_de_IO_a_ejecutar == IO_GEN_SLEEP)
             {
-                bloquear_proceso(pcb_recibido, interfaz_a_utilizar->nombre_interfaz_recibida);
-                squeue_push(interfaz_a_utilizar->cola_procesos_bloqueados, pcb_recibido);
+                bloquear_procesosIO(pcb_recibido, interfaz_a_utilizar);
                 enviar_InterfazGenerica(interfaz_a_utilizar->socket_interfaz_recibida, unidades_de_trabajo, pcb_recibido->pid, interfaz_a_utilizar->nombre_interfaz_recibida);
             }
             else
@@ -655,8 +657,7 @@ void ejecutar_intruccion_io(t_pcb *pcb_recibido)
         case STDIN:
             if (instruccion_de_IO_a_ejecutar == IO_STDIN_READ)
             {
-                bloquear_proceso(pcb_recibido, interfaz_a_utilizar->nombre_interfaz_recibida);
-                squeue_push(interfaz_a_utilizar->cola_procesos_bloqueados, pcb_recibido);
+                bloquear_procesosIO(pcb_recibido, interfaz_a_utilizar);
                 enviar_InterfazStdin(interfaz_a_utilizar->socket_interfaz_recibida, direccion_fisica, tamanioMaximo, pcb_recibido->pid, interfaz_a_utilizar->nombre_interfaz_recibida);
 
                 // Enviar interfaz STDIN
@@ -671,8 +672,9 @@ void ejecutar_intruccion_io(t_pcb *pcb_recibido)
         case STDOUT:
             if (instruccion_de_IO_a_ejecutar == IO_STDOUT_WRITE)
             {
-                bloquear_proceso(pcb_recibido, interfaz_a_utilizar->nombre_interfaz_recibida);
-                squeue_push(interfaz_a_utilizar->cola_procesos_bloqueados, pcb_recibido);
+                bloquear_procesosIO(pcb_recibido, interfaz_a_utilizar);
+                enviar_InterfazStdin(interfaz_a_utilizar->socket_interfaz_recibida, direccion_fisica, tamanioMaximo, pcb_recibido->pid, interfaz_a_utilizar->nombre_interfaz_recibida);
+
                 // Enviar interfaz STDOUT
             }
             else
@@ -723,4 +725,10 @@ t_interfaz_recibida *buscar_interfaz_por_nombre(char *nombre_interfaz)
     pthread_mutex_unlock(&mutex_lista_interfaces);
 
     return interfaz;
+}
+
+void bloquear_procesosIO(t_pcb *pcbAbloquear, t_interfaz_recibida *interfaz_a_utilizar){
+
+    bloquear_proceso(pcbAbloquear, interfaz_a_utilizar->nombre_interfaz_recibida);
+    squeue_push(interfaz_a_utilizar->cola_procesos_bloqueados, pcbAbloquear);
 }

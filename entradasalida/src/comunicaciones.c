@@ -22,7 +22,7 @@ void procesar_conexion_IO(int server_socket, t_log *logger)
 			break;
 
 		case PEDIDO_IO_STDOUT_WRITE:
-			// procesar_stdout(server_socket, logger);
+			procesar_stdout(server_socket, logger);
 			break;
 
 		case PEDIDO_IO_FS_CREATE:

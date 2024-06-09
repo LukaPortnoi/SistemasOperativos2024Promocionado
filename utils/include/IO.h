@@ -35,9 +35,11 @@ typedef struct
 
 typedef struct
 {
-    int unidades_de_trabajo;
-    uint32_t tamanio_nombre_interfaz;
-} t_interfaz_stdio;
+    uint32_t pidPcb;
+    uint32_t direccionFisica;
+    uint32_t tamanioMaximo;
+    char *nombre_interfaz;
+} t_interfaz_stdout;
 
 typedef struct
 {
@@ -77,5 +79,15 @@ t_interfaz_stdin *deserializar_InterfazStdin(t_buffer *buffer);
 void enviar_dato_stdin(int socket, uint32_t direccionFisica, char *datoRecibido);
 t_paquete *crear_paquete_dato_stdin(uint32_t direccionFisica, char *datoRecibido, op_cod codigo_operacion);
 t_buffer *crear_buffer_dato_stdin(uint32_t direccionFisica, char *datoRecibido);
+
+
+// stdout
+
+void enviar_InterfazStdout(int socket, uint32_t direccionFisica, uint32_t tamanioMaximo, uint32_t pid, char *nombre_interfaz);
+t_interfaz_stdout *recibir_InterfazStdout(int socket_cliente);
+t_interfaz_stdout *deserializar_InterfazStdout(t_buffer *buffer);
+t_paquete *crear_paquete_InterfazstdoutCodOp(t_interfaz_stdout *interfaz, op_cod codigo_operacion);
+t_buffer *crear_buffer_InterfazStdout(t_interfaz_stdout *interfaz);
+void enviar_interfaz_IO_stdout(t_pcb *pcb_actual, char *interfaz, uint32_t direccionFisica, uint32_t tamanioMaximoAingresar, int socket_cliente, nombre_instruccion IO);
 
 #endif // IO_H_

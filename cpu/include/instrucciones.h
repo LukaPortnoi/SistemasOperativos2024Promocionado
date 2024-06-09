@@ -16,6 +16,7 @@ void _wait(char *recurso, int cliente_socket);
 void _signal(char *recurso, int cliente_socket);
 void _io_gen_sleep(char *interfaz, char *unidades_de_trabajo, int cliente_socket);
 void _io_stdin_read(char *interfaz, char *direc_logica, char *tamanio, int cliente_socket);
+void _io_stdout_write(char *interfaz, char *direc_logica, char *tamanio, int cliente_socket);
 
 // ENVIOS
 void enviar_recurso(t_pcb *pcb, char *recurso, int cliente_socket, op_cod codigo_operacion);

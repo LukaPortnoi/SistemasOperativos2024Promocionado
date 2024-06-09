@@ -236,6 +236,10 @@ t_list *parsear_instrucciones(char *path)
         }
         else if (string_equals_ignore_case(palabras[0], "MOV_IN"))
         {
+            list_add(instrucciones, armar_estructura_instruccion(COPY_STRING, palabras[1], "", "", "", ""));
+        }
+        else if (string_equals_ignore_case(palabras[0], "COPY_STRING"))
+        {
             list_add(instrucciones, armar_estructura_instruccion(MOV_IN, palabras[1], palabras[2], "", "", ""));
         }
         else if (string_equals_ignore_case(palabras[0], "IO_GEN_SLEEP"))
@@ -245,6 +249,10 @@ t_list *parsear_instrucciones(char *path)
         else if (string_equals_ignore_case(palabras[0], "IO_STDIN_READ"))
         {
             list_add(instrucciones, armar_estructura_instruccion(IO_STDIN_READ, palabras[1], palabras[2], palabras[3], "", ""));
+        }
+        else if (string_equals_ignore_case(palabras[0], "IO_STDOUT_WRITE"))
+        {
+            list_add(instrucciones, armar_estructura_instruccion(IO_STDOUT_WRITE, palabras[1], palabras[2], palabras[3], "", ""));
         }
         else if (string_equals_ignore_case(palabras[0], "EXIT"))
         {

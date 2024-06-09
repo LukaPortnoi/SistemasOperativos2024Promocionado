@@ -38,7 +38,9 @@ t_pcb *deserializar_pcb_recurso(t_buffer *buffer, char **recurso);
 void asignar_recurso(t_pcb *pcb, char *recurso);
 t_recurso *encontrar_recurso(char *recurso);
 
+
 // INTERFACES
+void bloquear_procesosIO(t_pcb *pcbAbloquear, t_interfaz_recibida *interfaz_a_utilizar);
 void ejecutar_intruccion_io(t_pcb *pcb_recibido);
 t_interfaz_recibida *buscar_interfaz_por_nombre(char *nombre_interfaz);
 
