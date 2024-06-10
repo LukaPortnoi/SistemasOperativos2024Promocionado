@@ -88,10 +88,14 @@ static void procesar_conexion_memoria(void *void_args)
 			}
 
 		case PEDIDO_MOV_IN: // Lee el valor del marco y lo devuelve para guardarlo en el registro (se pide la direccion) - recibo direccion fisica
-			uint32_t direccion_fisica_mov_in;
-			recibir_mov_in_cpu(cliente_socket, &direccion_fisica_mov_in);
-			char* valor_leido_mov_in = leer_memoria(direccion_fisica_mov_in);
-			enviar_valor_mov_in_memoria(valor_leido_mov_in, cliente_socket); // MOV_IN_CPU  
+			uint32_t direccion_fisica_mov_in, tamanio_registro, valor_leido_mov_in;
+			recibir_mov_in_cpu(cliente_socket, &direccion_fisica_mov_in, &tamanio_registro);
+			printf("Valor de la direccion fisica despues de la deserializacion: %d \n", direccion_fisica_mov_in);
+			printf("Valor del tamanio del registro despues de la deserializacion: %d \n", tamanio_registro);
+			printf("LLego aca al menos \n");
+			valor_leido_mov_in = leer_memoria(direccion_fisica_mov_in, tamanio_registro);
+			printf("Valor leido de memoria: %d \n", valor_leido_mov_in);
+			//enviar_valor_mov_in_memoria(valor_leido_mov_in, cliente_socket); // MOV_IN_CPU  
 			break;
 
 		case PEDIDO_MOV_OUT: // me pasa por parametro un uint32_t y tengo que guardarlo en el marco que me dice

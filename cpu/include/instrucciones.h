@@ -23,16 +23,18 @@ void enviar_recurso(t_pcb *pcb, char *recurso, int cliente_socket, op_cod codigo
 void serializar_recurso(t_pcb *pcb, char *recurso, t_paquete *paquete);
 void enviar_resize_a_memoria(t_pcb *pcb, uint32_t tamanioAReasignar);
 void serializar_resize(t_pcb *pcb, uint32_t tamanioAReasignar, t_paquete *paquete);
-void enviar_valor_mov_in_cpu(uint32_t valor, int socket);
+void enviar_valor_mov_in_cpu(uint32_t valor, uint32_t tamanio_registro,int socket);
 void enviar_valor_mov_out_cpu(uint32_t direccion_fisica, char* registro_valor ,int socket);
 void serializar_datos_mov_out(t_paquete *paquete, uint32_t direccion_fisica, char *registro);
 char *recibir_valor_mov_in_memoria(int socket);
-char* deserializar_valor_mov_in_memoria( t_buffer *buffer);
+char *deserializar_valor_mov_in_memoria(t_buffer *buffer);
+void serializar_datos_mov_in(t_paquete *paquete, uint32_t direccion_fisica, uint32_t tamanio_registro);
 
 // UTILS
 uint32_t *get_registry32(char *registro);
 uint8_t *get_registry8(char *registro);
 char *instruccion_to_string(nombre_instruccion nombre);
 bool revisar_registro(char *registro);
+uint32_t obtener_tamanio_registro(char *registro);
 
 #endif // INSTRUCCIONES_H_

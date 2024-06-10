@@ -29,8 +29,11 @@ void _mov_in(char *registro, char *direc_logica, int socket)
         direccionLogica32 = *(get_registry32(direc_logica));
     }
 
+    uint32_t tamanio_registro = obtener_tamanio_registro(registro);
+    printf("Tamanio registro antes de serializarlor y enviarlo: %d \n", tamanio_registro);
     uint32_t direccionFisica = traducir_direccion(pcb_actual->pid, direccionLogica32, TAM_PAGINA);
-    enviar_valor_mov_in_cpu(direccionFisica, socket);
+    printf("Direccion fisica antes de serializarlor y enviarlo: %d \n", direccionFisica);
+    enviar_valor_mov_in_cpu(direccionFisica, tamanio_registro, socket);
     //char *valorObtenido = recibir_valor_mov_in_memoria(socket);
 
 
@@ -484,12 +487,37 @@ bool revisar_registro(char *registro)
     }
 }
 
+uint32_t obtener_tamanio_registro(char *registro)
+{
+    if (strcmp(registro, "AX") == 0)
+        return 1;
+    else if (strcmp(registro, "BX") == 0)
+        return 1;
+    else if (strcmp(registro, "CX") == 0)
+        return 1;
+    else if (strcmp(registro, "DX") == 0)
+        return 1;
+    else if (strcmp(registro, "EAX") == 0)
+        return 4;
+    else if (strcmp(registro, "EBX") == 0)
+        return 4;
+    else if (strcmp(registro, "ECX") == 0)
+        return 4;
+    else if (strcmp(registro, "EDX") == 0)
+        return 4;
+    else
+    {
+        log_error(LOGGER_CPU, "No se reconoce el registro %s", registro);
+        return -1;
+    }
+}
+
 // Mover todo esto a otro lado obviamente
 // Estaba en utis_memoria y lo movi aca de manera preliminar, despues se vera donde lo metemos
-void enviar_valor_mov_in_cpu(uint32_t direccion_fisica, int socket)
+void enviar_valor_mov_in_cpu(uint32_t direccion_fisica, uint32_t tamanio_registro, int socket)
 {
     t_paquete *paquete_mov_in = crear_paquete_con_codigo_de_operacion(PEDIDO_MOV_IN);
-    serializar_direccion_fisica(paquete_mov_in, direccion_fisica);
+    serializar_datos_mov_in(paquete_mov_in, direccion_fisica, tamanio_registro);
     enviar_paquete(paquete_mov_in, socket);
     eliminar_paquete(paquete_mov_in);
 }
@@ -545,3 +573,15 @@ void serializar_datos_mov_out(t_paquete *paquete, uint32_t direccion_fisica, cha
     memcpy(paquete->buffer->stream + desplazamiento, registro, char_length);
     desplazamiento += sizeof(char_length);
 } 
+
+void serializar_datos_mov_in(t_paquete *paquete, uint32_t direccion_fisica, uint32_t tamanio_registro)
+{
+    paquete->buffer->size = sizeof(uint32_t) * 2;
+    paquete->buffer->stream = malloc(paquete->buffer->size);
+    int desplazamiento = 0;
+
+    memcpy(paquete->buffer->stream + desplazamiento, &direccion_fisica, sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+    memcpy(paquete->buffer->stream + desplazamiento, &tamanio_registro, sizeof(uint32_t));
+}

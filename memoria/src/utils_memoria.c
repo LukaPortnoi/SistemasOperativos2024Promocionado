@@ -236,11 +236,11 @@ t_list *parsear_instrucciones(char *path)
         }
         else if (string_equals_ignore_case(palabras[0], "MOV_IN"))
         {
-            list_add(instrucciones, armar_estructura_instruccion(COPY_STRING, palabras[1], "", "", "", ""));
+            list_add(instrucciones, armar_estructura_instruccion(MOV_IN, palabras[1], palabras[2], "", "", ""));
         }
         else if (string_equals_ignore_case(palabras[0], "COPY_STRING"))
         {
-            list_add(instrucciones, armar_estructura_instruccion(MOV_IN, palabras[1], palabras[2], "", "", ""));
+            list_add(instrucciones, armar_estructura_instruccion(COPY_STRING, palabras[1], palabras[2], "", "", ""));
         }
         else if (string_equals_ignore_case(palabras[0], "IO_GEN_SLEEP"))
         {
@@ -369,10 +369,20 @@ void deserializar_datos_mov_out(t_paquete *paquete, uint32_t *direccion_fisica, 
     memcpy(registro, paquete->buffer->stream, char_length);
 }
 
-void recibir_mov_in_cpu(int socket_cliente, uint32_t *direccion_fisica)
+void deserializar_datos_mov_in(t_paquete *paquete, uint32_t *direccion_fisica, uint32_t *tamanio_registro)
+{
+    int desplazamiento = 0;
+    memcpy(direccion_fisica, paquete->buffer->stream + desplazamiento, sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+    memcpy(tamanio_registro, paquete->buffer->stream + desplazamiento, sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+}
+
+void recibir_mov_in_cpu(int socket_cliente, uint32_t *direccion_fisica, uint32_t *tamanio_registro)
 {
     t_paquete *paquete = recibir_paquete(socket_cliente);
-    deserializar_direccion_fisica(paquete->buffer, direccion_fisica);
+    deserializar_datos_mov_in(paquete, direccion_fisica, tamanio_registro);
     eliminar_paquete(paquete);
 }
 
@@ -438,13 +448,19 @@ void escribir_memoria(uint32_t direccion_fisica, char* valor)
 }
 
 
-char* leer_memoria(uint32_t dir_fisica)
+uint32_t leer_memoria(uint32_t dir_fisica, uint32_t tamanio_registro)
 {
-    char* valor_leido = 0;
+    printf("Entro a leer memoria \n");
+    uint32_t valor_leido;
+    uint32_t numaux = 3;
+    int numero_marco = dir_fisica / TAM_PAGINA;
     pthread_mutex_lock(&mutex_memoria_usuario);
-    memcpy(&valor_leido, memoriaUsuario + dir_fisica, sizeof(uint32_t));
+    //TESTEO
+    memcpy(&dir_fisica, &numaux, sizeof(tamanio_registro));
+    //TESTEO
+    memcpy(&valor_leido, &dir_fisica, sizeof(tamanio_registro));
+    printf("Valor leido: %d \n", valor_leido);
     pthread_mutex_unlock(&mutex_memoria_usuario);
-
     usleep(RETARDO_RESPUESTA * 1000);
 
     /*t_marco *marco = marco_desde_df(dir_fisica);
