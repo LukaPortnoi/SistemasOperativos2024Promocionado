@@ -50,7 +50,7 @@ static void procesar_conexion_dispatch(void *void_args)
 				ejecutar_ciclo_instruccion(cliente_socket);
 			}
 
-			log_debug(LOGGER_CPU, "PID: %d - Estado: %s, Contexto: %s\n", pcb_actual->pid, estado_to_string(pcb_actual->estado), motivo_desalojo_to_string(pcb_actual->contexto_ejecucion->motivo_desalojo));
+			log_debug(LOGGER_CPU, "PID: %d, Contexto: %s\n", pcb_actual->pid, motivo_desalojo_to_string(pcb_actual->contexto_ejecucion->motivo_desalojo));
 
 			// Envia el PCB actualizado si no ejecuto una syscall de pedido de recurso o IO
 			if (!envioPcb)

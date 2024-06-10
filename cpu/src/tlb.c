@@ -100,20 +100,30 @@ uint32_t traducir_direccion(uint32_t pid, uint32_t logicalAddress, uint32_t page
     uint32_t tamanioAleer2 = 0;
     bool ocupaMasDeUnaPagina = false;
     // Buscar en la TLB
-    uint32_t cantidadPaginas = 0;
+    uint32_t cantidadPaginas = 1;
     uint32_t logicalAddressAux = logicalAddress;
 
-    for (int i = 0; i < tamanioHracodeado; i++)
-    {
+    int index = 0;
+    int auxTamanioHracodeado = tamanio_registro;
 
-        if ((logicalAddressAux / pageSize != (logicalAddressAux + i) / pageSize))
+    while (index < auxTamanioHracodeado)
+    {
+        if (logicalAddressAux / pageSize != (logicalAddressAux + index) / pageSize)
         {
+            logicalAddressAux = logicalAddressAux + index;
+            auxTamanioHracodeado = auxTamanioHracodeado - index;
+            index = 0;
             cantidadPaginas++;
         }
+        else
+        {
+            index++;
+        }
     }
+
     printf("Cantidad de paginas: %d\n", cantidadPaginas);
 
-    if ((logicalAddress + tamanioHracodeado) > pageSize)
+    if ((logicalAddress + tamanio_registro) > pageSize)
     {
         ocupaMasDeUnaPagina = true;
     }
@@ -124,7 +134,7 @@ uint32_t traducir_direccion(uint32_t pid, uint32_t logicalAddress, uint32_t page
         // TLB Hit
         printf("TLB Hit\n");
         direccion->direccion_fisica = marco * pageSize + offset;
-        direccion->tamanio = tamanioHracodeado;
+        direccion->tamanio = tamanio_registro;
         list_add(listaDirecciones, direccion);
     }
     else
@@ -147,6 +157,7 @@ uint32_t traducir_direccion(uint32_t pid, uint32_t logicalAddress, uint32_t page
         }
         direccion->tamanio = tamanioAleer;
         list_add(listaDirecciones, direccion);
+        cantidadPaginas++;
     }
 
     printf("Tamanio a leer: %d\n", tamanioAleer);
@@ -157,19 +168,20 @@ uint32_t traducir_direccion(uint32_t pid, uint32_t logicalAddress, uint32_t page
     uint32_t marco2;
     int contador = 0;
     int contadorBreak = 0;
-    uint32_t tamanioAux = tamanioHracodeado - direccion->tamanio;
+    uint32_t tamanioAux = tamanio_registro - direccion->tamanio;
+    uint32_t tamanioAuxTotal = direccion->tamanio;
 
     if (ocupaMasDeUnaPagina)
     {
-        while (contador < cantidadPaginas)
+        while (contador <= cantidadPaginas)
         {
             t_direcciones_fisicas *direccionEsdiguientes = malloc(sizeof(t_direcciones_fisicas));
-            for (int i = 0; i < tamanioHracodeado; i++)
+            for (int i = 0; i < tamanio_registro; i++)
             {
-                if ((logicalAddress / pageSize != (logicalAddress + i) / pageSize) && contadorBreak == 0)
+                if ((logicalAddress / pageSize != (logicalAddress + i) / pageSize) && contadorBreak == 0 && tamanioAuxTotal != tamanio_registro)
                 {
-                    paginaSig = (logicalAddress + i) / pageSize;
-                    offset2 = (logicalAddress + i) - paginaSig * pageSize;
+                    paginaSig = (logicalAddress + tamanioAuxTotal) / pageSize;
+                    offset2 = (logicalAddress + tamanioAuxTotal) - paginaSig * pageSize;
                     marco2 = buscar_en_tlb(pid, paginaSig);
 
                     if (marco2 != -1)
@@ -184,6 +196,7 @@ uint32_t traducir_direccion(uint32_t pid, uint32_t logicalAddress, uint32_t page
                                 tamanioAleer2++;
                             }
                         }
+                        direccionEsdiguientes->tamanio = tamanioAleer2;
                         tamanioAux = tamanioAux - direccionEsdiguientes->tamanio;
                         list_add(listaDirecciones, direccionEsdiguientes);
 
@@ -214,8 +227,11 @@ uint32_t traducir_direccion(uint32_t pid, uint32_t logicalAddress, uint32_t page
 
                         contadorBreak++;
                     }
+                    tamanioAuxTotal = tamanioAuxTotal + tamanioAleer2;
                 }
             }
+            tamanioAleer2 = 0;
+            contadorBreak = 0;
             contador++;
         }
     }
