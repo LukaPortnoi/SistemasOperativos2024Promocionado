@@ -212,7 +212,7 @@ t_pcb *recibir_pcb_CPU(int fd_cpu)
     switch (cop)
     {
     case PCB:
-        pcb_recibido = recibir_pcb(fd_cpu);
+        pcb_recibido = recibir_pcb(fd_cpu);     //fijarse de no hacer un malloc cada vez que llega un pcb
         break;
 
     case PEDIDO_WAIT:
@@ -325,8 +325,6 @@ void atender_quantum(void *arg)
 // OTRAS FUNCIONES
 void detener_planificadores()
 {
-    // planificar = 0;
-
     int largo_plazo;
     int corto_plazo;
 

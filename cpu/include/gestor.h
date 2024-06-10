@@ -10,6 +10,7 @@
 #include <inttypes.h>
 #include <stdbool.h>
 #include <sys/socket.h>
+#include <signal.h>
 
 #include <commons/log.h>
 #include <commons/string.h>
@@ -47,6 +48,7 @@ extern t_pcb *pcb_actual;
 extern bool esSyscall;
 extern bool envioPcb;
 
+extern pthread_mutex_t mutex_pcb_actual;
 extern pthread_mutex_t mutex_interrupt;
 
 #endif /* GESTOR_H_ */

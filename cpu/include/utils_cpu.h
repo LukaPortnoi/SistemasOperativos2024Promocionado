@@ -13,4 +13,5 @@ void pedir_instruccion_memoria(uint32_t pid, uint32_t pc, int socket);
 t_instruccion *deserializar_instruccion(int socket);
 void log_instruccion_ejecutada(nombre_instruccion nombre, char *param1, char *param2);
 void iniciar_semaforos_etc();
+void liberar_instruccion(t_instruccion *instruccion);
 #endif // UTILS_CPU_H_

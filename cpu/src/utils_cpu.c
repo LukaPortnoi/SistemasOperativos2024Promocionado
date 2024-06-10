@@ -5,7 +5,8 @@ void ejecutar_ciclo_instruccion(int socket)
     t_instruccion *instruccion = fetch(pcb_actual->pid, pcb_actual->contexto_ejecucion->registros->program_counter);
     // TODO decode: manejo de TLB y MMU
     execute(instruccion, socket);
-    // if (!page_fault)
+    
+    liberar_instruccion(instruccion);
 }
 
 t_instruccion *fetch(uint32_t pid, uint32_t pc)
@@ -73,11 +74,11 @@ void execute(t_instruccion *instruccion, int socket)
         loguear_y_sumar_pc(instruccion);
         break;
     case MOV_IN:
-        _mov_in(instruccion->parametro1, instruccion->parametro2, fd_cpu_memoria);  //ojo con este socket revisarlo (o no, recien lo cambie)
+        _mov_in(instruccion->parametro1, instruccion->parametro2, fd_cpu_memoria); // ojo con este socket revisarlo (o no, recien lo cambie)
         loguear_y_sumar_pc(instruccion);
         break;
     case MOV_OUT:
-        _mov_out(instruccion->parametro1, instruccion->parametro2, fd_cpu_memoria); //ojo con este socket revisarlo (o no, recien lo cambie)
+        _mov_out(instruccion->parametro1, instruccion->parametro2, fd_cpu_memoria); // ojo con este socket revisarlo (o no, recien lo cambie)
         loguear_y_sumar_pc(instruccion);
         break;
     case IO_GEN_SLEEP:
@@ -92,14 +93,14 @@ void execute(t_instruccion *instruccion, int socket)
         pcb_actual->contexto_ejecucion->motivo_desalojo = INTERRUPCION_BLOQUEO;
         esSyscall = true;
         envioPcb = true;
-        _io_stdin_read(instruccion->parametro1, instruccion->parametro2 , instruccion->parametro3, socket);
+        _io_stdin_read(instruccion->parametro1, instruccion->parametro2, instruccion->parametro3, socket);
         break;
     case IO_STDOUT_WRITE:
         loguear_y_sumar_pc(instruccion);
         pcb_actual->contexto_ejecucion->motivo_desalojo = INTERRUPCION_BLOQUEO;
         esSyscall = true;
         envioPcb = true;
-        _io_stdout_write(instruccion->parametro1, instruccion->parametro2 , instruccion->parametro3, socket);
+        _io_stdout_write(instruccion->parametro1, instruccion->parametro2, instruccion->parametro3, socket);
         break;
     case EXIT:
         log_info(LOGGER_CPU, "PID: %d - Ejecutando: %s", pcb_actual->pid, instruccion_to_string(instruccion->nombre));
@@ -193,4 +194,15 @@ void log_instruccion_ejecutada(nombre_instruccion nombre, char *param1, char *pa
 void iniciar_semaforos_etc()
 {
     pthread_mutex_init(&mutex_interrupt, NULL);
+    pthread_mutex_init(&mutex_pcb_actual, NULL);
+}
+
+void liberar_instruccion(t_instruccion *instruccion)
+{
+    free(instruccion->parametro1);
+    free(instruccion->parametro2);
+    free(instruccion->parametro3);
+    free(instruccion->parametro4);
+    free(instruccion->parametro5);
+    free(instruccion);
 }

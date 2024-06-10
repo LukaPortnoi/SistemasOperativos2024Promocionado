@@ -32,6 +32,7 @@ typedef struct
 } t_direcciones_fisicas;
 
 t_tlb *inicializar_tlb();
+void destruir_tlb();
 uint32_t buscar_en_tlb(uint32_t pid, uint32_t pagina);
 void reemplazo_algoritmo_FIFO(uint32_t pid, uint32_t pagina, uint32_t marco);
 void reemplazo_algoritmo_LRU(uint32_t pid, uint32_t pagina, uint32_t marco);

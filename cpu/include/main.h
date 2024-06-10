@@ -9,6 +9,7 @@
 void inicializar_config(void);
 void iniciar_conexiones(void);
 void escuchar_interrupt(void);
+void manejador_signals(int signum);
 void finalizar_cpu();
 
 #endif /* MAIN_H_ */

@@ -164,7 +164,7 @@ uint32_t str_to_uint32(char *str)
 {
     char *endptr;
     uint32_t result = (uint32_t)strtoul(str, &endptr, 10);
-    
+
     // Comprobar si hubo errores durante la conversión
     if (*endptr != '\0')
     {
@@ -188,54 +188,6 @@ uint8_t str_to_uint8(char *str)
     }
 
     return result;
-}
-
-t_pcb *recibir_pcbTOP(int socket_cliente)
-{
-    int size;
-    void *buffer;
-
-    buffer = recibir_bufferTOP(socket_cliente, &size);
-
-    // vamos a printear el buffer recibido
-
-    t_pcb *pcb = malloc(sizeof(t_pcb));
-    int desplazamiento = 0;
-
-    memcpy(&(pcb->pid), buffer + desplazamiento, sizeof(uint32_t));
-    desplazamiento += sizeof(uint32_t);
-
-    memcpy(&(pcb->estado), buffer + desplazamiento, sizeof(t_estado_proceso));
-    desplazamiento += sizeof(t_estado_proceso);
-
-    memcpy(&(pcb->quantum), buffer + desplazamiento, sizeof(uint32_t));
-    desplazamiento += sizeof(uint32_t);
-
-    memcpy(&(pcb->tiempo_q), buffer + desplazamiento, sizeof(uint64_t));
-    desplazamiento += sizeof(uint64_t);
-
-    pcb->contexto_ejecucion = malloc(sizeof(t_contexto_ejecucion));
-    pcb->contexto_ejecucion->registros = malloc(sizeof(t_registros));
-
-    memcpy(pcb->contexto_ejecucion->registros, buffer + desplazamiento, sizeof(t_registros));
-    desplazamiento += sizeof(t_registros);
-
-    memcpy(&(pcb->contexto_ejecucion->motivo_desalojo), buffer + desplazamiento, sizeof(t_motivo_desalojo));
-
-    free(buffer);
-
-    return pcb;
-}
-
-void *recibir_bufferTOP(int socket_cliente, int *size)
-{
-    void *buffer;
-
-    recv(socket_cliente, size, sizeof(int), MSG_WAITALL);
-    buffer = malloc(*size);
-    recv(socket_cliente, buffer, *size, MSG_WAITALL);
-
-    return buffer;
 }
 
 char *estado_to_string(t_estado_proceso estado)

@@ -19,12 +19,15 @@ int fd_cpu_memoria;
 t_pcb *pcb_actual;
 
 pthread_t hilo_interrupt;
+pthread_mutex_t mutex_pcb_actual;
 pthread_mutex_t mutex_interrupt;
 
 op_cod cod_op;
 
 int main()
-{
+{   
+    signal(SIGINT, manejador_signals);
+    signal(SIGSEGV, manejador_signals);
     inicializar_config();
     iniciar_semaforos_etc();
     inicializar_tlb();
@@ -81,4 +84,45 @@ void finalizar_cpu()
     liberar_conexion(fd_cpu_dispatch);
     liberar_conexion(fd_cpu_interrupt);
     liberar_conexion(fd_cpu_memoria);
+}
+
+void manejador_signals(int signum)
+{
+	switch (signum)
+	{
+	case SIGUSR1:
+		log_trace(LOGGER_CPU, "Se recibio la señal SIGUSR1\n");
+		break;
+
+	case SIGUSR2:
+		log_trace(LOGGER_CPU, "Se recibio la señal SIGUSR2\n");
+		break;
+
+	case SIGINT:
+		log_trace(LOGGER_CPU, "Se recibio la señal SIGINT\n");
+        log_trace(LOGGER_CPU, "Se recibió SIGINT, cerrando conexiones y liberando recursos...");
+        finalizar_cpu();
+        destruir_tlb();
+        destruir_pcb(pcb_actual);
+        pthread_mutex_destroy(&mutex_interrupt);
+        exit(0);
+		break;
+
+	case SIGSEGV:
+		log_error(LOGGER_CPU, "Se recibio la señal SIGSEGV\n");
+        log_trace(LOGGER_CPU, "Se recibió SIGINT, cerrando conexiones y liberando recursos...");
+        finalizar_cpu();
+        destruir_tlb();
+        pthread_mutex_destroy(&mutex_interrupt);
+        exit(0);
+		break;
+
+	case SIGTERM:
+		log_trace(LOGGER_CPU, "Se recibio la señal SIGTERM\n");
+		break;
+
+	default:
+		log_trace(LOGGER_CPU, "Se recibio una señal no manejada\n");
+		break;
+	}
 }

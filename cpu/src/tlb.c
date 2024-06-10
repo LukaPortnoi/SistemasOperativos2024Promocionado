@@ -22,6 +22,13 @@ t_tlb *inicializar_tlb()
     return tlb;
 }
 
+// Destruir TLB
+void destruir_tlb()
+{
+    free(tlb->entradas);
+    free(tlb);
+}
+
 // Busqueda en la TLB
 uint32_t buscar_en_tlb(uint32_t pid, uint32_t pagina)
 {
@@ -236,14 +243,20 @@ uint32_t traducir_direccion(uint32_t pid, uint32_t logicalAddress, uint32_t page
         }
     }
 
+    uint32_t direccionFisica = direccion->direccion_fisica;
+
+
     for (int i = 0; i < list_size(listaDirecciones); i++)
     {
         t_direcciones_fisicas *direccionAmostrar = list_get(listaDirecciones, i);
         printf("Direccion Fisica: %d\n", direccionAmostrar->direccion_fisica);
         printf("Tamanio: %d\n", direccionAmostrar->tamanio);
+        free(direccionAmostrar);    //agregado
     }
 
-    return direccion->direccion_fisica;
+    list_destroy(listaDirecciones); //agregado
+    
+    return direccionFisica;
 }
 
 void enviar_Pid_Pagina_Memoria(uint32_t pid_proceso, uint32_t pagina_nueva)
@@ -269,17 +282,8 @@ void serializar_nueva_pagina(t_paquete *paquete, uint32_t pid_proceso, uint32_t 
 
     memcpy(stream + offset, &pagina_nueva, sizeof(uint32_t));
 
-    t_buffer *buffer = malloc(sizeof(t_buffer));
-    if (buffer == NULL)
-    {
-        free(stream);
-        return;
-    }
-
-    buffer->size = buffer_size;
-    buffer->stream = stream;
-
-    paquete->buffer = buffer;
+    paquete->buffer->size = buffer_size;
+    paquete->buffer->stream = stream;
 }
 
 /*uint32_t obtener_valor_direccion_fisica(uint32_t direccion_fisica)

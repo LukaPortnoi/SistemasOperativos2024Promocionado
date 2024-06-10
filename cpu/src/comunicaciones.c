@@ -43,7 +43,9 @@ static void procesar_conexion_dispatch(void *void_args)
 			break;
 
 		case PCB:
+			pthread_mutex_lock(&mutex_pcb_actual);
 			pcb_actual = recibir_pcb(cliente_socket);
+			pthread_mutex_unlock(&mutex_pcb_actual);
 
 			while (!hayInterrupciones() && pcb_actual != NULL && !esSyscall /* && !page_fault*/) // Aca deberia ir el check_interrupt()
 			{
@@ -60,7 +62,12 @@ static void procesar_conexion_dispatch(void *void_args)
 
 			envioPcb = false;
 			esSyscall = false;
-			pcb_actual = NULL;
+			
+			if (pcb_actual != NULL)
+			{
+				destruir_pcb(pcb_actual);
+				pcb_actual = NULL;
+			}
 
 			pthread_mutex_lock(&mutex_interrupt);
 			limpiar_interrupciones();
@@ -153,6 +160,8 @@ void recibir_interrupciones(int cliente_socket, t_log *logger)
 {
 	t_interrupcion *interrupcion = recibir_interrupcion(cliente_socket);
 
+	pthread_mutex_lock(&mutex_pcb_actual);
+
 	switch (interrupcion->motivo_interrupcion)
 	{
 	case INTERRUPCION_FIN_QUANTUM:
@@ -183,7 +192,75 @@ void recibir_interrupciones(int cliente_socket, t_log *logger)
 	default:
 		break;
 	}
+
+	pthread_mutex_unlock(&mutex_pcb_actual);
+
+	free(interrupcion);
 }
+
+/* void recibir_interrupciones(int cliente_socket, t_log *logger)
+{
+	t_interrupcion *interrupcion = recibir_interrupcion(cliente_socket);
+
+	if (interrupcion == NULL) {
+		log_error(logger, "Error al recibir la interrupcion");
+		return;
+	}
+
+	log_info(logger, "Recibida interrupcion con motivo %d", interrupcion->motivo_interrupcion);
+
+	pthread_mutex_lock(&mutex_pcb_actual);
+
+	if (pcb_actual == NULL) {
+		log_error(logger, "pcb_actual es NULL");
+		pthread_mutex_unlock(&mutex_pcb_actual);
+		free(interrupcion);
+		return;
+	}
+
+	if (pcb_actual->contexto_ejecucion == NULL) {
+		log_error(logger, "pcb_actual->contexto_ejecucion es NULL");
+		pthread_mutex_unlock(&mutex_pcb_actual);
+		free(interrupcion);
+		return;
+	}
+
+	switch (interrupcion->motivo_interrupcion)
+	{
+	case INTERRUPCION_FIN_QUANTUM:
+		interrupciones[0] = true;
+		pcb_actual->contexto_ejecucion->motivo_desalojo = INTERRUPCION_FIN_QUANTUM;
+		break;
+
+	case INTERRUPCION_BLOQUEO:
+		interrupciones[1] = true;
+		pcb_actual->contexto_ejecucion->motivo_desalojo = INTERRUPCION_BLOQUEO;
+		break;
+
+	case INTERRUPCION_FINALIZACION:
+		interrupciones[2] = true;
+		pcb_actual->contexto_ejecucion->motivo_desalojo = INTERRUPCION_FINALIZACION;
+		break;
+
+	case INTERRUPCION_ERROR:
+		interrupciones[3] = true;
+		pcb_actual->contexto_ejecucion->motivo_desalojo = INTERRUPCION_ERROR;
+		break;
+
+	case INTERRUPCION_SYSCALL:
+		interrupciones[4] = true;
+		pcb_actual->contexto_ejecucion->motivo_desalojo = INTERRUPCION_SYSCALL;
+		break;
+
+	default:
+		break;
+	}
+
+	pthread_mutex_unlock(&mutex_pcb_actual);
+
+	free(interrupcion);
+	log_info(logger, "Interrupcion procesada correctamente");
+} */
 
 bool hayInterrupciones(void)
 {
