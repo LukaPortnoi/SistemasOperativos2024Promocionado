@@ -451,15 +451,39 @@ void escribir_memoria(uint32_t direccion_fisica, char* valor)
 uint32_t leer_memoria(uint32_t dir_fisica, uint32_t tamanio_registro)
 {
     printf("Entro a leer memoria \n");
-    uint32_t valor_leido;
-    uint32_t numaux = 3;
+    uint32_t valor_leido = 0;
+    uint32_t letra1 = 2;
+    uint32_t letra2 = 4;
+    uint32_t letra3 = 6;
+    uint32_t letra4 = 8;
+
+    //TESTEO
+    memcpy((char*)memoriaUsuario + dir_fisica * sizeof(uint32_t), &letra1, sizeof(uint32_t));
+    memcpy(&valor_leido, (char*)memoriaUsuario + dir_fisica * sizeof(uint32_t), sizeof(uint32_t));
+    printf("Valor leido antes del for: %d \n", valor_leido);
+
+    memcpy((char*)memoriaUsuario + (dir_fisica + 1) * sizeof(uint32_t), &letra2, sizeof(uint32_t));
+    memcpy(&valor_leido, (char*)memoriaUsuario + (dir_fisica + 1) * sizeof(uint32_t), sizeof(uint32_t));
+    printf("Valor leido antes del for: %d \n", valor_leido);
+
+    memcpy((char*)memoriaUsuario + (dir_fisica + 2) * sizeof(uint32_t), &letra3, sizeof(uint32_t));
+    memcpy(&valor_leido, (char*)memoriaUsuario + (dir_fisica + 2) * sizeof(uint32_t), sizeof(uint32_t));
+    printf("Valor leido antes del for: %d \n", valor_leido);
+
+    memcpy((char*)memoriaUsuario + (dir_fisica + 3) * sizeof(uint32_t), &letra4, sizeof(uint32_t));
+    memcpy(&valor_leido, (char*)memoriaUsuario + (dir_fisica + 3) * sizeof(uint32_t), sizeof(uint32_t));
+    printf("Valor leido antes del for: %d \n", valor_leido);
+    //TESTEO
+
     int numero_marco = dir_fisica / TAM_PAGINA;
+    printf("Numero de marco al leer memoria: %d \n", numero_marco);
+
     pthread_mutex_lock(&mutex_memoria_usuario);
-    //TESTEO
-    memcpy(&dir_fisica, &numaux, sizeof(tamanio_registro));
-    //TESTEO
-    memcpy(&valor_leido, &dir_fisica, sizeof(tamanio_registro));
-    printf("Valor leido: %d \n", valor_leido);
+    for(uint32_t i = 0; i < tamanio_registro; i++){
+        printf("valor de i: %d \n", i);
+        memcpy(&valor_leido, (char*)memoriaUsuario + (dir_fisica + i) * sizeof(uint32_t), sizeof(uint32_t));
+        printf("Valor leido: %d \n", valor_leido);
+    }
     pthread_mutex_unlock(&mutex_memoria_usuario);
     usleep(RETARDO_RESPUESTA * 1000);
 
@@ -479,3 +503,28 @@ uint32_t leer_memoria(uint32_t dir_fisica, uint32_t tamanio_registro)
     */
     return valor_leido;
 }
+
+
+/*
+Entiendo, si quieres que la función leer_memoria sea genérica y pueda leer cualquier tipo de datos (no solo uint32_t), puedes hacerlo pasando un puntero a la función y luego usando memcpy para copiar los datos en ese puntero. Aquí te dejo un ejemplo de cómo podrías hacerlo:
+
+En este código, destino es un puntero al lugar donde quieres almacenar los datos leídos de la memoria. dir_fisica es la dirección de inicio desde donde quieres leer los datos, y tamanio_registro es la cantidad de bytes que quieres leer.
+
+Por favor, ten en cuenta que este código asume que destino apunta a un bloque de memoria que es lo suficientemente grande para almacenar tamanio_registro bytes. Si no es así, este código podría causar un desbordamiento de búfer.
+
+void leer_memoria(void* destino, uint32_t dir_fisica, size_t tamanio_registro)
+{
+    printf("Entro a leer memoria \n");
+
+    int numero_marco = dir_fisica / TAM_PAGINA;
+    printf("Numero de marco al leer memoria: %d \n", numero_marco);
+
+    pthread_mutex_lock(&mutex_memoria_usuario);
+    for(size_t i = 0; i < tamanio_registro; i++){
+        printf("valor de i: %zu \n", i);
+        memcpy(destino + i, (char*)memoriaUsuario + (dir_fisica + i), 1);
+    }
+    pthread_mutex_unlock(&mutex_memoria_usuario);
+    usleep(RETARDO_RESPUESTA * 1000);
+}
+*/

@@ -31,7 +31,7 @@ void _mov_in(char *registro, char *direc_logica, int socket)
 
     uint32_t tamanio_registro = obtener_tamanio_registro(registro);
     printf("Tamanio registro antes de serializarlor y enviarlo: %d \n", tamanio_registro);
-    uint32_t direccionFisica = traducir_direccion(pcb_actual->pid, direccionLogica32, TAM_PAGINA);
+    uint32_t direccionFisica = traducir_direccion(pcb_actual->pid, direccionLogica32, TAM_PAGINA, tamanio_registro);
     printf("Direccion fisica antes de serializarlor y enviarlo: %d \n", direccionFisica);
     enviar_valor_mov_in_cpu(direccionFisica, tamanio_registro, socket);
     //char *valorObtenido = recibir_valor_mov_in_memoria(socket);
@@ -63,8 +63,9 @@ void _mov_out(char *direc_logica, char *registro, int socket)
     {
         direccionLogica32 = *(get_registry32(direc_logica));
     }
-
-    uint32_t direccionFisica = traducir_direccion(pcb_actual->pid, direccionLogica32, TAM_PAGINA);
+    
+    uint32_t tamanio_registro = obtener_tamanio_registro(registro);
+    uint32_t direccionFisica = traducir_direccion(pcb_actual->pid, direccionLogica32, TAM_PAGINA, tamanio_registro);
     enviar_valor_mov_out_cpu(direccionFisica, registro, socket);
     // char *valorObtenido = obtener_valor_direccion_fisica(direccionFisica);
 
@@ -254,7 +255,7 @@ void _io_stdin_read(char *interfaz, char *direc_logica, char *tamanio, int clien
         printf("TamMaximo recibido: %d\n", tamanioMaximoAingresar);
     }
     
-    uint32_t direccionFisica = traducir_direccion(pcb_actual->pid, direccionLogica32, TAM_PAGINA);
+    uint32_t direccionFisica = traducir_direccion(pcb_actual->pid, direccionLogica32, TAM_PAGINA, tamanioMaximoAingresar);
     enviar_interfaz_IO_stdin(pcb_actual, interfaz, direccionFisica, tamanioMaximoAingresar, cliente_socket, IO_STDIN_READ);
 }
 
@@ -288,7 +289,7 @@ void _io_stdout_write(char *interfaz, char *direc_logica, char *tamanio, int cli
         printf("TamMaximo recibido: %d\n", tamanioMaximoAingresar);
     }
     
-    uint32_t direccionFisica = traducir_direccion(pcb_actual->pid, direccionLogica32, TAM_PAGINA);
+    uint32_t direccionFisica = traducir_direccion(pcb_actual->pid, direccionLogica32, TAM_PAGINA, tamanioMaximoAingresar);
     enviar_interfaz_IO_stdin(pcb_actual, interfaz, direccionFisica, tamanioMaximoAingresar, cliente_socket, IO_STDOUT_WRITE);
 }
 
