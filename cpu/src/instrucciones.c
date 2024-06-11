@@ -54,6 +54,7 @@ void _mov_out(char *direc_logica, char *registro, int socket)
 {
 
     uint32_t direccionLogica32;
+    uint32_t valorObtenido;
 
     if (revisar_registro(direc_logica))
     {
@@ -64,12 +65,7 @@ void _mov_out(char *direc_logica, char *registro, int socket)
         direccionLogica32 = *(get_registry32(direc_logica));
     }
     
-    uint32_t tamanio_registro = obtener_tamanio_registro(registro);
-    uint32_t direccionFisica = traducir_direccion(pcb_actual->pid, direccionLogica32, TAM_PAGINA, tamanio_registro);
-    enviar_valor_mov_out_cpu(direccionFisica, registro, socket);
-    // char *valorObtenido = obtener_valor_direccion_fisica(direccionFisica);
-
-    /*if (revisar_registro(registro))
+    if (revisar_registro(registro))
     {
         *(get_registry8(valorObtenido)) = get_registry8(registro);
 
@@ -77,7 +73,14 @@ void _mov_out(char *direc_logica, char *registro, int socket)
     else
     {
         *(get_registry32(valorObtenido)) = get_registry32(registro);
-    }*/
+    }
+
+    uint32_t tamanio_registro = obtener_tamanio_registro(registro);
+    uint32_t direccionFisica = traducir_direccion(pcb_actual->pid, direccionLogica32, TAM_PAGINA, tamanio_registro);
+    enviar_valor_mov_out_cpu(direccionFisica, tamanio_registro, valorObtenido, socket);
+    // char *valorObtenido = obtener_valor_direccion_fisica(direccionFisica);
+
+    
 }
 
 // (Registro Destino, Registro Origen): Suma al Registro Destino el
@@ -550,29 +553,28 @@ char* deserializar_valor_mov_in_memoria( t_buffer *buffer)
     return valor;
 }
 
-void enviar_valor_mov_out_cpu(uint32_t direccion_fisica, char *registro_valor, int socket)
+void enviar_valor_mov_out_cpu(uint32_t direccion_fisica, uint32_t tamanio_registro, uint32_t valorObtenido, int socket)
 {
     t_paquete *paquete_mov_out = crear_paquete_con_codigo_de_operacion(PEDIDO_MOV_OUT);
-    serializar_datos_mov_out(paquete_mov_out, direccion_fisica, registro_valor);
+    serializar_datos_mov_out(paquete_mov_out, direccion_fisica, tamanio_registro, valorObtenido);
     enviar_paquete(paquete_mov_out, socket);
     eliminar_paquete(paquete_mov_out);
 }
 
 
-void serializar_datos_mov_out(t_paquete *paquete, uint32_t direccion_fisica, char *registro)
+void serializar_datos_mov_out(t_paquete *paquete, uint32_t direccion_fisica, uint32_t tamanio_registro, uint32_t valorObtenido)
  {
-    int char_length = strlen(registro) + 1;
-    paquete->buffer->size = sizeof(uint32_t) + char_length;
+    paquete->buffer->size = sizeof(uint32_t) * 3;
     paquete->buffer->stream = malloc(paquete->buffer->size);
 
     int desplazamiento = 0;
 
     memcpy(paquete->buffer->stream + desplazamiento, &direccion_fisica, sizeof(uint32_t));
     desplazamiento += sizeof(uint32_t);
-    memcpy(paquete->buffer->stream + desplazamiento, &char_length, sizeof(int));
-    desplazamiento += sizeof(int);
-    memcpy(paquete->buffer->stream + desplazamiento, registro, char_length);
-    desplazamiento += sizeof(char_length);
+    memcpy(paquete->buffer->stream + desplazamiento, &tamanio_registro, sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+    memcpy(paquete->buffer->stream + desplazamiento, &valorObtenido, sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
 } 
 
 void serializar_datos_mov_in(t_paquete *paquete, uint32_t direccion_fisica, uint32_t tamanio_registro)

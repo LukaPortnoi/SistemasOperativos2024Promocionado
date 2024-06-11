@@ -95,10 +95,11 @@ static void procesar_conexion_memoria(void *void_args)
 			break;
 
 		case PEDIDO_MOV_OUT: // me pasa por parametro un uint32_t y tengo que guardarlo en el marco que me dice
-			char* registro_a_escrbir;
+			uint32_t tamanio_registro_mov_out;
 			uint32_t direccion_fisica_mov_out;
-			recibir_mov_out_cpu(&direccion_fisica_mov_out, &registro_a_escrbir, cliente_socket);
-			escribir_memoria(direccion_fisica_mov_out, registro_a_escrbir);
+			uint32_t valorObtenido_mov_out;
+			recibir_mov_out_cpu(&direccion_fisica_mov_out, &tamanio_registro_mov_out, &valorObtenido_mov_out, cliente_socket);
+			escribir_memoria(&direccion_fisica_mov_out, &tamanio_registro_mov_out, &valorObtenido_mov_out);
 			break;
 
 		case PEDIDO_MARCO:

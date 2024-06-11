@@ -350,23 +350,23 @@ void iniciar_semaforos()
     pthread_mutex_init(&mutex_comunicacion_procesos, NULL);
 }
 
-void recibir_mov_out_cpu(uint32_t *direccion_fisica, char **registro, int cliente_socket)
+void recibir_mov_out_cpu(uint32_t *direccion_fisica, uint32_t  *tamanio_registro, uint32_t  *valorObtenido, int cliente_socket)
 {
     t_paquete *paquete = recibir_paquete(cliente_socket);
-    deserializar_datos_mov_out(paquete, direccion_fisica, registro);
+    deserializar_datos_mov_out(paquete, direccion_fisica, tamanio_registro, valorObtenido);
     eliminar_paquete(paquete);
 }
 
-void deserializar_datos_mov_out(t_paquete *paquete, uint32_t *direccion_fisica, char **registro)
+void deserializar_datos_mov_out(t_paquete *paquete, uint32_t *direccion_fisica, uint32_t  *tamanio_registro, uint32_t  *valorObtenido)
 {
     int desplazamiento = 0;
     memcpy(&direccion_fisica, paquete->buffer->stream, sizeof(uint32_t));
     desplazamiento += sizeof(uint32_t);
-    int char_length = strlen(*registro) + 1;
-    memcpy(&char_length, paquete->buffer->stream, sizeof(int));
-    desplazamiento += sizeof(int);
-    registro = malloc(char_length);
-    memcpy(registro, paquete->buffer->stream, char_length);
+
+    memcpy(&tamanio_registro, paquete->buffer->stream, sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+    memcpy(&valorObtenido, paquete->buffer->stream, sizeof(uint32_t));
 }
 
 void deserializar_datos_mov_in(t_paquete *paquete, uint32_t *direccion_fisica, uint32_t *tamanio_registro)
@@ -432,11 +432,12 @@ void serializar_valor_leido_mov_in(t_paquete *paquete, char* valor)
     memcpy(paquete->buffer->stream, &tamanio_valor, sizeof(uint32_t));
 }
 
-void escribir_memoria(uint32_t direccion_fisica, char* valor)
+void escribir_memoria(uint32_t dir_fisica, uint32_t tamanio_registro, uint32_t valorObtenido)
 {
-	// log_info(logger_memoria_info, "voy a escribir un valor en memoria usuario"); // TODO BORRAR
 	pthread_mutex_lock(&mutex_memoria_usuario);
-	memcpy(memoriaUsuario + direccion_fisica, &valor, sizeof(uint32_t));
+    for(uint32_t i = 0; i < tamanio_registro; i++){
+        memcpy(&memoriaUsuario[dir_fisica + i],&valorObtenido, 1);
+    }
 	pthread_mutex_unlock(&mutex_memoria_usuario);
 
 	// log_error(logger_memoria_info, "ya guarde en memoria"); // TODO BORRAR
