@@ -238,6 +238,10 @@ t_list *parsear_instrucciones(char *path)
         {
             list_add(instrucciones, armar_estructura_instruccion(MOV_IN, palabras[1], palabras[2], "", "", ""));
         }
+        else if (string_equals_ignore_case(palabras[0], "MOV_OUT"))
+        {
+            list_add(instrucciones, armar_estructura_instruccion(MOV_OUT, palabras[1], palabras[2], "", "", ""));
+        }
         else if (string_equals_ignore_case(palabras[0], "COPY_STRING"))
         {
             list_add(instrucciones, armar_estructura_instruccion(COPY_STRING, palabras[1], palabras[2], "", "", ""));
@@ -354,19 +358,22 @@ void recibir_mov_out_cpu(uint32_t *direccion_fisica, uint32_t  *tamanio_registro
 {
     t_paquete *paquete = recibir_paquete(cliente_socket);
     deserializar_datos_mov_out(paquete, direccion_fisica, tamanio_registro, valorObtenido);
+    printf("Valor dir_fisica despues de la deserializacion: %ls \n", direccion_fisica);
+    printf("Valor tamanio_registro despues de la deserializacion: %ls \n", tamanio_registro);
+    printf("Valor valorObtenido despues de la deserializacion: %ls \n", valorObtenido);
     eliminar_paquete(paquete);
 }
 
-void deserializar_datos_mov_out(t_paquete *paquete, uint32_t *direccion_fisica, uint32_t  *tamanio_registro, uint32_t  *valorObtenido)
+void deserializar_datos_mov_out(t_paquete *paquete, uint32_t *direccion_fisica, uint32_t *tamanio_registro, uint32_t *valorObtenido)
 {
     int desplazamiento = 0;
-    memcpy(&direccion_fisica, paquete->buffer->stream, sizeof(uint32_t));
+    memcpy(direccion_fisica, paquete->buffer->stream, sizeof(uint32_t));
     desplazamiento += sizeof(uint32_t);
 
-    memcpy(&tamanio_registro, paquete->buffer->stream, sizeof(uint32_t));
+    memcpy(tamanio_registro, paquete->buffer->stream, sizeof(uint32_t));
     desplazamiento += sizeof(uint32_t);
 
-    memcpy(&valorObtenido, paquete->buffer->stream, sizeof(uint32_t));
+    memcpy(valorObtenido, paquete->buffer->stream, sizeof(uint32_t));
 }
 
 void deserializar_datos_mov_in(t_paquete *paquete, uint32_t *direccion_fisica, uint32_t *tamanio_registro)
@@ -434,11 +441,18 @@ void serializar_valor_leido_mov_in(t_paquete *paquete, char* valor)
 
 void escribir_memoria(uint32_t dir_fisica, uint32_t tamanio_registro, uint32_t valorObtenido)
 {
+    printf("Llego aca al menos \n");
+    printf("Valor dir_fisica: %d", dir_fisica);
+    printf("Valor tamanio_registro: %d", tamanio_registro);
+    printf("Valor valorObtenido: %d", valorObtenido);
 	pthread_mutex_lock(&mutex_memoria_usuario);
     for(uint32_t i = 0; i < tamanio_registro; i++){
-        memcpy(&memoriaUsuario[dir_fisica + i],&valorObtenido, 1);
+        memcpy(&memoriaUsuario[dir_fisica + i],&valorObtenido, tamanio_registro);
     }
 	pthread_mutex_unlock(&mutex_memoria_usuario);
+
+    char* cadena_leida = leer_memoria(dir_fisica, tamanio_registro);
+    printf("Leemos valor escrito por MOV_OUT: %s", cadena_leida);
 
 	// log_error(logger_memoria_info, "ya guarde en memoria"); // TODO BORRAR
 	//t_marco *marco = marco_desde_df(direccion_fisica); //chequear esto
@@ -449,20 +463,20 @@ void escribir_memoria(uint32_t dir_fisica, uint32_t tamanio_registro, uint32_t v
 }
 
 
-uint32_t leer_memoria(uint32_t dir_fisica, uint32_t tamanio_registro)
+char* leer_memoria(uint32_t dir_fisica, uint32_t tamanio_registro)
 {
     int valor_leido = 0;
-    char numero1 = 'H';
+    /*char numero1 = 'H';
     char numero2 = 'o';
     char numero3 = 'l';
     char numero4 = 'a';
 
-    //TESTEO
+    TESTEO
     memcpy(&memoriaUsuario[dir_fisica], &numero1, 1);
     memcpy(&memoriaUsuario[dir_fisica + 1], &numero2, 1);
     memcpy(&memoriaUsuario[dir_fisica + 2], &numero3, 1);
     memcpy(&memoriaUsuario[dir_fisica + 3], &numero4, 1);
-    //TESTEO
+    //TESTEO*/
 
     pthread_mutex_lock(&mutex_memoria_usuario);
     char cadena[tamanio_registro + 1]; // Crear cadena para almacenar los caracteres leídos
@@ -475,7 +489,7 @@ uint32_t leer_memoria(uint32_t dir_fisica, uint32_t tamanio_registro)
     log_debug(LOGGER_MEMORIA, "Cadena final leída: %s \n", cadena); // Imprimir la cadena final
     pthread_mutex_unlock(&mutex_memoria_usuario);
     usleep(RETARDO_RESPUESTA * 1000);
-    return valor_leido;
+    return cadena;
 }
 
 

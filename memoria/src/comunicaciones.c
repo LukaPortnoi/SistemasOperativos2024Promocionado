@@ -88,7 +88,8 @@ static void procesar_conexion_memoria(void *void_args)
 			}
 
 		case PEDIDO_MOV_IN: // Lee el valor del marco y lo devuelve para guardarlo en el registro (se pide la direccion) - recibo direccion fisica
-			uint32_t direccion_fisica_mov_in, tamanio_registro, valor_leido_mov_in;
+			uint32_t direccion_fisica_mov_in, tamanio_registro; 
+			char* valor_leido_mov_in;
 			recibir_mov_in_cpu(cliente_socket, &direccion_fisica_mov_in, &tamanio_registro);
 			valor_leido_mov_in = leer_memoria(direccion_fisica_mov_in, tamanio_registro);
 			//enviar_valor_mov_in_memoria(valor_leido_mov_in, cliente_socket); // MOV_IN_CPU  
@@ -99,7 +100,10 @@ static void procesar_conexion_memoria(void *void_args)
 			uint32_t direccion_fisica_mov_out;
 			uint32_t valorObtenido_mov_out;
 			recibir_mov_out_cpu(&direccion_fisica_mov_out, &tamanio_registro_mov_out, &valorObtenido_mov_out, cliente_socket);
-			escribir_memoria(&direccion_fisica_mov_out, &tamanio_registro_mov_out, &valorObtenido_mov_out);
+			printf("Valor dir_fisica comu: %d \n", direccion_fisica_mov_out);
+    		printf("Valor tamanio_registro comu: %d \n", tamanio_registro_mov_out);
+    		printf("Valor valorObtenido comu: %d \n", valorObtenido_mov_out);
+			escribir_memoria(direccion_fisica_mov_out, tamanio_registro_mov_out, valorObtenido_mov_out);
 			break;
 
 		case PEDIDO_MARCO:

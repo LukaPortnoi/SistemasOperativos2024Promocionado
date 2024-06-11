@@ -30,9 +30,9 @@ void _mov_in(char *registro, char *direc_logica, int socket)
     }
 
     uint32_t tamanio_registro = obtener_tamanio_registro(registro);
-    printf("Tamanio registro antes de serializarlor y enviarlo: %d \n", tamanio_registro);
+    printf("Tamanio registro antes de serializarlor y enviarlo MOV_IN: %d \n", tamanio_registro);
     uint32_t direccionFisica = traducir_direccion(pcb_actual->pid, direccionLogica32, TAM_PAGINA, tamanio_registro);
-    printf("Direccion fisica antes de serializarlor y enviarlo: %d \n", direccionFisica);
+    printf("Direccion fisica antes de serializarlor y enviarlo MOV_IN: %d \n", direccionFisica);
     enviar_valor_mov_in_cpu(direccionFisica, tamanio_registro, socket);
     //char *valorObtenido = recibir_valor_mov_in_memoria(socket);
 
@@ -67,16 +67,18 @@ void _mov_out(char *direc_logica, char *registro, int socket)
     
     if (revisar_registro(registro))
     {
-        *(get_registry8(valorObtenido)) = get_registry8(registro);
-
+        valorObtenido = *(get_registry8(registro));
     }
     else
     {
-        *(get_registry32(valorObtenido)) = get_registry32(registro);
+        valorObtenido = *(get_registry32(registro));
     }
 
+    printf("Valor a escribir antes de serializarlor y enviarlo MOV_OUT: %d \n", valorObtenido);
     uint32_t tamanio_registro = obtener_tamanio_registro(registro);
+    printf("Tamanio registro antes de serializarlor y enviarlo MOV_OUT: %d \n", tamanio_registro);
     uint32_t direccionFisica = traducir_direccion(pcb_actual->pid, direccionLogica32, TAM_PAGINA, tamanio_registro);
+    printf("Direccion fisica antes de serializarlor y enviarlo MOV_OUT: %d \n", direccionFisica);
     enviar_valor_mov_out_cpu(direccionFisica, tamanio_registro, valorObtenido, socket);
     // char *valorObtenido = obtener_valor_direccion_fisica(direccionFisica);
 
@@ -574,7 +576,6 @@ void serializar_datos_mov_out(t_paquete *paquete, uint32_t direccion_fisica, uin
     memcpy(paquete->buffer->stream + desplazamiento, &tamanio_registro, sizeof(uint32_t));
     desplazamiento += sizeof(uint32_t);
     memcpy(paquete->buffer->stream + desplazamiento, &valorObtenido, sizeof(uint32_t));
-    desplazamiento += sizeof(uint32_t);
 } 
 
 void serializar_datos_mov_in(t_paquete *paquete, uint32_t direccion_fisica, uint32_t tamanio_registro)
