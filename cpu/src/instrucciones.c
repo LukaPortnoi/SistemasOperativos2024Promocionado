@@ -31,21 +31,11 @@ void _mov_in(char *registro, char *direc_logica, int socket)
 
     uint32_t tamanio_registro = obtener_tamanio_registro(registro);
     printf("Tamanio registro antes de serializarlor y enviarlo MOV_IN: %d \n", tamanio_registro);
-    uint32_t direccionFisica = traducir_direccion(pcb_actual->pid, direccionLogica32, TAM_PAGINA, tamanio_registro);
-    printf("Direccion fisica antes de serializarlor y enviarlo MOV_IN: %d \n", direccionFisica);
-    enviar_valor_mov_in_cpu(direccionFisica, tamanio_registro, socket);
-    //char *valorObtenido = recibir_valor_mov_in_memoria(socket);
+    t_list  *Lista_direccionesFisica = list_create();
+    Lista_direccionesFisica = traducir_direccion(pcb_actual->pid, direccionLogica32, TAM_PAGINA, tamanio_registro);
+    printf("tamanio de la lista de direcciones fisicas: %d \n", list_size(Lista_direccionesFisica));
+    //enviar_valor_mov_in_cpu(Lista_direccionesFisica, socket);
 
-
-    
-    /*if (revisar_registro(registro))
-    {
-        *(get_registry8(registro)) = get_registry8(valorObtenido);
-    }
-    else
-    {
-        *(get_registry8(registro)) = get_registry32(valorObtenido);
-    }*/
 }
 
 //(Registro Dirección, Registro Datos): Lee el valor del Registro Datos y lo escribe en
@@ -77,12 +67,12 @@ void _mov_out(char *direc_logica, char *registro, int socket)
     printf("Valor a escribir antes de serializarlor y enviarlo MOV_OUT: %d \n", valorObtenido);
     uint32_t tamanio_registro = obtener_tamanio_registro(registro);
     printf("Tamanio registro antes de serializarlor y enviarlo MOV_OUT: %d \n", tamanio_registro);
-    uint32_t direccionFisica = traducir_direccion(pcb_actual->pid, direccionLogica32, TAM_PAGINA, tamanio_registro);
-    printf("Direccion fisica antes de serializarlor y enviarlo MOV_OUT: %d \n", direccionFisica);
-    enviar_valor_mov_out_cpu(direccionFisica, tamanio_registro, valorObtenido, socket);
-    // char *valorObtenido = obtener_valor_direccion_fisica(direccionFisica);
-
+    t_list  *Lista_direccionesFisica = list_create();
+    Lista_direccionesFisica = traducir_direccion(pcb_actual->pid, direccionLogica32, TAM_PAGINA, tamanio_registro);
     
+    
+    
+    enviar_valor_mov_out_cpu(Lista_direccionesFisica, valorObtenido, socket);
 }
 
 // (Registro Destino, Registro Origen): Suma al Registro Destino el
@@ -213,7 +203,9 @@ void _resize(char *tamanioAReasignar)
     enviar_resize_a_memoria(pcb_actual, tamanioAReasignarNum);
 }
 
-void _copy_string(char *tamanio) {}
+void _copy_string(char *tamanio) {
+    
+}
 
 void _wait(char *recurso, int cliente_socket)
 {
@@ -260,8 +252,8 @@ void _io_stdin_read(char *interfaz, char *direc_logica, char *tamanio, int clien
         printf("TamMaximo recibido: %d\n", tamanioMaximoAingresar);
     }
     
-    uint32_t direccionFisica = traducir_direccion(pcb_actual->pid, direccionLogica32, TAM_PAGINA, tamanioMaximoAingresar);
-    enviar_interfaz_IO_stdin(pcb_actual, interfaz, direccionFisica, tamanioMaximoAingresar, cliente_socket, IO_STDIN_READ);
+    //uint32_t direccionFisica = traducir_direccion(pcb_actual->pid, direccionLogica32, TAM_PAGINA, tamanioMaximoAingresar);
+    //enviar_interfaz_IO_stdin(pcb_actual, interfaz, direccionFisica, tamanioMaximoAingresar, cliente_socket, IO_STDIN_READ);
 }
 
 
@@ -294,8 +286,8 @@ void _io_stdout_write(char *interfaz, char *direc_logica, char *tamanio, int cli
         printf("TamMaximo recibido: %d\n", tamanioMaximoAingresar);
     }
     
-    uint32_t direccionFisica = traducir_direccion(pcb_actual->pid, direccionLogica32, TAM_PAGINA, tamanioMaximoAingresar);
-    enviar_interfaz_IO_stdin(pcb_actual, interfaz, direccionFisica, tamanioMaximoAingresar, cliente_socket, IO_STDOUT_WRITE);
+    //uint32_t direccionFisica = traducir_direccion(pcb_actual->pid, direccionLogica32, TAM_PAGINA, tamanioMaximoAingresar);
+    //enviar_interfaz_IO_stdin(pcb_actual, interfaz, direccionFisica, tamanioMaximoAingresar, cliente_socket, IO_STDOUT_WRITE);
 }
 
 // ENVIOS
@@ -520,13 +512,7 @@ uint32_t obtener_tamanio_registro(char *registro)
 
 // Mover todo esto a otro lado obviamente
 // Estaba en utis_memoria y lo movi aca de manera preliminar, despues se vera donde lo metemos
-void enviar_valor_mov_in_cpu(uint32_t direccion_fisica, uint32_t tamanio_registro, int socket)
-{
-    t_paquete *paquete_mov_in = crear_paquete_con_codigo_de_operacion(PEDIDO_MOV_IN);
-    serializar_datos_mov_in(paquete_mov_in, direccion_fisica, tamanio_registro);
-    enviar_paquete(paquete_mov_in, socket);
-    eliminar_paquete(paquete_mov_in);
-}
+
 
 char *recibir_valor_mov_in_memoria(int socket)
 {
@@ -555,37 +541,63 @@ char* deserializar_valor_mov_in_memoria( t_buffer *buffer)
     return valor;
 }
 
-void enviar_valor_mov_out_cpu(uint32_t direccion_fisica, uint32_t tamanio_registro, uint32_t valorObtenido, int socket)
+void enviar_valor_mov_in_cpu(t_list *Lista_direccionesFisica, int socket)
+{
+    t_paquete *paquete_mov_in = crear_paquete_con_codigo_de_operacion(PEDIDO_MOV_IN);
+    serializar_datos_mov_in(paquete_mov_in, Lista_direccionesFisica);
+    enviar_paquete(paquete_mov_in, socket);
+    eliminar_paquete(paquete_mov_in);
+}
+
+
+void serializar_datos_mov_in(t_paquete *paquete, t_list *Lista_direccionesFisica) {
+    
+    // Calculamos el tamaño total del buffer necesario
+    paquete->buffer->size = list_size(Lista_direccionesFisica) * sizeof(t_direcciones_fisicas);
+    printf("Tamanio del buffer: %d \n", paquete->buffer->size);
+    // Reservamos la memoria para el buffer
+    paquete->buffer->stream = malloc(paquete->buffer->size);
+
+    int desplazamiento = 0;
+
+    // Iteramos sobre la lista de datos y serializamos cada elemento
+    for (int i = 0; i < list_size(Lista_direccionesFisica); i++) {
+        t_direcciones_fisicas *dato = list_get(Lista_direccionesFisica, i);
+        memcpy(paquete->buffer->stream + desplazamiento, &(dato->direccion_fisica), sizeof(uint32_t));
+        desplazamiento += sizeof(uint32_t);
+        memcpy(paquete->buffer->stream + desplazamiento, &(dato->tamanio), sizeof(uint32_t));
+        desplazamiento += sizeof(uint32_t);
+        
+    }
+}
+
+
+void enviar_valor_mov_out_cpu(t_list *Lista_direccionesFisica, uint32_t valorObtenido, int socket)
 {
     t_paquete *paquete_mov_out = crear_paquete_con_codigo_de_operacion(PEDIDO_MOV_OUT);
-    serializar_datos_mov_out(paquete_mov_out, direccion_fisica, tamanio_registro, valorObtenido);
+    serializar_datos_mov_out(paquete_mov_out, Lista_direccionesFisica, valorObtenido);
     enviar_paquete(paquete_mov_out, socket);
     eliminar_paquete(paquete_mov_out);
 }
 
 
-void serializar_datos_mov_out(t_paquete *paquete, uint32_t direccion_fisica, uint32_t tamanio_registro, uint32_t valorObtenido)
+void serializar_datos_mov_out(t_paquete *paquete, t_list *Lista_direccionesFisica , uint32_t valorObtenido)
  {
-    paquete->buffer->size = sizeof(uint32_t) * 3;
+    paquete->buffer->size = list_size(Lista_direccionesFisica) * sizeof(t_direcciones_fisicas) + sizeof(uint32_t);
+    // Reservamos la memoria para el buffer
     paquete->buffer->stream = malloc(paquete->buffer->size);
 
     int desplazamiento = 0;
 
-    memcpy(paquete->buffer->stream + desplazamiento, &direccion_fisica, sizeof(uint32_t));
-    desplazamiento += sizeof(uint32_t);
-    memcpy(paquete->buffer->stream + desplazamiento, &tamanio_registro, sizeof(uint32_t));
-    desplazamiento += sizeof(uint32_t);
+    // Iteramos sobre la lista de datos y serializamos cada elemento
+    for (int i = 0; i < list_size(Lista_direccionesFisica); i++) {
+        t_direcciones_fisicas *dato = list_get(Lista_direccionesFisica, i);
+        memcpy(paquete->buffer->stream + desplazamiento, &(dato->direccion_fisica), sizeof(uint32_t));
+        desplazamiento += sizeof(uint32_t);
+        memcpy(paquete->buffer->stream + desplazamiento, &(dato->tamanio), sizeof(uint32_t));
+        desplazamiento += sizeof(uint32_t);
+    }//anda a hacer el parcial
+//jajajaja no es parcial, es un tp al final
     memcpy(paquete->buffer->stream + desplazamiento, &valorObtenido, sizeof(uint32_t));
 } 
 
-void serializar_datos_mov_in(t_paquete *paquete, uint32_t direccion_fisica, uint32_t tamanio_registro)
-{
-    paquete->buffer->size = sizeof(uint32_t) * 2;
-    paquete->buffer->stream = malloc(paquete->buffer->size);
-    int desplazamiento = 0;
-
-    memcpy(paquete->buffer->stream + desplazamiento, &direccion_fisica, sizeof(uint32_t));
-    desplazamiento += sizeof(uint32_t);
-
-    memcpy(paquete->buffer->stream + desplazamiento, &tamanio_registro, sizeof(uint32_t));
-}

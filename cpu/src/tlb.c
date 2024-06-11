@@ -95,7 +95,7 @@ void actualizar_TLB(uint32_t pid, uint32_t pagina, uint32_t marco)
     }
 }
 
-uint32_t traducir_direccion(uint32_t pid, uint32_t logicalAddress, uint32_t pageSize, uint32_t tamanio_registro)
+t_list *traducir_direccion(uint32_t pid, uint32_t logicalAddress, uint32_t pageSize, uint32_t tamanio_registro)
 {
     printf("El número es: %d\n", logicalAddress);
     t_list *listaDirecciones = list_create();
@@ -107,12 +107,14 @@ uint32_t traducir_direccion(uint32_t pid, uint32_t logicalAddress, uint32_t page
     bool ocupaMasDeUnaPagina = false;
 
 
-    uint32_t cantidadPaginas = obtenerCantidadPaginas(logicalAddress, pageSize,tamanio_registro);
+    printf("TAMANIOOOOO: %d\n", tamanio_registro);
+
+    uint32_t cantidadPaginas = obtenerCantidadPaginas(logicalAddress, pageSize, tamanio_registro);
     
 
     printf("Cantidad de paginas: %d\n", cantidadPaginas);
 
-    if ((logicalAddress + tamanio_registro) > pageSize)
+    if (cantidadPaginas > 1)
     {
         ocupaMasDeUnaPagina = true;
     }
@@ -137,7 +139,7 @@ uint32_t traducir_direccion(uint32_t pid, uint32_t logicalAddress, uint32_t page
         direccion->direccion_fisica = marco * pageSize + offset;
 
         int i = 0;
-        while (direccion->direccion_fisica / pageSize == (direccion->direccion_fisica + i) / pageSize)
+        while (direccion->direccion_fisica / pageSize == (direccion->direccion_fisica + i) / pageSize && i < tamanio_registro)
         {
             tamanioAleer++;
             i++;
@@ -233,8 +235,6 @@ uint32_t traducir_direccion(uint32_t pid, uint32_t logicalAddress, uint32_t page
     }
 
     list_destroy(listaDirecciones); //agregado
-    
-    return direccionFisica;
 }
 
 uint32_t obtenerCantidadPaginas(uint32_t logicalAddress, uint32_t pageSize, uint32_t tamanio_registro)

@@ -25,11 +25,8 @@ typedef struct
     algoritmos_tlb algoritmo;
 } t_tlb;
 
-typedef struct
-{
-    uint32_t direccion_fisica;
-    uint32_t tamanio;
-} t_direcciones_fisicas;
+
+
 
 t_tlb *inicializar_tlb();
 void destruir_tlb();
@@ -37,7 +34,7 @@ uint32_t buscar_en_tlb(uint32_t pid, uint32_t pagina);
 void reemplazo_algoritmo_FIFO(uint32_t pid, uint32_t pagina, uint32_t marco);
 void reemplazo_algoritmo_LRU(uint32_t pid, uint32_t pagina, uint32_t marco);
 void actualizar_TLB(uint32_t pid, uint32_t pagina, uint32_t marco);
-uint32_t traducir_direccion(uint32_t pid, uint32_t logicalAddress, uint32_t pageSize, uint32_t tamanio_registro);
+t_list *traducir_direccion(uint32_t pid, uint32_t logicalAddress, uint32_t pageSize, uint32_t tamanio_registro);
 void enviar_Pid_Pagina_Memoria(uint32_t pid_proceso, uint32_t pagina_nueva);
 void serializar_nueva_pagina(t_paquete *paquete, uint32_t pid_proceso, uint32_t pagina_nueva);
 uint32_t obtener_valor_direccion_fisica(uint32_t direccion_fisica);

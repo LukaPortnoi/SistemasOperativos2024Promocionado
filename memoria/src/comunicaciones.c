@@ -83,27 +83,40 @@ static void procesar_conexion_memoria(void *void_args)
 			else
 			{
 				uint32_t response = resize_proceso_memoria(proceso_memoria, tamanio);
-				//enviar_respuesta_resize(cliente_socket, response);
+				// enviar_respuesta_resize(cliente_socket, response);
 				break;
 			}
 
 		case PEDIDO_MOV_IN: // Lee el valor del marco y lo devuelve para guardarlo en el registro (se pide la direccion) - recibo direccion fisica
-			uint32_t direccion_fisica_mov_in, tamanio_registro; 
-			char* valor_leido_mov_in;
-			recibir_mov_in_cpu(cliente_socket, &direccion_fisica_mov_in, &tamanio_registro);
-			valor_leido_mov_in = leer_memoria(direccion_fisica_mov_in, tamanio_registro);
-			//enviar_valor_mov_in_memoria(valor_leido_mov_in, cliente_socket); // MOV_IN_CPU  
+			t_list *direcciones_fisicas_mov_in;
+			char *valor_leido_mov_in;
+			recibir_mov_in_cpu(cliente_socket, &direcciones_fisicas_mov_in);
+
+			for (int i = 0; i < list_size(direcciones_fisicas_mov_in); i++)
+			{
+				t_direcciones_fisicas *direccionAmostrar = list_get(direcciones_fisicas_mov_in, i);
+				printf("Direccion Fisica %d recibida: %d\n", i, direccionAmostrar->direccion_fisica);
+				printf("Tamanio %d recibido: %d\n", i, direccionAmostrar->tamanio);
+				free(direccionAmostrar); // agregado
+			}
+
+			// valor_leido_mov_in = leer_memoria(direccion_fisica_mov_in, tamanio_registro);
+			// enviar_valor_mov_in_memoria(valor_leido_mov_in, cliente_socket); // MOV_IN_CPU
 			break;
 
 		case PEDIDO_MOV_OUT: // me pasa por parametro un uint32_t y tengo que guardarlo en el marco que me dice
-			uint32_t tamanio_registro_mov_out;
-			uint32_t direccion_fisica_mov_out;
+			t_list *direcciones_fisicas_mov_out;
 			uint32_t valorObtenido_mov_out;
-			recibir_mov_out_cpu(&direccion_fisica_mov_out, &tamanio_registro_mov_out, &valorObtenido_mov_out, cliente_socket);
-			printf("Valor dir_fisica comu: %d \n", direccion_fisica_mov_out);
-    		printf("Valor tamanio_registro comu: %d \n", tamanio_registro_mov_out);
-    		printf("Valor valorObtenido comu: %d \n", valorObtenido_mov_out);
-			escribir_memoria(direccion_fisica_mov_out, tamanio_registro_mov_out, valorObtenido_mov_out);
+			recibir_mov_out_cpu(&direcciones_fisicas_mov_out, &valorObtenido_mov_out, cliente_socket);
+
+			for (int i = 0; i < list_size(direcciones_fisicas_mov_out); i++)
+			{
+				t_direcciones_fisicas *direccionAmostrar = list_get(direcciones_fisicas_mov_out, i);
+				printf("Direccion Fisica %d recibida: %d\n", i, direccionAmostrar->direccion_fisica);
+				printf("Tamanio %d recibido: %d\n", i, direccionAmostrar->tamanio);
+				free(direccionAmostrar); // agregado
+			}
+			// escribir_memoria(direccion_fisica_mov_out, tamanio_registro_mov_out, valorObtenido_mov_out);
 			break;
 
 		case PEDIDO_MARCO:

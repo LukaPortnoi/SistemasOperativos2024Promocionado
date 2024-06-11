@@ -354,29 +354,35 @@ void iniciar_semaforos()
     pthread_mutex_init(&mutex_comunicacion_procesos, NULL);
 }
 
-void recibir_mov_out_cpu(uint32_t *direccion_fisica, uint32_t  *tamanio_registro, uint32_t  *valorObtenido, int cliente_socket)
+void recibir_mov_out_cpu(t_list *lista_direcciones, uint32_t *valorObtenido , int cliente_socket)
 {
     t_paquete *paquete = recibir_paquete(cliente_socket);
-    deserializar_datos_mov_out(paquete, direccion_fisica, tamanio_registro, valorObtenido);
-    printf("Valor dir_fisica despues de la deserializacion: %ls \n", direccion_fisica);
-    printf("Valor tamanio_registro despues de la deserializacion: %ls \n", tamanio_registro);
-    printf("Valor valorObtenido despues de la deserializacion: %ls \n", valorObtenido);
+    deserializar_datos_mov_out(paquete, lista_direcciones ,valorObtenido);
+    //printf("Valor dir_fisica recv: %ls \n", direccion_fisica);
+    //printf("Valor tamanio_registro recv: %ls \n", tamanio_registro);
+    //printf("Valor valorObtenido recv: %ls \n", valorObtenido);
     eliminar_paquete(paquete);
 }
 
-void deserializar_datos_mov_out(t_paquete *paquete, uint32_t *direccion_fisica, uint32_t *tamanio_registro, uint32_t *valorObtenido)
-{
+void deserializar_datos_mov_out (t_paquete *paquete, t_list *lista_datos, uint32_t  *valorObtenido) {
     int desplazamiento = 0;
-    memcpy(direccion_fisica, paquete->buffer->stream, sizeof(uint32_t));
-    desplazamiento += sizeof(uint32_t);
+    size_t num_elementos = (paquete->buffer->size - sizeof(uint32_t)) / sizeof(t_direcciones_fisicas);
 
-    memcpy(tamanio_registro, paquete->buffer->stream, sizeof(uint32_t));
-    desplazamiento += sizeof(uint32_t);
+    // Iteramos sobre el buffer y deserializamos cada elemento
+    for (size_t i = 1; i <= num_elementos; i++) {
+        t_direcciones_fisicas *dato = malloc(sizeof(t_direcciones_fisicas));
+        memcpy(&(dato->direccion_fisica), paquete->buffer->stream + desplazamiento, sizeof(uint32_t));
+        desplazamiento += sizeof(uint32_t);
+        memcpy(&(dato->tamanio), paquete->buffer->stream + desplazamiento, sizeof(uint32_t));
+        desplazamiento += sizeof(uint32_t);
+        
+        list_add(lista_datos, dato);
+    }
 
-    memcpy(valorObtenido, paquete->buffer->stream, sizeof(uint32_t));
+    memcpy(valorObtenido, paquete->buffer->stream + desplazamiento, sizeof(uint32_t));
 }
 
-void deserializar_datos_mov_in(t_paquete *paquete, uint32_t *direccion_fisica, uint32_t *tamanio_registro)
+/*void deserializar_datos_mov_out(t_paquete *paquete, t_list *lista_direcciones, uint32_t *valorObtenido)
 {
     int desplazamiento = 0;
     memcpy(direccion_fisica, paquete->buffer->stream + desplazamiento, sizeof(uint32_t));
@@ -384,14 +390,48 @@ void deserializar_datos_mov_in(t_paquete *paquete, uint32_t *direccion_fisica, u
 
     memcpy(tamanio_registro, paquete->buffer->stream + desplazamiento, sizeof(uint32_t));
     desplazamiento += sizeof(uint32_t);
+
+    memcpy(valorObtenido, paquete->buffer->stream + desplazamiento, sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
 }
 
-void recibir_mov_in_cpu(int socket_cliente, uint32_t *direccion_fisica, uint32_t *tamanio_registro)
+ void deserializar_datos_mov_in(t_paquete *paquete, t_list *lista_direcciones)
+{
+    int desplazamiento = 0;
+    memcpy(direccion_fisica, paquete->buffer->stream + desplazamiento, sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+    memcpy(tamanio_registro, paquete->buffer->stream + desplazamiento, sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+} */
+
+
+void recibir_mov_in_cpu(int socket_cliente, t_list *lista_direcciones)
 {
     t_paquete *paquete = recibir_paquete(socket_cliente);
-    deserializar_datos_mov_in(paquete, direccion_fisica, tamanio_registro);
+    deserializar_datos_mov_in(paquete, lista_direcciones);
     eliminar_paquete(paquete);
 }
+
+
+
+void deserializar_datos_mov_in(t_paquete *paquete, t_list *lista_datos) {
+    int desplazamiento = 0;
+    size_t num_elementos = (paquete->buffer->size) / sizeof(t_direcciones_fisicas);
+
+    // Iteramos sobre el buffer y deserializamos cada elemento
+    for (size_t i = 1; i <= num_elementos; i++) {
+        t_direcciones_fisicas *dato = malloc(sizeof(t_direcciones_fisicas));
+        memcpy(&(dato->direccion_fisica), paquete->buffer->stream + desplazamiento, sizeof(uint32_t));
+        desplazamiento += sizeof(uint32_t);
+        memcpy(&(dato->tamanio), paquete->buffer->stream + desplazamiento, sizeof(uint32_t));
+        if (i != num_elementos) {
+            desplazamiento += sizeof(uint32_t);
+        }
+        list_add(lista_datos, dato);
+    }
+}
+
 
 void recibir_pedido_marco(uint32_t *pagina, uint32_t *pid_proceso, int socket)
 {
@@ -442,23 +482,19 @@ void serializar_valor_leido_mov_in(t_paquete *paquete, char* valor)
 void escribir_memoria(uint32_t dir_fisica, uint32_t tamanio_registro, uint32_t valorObtenido)
 {
     printf("Llego aca al menos \n");
-    printf("Valor dir_fisica: %d", dir_fisica);
-    printf("Valor tamanio_registro: %d", tamanio_registro);
-    printf("Valor valorObtenido: %d", valorObtenido);
+    /*int valor_leido = (int)valorObtenido;
+    char cadena_a_escribir[tamanio_registro];
+
+    sprintf(cadena_a_escribir, %d, valor_leido);*/
+
 	pthread_mutex_lock(&mutex_memoria_usuario);
     for(uint32_t i = 0; i < tamanio_registro; i++){
-        memcpy(&memoriaUsuario[dir_fisica + i],&valorObtenido, tamanio_registro);
+        memcpy(&memoriaUsuario[dir_fisica + i],&valorObtenido, 1);
     }
 	pthread_mutex_unlock(&mutex_memoria_usuario);
 
     char* cadena_leida = leer_memoria(dir_fisica, tamanio_registro);
-    printf("Leemos valor escrito por MOV_OUT: %s", cadena_leida);
-
-	// log_error(logger_memoria_info, "ya guarde en memoria"); // TODO BORRAR
-	//t_marco *marco = marco_desde_df(direccion_fisica); //chequear esto
-
-	//marcar_pag_modificada(marco->pid, marco->num_de_marco); //chequear esto
-	
+    //printf("Leemos valor escrito por MOV_OUT: %s", cadena_leida);
 	usleep(RETARDO_RESPUESTA * 1000);
 }
 
