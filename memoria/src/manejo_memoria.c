@@ -12,7 +12,6 @@ void iniciar_estructura_proceso_memoria(t_proceso_memoria *proceso_memoria)
 void liberar_estructura_proceso_memoria(t_proceso_memoria *proceso_memoria)
 {
     list_destroy(proceso_memoria->tabla_paginas);
-    // log obligatorio  “PID: <PID> - Tamaño: <CANTIDAD_PAGINAS>”
     log_info(LOGGER_MEMORIA, "PID: %d - Tamaño: %d", proceso_memoria->pid, proceso_memoria->tamanio);
 }
 

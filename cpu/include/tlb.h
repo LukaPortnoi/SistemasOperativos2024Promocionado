@@ -46,5 +46,7 @@ uint32_t recibir_direccion_fisica(int socket_cliente);
 uint32_t recibir_marco_memoria(int fd_cpu_memoria);
 uint32_t recibir_marco(int socket_cliente);
 uint32_t deserializar_marco(t_buffer *buffer);
+uint32_t obtenerCantidadPaginas(uint32_t logicalAddress, uint32_t pageSize, uint32_t tamanio_registro);
+//uint32_t calcularTamanioALeer(uint32_t direccionFisica, uint32_t pageSize, uint32_t tamanio_registro);
 
 #endif // TLB_H_

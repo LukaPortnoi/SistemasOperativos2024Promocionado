@@ -33,5 +33,6 @@ void serializar_valor_leido_mov_in(t_paquete *paquete, char* valor);
 void escribir_memoria(uint32_t direccion_fisica, char* valor);
 uint32_t leer_memoria(uint32_t dir_fisica, uint32_t tamanio_registro);
 void deserializar_datos_mov_in(t_paquete *paquete, uint32_t *direccion_fisica, uint32_t *tamanio_registro);
+//void leer_memoria(void* destino, uint32_t dir_fisica, size_t tamanio_registro);
 
 #endif // UTILS_MEMORIA_H

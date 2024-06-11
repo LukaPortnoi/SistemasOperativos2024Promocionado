@@ -90,11 +90,7 @@ static void procesar_conexion_memoria(void *void_args)
 		case PEDIDO_MOV_IN: // Lee el valor del marco y lo devuelve para guardarlo en el registro (se pide la direccion) - recibo direccion fisica
 			uint32_t direccion_fisica_mov_in, tamanio_registro, valor_leido_mov_in;
 			recibir_mov_in_cpu(cliente_socket, &direccion_fisica_mov_in, &tamanio_registro);
-			printf("Valor de la direccion fisica despues de la deserializacion: %d \n", direccion_fisica_mov_in);
-			printf("Valor del tamanio del registro despues de la deserializacion: %d \n", tamanio_registro);
-			printf("LLego aca al menos \n");
 			valor_leido_mov_in = leer_memoria(direccion_fisica_mov_in, tamanio_registro);
-			printf("Valor leido de memoria: %d \n", valor_leido_mov_in);
 			//enviar_valor_mov_in_memoria(valor_leido_mov_in, cliente_socket); // MOV_IN_CPU  
 			break;
 
@@ -108,7 +104,6 @@ static void procesar_conexion_memoria(void *void_args)
 		case PEDIDO_MARCO:
 			uint32_t pid_proceso, pagina;
 			recibir_pedido_marco(&pagina, &pid_proceso, cliente_socket);
-			log_debug(logger, "Se recibio un pedido de marco para el PID %d y pagina %d", pid_proceso, pagina);
 			proceso_memoria = obtener_proceso_pid(pid_proceso);
 			if (proceso_memoria == NULL)
 			{
@@ -118,7 +113,7 @@ static void procesar_conexion_memoria(void *void_args)
 			else
 			{
 				uint32_t marco = obtener_marco_de_pagina(proceso_memoria, pagina);
-				printf("El marco es: %d\n", marco);
+				log_info(logger, "PID: %d - PAGINA: %d - MARCO: %d", pid_proceso, pagina, marco);
 				enviar_marco(cliente_socket, marco);
 				break;
 			}

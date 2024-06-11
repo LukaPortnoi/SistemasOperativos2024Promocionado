@@ -450,57 +450,30 @@ void escribir_memoria(uint32_t direccion_fisica, char* valor)
 
 uint32_t leer_memoria(uint32_t dir_fisica, uint32_t tamanio_registro)
 {
-    printf("Entro a leer memoria \n");
-    uint32_t valor_leido = 0;
-    uint32_t letra1 = 2;
-    uint32_t letra2 = 4;
-    uint32_t letra3 = 6;
-    uint32_t letra4 = 8;
+    int valor_leido = 0;
+    char numero1 = 'H';
+    char numero2 = 'o';
+    char numero3 = 'l';
+    char numero4 = 'a';
 
     //TESTEO
-    memcpy((char*)memoriaUsuario + dir_fisica * sizeof(uint32_t), &letra1, sizeof(uint32_t));
-    memcpy(&valor_leido, (char*)memoriaUsuario + dir_fisica * sizeof(uint32_t), sizeof(uint32_t));
-    printf("Valor leido antes del for: %d \n", valor_leido);
-
-    memcpy((char*)memoriaUsuario + (dir_fisica + 1) * sizeof(uint32_t), &letra2, sizeof(uint32_t));
-    memcpy(&valor_leido, (char*)memoriaUsuario + (dir_fisica + 1) * sizeof(uint32_t), sizeof(uint32_t));
-    printf("Valor leido antes del for: %d \n", valor_leido);
-
-    memcpy((char*)memoriaUsuario + (dir_fisica + 2) * sizeof(uint32_t), &letra3, sizeof(uint32_t));
-    memcpy(&valor_leido, (char*)memoriaUsuario + (dir_fisica + 2) * sizeof(uint32_t), sizeof(uint32_t));
-    printf("Valor leido antes del for: %d \n", valor_leido);
-
-    memcpy((char*)memoriaUsuario + (dir_fisica + 3) * sizeof(uint32_t), &letra4, sizeof(uint32_t));
-    memcpy(&valor_leido, (char*)memoriaUsuario + (dir_fisica + 3) * sizeof(uint32_t), sizeof(uint32_t));
-    printf("Valor leido antes del for: %d \n", valor_leido);
+    memcpy(&memoriaUsuario[dir_fisica], &numero1, 1);
+    memcpy(&memoriaUsuario[dir_fisica + 1], &numero2, 1);
+    memcpy(&memoriaUsuario[dir_fisica + 2], &numero3, 1);
+    memcpy(&memoriaUsuario[dir_fisica + 3], &numero4, 1);
     //TESTEO
-
-    int numero_marco = dir_fisica / TAM_PAGINA;
-    printf("Numero de marco al leer memoria: %d \n", numero_marco);
 
     pthread_mutex_lock(&mutex_memoria_usuario);
+    char cadena[tamanio_registro + 1]; // Crear cadena para almacenar los caracteres leídos
+    cadena[0] = '\0'; // Inicializar la cadena
     for(uint32_t i = 0; i < tamanio_registro; i++){
-        printf("valor de i: %d \n", i);
-        memcpy(&valor_leido, (char*)memoriaUsuario + (dir_fisica + i) * sizeof(uint32_t), sizeof(uint32_t));
-        printf("Valor leido: %d \n", valor_leido);
+        memcpy(&valor_leido, &memoriaUsuario[dir_fisica + i], 1);
+        char caracter = (char)valor_leido;
+        strncat(cadena, &caracter, 1); // Agregar el carácter a la cadena
     }
+    log_debug(LOGGER_MEMORIA, "Cadena final leída: %s \n", cadena); // Imprimir la cadena final
     pthread_mutex_unlock(&mutex_memoria_usuario);
     usleep(RETARDO_RESPUESTA * 1000);
-
-    /*t_marco *marco = marco_desde_df(dir_fisica);
-    // TODO -- VALIDAR -- cuando hago un F_READ debo marcar la pagina que tiene el marco como modificada
-    t_proceso_memoria *proceso = obtener_proceso_pid((uint32_t)marco->pid);
-    t_list *paginas_en_memoria = obtener_entradas_con_bit_presencia_1(proceso);
-    t_entrada_tabla_pag *pagina_modificada = obtener_entrada_con_marco(paginas_en_memoria, marco->num_de_marco);
-    actualizo_entrada_para_futuro_reemplazo(pagina_modificada);
-
-    if (config_valores_memoria.retardo_respuesta / 1000 > 0)
-        sleep(config_valores_memoria.retardo_respuesta / 1000);
-    else
-        sleep(1);
-    usleep(config_valores_memoria.retardo_respuesta * 1000);
-    log_info(logger_memoria_info, "***** ACCESO A ESPACIO USUARIO - CPU - PID [%d] - ACCION: [LEER] - DIRECCION FISICA: [%d]", marco->pid, dir_fisica); // LOG OBLIGATORIO
-    */
     return valor_leido;
 }
 
