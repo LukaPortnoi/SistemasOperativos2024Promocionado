@@ -498,7 +498,7 @@ void escribir_memoria(uint32_t dir_fisica, uint32_t tamanio_registro, char* valo
 char* leer_memoria(uint32_t dir_fisica, uint32_t tamanio_registro)
 {
     char valor_leido;
-    printf("direccion fisica recibida en leer memoria: %d", dir_fisica);
+    printf("direccion fisica recibida en leer memoria: %d \n", dir_fisica);
     printf("Tamaño a leer: %d \n", tamanio_registro);
 
     pthread_mutex_lock(&mutex_memoria_usuario);
@@ -568,43 +568,4 @@ void leer_memoria(void* destino, uint32_t dir_fisica, size_t tamanio_registro)
     pthread_mutex_unlock(&mutex_memoria_usuario);
     usleep(RETARDO_RESPUESTA * 1000);
 }
-==18471== Thread 2:
-==18471== Conditional jump or move depends on uninitialised value(s)
-==18471==    at 0x484ED88: __strlen_sse2 (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
-==18471==    by 0x49D2D30: __vfprintf_internal (vfprintf-internal.c:1517)
-==18471==    by 0x49E4499: __vsnprintf_internal (vsnprintf.c:114)
-==18471==    by 0x486F3FF: _string_append_with_format_list (string.c:305)
-==18471==    by 0x486E83F: string_from_vformat (string.c:74)
-==18471==    by 0x486E440: _log_write_in_level (log.c:125)
-==18471==    by 0x486E0B8: log_debug (log.c:89)
-==18471==    by 0x10CFE8: leer_memoria (utils_memoria.c:533)
-==18471==    by 0x10CE34: escribir_memoria (utils_memoria.c:501)
-==18471==    by 0x10ACBA: procesar_conexion_memoria (comunicaciones.c:115)
-==18471==    by 0x49F0AC2: start_thread (pthread_create.c:442)
-==18471==    by 0x4A81A03: clone (clone.S:100)
-==18471==  Uninitialised value was created by a heap allocation
-==18471==    at 0x4848899: malloc (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
-==18471==    by 0x10B0C1: iniciar_memoria_usuario (main.c:55)
-==18471==    by 0x10AF2E: main (main.c:30)
-==18471== 
-==18471== Conditional jump or move depends on uninitialised value(s)
-==18471==    at 0x484ED88: __strlen_sse2 (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
-==18471==    by 0x49D2D30: __vfprintf_internal (vfprintf-internal.c:1517)
-==18471==    by 0x49E4499: __vsnprintf_internal (vsnprintf.c:114)
-==18471==    by 0x486F44E: _string_append_with_format_list (string.c:310)
-==18471==    by 0x486E83F: string_from_vformat (string.c:74)
-==18471==    by 0x486E440: _log_write_in_level (log.c:125)
-==18471==    by 0x486E0B8: log_debug (log.c:89)
-==18471==    by 0x10CFE8: leer_memoria (utils_memoria.c:533)
-==18471==    by 0x10CE34: escribir_memoria (utils_memoria.c:501)
-==18471==    by 0x10ACBA: procesar_conexion_memoria (comunicaciones.c:115)
-==18471==    by 0x49F0AC2: start_thread (pthread_create.c:442)
-==18471==    by 0x4A81A03: clone (clone.S:100)
-==18471==  Uninitialised value was created by a heap allocation
-==18471==    at 0x4848899: malloc (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
-==18471==    by 0x10B0C1: iniciar_memoria_usuario (main.c:55)
-==18471==    by 0x10AF2E: main (main.c:30)
-==18471== 
-
-
 */

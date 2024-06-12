@@ -108,6 +108,9 @@ t_list *traducir_direccion(uint32_t pid, uint32_t logicalAddress, uint32_t pageS
 
 
     printf("TAMANIOOOOO: %d\n", tamanio_registro);
+    printf("pagina: %d\n", pagina);
+    printf("offset: %d\n", offset);
+    printf("TAMANIOOOOO: %d\n", tamanio_registro);
 
     uint32_t cantidadPaginas = obtenerCantidadPaginas(logicalAddress, pageSize, tamanio_registro);
     
@@ -126,6 +129,8 @@ t_list *traducir_direccion(uint32_t pid, uint32_t logicalAddress, uint32_t pageS
         printf("TLB Hit\n");
         direccion->direccion_fisica = marco * pageSize + offset;
         direccion->tamanio = tamanio_registro;
+        printf("direccion: %d\n", direccion->direccion_fisica);
+        printf("tamanio direccion: %d\n", direccion->tamanio);
         list_add(listaDirecciones, direccion);
     }
     else
@@ -146,6 +151,8 @@ t_list *traducir_direccion(uint32_t pid, uint32_t logicalAddress, uint32_t pageS
         }
         direccion->tamanio = tamanioAleer;
         list_add(listaDirecciones, direccion);
+        printf("direccion: %d\n", direccion->direccion_fisica);
+        printf("tamanio direccion: %d\n", direccion->tamanio);
         cantidadPaginas++;
     }
 

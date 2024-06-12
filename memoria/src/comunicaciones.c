@@ -91,13 +91,13 @@ static void procesar_conexion_memoria(void *void_args)
 			t_list *direcciones_fisicas_mov_in = list_create();
 			char *valor_leido_mov_in;
 			recibir_mov_in_cpu(cliente_socket, direcciones_fisicas_mov_in);
-				printf("tamaño lista: %d", list_size(direcciones_fisicas_mov_in));
+				printf("tamaño lista: %d\n", list_size(direcciones_fisicas_mov_in));
 				
 			for (int i = 0; i < list_size(direcciones_fisicas_mov_in); i++)
 			{
 				t_direcciones_fisicas *direccionAmostrar = list_get(direcciones_fisicas_mov_in, i);
 				printf("Direccion Fisica %d recibida: %d\n", i, direccionAmostrar->direccion_fisica);
-				printf("(EN LECTURA) tamaño a leer es: %d, en posicion: %d \n", direccionAmostrar->tamanio, i);
+				printf("(EN LECTURA) tamaño a leer es: %d, en posicion: %d\n", direccionAmostrar->tamanio, i);
 				valor_leido_mov_in = leer_memoria(direccionAmostrar->direccion_fisica, direccionAmostrar->tamanio);
 				free(direccionAmostrar); // agregado
 			}
