@@ -478,44 +478,45 @@ void serializar_valor_leido_mov_in(t_paquete *paquete, char* valor)
     memcpy(paquete->buffer->stream, &tamanio_valor, sizeof(uint32_t));
 }
 
-void escribir_memoria(uint32_t dir_fisica, uint32_t tamanio_registro, uint32_t valorObtenido)
+void escribir_memoria(uint32_t dir_fisica, uint32_t tamanio_registro, char* valorObtenido)
 {
-    printf("Llego aca al menos \n");
-    int valor_leido = (int)valorObtenido;
-    char* valor_a_escribir = int_to_char(valor_leido);
-
-    printf("Valor a escribir como char*: %s", valor_a_escribir);
-    printf("Primer char: %c", valor_a_escribir[0]);
-    printf("Segundo char: %c", valor_a_escribir[1]);
-
+    printf("Valor recibido en ESCRIBIR_MEMORIA:: %s \n", valorObtenido);
 	pthread_mutex_lock(&mutex_memoria_usuario);
     for(uint32_t i = 0; i < tamanio_registro; i++){
-        if(valor_a_escribir[i]){
-        memcpy(&memoriaUsuario[dir_fisica + i],&valor_a_escribir[i], 1);
-        }else{
+        if(valorObtenido[i]){
+        memcpy(&memoriaUsuario[dir_fisica + i],&valorObtenido[i], 1);
+        }
+        else{
             break;
         }
     }
 	pthread_mutex_unlock(&mutex_memoria_usuario);
 
-    char* cadena_leida = leer_memoria(dir_fisica, tamanio_registro);
-    //printf("Leemos valor escrito por MOV_OUT: %s", cadena_leida);
 	usleep(RETARDO_RESPUESTA * 1000);
 }
 
 char* leer_memoria(uint32_t dir_fisica, uint32_t tamanio_registro)
 {
-    int valor_leido = 0;
+    char valor_leido;
+    printf("direccion fisica recibida en leer memoria: %d", dir_fisica);
+    printf("Tamaño a leer: %d \n", tamanio_registro);
 
     pthread_mutex_lock(&mutex_memoria_usuario);
     char* cadena = malloc(tamanio_registro + 1); // Allocate memory dynamically
     memset(cadena, 0, tamanio_registro + 1); // Initialize all elements to 0
     for(uint32_t i = 0; i < tamanio_registro; i++){
+        if(&memoriaUsuario[dir_fisica + i] != NULL){
         memcpy(&valor_leido, &memoriaUsuario[dir_fisica + i], 1);
-        cadena[i] = (char)valor_leido; // Assign the character directly
+        cadena[i] = valor_leido; // Assign the character directly
+        printf("elementos cadena: %c \n", cadena[i]);
+        }
+        else{
+            break;
+        }
     }
     cadena[tamanio_registro] = '\0'; // Ensure the string is null-terminated
     log_debug(LOGGER_MEMORIA, "Cadena final leída: %s \n", cadena); // Imprimir la cadena final
+    //printf("Cadena final leída: %s \n", cadena);
     pthread_mutex_unlock(&mutex_memoria_usuario);
     usleep(RETARDO_RESPUESTA * 1000);
     return cadena;

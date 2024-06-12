@@ -552,6 +552,13 @@ void enviar_valor_mov_in_cpu(t_list *Lista_direccionesFisica, int socket)
 {
     t_paquete *paquete_mov_in = crear_paquete_con_codigo_de_operacion(PEDIDO_MOV_IN);
     serializar_datos_mov_in(paquete_mov_in, Lista_direccionesFisica);
+    printf("tamaño lista: %d", list_size(Lista_direccionesFisica));
+    for (int i = 0; i < list_size(Lista_direccionesFisica); i++)
+	{
+		t_direcciones_fisicas *direccionAmostrar = list_get(Lista_direccionesFisica, i);
+		printf("Direccion Fisica %d recibida: %d\n", i, direccionAmostrar->direccion_fisica);
+		printf("Tamaño a leer es: %d, en posicion: %d \n", direccionAmostrar->tamanio, i);
+	}
     enviar_paquete(paquete_mov_in, socket);
     eliminar_paquete(paquete_mov_in);
 }

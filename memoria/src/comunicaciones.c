@@ -91,12 +91,13 @@ static void procesar_conexion_memoria(void *void_args)
 			t_list *direcciones_fisicas_mov_in = list_create();
 			char *valor_leido_mov_in;
 			recibir_mov_in_cpu(cliente_socket, direcciones_fisicas_mov_in);
-
+				printf("tamaño lista: %d", list_size(direcciones_fisicas_mov_in));
+				
 			for (int i = 0; i < list_size(direcciones_fisicas_mov_in); i++)
 			{
 				t_direcciones_fisicas *direccionAmostrar = list_get(direcciones_fisicas_mov_in, i);
 				printf("Direccion Fisica %d recibida: %d\n", i, direccionAmostrar->direccion_fisica);
-				printf("Tamanio %d recibido: %d\n", i, direccionAmostrar->tamanio);
+				printf("(EN LECTURA) tamaño a leer es: %d, en posicion: %d \n", direccionAmostrar->tamanio, i);
 				valor_leido_mov_in = leer_memoria(direccionAmostrar->direccion_fisica, direccionAmostrar->tamanio);
 				free(direccionAmostrar); // agregado
 			}
@@ -107,15 +108,31 @@ static void procesar_conexion_memoria(void *void_args)
 			uint32_t valorObtenido_mov_out;
 			recibir_mov_out_cpu(direcciones_fisicas_mov_out, &valorObtenido_mov_out, cliente_socket);
 
+			int valor_leido = (int)valorObtenido_mov_out;
+    		char* valor_entero_a_escribir = int_to_char(valor_leido);
+
+    		printf("Valor ya escrito como char*: %s \n", valor_entero_a_escribir);
+
+			int k=0;
 			for (int i = 0; i < list_size(direcciones_fisicas_mov_out); i++)
 			{
 				t_direcciones_fisicas *direccionAmostrar = list_get(direcciones_fisicas_mov_out, i);
-				printf("Direccion Fisica %d recibida: %d\n", i, direccionAmostrar->direccion_fisica);
-				printf("Tamanio %d recibido: %d\n", i, direccionAmostrar->tamanio);
-				escribir_memoria(direccionAmostrar->direccion_fisica, direccionAmostrar->tamanio, valorObtenido_mov_out);
+				//printf("Direccion Fisica %d recibida: %d\n", i, direccionAmostrar->direccion_fisica);
+				//printf("Tamanio %d recibido: %d\n", i, direccionAmostrar->tamanio);
+				char* valor_parcial_a_pasar = malloc(direccionAmostrar->tamanio + 1);
+    			memset(valor_parcial_a_pasar, 0, direccionAmostrar->tamanio + 1);
+				for(int j=0; j < direccionAmostrar->tamanio; j++){
+					valor_parcial_a_pasar[j] = valor_entero_a_escribir[k];
+					k++;
+				}
+				valor_parcial_a_pasar[direccionAmostrar->tamanio] = '\0';
+				printf("Valor parcial a pasar: %s \n", valor_parcial_a_pasar);
+				printf("tamaño a leer es: %d, en posicion: %d \n", direccionAmostrar->tamanio, i);
+				escribir_memoria(direccionAmostrar->direccion_fisica, direccionAmostrar->tamanio, valor_parcial_a_pasar);
 				free(direccionAmostrar); // agregado
 			}
-			break;
+
+			break;			
 
 		case PEDIDO_MARCO:
 			uint32_t pid_proceso, pagina;
