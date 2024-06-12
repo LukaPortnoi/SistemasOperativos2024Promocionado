@@ -66,22 +66,15 @@ void serializar_IO_instruccion(t_paquete *paquete, t_pcb *pcb, int unidades_de_t
     memcpy(paquete->buffer->stream + desplazamiento, &IO, sizeof(nombre_instruccion));
 }
 
-t_pcb *recibir_pcb_para_interfaz(int socket_cliente, char **nombre_interfaz, int *unidades_de_trabajo, nombre_instruccion *IO)
+void recibir_pcb_para_interfaz(t_pcb *pcb, int socket_cliente, char **nombre_interfaz, int *unidades_de_trabajo, nombre_instruccion *IO)
 {
     t_paquete *paquete = recibir_paquete(socket_cliente);
-    t_pcb *pcb = deserializar_pcb_para_interfaz(paquete->buffer, nombre_interfaz, unidades_de_trabajo, IO);
+    deserializar_pcb_para_interfaz(pcb, paquete->buffer, nombre_interfaz, unidades_de_trabajo, IO);
     eliminar_paquete(paquete);
-    return pcb;
 }
 
-t_pcb *deserializar_pcb_para_interfaz(t_buffer *buffer, char **nombre_interfaz, int *unidades_de_trabajo, nombre_instruccion *IO)
+void deserializar_pcb_para_interfaz(t_pcb *pcb, t_buffer *buffer, char **nombre_interfaz, int *unidades_de_trabajo, nombre_instruccion *IO)
 {
-    t_pcb *pcb = malloc(sizeof(t_pcb));
-    if (pcb == NULL)
-    {
-        return NULL;
-    }
-
     uint32_t long_interfaz;
     void *stream = buffer->stream;
     int desplazamiento = 0;
@@ -97,21 +90,6 @@ t_pcb *deserializar_pcb_para_interfaz(t_buffer *buffer, char **nombre_interfaz, 
 
     memcpy(&(pcb->tiempo_q), stream + desplazamiento, sizeof(uint64_t));
     desplazamiento += sizeof(uint64_t);
-
-    pcb->contexto_ejecucion = malloc(sizeof(t_contexto_ejecucion));
-    if (pcb->contexto_ejecucion == NULL)
-    {
-        free(pcb);
-        return NULL;
-    }
-
-    pcb->contexto_ejecucion->registros = malloc(sizeof(t_registros));
-    if (pcb->contexto_ejecucion->registros == NULL)
-    {
-        free(pcb->contexto_ejecucion);
-        free(pcb);
-        return NULL;
-    }
 
     memcpy(pcb->contexto_ejecucion->registros, stream + desplazamiento, sizeof(t_registros));
     desplazamiento += sizeof(t_registros);
@@ -134,8 +112,6 @@ t_pcb *deserializar_pcb_para_interfaz(t_buffer *buffer, char **nombre_interfaz, 
     desplazamiento += long_interfaz;
 
     memcpy(IO, stream + desplazamiento, sizeof(nombre_instruccion));
-
-    return pcb;
 }
 
 // Envia la interfaz que se va a conectar y que existe a kernel
@@ -393,22 +369,15 @@ void serializar_IO_instruccion_stdin(t_paquete *paquete, t_pcb *pcb, char *inter
     }
 }
 
-t_pcb *recibir_pcb_para_interfaz_stdin(int socket_cliente, char **nombre_interfaz, t_list *direcciones_fisicas , nombre_instruccion *IO)
+void recibir_pcb_para_interfaz_stdin(t_pcb *pcb, int socket_cliente, char **nombre_interfaz, t_list *direcciones_fisicas , nombre_instruccion *IO)
 {
     t_paquete *paquete = recibir_paquete(socket_cliente);
-    t_pcb *pcb = deserializar_pcb_para_interfaz_stdin(paquete->buffer, nombre_interfaz, direcciones_fisicas , IO);
+    deserializar_pcb_para_interfaz_stdin(pcb, paquete->buffer, nombre_interfaz, direcciones_fisicas , IO);
     eliminar_paquete(paquete);
-    return pcb;
 }
 
-t_pcb *deserializar_pcb_para_interfaz_stdin(t_buffer *buffer, char **nombre_interfaz, t_list *direcciones_fisicas, nombre_instruccion *IO)
+void deserializar_pcb_para_interfaz_stdin(t_pcb *pcb, t_buffer *buffer, char **nombre_interfaz, t_list *direcciones_fisicas, nombre_instruccion *IO)
 {
-    t_pcb *pcb = malloc(sizeof(t_pcb));
-    if (pcb == NULL)
-    {
-        return NULL;
-    }
-
     uint32_t long_interfaz;
     uint32_t tamanioListDirecciones;
     void *stream = buffer->stream;
@@ -426,24 +395,9 @@ t_pcb *deserializar_pcb_para_interfaz_stdin(t_buffer *buffer, char **nombre_inte
     memcpy(&(pcb->tiempo_q), stream + desplazamiento, sizeof(uint64_t));
     desplazamiento += sizeof(uint64_t);
 
-    pcb->contexto_ejecucion = malloc(sizeof(t_contexto_ejecucion));
-    if (pcb->contexto_ejecucion == NULL)
-    {
-        free(pcb);
-        return NULL;
-    }
-
     size_t tam_registros = sizeof(uint32_t) +
                            sizeof(uint8_t) * 4 +
                            sizeof(uint32_t) * 6;
-
-    pcb->contexto_ejecucion->registros = malloc(tam_registros);
-    if (pcb->contexto_ejecucion->registros == NULL)
-    {
-        free(pcb->contexto_ejecucion);
-        free(pcb);
-        return NULL;
-    }
 
     memcpy(pcb->contexto_ejecucion->registros, stream + desplazamiento, tam_registros);
     desplazamiento += tam_registros;
@@ -494,11 +448,7 @@ t_pcb *deserializar_pcb_para_interfaz_stdin(t_buffer *buffer, char **nombre_inte
 
         list_add(direcciones_fisicas, dato);
     }
-
-    return pcb;
 }
-
-
 
 t_paquete *crear_paquete_InterfazstdinCodOp(t_interfaz_stdin *interfaz, op_cod codigo_operacion)
 {

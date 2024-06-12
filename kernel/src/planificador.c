@@ -118,17 +118,8 @@ void serializar_inicializar_proceso(t_paquete *paquete, int pid_nuevo, char *pat
     offset += sizeof(int);
     memcpy(stream + offset, path_proceso, path_length);
 
-    t_buffer *buffer = malloc(sizeof(t_buffer));
-    if (buffer == NULL)
-    {
-        free(stream);
-        return;
-    }
-
-    buffer->size = buffer_size;
-    buffer->stream = stream;
-
-    paquete->buffer = buffer;
+    paquete->buffer->size = buffer_size;
+    paquete->buffer->stream = stream;
 }
 
 // PLANIFICADOR CORTO PLAZO
@@ -190,7 +181,7 @@ void ejecutar_PCB(t_pcb *pcb)
         pthread_create(&hilo_quantum, NULL, (void *)atender_quantum, NULL);
     }
 
-    pcb = recibir_pcb_CPU(fd_kernel_cpu_dispatch); // Tener en cuenta la funcion para I/O
+    recibir_pcb_CPU(pcb, fd_kernel_cpu_dispatch); // Tener en cuenta la funcion para I/O
 
     if (pcb == NULL)
     {
@@ -202,47 +193,46 @@ void ejecutar_PCB(t_pcb *pcb)
     desalojo_cpu(pcb, hilo_quantum); // Manejar el desalojo y finalización del hilo de quantum
 }
 
-t_pcb *recibir_pcb_CPU(int fd_cpu)
+void recibir_pcb_CPU(t_pcb *pcb_recibido, int fd_cpu)
 {
     op_cod cop;
-    t_pcb *pcb_recibido;
 
     recv(fd_cpu, &cop, sizeof(op_cod), 0);
 
     switch (cop)
     {
     case PCB:
-        pcb_recibido = recibir_pcb(fd_cpu);     //fijarse de no hacer un malloc cada vez que llega un pcb
+        recibir_pcb(pcb_recibido, fd_cpu);
         break;
 
     case PEDIDO_WAIT:
-        pcb_recibido = recibir_pcb_para_manejo_recurso(fd_cpu, &RECURSO_A_USAR);
+        recibir_pcb_para_manejo_recurso(pcb_recibido, fd_cpu, &RECURSO_A_USAR);
         INSTRUCCION_RECURSO_A_USAR = WAIT;
         break;
 
     case PEDIDO_SIGNAL:
-        pcb_recibido = recibir_pcb_para_manejo_recurso(fd_cpu, &RECURSO_A_USAR);
+        recibir_pcb_para_manejo_recurso(pcb_recibido, fd_cpu, &RECURSO_A_USAR);
         INSTRUCCION_RECURSO_A_USAR = SIGNAL;
         break;
 
     case ENVIAR_INTERFAZ:
-        pcb_recibido = recibir_pcb_para_interfaz(fd_cpu, &nombre_interfaz, &unidades_de_trabajo, &instruccion_de_IO_a_ejecutar);
+        recibir_pcb_para_interfaz(pcb_recibido, fd_cpu, &nombre_interfaz, &unidades_de_trabajo, &instruccion_de_IO_a_ejecutar);
         break;
 
     case ENVIAR_INTERFAZ_STDIN:
-        pcb_recibido = recibir_pcb_para_interfaz_stdin(fd_cpu, &nombre_interfaz, direcciones_fisicas, &instruccion_de_IO_a_ejecutar);
-        
-        break;
-    case ENVIAR_INTERFAZ_STDOUT:
-        pcb_recibido = recibir_pcb_para_interfaz_stdin(fd_cpu, &nombre_interfaz, direcciones_fisicas, &instruccion_de_IO_a_ejecutar);
-        for (int i = 0; i < list_size(direcciones_fisicas); i++)
-			        {
-                        t_direcciones_fisicas *direccionAmostrar = list_get(direcciones_fisicas, i);
-                        printf("Direccion Fisica %d recibida: %d\n", i, direccionAmostrar->direccion_fisica);
-                        printf("Tamanio %d recibido: %d\n", i, direccionAmostrar->tamanio);
-			        }
+        recibir_pcb_para_interfaz_stdin(pcb_recibido, fd_cpu, &nombre_interfaz, direcciones_fisicas, &instruccion_de_IO_a_ejecutar);
         break;
 
+    case ENVIAR_INTERFAZ_STDOUT:
+        recibir_pcb_para_interfaz_stdin(pcb_recibido, fd_cpu, &nombre_interfaz, direcciones_fisicas, &instruccion_de_IO_a_ejecutar);
+        for (int i = 0; i < list_size(direcciones_fisicas); i++)
+        {
+            t_direcciones_fisicas *direccionAmostrar = list_get(direcciones_fisicas, i);
+            printf("Direccion Fisica %d recibida: %d\n", i, direccionAmostrar->direccion_fisica);
+            printf("Tamanio %d recibido: %d\n", i, direccionAmostrar->tamanio);
+        }
+        break;
+       
     default:
         log_error(LOGGER_KERNEL, "No se pudo recibir el pcb");
         break;
@@ -251,10 +241,7 @@ t_pcb *recibir_pcb_CPU(int fd_cpu)
     if (pcb_recibido == NULL)
     {
         log_error(LOGGER_KERNEL, "Error al recibir PCB de CPU");
-        return NULL;
     }
-
-    return pcb_recibido;
 }
 
 void desalojo_cpu(t_pcb *pcb, pthread_t hilo_quantum_id)
@@ -288,7 +275,7 @@ void desalojo_cpu(t_pcb *pcb, pthread_t hilo_quantum_id)
         break;
     case INTERRUPCION_SYSCALL: // MANEJO RECURSO
         log_debug(LOGGER_KERNEL, "PID %d - Desalojado por manejo de recurso", pcb->pid);
-        asignar_recurso(pcb, RECURSO_A_USAR);
+        manejar_recurso(pcb, RECURSO_A_USAR);   //ojo ver si hay que hacer un free
         break;
     case INTERRUPCION_BLOQUEO:
         log_debug(LOGGER_KERNEL, "PID %d - Desalojado por bloqueo", pcb->pid);
@@ -470,6 +457,13 @@ void finalizar_proceso(t_pcb *pcb)
     log_info(LOGGER_KERNEL, "Finaliza el proceso %d - Motivo: %s", pcb->pid, motivo_finalizacion_to_string(pcb->contexto_ejecucion->motivo_finalizacion));
     cambiar_estado_pcb(pcb, FINALIZADO);
     squeue_push(squeue_exit, pcb);
+    if (list_size(pcb->recursos_asignados) > 0)
+    {
+        for (int i = 0; i < list_size(pcb->recursos_asignados); i++)
+        {
+            liberar_recurso(pcb, list_get(pcb->recursos_asignados, i));
+        }
+    }
     // liberar_estructuras_memoria(pcb->pid); // TODO: Liberar estructuras de memoria
     sem_post(&semMultiprogramacion);
     if (sem_getvalue(&semMultiprogramacion, &sem_value) == 0)
@@ -515,24 +509,15 @@ void desbloquear_proceso(uint32_t pid)
     }
 }
 
-// REVISAR
-t_pcb *recibir_pcb_para_manejo_recurso(int socket, char **recurso)
+void recibir_pcb_para_manejo_recurso(t_pcb *pcb, int socket, char **recurso)
 {
     t_paquete *paquete = recibir_paquete(socket);
-    t_pcb *pcb = deserializar_pcb_recurso(paquete->buffer, recurso);
+    deserializar_pcb_recurso(pcb, paquete->buffer, recurso);
     eliminar_paquete(paquete);
-    return pcb;
 }
 
-t_pcb *deserializar_pcb_recurso(t_buffer *buffer, char **recurso)
+void deserializar_pcb_recurso(t_pcb *pcb, t_buffer *buffer, char **recurso)
 {
-
-    t_pcb *pcb = malloc(sizeof(t_pcb));
-    if (pcb == NULL)
-    {
-        return NULL;
-    }
-
     uint32_t long_recurso;
     void *stream = buffer->stream;
     int desplazamiento = 0;
@@ -549,21 +534,6 @@ t_pcb *deserializar_pcb_recurso(t_buffer *buffer, char **recurso)
     memcpy(&(pcb->tiempo_q), stream + desplazamiento, sizeof(uint64_t));
     desplazamiento += sizeof(uint64_t);
 
-    pcb->contexto_ejecucion = malloc(sizeof(t_contexto_ejecucion));
-    if (pcb->contexto_ejecucion == NULL)
-    {
-        free(pcb);
-        return NULL;
-    }
-
-    pcb->contexto_ejecucion->registros = malloc(sizeof(t_registros));
-    if (pcb->contexto_ejecucion->registros == NULL)
-    {
-        free(pcb->contexto_ejecucion);
-        free(pcb);
-        return NULL;
-    }
-
     memcpy(pcb->contexto_ejecucion->registros, stream + desplazamiento, sizeof(t_registros));
     desplazamiento += sizeof(t_registros);
 
@@ -579,24 +549,26 @@ t_pcb *deserializar_pcb_recurso(t_buffer *buffer, char **recurso)
     *recurso = malloc(long_recurso);
 
     memcpy(*recurso, stream + desplazamiento, long_recurso);
-
-    return pcb;
 }
 
-void asignar_recurso(t_pcb *pcb, char *recurso)
+void manejar_recurso(t_pcb *pcb, char *recurso)
 {
     t_recurso *recurso_a_utilizar = encontrar_recurso(recurso);
     log_trace(LOGGER_KERNEL, "PID %d - Recurso %s - Instruccion %s", pcb->pid, recurso_a_utilizar->nombre_recurso, nombre_instruccion_to_string(INSTRUCCION_RECURSO_A_USAR));
     if (recurso_a_utilizar)
     {
+
+        if (pcb->recursos_asignados == NULL)
+        {
+            log_error(LOGGER_KERNEL, "PID %d - Recursos asignados no inicializados", pcb->pid);
+        }
+
         switch (INSTRUCCION_RECURSO_A_USAR)
         {
         case WAIT:
             if (recurso_a_utilizar->instancias > 0)
             {
-                pthread_mutex_lock(&MUTEX_RECURSO);
-                recurso_a_utilizar->instancias--;
-                pthread_mutex_unlock(&MUTEX_RECURSO);
+                asignar_recurso(pcb, recurso_a_utilizar);
                 proceso_listo(pcb, false);
             }
             else
@@ -606,14 +578,7 @@ void asignar_recurso(t_pcb *pcb, char *recurso)
             }
             break;
         case SIGNAL:
-            pthread_mutex_lock(&MUTEX_RECURSO);
-            recurso_a_utilizar->instancias++;
-            pthread_mutex_unlock(&MUTEX_RECURSO);
-            if (recurso_a_utilizar->instancias > 0 && !list_is_empty(recurso_a_utilizar->cola_procesos_bloqueados->cola))
-            {
-                t_pcb *pcb_desbloquear = squeue_pop(recurso_a_utilizar->cola_procesos_bloqueados);
-                desbloquear_proceso(pcb_desbloquear->pid);
-            }
+            liberar_recurso(pcb, recurso_a_utilizar);
             proceso_listo(pcb, false);
             break;
         default:
@@ -626,6 +591,33 @@ void asignar_recurso(t_pcb *pcb, char *recurso)
         log_error(LOGGER_KERNEL, "PID %d - Recurso %s no existe", pcb->pid, recurso);
         pcb->contexto_ejecucion->motivo_finalizacion = INVALID_RESOURCE;
         finalizar_proceso(pcb);
+    }
+}
+
+void asignar_recurso(t_pcb *pcb, t_recurso *recurso)
+{
+    pthread_mutex_lock(&MUTEX_RECURSO);
+    recurso->instancias--;
+    list_add(pcb->recursos_asignados, recurso);
+    pthread_mutex_unlock(&MUTEX_RECURSO);
+}
+
+void liberar_recurso(t_pcb *pcb, t_recurso *recurso)
+{
+    bool es_el_recurso(void *recurso_en_lista)
+    {
+        return (t_recurso *)recurso_en_lista == recurso;
+    }
+
+    pthread_mutex_lock(&MUTEX_RECURSO);
+    recurso->instancias++;
+    list_remove_by_condition(pcb->recursos_asignados, es_el_recurso);
+    pthread_mutex_unlock(&MUTEX_RECURSO);
+
+    if (recurso->instancias > 0 && !list_is_empty(recurso->cola_procesos_bloqueados->cola))
+    {
+        t_pcb *pcb_desbloquear = squeue_pop(recurso->cola_procesos_bloqueados);
+        desbloquear_proceso(pcb_desbloquear->pid);
     }
 }
 
@@ -734,7 +726,8 @@ t_interfaz_recibida *buscar_interfaz_por_nombre(char *nombre_interfaz)
     return interfaz;
 }
 
-void bloquear_procesosIO(t_pcb *pcbAbloquear, t_interfaz_recibida *interfaz_a_utilizar){
+void bloquear_procesosIO(t_pcb *pcbAbloquear, t_interfaz_recibida *interfaz_a_utilizar)
+{
 
     bloquear_proceso(pcbAbloquear, interfaz_a_utilizar->nombre_interfaz_recibida);
     squeue_push(interfaz_a_utilizar->cola_procesos_bloqueados, pcbAbloquear);

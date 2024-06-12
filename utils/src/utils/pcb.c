@@ -31,12 +31,14 @@ t_pcb *crear_pcb(uint32_t pid, t_estado_proceso estado, uint32_t quantum)
     pcb->estado = estado;
     pcb->quantum = quantum;
     pcb->tiempo_q = 0;
+    pcb->recursos_asignados = list_create();
     inicializar_contexto_y_registros(pcb);
     return pcb;
 }
 
 void destruir_pcb(t_pcb *pcb)
 {
+    list_destroy_and_destroy_elements(pcb->recursos_asignados, free);
     free(pcb->contexto_ejecucion->registros);
     free(pcb->contexto_ejecucion);
     free(pcb);
@@ -94,14 +96,8 @@ t_paquete *crear_paquete_PCB(t_pcb *pcb)
     return paquete;
 }
 
-t_pcb *deserializar_pcb(t_buffer *buffer)
+void deserializar_pcb(t_buffer *buffer, t_pcb *pcb)
 {
-    t_pcb *pcb = malloc(sizeof(t_pcb));
-    if (pcb == NULL)
-    {
-        return NULL;
-    }
-
     void *stream = buffer->stream;
     int desplazamiento = 0;
 
@@ -117,21 +113,6 @@ t_pcb *deserializar_pcb(t_buffer *buffer)
     memcpy(&(pcb->tiempo_q), stream + desplazamiento, sizeof(uint64_t));
     desplazamiento += sizeof(uint64_t);
 
-    pcb->contexto_ejecucion = malloc(sizeof(t_contexto_ejecucion));
-    if (pcb->contexto_ejecucion == NULL)
-    {
-        free(pcb);
-        return NULL;
-    }
-
-    pcb->contexto_ejecucion->registros = malloc(sizeof(t_registros));
-    if (pcb->contexto_ejecucion->registros == NULL)
-    {
-        free(pcb->contexto_ejecucion);
-        free(pcb);
-        return NULL;
-    }
-
     memcpy(pcb->contexto_ejecucion->registros, stream + desplazamiento, sizeof(t_registros));
     desplazamiento += sizeof(t_registros);
 
@@ -139,8 +120,6 @@ t_pcb *deserializar_pcb(t_buffer *buffer)
     desplazamiento += sizeof(t_motivo_desalojo);
 
     memcpy(&(pcb->contexto_ejecucion->motivo_finalizacion), stream + desplazamiento, sizeof(t_motivo_finalizacion));
-
-    return pcb;
 }
 
 // Funciones de Envio y Recepcion
@@ -152,12 +131,11 @@ void enviar_pcb(t_pcb *pcb, int socket_cliente)
     eliminar_paquete(paquete);
 }
 
-t_pcb *recibir_pcb(int socket_cliente)
+void recibir_pcb(t_pcb *pcb, int socket_cliente)
 {
     t_paquete *paquete = recibir_paquete(socket_cliente);
-    t_pcb *pcb = deserializar_pcb(paquete->buffer);
+    deserializar_pcb(paquete->buffer, pcb);
     eliminar_paquete(paquete);
-    return pcb;
 }
 
 uint32_t str_to_uint32(char *str)

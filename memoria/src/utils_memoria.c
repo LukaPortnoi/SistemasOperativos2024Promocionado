@@ -503,21 +503,6 @@ void escribir_memoria(uint32_t dir_fisica, uint32_t tamanio_registro, uint32_t v
 	usleep(RETARDO_RESPUESTA * 1000);
 }
 
-char * int_to_char(int num)
-{
-    int i = log10(num) + 1;
-    char *s = (char*)calloc(i+1, sizeof(char));
-    
-    for(i--; num != 0; i--)
-    {
-        s[i] = (num % 10) + '0';
-        num/=10;
-    }
-    
-    return s;
-}
-
-
 char* leer_memoria(uint32_t dir_fisica, uint32_t tamanio_registro)
 {
     int valor_leido = 0;
@@ -536,6 +521,19 @@ char* leer_memoria(uint32_t dir_fisica, uint32_t tamanio_registro)
     return cadena;
 }
 
+char * int_to_char(int num)
+{
+    int i = log10(num) + 1;
+    char *s = (char*)calloc(i+1, sizeof(char));
+    
+    for(i--; num != 0; i--)
+    {
+        s[i] = (num % 10) + '0';
+        num/=10;
+    }
+    
+    return s;
+}
     /*char numero1 = 'H';
     char numero2 = 'o';
     char numero3 = 'l';
@@ -546,8 +544,8 @@ char* leer_memoria(uint32_t dir_fisica, uint32_t tamanio_registro)
     memcpy(&memoriaUsuario[dir_fisica + 1], &numero2, 1);
     memcpy(&memoriaUsuario[dir_fisica + 2], &numero3, 1);
     memcpy(&memoriaUsuario[dir_fisica + 3], &numero4, 1);
-    //TESTEO*/
-/*
+    //TESTEO
+
 Entiendo, si quieres que la función leer_memoria sea genérica y pueda leer cualquier tipo de datos (no solo uint32_t), puedes hacerlo pasando un puntero a la función y luego usando memcpy para copiar los datos en ese puntero. Aquí te dejo un ejemplo de cómo podrías hacerlo:
 
 En este código, destino es un puntero al lugar donde quieres almacenar los datos leídos de la memoria. dir_fisica es la dirección de inicio desde donde quieres leer los datos, y tamanio_registro es la cantidad de bytes que quieres leer.

@@ -44,7 +44,7 @@ static void procesar_conexion_dispatch(void *void_args)
 
 		case PCB:
 			pthread_mutex_lock(&mutex_pcb_actual);
-			pcb_actual = recibir_pcb(cliente_socket);
+			recibir_pcb(pcb_actual, cliente_socket);
 			pthread_mutex_unlock(&mutex_pcb_actual);
 
 			while (!hayInterrupciones() && pcb_actual != NULL && !esSyscall /* && !page_fault*/) // Aca deberia ir el check_interrupt()
@@ -62,12 +62,6 @@ static void procesar_conexion_dispatch(void *void_args)
 
 			envioPcb = false;
 			esSyscall = false;
-			
-			if (pcb_actual != NULL)
-			{
-				destruir_pcb(pcb_actual);
-				pcb_actual = NULL;
-			}
 
 			pthread_mutex_lock(&mutex_interrupt);
 			limpiar_interrupciones();

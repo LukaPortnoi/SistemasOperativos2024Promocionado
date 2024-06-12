@@ -250,6 +250,13 @@ void finalizar_proceso_consola(char *pid_string)
         log_info(LOGGER_KERNEL, "Finaliza el proceso %d - Motivo: %s", proceso->pid, motivo_finalizacion_to_string(proceso->contexto_ejecucion->motivo_finalizacion));
         cambiar_estado_pcb(proceso, FINALIZADO);
         squeue_push(squeue_exit, proceso);
+        if (list_size(proceso->recursos_asignados) > 0)
+        {
+          for (int i = 0; i < list_size(proceso->recursos_asignados); i++)
+          {
+            liberar_recurso(proceso, list_get(proceso->recursos_asignados, i));
+          }
+        }
         // liberar_estructuras_memoria(proceso->pid); // TODO: Liberar estructuras de memoria
       }
       else

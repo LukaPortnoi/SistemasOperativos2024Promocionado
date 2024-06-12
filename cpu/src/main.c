@@ -25,16 +25,22 @@ pthread_mutex_t mutex_interrupt;
 op_cod cod_op;
 
 int main()
-{   
+{
     signal(SIGINT, manejador_signals);
     signal(SIGSEGV, manejador_signals);
     inicializar_config();
     iniciar_semaforos_etc();
     inicializar_tlb();
+    pcb_actual = inicializar_pcb();
+    if (pcb_actual == NULL)
+    {
+        // manejar error de asignación de memoria
+    }
 
     iniciar_conexiones();
 
-    while (server_escuchar(LOGGER_CPU, "CPU_DISPATCH", fd_cpu_dispatch));
+    while (server_escuchar(LOGGER_CPU, "CPU_DISPATCH", fd_cpu_dispatch))
+        ;
 
     finalizar_cpu();
 }
@@ -74,11 +80,13 @@ void iniciar_conexiones()
 
 void escuchar_interrupt()
 {
-    while (server_escuchar(LOGGER_CPU, "CPU_INTERRUPT", fd_cpu_interrupt));
+    while (server_escuchar(LOGGER_CPU, "CPU_INTERRUPT", fd_cpu_interrupt))
+        ;
 }
 
 void finalizar_cpu()
 {
+    destruir_pcb(pcb_actual);
     log_destroy(LOGGER_CPU);
     config_destroy(CONFIG);
     liberar_conexion(fd_cpu_dispatch);
@@ -88,41 +96,85 @@ void finalizar_cpu()
 
 void manejador_signals(int signum)
 {
-	switch (signum)
-	{
-	case SIGUSR1:
-		log_trace(LOGGER_CPU, "Se recibio la señal SIGUSR1\n");
-		break;
+    switch (signum)
+    {
+    case SIGUSR1:
+        log_trace(LOGGER_CPU, "Se recibio la señal SIGUSR1\n");
+        break;
 
-	case SIGUSR2:
-		log_trace(LOGGER_CPU, "Se recibio la señal SIGUSR2\n");
-		break;
+    case SIGUSR2:
+        log_trace(LOGGER_CPU, "Se recibio la señal SIGUSR2\n");
+        break;
 
-	case SIGINT:
-		log_trace(LOGGER_CPU, "Se recibio la señal SIGINT\n");
+    case SIGINT:
+        log_trace(LOGGER_CPU, "Se recibio la señal SIGINT\n");
         log_trace(LOGGER_CPU, "Se recibió SIGINT, cerrando conexiones y liberando recursos...");
         finalizar_cpu();
         destruir_tlb();
         destruir_pcb(pcb_actual);
         pthread_mutex_destroy(&mutex_interrupt);
         exit(0);
-		break;
+        break;
 
-	case SIGSEGV:
-		log_error(LOGGER_CPU, "Se recibio la señal SIGSEGV\n");
+    case SIGSEGV:
+        log_error(LOGGER_CPU, "Se recibio la señal SIGSEGV\n");
         log_trace(LOGGER_CPU, "Se recibió SIGINT, cerrando conexiones y liberando recursos...");
         finalizar_cpu();
         destruir_tlb();
         pthread_mutex_destroy(&mutex_interrupt);
         exit(0);
-		break;
+        break;
 
-	case SIGTERM:
-		log_trace(LOGGER_CPU, "Se recibio la señal SIGTERM\n");
-		break;
+    case SIGTERM:
+        log_trace(LOGGER_CPU, "Se recibio la señal SIGTERM\n");
+        break;
 
-	default:
-		log_trace(LOGGER_CPU, "Se recibio una señal no manejada\n");
-		break;
-	}
+    default:
+        log_trace(LOGGER_CPU, "Se recibio una señal no manejada\n");
+        break;
+    }
+}
+
+t_pcb *inicializar_pcb()
+{
+    t_pcb *pcb = malloc(sizeof(t_pcb));
+    if (pcb == NULL)
+    {
+        // manejar error de asignación de memoria
+        return NULL;
+    }
+
+    pcb->pid = 0;                            // o cualquier valor inicial apropiado
+    pcb->estado = NUEVO;                     // o cualquier valor inicial apropiado
+    pcb->quantum = 0;                        // o cualquier valor inicial apropiado
+    pcb->tiempo_q = 0;                       // o cualquier valor inicial apropiado
+    pcb->recursos_asignados = list_create(); // asumiendo que t_list es una lista enlazada
+    if (pcb->recursos_asignados == NULL)
+    {
+        // manejar error de asignación de memoria
+        free(pcb);
+        return NULL;
+    }
+
+    pcb->contexto_ejecucion = malloc(sizeof(t_contexto_ejecucion));
+    if (pcb->contexto_ejecucion == NULL)
+    {
+        // manejar error de asignación de memoria
+        list_destroy(pcb->recursos_asignados);
+        free(pcb);
+        return NULL;
+    }
+
+    pcb->contexto_ejecucion->registros = malloc(sizeof(t_registros));
+    if (pcb->contexto_ejecucion->registros == NULL)
+    {
+        free(pcb->contexto_ejecucion);
+        list_destroy(pcb->recursos_asignados);
+        free(pcb);
+        return NULL;
+    }
+    pcb->contexto_ejecucion->motivo_desalojo = SIN_MOTIVO;                  // o cualquier valor inicial apropiado
+    pcb->contexto_ejecucion->motivo_finalizacion = FINALIZACION_SIN_MOTIVO; // o cualquier valor inicial apropiado
+
+    return pcb;
 }

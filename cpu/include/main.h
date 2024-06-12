@@ -11,5 +11,6 @@ void iniciar_conexiones(void);
 void escuchar_interrupt(void);
 void manejador_signals(int signum);
 void finalizar_cpu();
+t_pcb* inicializar_pcb();
 
 #endif /* MAIN_H_ */
