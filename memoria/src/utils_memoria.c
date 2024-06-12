@@ -366,10 +366,10 @@ void recibir_mov_out_cpu(t_list *lista_direcciones, uint32_t *valorObtenido , in
 
 void deserializar_datos_mov_out (t_paquete *paquete, t_list *lista_datos, uint32_t  *valorObtenido) {
     int desplazamiento = 0;
-    size_t num_elementos = (paquete->buffer->size - sizeof(uint32_t)) / sizeof(t_direcciones_fisicas);
+    size_t num_elementos = (paquete->buffer->size - sizeof(uint32_t)) / (2 * sizeof(uint32_t));
 
     // Iteramos sobre el buffer y deserializamos cada elemento
-    for (size_t i = 1; i <= num_elementos; i++) {
+    for (size_t i = 0; i < num_elementos; i++) {
         t_direcciones_fisicas *dato = malloc(sizeof(t_direcciones_fisicas));
         memcpy(&(dato->direccion_fisica), paquete->buffer->stream + desplazamiento, sizeof(uint32_t));
         desplazamiento += sizeof(uint32_t);
@@ -417,17 +417,16 @@ void recibir_mov_in_cpu(int socket_cliente, t_list *lista_direcciones)
 
 void deserializar_datos_mov_in(t_paquete *paquete, t_list *lista_datos) {
     int desplazamiento = 0;
-    size_t num_elementos = (paquete->buffer->size) / sizeof(t_direcciones_fisicas);
+    size_t num_elementos = paquete->buffer->size / (2 * sizeof(uint32_t));
 
     // Iteramos sobre el buffer y deserializamos cada elemento
-    for (size_t i = 1; i <= num_elementos; i++) {
+    for (size_t i = 0; i < num_elementos; i++) {
         t_direcciones_fisicas *dato = malloc(sizeof(t_direcciones_fisicas));
         memcpy(&(dato->direccion_fisica), paquete->buffer->stream + desplazamiento, sizeof(uint32_t));
         desplazamiento += sizeof(uint32_t);
         memcpy(&(dato->tamanio), paquete->buffer->stream + desplazamiento, sizeof(uint32_t));
-        if (i != num_elementos) {
-            desplazamiento += sizeof(uint32_t);
-        }
+        desplazamiento += sizeof(uint32_t);
+        
         list_add(lista_datos, dato);
     }
 }

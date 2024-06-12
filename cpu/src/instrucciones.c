@@ -34,7 +34,9 @@ void _mov_in(char *registro, char *direc_logica, int socket)
     t_list  *Lista_direccionesFisica = list_create();
     Lista_direccionesFisica = traducir_direccion(pcb_actual->pid, direccionLogica32, TAM_PAGINA, tamanio_registro);
     printf("tamanio de la lista de direcciones fisicas: %d \n", list_size(Lista_direccionesFisica));
-    //enviar_valor_mov_in_cpu(Lista_direccionesFisica, socket);
+    enviar_valor_mov_in_cpu(Lista_direccionesFisica, socket);
+
+    //list_destroy_and_destroy_elements(Lista_direccionesFisica); MEMORY LEAK
 
 }
 
@@ -567,7 +569,6 @@ void serializar_datos_mov_in(t_paquete *paquete, t_list *Lista_direccionesFisica
         desplazamiento += sizeof(uint32_t);
         memcpy(paquete->buffer->stream + desplazamiento, &(dato->tamanio), sizeof(uint32_t));
         desplazamiento += sizeof(uint32_t);
-        
     }
 }
 
@@ -582,8 +583,8 @@ void enviar_valor_mov_out_cpu(t_list *Lista_direccionesFisica, uint32_t valorObt
 
 
 void serializar_datos_mov_out(t_paquete *paquete, t_list *Lista_direccionesFisica , uint32_t valorObtenido)
- {
-    paquete->buffer->size = list_size(Lista_direccionesFisica) * sizeof(t_direcciones_fisicas) + sizeof(uint32_t);
+{
+    paquete->buffer->size = list_size(Lista_direccionesFisica) * 2 * sizeof(uint32_t) + sizeof(uint32_t);
     // Reservamos la memoria para el buffer
     paquete->buffer->stream = malloc(paquete->buffer->size);
 
@@ -596,8 +597,8 @@ void serializar_datos_mov_out(t_paquete *paquete, t_list *Lista_direccionesFisic
         desplazamiento += sizeof(uint32_t);
         memcpy(paquete->buffer->stream + desplazamiento, &(dato->tamanio), sizeof(uint32_t));
         desplazamiento += sizeof(uint32_t);
-    }//anda a hacer el parcial
-//jajajaja no es parcial, es un tp al final
+    }
+
     memcpy(paquete->buffer->stream + desplazamiento, &valorObtenido, sizeof(uint32_t));
-} 
+}
 

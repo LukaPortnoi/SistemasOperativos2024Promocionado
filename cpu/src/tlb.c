@@ -231,10 +231,10 @@ t_list *traducir_direccion(uint32_t pid, uint32_t logicalAddress, uint32_t pageS
         t_direcciones_fisicas *direccionAmostrar = list_get(listaDirecciones, i);
         printf("Direccion Fisica: %d\n", direccionAmostrar->direccion_fisica);
         printf("Tamanio: %d\n", direccionAmostrar->tamanio);
-        free(direccionAmostrar);    //agregado
     }
-
-    list_destroy(listaDirecciones); //agregado
+    
+    //list_destroy(listaDirecciones); //agregado
+    return listaDirecciones;
 }
 
 uint32_t obtenerCantidadPaginas(uint32_t logicalAddress, uint32_t pageSize, uint32_t tamanio_registro)

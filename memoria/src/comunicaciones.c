@@ -88,9 +88,9 @@ static void procesar_conexion_memoria(void *void_args)
 			}
 
 		case PEDIDO_MOV_IN: // Lee el valor del marco y lo devuelve para guardarlo en el registro (se pide la direccion) - recibo direccion fisica
-			t_list *direcciones_fisicas_mov_in;
+			t_list *direcciones_fisicas_mov_in = list_create();
 			char *valor_leido_mov_in;
-			recibir_mov_in_cpu(cliente_socket, &direcciones_fisicas_mov_in);
+			recibir_mov_in_cpu(cliente_socket, direcciones_fisicas_mov_in);
 
 			for (int i = 0; i < list_size(direcciones_fisicas_mov_in); i++)
 			{
@@ -105,9 +105,9 @@ static void procesar_conexion_memoria(void *void_args)
 			break;
 
 		case PEDIDO_MOV_OUT: // me pasa por parametro un uint32_t y tengo que guardarlo en el marco que me dice
-			t_list *direcciones_fisicas_mov_out;
+			t_list *direcciones_fisicas_mov_out = list_create();
 			uint32_t valorObtenido_mov_out;
-			recibir_mov_out_cpu(&direcciones_fisicas_mov_out, &valorObtenido_mov_out, cliente_socket);
+			recibir_mov_out_cpu(direcciones_fisicas_mov_out, &valorObtenido_mov_out, cliente_socket);
 
 			for (int i = 0; i < list_size(direcciones_fisicas_mov_out); i++)
 			{
