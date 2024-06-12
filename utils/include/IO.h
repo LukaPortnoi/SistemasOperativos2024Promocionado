@@ -89,5 +89,8 @@ t_interfaz_stdout *deserializar_InterfazStdout(t_buffer *buffer);
 t_paquete *crear_paquete_InterfazstdoutCodOp(t_interfaz_stdout *interfaz, op_cod codigo_operacion);
 t_buffer *crear_buffer_InterfazStdout(t_interfaz_stdout *interfaz);
 void enviar_interfaz_IO_stdout(t_pcb *pcb_actual, char *interfaz, t_list *Lista_direccionesFisica, int socket_cliente, nombre_instruccion IO);
+void serializarInterfazStdout_de_Kernale_a_Memoria(t_paquete *paquete, t_interfaz_stdout *interfaz);
+void enviar_InterfazStdoutConCodigoOPaKernel(int socket, t_list *direcciones_fisicas, uint32_t pid, char *nombre_interfaz);
+
 
 #endif // IO_H_

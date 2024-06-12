@@ -54,9 +54,22 @@ void procesar_stdout(int socket_cliente, t_log *logger)
 {
     t_interfaz_stdout *interfazRecibida = recibir_InterfazStdout(socket_cliente);
     log_info(logger, "PID: %d - Operacion: IO_STDIN_READ", interfazRecibida->pidPcb);
+        uint32_t tamanioTotal = 0;
+
+    for (int i = 0; i < list_size(interfazRecibida->direccionesFisicas); i++)
+			{
+				t_direcciones_fisicas *direccionAmostrar = list_get(interfazRecibida->direccionesFisicas, i);
+				printf("Direccion Fisica %d recibida: %d\n", i, direccionAmostrar->direccion_fisica);
+				printf("Tamanio %d recibido: %d\n", i, direccionAmostrar->tamanio);
+                tamanioTotal = tamanioTotal + direccionAmostrar->tamanio;
+			}
     //enviar_dato_stdout(fd_io_memoria, interfazRecibida->direccionFisica, interfazRecibida->tamanioMaximo);
     //recibir_dato_stdout(socket_cliente, interfazRecibida->direccionFisica, interfazRecibida->tamanioMaximo, interfazRecibida->pidPcb, interfazRecibida->nombre_interfaz);
-    imprimir_dato_recibido_de_memoria("Hola") ;  
+    imprimir_dato_recibido_de_memoria("Hola") ; 
+    log_trace(logger, "Durmiendo: %d segundos", TIEMPO_UNIDAD_TRABAJO);
+    sleep(TIEMPO_UNIDAD_TRABAJO);
+    enviar_InterfazStdoutConCodigoOPaKernel(socket_cliente, interfazRecibida->direccionesFisicas, interfazRecibida->pidPcb, interfazRecibida->nombre_interfaz);
+
 }
 
 void imprimir_dato_recibido_de_memoria(char *dato){

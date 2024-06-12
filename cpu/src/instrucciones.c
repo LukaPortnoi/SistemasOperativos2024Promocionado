@@ -290,8 +290,11 @@ void _io_stdout_write(char *interfaz, char *direc_logica, char *tamanio, int cli
         printf("TamMaximo recibido: %d\n", tamanioMaximoAingresar);
     }
     
-    //uint32_t direccionFisica = traducir_direccion(pcb_actual->pid, direccionLogica32, TAM_PAGINA, tamanioMaximoAingresar);
-    //enviar_interfaz_IO_stdin(pcb_actual, interfaz, direccionFisica, tamanioMaximoAingresar, cliente_socket, IO_STDOUT_WRITE);
+    t_list  *Lista_direccionesFisica = list_create();
+    Lista_direccionesFisica = traducir_direccion(pcb_actual->pid, direccionLogica32, TAM_PAGINA, tamanioMaximoAingresar);
+    
+    enviar_interfaz_IO_stdout(pcb_actual, interfaz, Lista_direccionesFisica, cliente_socket, IO_STDOUT_WRITE);
+    
 }
 
 // ENVIOS

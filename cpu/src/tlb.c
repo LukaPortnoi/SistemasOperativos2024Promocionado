@@ -223,7 +223,6 @@ t_list *traducir_direccion(uint32_t pid, uint32_t logicalAddress, uint32_t pageS
         }
     }
 
-    uint32_t direccionFisica = direccion->direccion_fisica;
 
 
     for (int i = 0; i < list_size(listaDirecciones); i++)

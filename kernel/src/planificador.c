@@ -231,15 +231,16 @@ t_pcb *recibir_pcb_CPU(int fd_cpu)
 
     case ENVIAR_INTERFAZ_STDIN:
         pcb_recibido = recibir_pcb_para_interfaz_stdin(fd_cpu, &nombre_interfaz, direcciones_fisicas, &instruccion_de_IO_a_ejecutar);
+        
+        break;
+    case ENVIAR_INTERFAZ_STDOUT:
+        pcb_recibido = recibir_pcb_para_interfaz_stdin(fd_cpu, &nombre_interfaz, direcciones_fisicas, &instruccion_de_IO_a_ejecutar);
         for (int i = 0; i < list_size(direcciones_fisicas); i++)
 			        {
                         t_direcciones_fisicas *direccionAmostrar = list_get(direcciones_fisicas, i);
                         printf("Direccion Fisica %d recibida: %d\n", i, direccionAmostrar->direccion_fisica);
                         printf("Tamanio %d recibido: %d\n", i, direccionAmostrar->tamanio);
 			        }
-        break;
-    case ENVIAR_INTERFAZ_STDOUT:
-        pcb_recibido = recibir_pcb_para_interfaz_stdin(fd_cpu, &nombre_interfaz, direcciones_fisicas, &instruccion_de_IO_a_ejecutar);
         break;
 
     default:
@@ -678,7 +679,7 @@ void ejecutar_intruccion_io(t_pcb *pcb_recibido)
             if (instruccion_de_IO_a_ejecutar == IO_STDOUT_WRITE)
             {
                 bloquear_procesosIO(pcb_recibido, interfaz_a_utilizar);
-                enviar_InterfazStdin(interfaz_a_utilizar->socket_interfaz_recibida, direcciones_fisicas, pcb_recibido->pid, interfaz_a_utilizar->nombre_interfaz_recibida);
+                enviar_InterfazStdout(interfaz_a_utilizar->socket_interfaz_recibida, direcciones_fisicas, pcb_recibido->pid, interfaz_a_utilizar->nombre_interfaz_recibida);
 
                 // Enviar interfaz STDOUT
             }
