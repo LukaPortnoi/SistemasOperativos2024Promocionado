@@ -508,15 +508,11 @@ char* leer_memoria(uint32_t dir_fisica, uint32_t tamanio_registro)
         if(&memoriaUsuario[dir_fisica + i] != NULL){
         memcpy(&valor_leido, &memoriaUsuario[dir_fisica + i], 1);
         cadena[i] = valor_leido; // Assign the character directly
-        printf("elementos cadena: %c \n", cadena[i]);
-        }
-        else{
-            break;
         }
     }
     cadena[tamanio_registro] = '\0'; // Ensure the string is null-terminated
     log_debug(LOGGER_MEMORIA, "Cadena final leída: %s \n", cadena); // Imprimir la cadena final
-    //printf("Cadena final leída: %s \n", cadena);
+    //printf("Cadena final leída: %s \n", cadena);printf("elementos cadena: %c \n", cadena[i]); }
     pthread_mutex_unlock(&mutex_memoria_usuario);
     usleep(RETARDO_RESPUESTA * 1000);
     return cadena;
