@@ -481,14 +481,20 @@ void serializar_valor_leido_mov_in(t_paquete *paquete, char* valor)
 void escribir_memoria(uint32_t dir_fisica, uint32_t tamanio_registro, uint32_t valorObtenido)
 {
     printf("Llego aca al menos \n");
-    /*int valor_leido = (int)valorObtenido;
-    char cadena_a_escribir[tamanio_registro];
+    int valor_leido = (int)valorObtenido;
+    char* valor_a_escribir = int_to_char(valor_leido);
 
-    sprintf(cadena_a_escribir, %d, valor_leido);*/
+    printf("Valor a escribir como char*: %s", valor_a_escribir);
+    printf("Primer char: %c", valor_a_escribir[0]);
+    printf("Segundo char: %c", valor_a_escribir[1]);
 
 	pthread_mutex_lock(&mutex_memoria_usuario);
     for(uint32_t i = 0; i < tamanio_registro; i++){
-        memcpy(&memoriaUsuario[dir_fisica + i],&valorObtenido, 1);
+        if(valor_a_escribir[i]){
+        memcpy(&memoriaUsuario[dir_fisica + i],&valor_a_escribir[i], 1);
+        }else{
+            break;
+        }
     }
 	pthread_mutex_unlock(&mutex_memoria_usuario);
 
@@ -497,10 +503,39 @@ void escribir_memoria(uint32_t dir_fisica, uint32_t tamanio_registro, uint32_t v
 	usleep(RETARDO_RESPUESTA * 1000);
 }
 
+char * int_to_char(int num)
+{
+    int i = log10(num) + 1;
+    char *s = (char*)calloc(i+1, sizeof(char));
+    
+    for(i--; num != 0; i--)
+    {
+        s[i] = (num % 10) + '0';
+        num/=10;
+    }
+    
+    return s;
+}
+
 
 char* leer_memoria(uint32_t dir_fisica, uint32_t tamanio_registro)
 {
     int valor_leido = 0;
+
+    pthread_mutex_lock(&mutex_memoria_usuario);
+    char* cadena = malloc(tamanio_registro + 1); // Allocate memory dynamically
+    memset(cadena, 0, tamanio_registro + 1); // Initialize all elements to 0
+    for(uint32_t i = 0; i < tamanio_registro; i++){
+        memcpy(&valor_leido, &memoriaUsuario[dir_fisica + i], 1);
+        cadena[i] = (char)valor_leido; // Assign the character directly
+    }
+    cadena[tamanio_registro] = '\0'; // Ensure the string is null-terminated
+    log_debug(LOGGER_MEMORIA, "Cadena final leída: %s \n", cadena); // Imprimir la cadena final
+    pthread_mutex_unlock(&mutex_memoria_usuario);
+    usleep(RETARDO_RESPUESTA * 1000);
+    return cadena;
+}
+
     /*char numero1 = 'H';
     char numero2 = 'o';
     char numero3 = 'l';
@@ -512,22 +547,6 @@ char* leer_memoria(uint32_t dir_fisica, uint32_t tamanio_registro)
     memcpy(&memoriaUsuario[dir_fisica + 2], &numero3, 1);
     memcpy(&memoriaUsuario[dir_fisica + 3], &numero4, 1);
     //TESTEO*/
-
-    pthread_mutex_lock(&mutex_memoria_usuario);
-    char cadena[tamanio_registro + 1]; // Crear cadena para almacenar los caracteres leídos
-    cadena[0] = '\0'; // Inicializar la cadena
-    for(uint32_t i = 0; i < tamanio_registro; i++){
-        memcpy(&valor_leido, &memoriaUsuario[dir_fisica + i], 1);
-        char caracter = (char)valor_leido;
-        strncat(cadena, &caracter, 1); // Agregar el carácter a la cadena
-    }
-    log_debug(LOGGER_MEMORIA, "Cadena final leída: %s \n", cadena); // Imprimir la cadena final
-    pthread_mutex_unlock(&mutex_memoria_usuario);
-    usleep(RETARDO_RESPUESTA * 1000);
-    return cadena;
-}
-
-
 /*
 Entiendo, si quieres que la función leer_memoria sea genérica y pueda leer cualquier tipo de datos (no solo uint32_t), puedes hacerlo pasando un puntero a la función y luego usando memcpy para copiar los datos en ese puntero. Aquí te dejo un ejemplo de cómo podrías hacerlo:
 
@@ -550,4 +569,43 @@ void leer_memoria(void* destino, uint32_t dir_fisica, size_t tamanio_registro)
     pthread_mutex_unlock(&mutex_memoria_usuario);
     usleep(RETARDO_RESPUESTA * 1000);
 }
+==18471== Thread 2:
+==18471== Conditional jump or move depends on uninitialised value(s)
+==18471==    at 0x484ED88: __strlen_sse2 (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
+==18471==    by 0x49D2D30: __vfprintf_internal (vfprintf-internal.c:1517)
+==18471==    by 0x49E4499: __vsnprintf_internal (vsnprintf.c:114)
+==18471==    by 0x486F3FF: _string_append_with_format_list (string.c:305)
+==18471==    by 0x486E83F: string_from_vformat (string.c:74)
+==18471==    by 0x486E440: _log_write_in_level (log.c:125)
+==18471==    by 0x486E0B8: log_debug (log.c:89)
+==18471==    by 0x10CFE8: leer_memoria (utils_memoria.c:533)
+==18471==    by 0x10CE34: escribir_memoria (utils_memoria.c:501)
+==18471==    by 0x10ACBA: procesar_conexion_memoria (comunicaciones.c:115)
+==18471==    by 0x49F0AC2: start_thread (pthread_create.c:442)
+==18471==    by 0x4A81A03: clone (clone.S:100)
+==18471==  Uninitialised value was created by a heap allocation
+==18471==    at 0x4848899: malloc (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
+==18471==    by 0x10B0C1: iniciar_memoria_usuario (main.c:55)
+==18471==    by 0x10AF2E: main (main.c:30)
+==18471== 
+==18471== Conditional jump or move depends on uninitialised value(s)
+==18471==    at 0x484ED88: __strlen_sse2 (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
+==18471==    by 0x49D2D30: __vfprintf_internal (vfprintf-internal.c:1517)
+==18471==    by 0x49E4499: __vsnprintf_internal (vsnprintf.c:114)
+==18471==    by 0x486F44E: _string_append_with_format_list (string.c:310)
+==18471==    by 0x486E83F: string_from_vformat (string.c:74)
+==18471==    by 0x486E440: _log_write_in_level (log.c:125)
+==18471==    by 0x486E0B8: log_debug (log.c:89)
+==18471==    by 0x10CFE8: leer_memoria (utils_memoria.c:533)
+==18471==    by 0x10CE34: escribir_memoria (utils_memoria.c:501)
+==18471==    by 0x10ACBA: procesar_conexion_memoria (comunicaciones.c:115)
+==18471==    by 0x49F0AC2: start_thread (pthread_create.c:442)
+==18471==    by 0x4A81A03: clone (clone.S:100)
+==18471==  Uninitialised value was created by a heap allocation
+==18471==    at 0x4848899: malloc (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
+==18471==    by 0x10B0C1: iniciar_memoria_usuario (main.c:55)
+==18471==    by 0x10AF2E: main (main.c:30)
+==18471== 
+
+
 */

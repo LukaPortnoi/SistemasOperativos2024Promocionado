@@ -640,6 +640,35 @@ t_interfaz_stdin *deserializar_InterfazStdin(t_buffer *buffer)
     return interfaz;
 }
 
+void enviar_InterfazStdinConCodigoOPaKernel(int socket, t_list *direcciones_fisicas, uint32_t pid, char *nombre_interfaz)
+{
+    t_interfaz_stdin *interfaz = malloc(sizeof(t_interfaz_stdin));
+    if (interfaz == NULL) {
+        // Manejo de error si la asignación de memoria falla
+        return;
+    }
+    interfaz->direccionesFisicas = direcciones_fisicas;
+    interfaz->pidPcb = pid;
+    interfaz->nombre_interfaz = strdup(nombre_interfaz); // Copiar el nombre de interfaz
+
+    t_paquete *paquete = crear_paquete_con_codigo_de_operacion(FINALIZACION_INTERFAZ_STDIN);
+    if (paquete == NULL) {
+        // Manejo de error si la creación del paquete falla
+        free(interfaz->nombre_interfaz); // Liberar memoria asignada
+        free(interfaz);
+        return;
+    }
+
+    serializarInterfazStdin_de_Kernale_a_Memoria(paquete, interfaz);
+    enviar_paquete(paquete, socket);
+    eliminar_paquete(paquete);
+
+    // Liberar la memoria asignada para el nombre de la interfaz
+    free(interfaz->nombre_interfaz);
+    // Liberar la memoria asignada para la estructura de interfaz
+    free(interfaz);
+}
+
 //STDOUT
 
 void enviar_interfaz_IO_stdout(t_pcb *pcb_actual, char *interfaz, t_list *direcciones_fisicas, int socket_cliente, nombre_instruccion IO)
@@ -713,52 +742,6 @@ void serializarInterfazStdout_de_Kernale_a_Memoria(t_paquete *paquete, t_interfa
         desplazamiento += sizeof(uint32_t);
     }
 }
-
-/* 
-t_paquete *crear_paquete_InterfazstdoutCodOp(t_interfaz_stdout *interfaz, op_cod codigo_operacion)
-{
-    t_paquete *paquete = malloc(sizeof(t_paquete));
-    paquete->codigo_operacion = codigo_operacion;
-    paquete->buffer = crear_buffer_InterfazStdout(interfaz);
-    return paquete;
-}
-
-t_buffer *crear_buffer_InterfazStdout(t_interfaz_stdout *interfaz)
-{
-    uint32_t tamanio_nombre_interfaz = strlen(interfaz->nombre_interfaz) + 1;
-
-
-
-    t_buffer *buffer = malloc(sizeof(t_buffer));
-    buffer->size = sizeof(uint32_t) * 2+ tamanio_nombre_interfaz + list_size(interfaz->direccionesFisicas) * sizeof(t_direcciones_fisicas);
-
-    buffer->stream = malloc(buffer->size);
-    int desplazamiento = 0;
-
-    memcpy(buffer->stream + desplazamiento, &(interfaz->pidPcb), sizeof(uint32_t));
-    desplazamiento += sizeof(uint32_t);
-
-    memcpy(buffer->stream + desplazamiento, &(tamanio_nombre_interfaz), sizeof(uint32_t));
-    desplazamiento += sizeof(uint32_t);
-
-    memcpy(buffer->stream + desplazamiento, interfaz->nombre_interfaz, tamanio_nombre_interfaz);
-    desplazamiento += sizeof(tamanio_nombre_interfaz);
-
-
-    for (int i = 0; i < list_size(interfaz->direccionesFisicas); i++) {
-        t_direcciones_fisicas *dato = list_get(interfaz->direccionesFisicas, i);
-        memcpy(buffer->stream + desplazamiento, &(dato->direccion_fisica), sizeof(uint32_t));
-        desplazamiento += sizeof(uint32_t);
-        memcpy(buffer->stream + desplazamiento, &(dato->tamanio), sizeof(uint32_t));
-        desplazamiento += sizeof(uint32_t);
-    }
-
-    return buffer;
-}*/
-
-
-
-
 
 
 t_interfaz_stdout *recibir_InterfazStdout(int socket_cliente)
@@ -865,34 +848,7 @@ t_buffer *crear_buffer_dato_stdin(uint32_t direccionFisica, char *datoRecibido)
     return buffer;
 } */
 
-void enviar_InterfazStdinConCodigoOPaKernel(int socket, t_list *direcciones_fisicas, uint32_t pid, char *nombre_interfaz)
-{
-    t_interfaz_stdin *interfaz = malloc(sizeof(t_interfaz_stdin));
-    if (interfaz == NULL) {
-        // Manejo de error si la asignación de memoria falla
-        return;
-    }
-    interfaz->direccionesFisicas = direcciones_fisicas;
-    interfaz->pidPcb = pid;
-    interfaz->nombre_interfaz = strdup(nombre_interfaz); // Copiar el nombre de interfaz
 
-    t_paquete *paquete = crear_paquete_con_codigo_de_operacion(FINALIZACION_INTERFAZ_STDIN);
-    if (paquete == NULL) {
-        // Manejo de error si la creación del paquete falla
-        free(interfaz->nombre_interfaz); // Liberar memoria asignada
-        free(interfaz);
-        return;
-    }
-
-    serializarInterfazStdin_de_Kernale_a_Memoria(paquete, interfaz);
-    enviar_paquete(paquete, socket);
-    eliminar_paquete(paquete);
-
-    // Liberar la memoria asignada para el nombre de la interfaz
-    free(interfaz->nombre_interfaz);
-    // Liberar la memoria asignada para la estructura de interfaz
-    free(interfaz);
-}
 
 
 void enviar_InterfazStdoutConCodigoOPaKernel(int socket, t_list *direcciones_fisicas, uint32_t pid, char *nombre_interfaz)

@@ -665,7 +665,7 @@ void ejecutar_intruccion_io(t_pcb *pcb_recibido)
             {
                 bloquear_procesosIO(pcb_recibido, interfaz_a_utilizar);
                 enviar_InterfazStdin(interfaz_a_utilizar->socket_interfaz_recibida, direcciones_fisicas, pcb_recibido->pid, interfaz_a_utilizar->nombre_interfaz_recibida);
-                
+                list_clean_and_destroy_elements(direcciones_fisicas, free);
                 // Enviar interfaz STDIN
             }
             else
@@ -680,6 +680,7 @@ void ejecutar_intruccion_io(t_pcb *pcb_recibido)
             {
                 bloquear_procesosIO(pcb_recibido, interfaz_a_utilizar);
                 enviar_InterfazStdout(interfaz_a_utilizar->socket_interfaz_recibida, direcciones_fisicas, pcb_recibido->pid, interfaz_a_utilizar->nombre_interfaz_recibida);
+                list_clean_and_destroy_elements(direcciones_fisicas, free);
 
                 // Enviar interfaz STDOUT
             }

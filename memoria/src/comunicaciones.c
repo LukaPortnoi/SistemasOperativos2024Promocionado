@@ -97,11 +97,9 @@ static void procesar_conexion_memoria(void *void_args)
 				t_direcciones_fisicas *direccionAmostrar = list_get(direcciones_fisicas_mov_in, i);
 				printf("Direccion Fisica %d recibida: %d\n", i, direccionAmostrar->direccion_fisica);
 				printf("Tamanio %d recibido: %d\n", i, direccionAmostrar->tamanio);
+				valor_leido_mov_in = leer_memoria(direccionAmostrar->direccion_fisica, direccionAmostrar->tamanio);
 				free(direccionAmostrar); // agregado
 			}
-
-			// valor_leido_mov_in = leer_memoria(direccion_fisica_mov_in, tamanio_registro);
-			// enviar_valor_mov_in_memoria(valor_leido_mov_in, cliente_socket); // MOV_IN_CPU
 			break;
 
 		case PEDIDO_MOV_OUT: // me pasa por parametro un uint32_t y tengo que guardarlo en el marco que me dice
@@ -114,9 +112,9 @@ static void procesar_conexion_memoria(void *void_args)
 				t_direcciones_fisicas *direccionAmostrar = list_get(direcciones_fisicas_mov_out, i);
 				printf("Direccion Fisica %d recibida: %d\n", i, direccionAmostrar->direccion_fisica);
 				printf("Tamanio %d recibido: %d\n", i, direccionAmostrar->tamanio);
+				escribir_memoria(direccionAmostrar->direccion_fisica, direccionAmostrar->tamanio, valorObtenido_mov_out);
 				free(direccionAmostrar); // agregado
 			}
-			// escribir_memoria(direccion_fisica_mov_out, tamanio_registro_mov_out, valorObtenido_mov_out);
 			break;
 
 		case PEDIDO_MARCO:

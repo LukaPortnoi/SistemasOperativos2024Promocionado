@@ -4,6 +4,7 @@
 #include "./gestor.h"
 #include "../../utils/include/contexto.h"
 #include "./manejo_memoria.h"
+#include <math.h>
 
 t_proceso_memoria *recibir_proceso_memoria(int socket);
 t_proceso_memoria *deserializar_proceso(t_buffer *buffer);
@@ -29,6 +30,7 @@ void enviar_valor_mov_in_memoria(char* valor, int socket);
 void serializar_valor_leido_mov_in(t_paquete *paquete, char* valor);
 void escribir_memoria(uint32_t dir_fisica, uint32_t tamanio_registro, uint32_t valorObtenido);
 char* leer_memoria(uint32_t dir_fisica, uint32_t tamanio_registro);
+char * int_to_char(int num);
 
 
 //mov in y mov out
