@@ -37,6 +37,7 @@ int main(int argc, char** argv)
     } else {
         log_error(LOGGER_INPUT_OUTPUT, "Tipo de interfaz no reconocido");
     }
+
     
     iniciar_conexiones();
     procesar_conexion_IO(fd_io_kernel, LOGGER_INPUT_OUTPUT);
@@ -63,7 +64,7 @@ void iniciar_conexiones()
 {   
     //conexion como cliente a MEMORIA
     fd_io_memoria = crear_conexion(IP_MEMORIA, PUERTO_MEMORIA);
-
+    
     //conexion como cliente a KERNEL
     fd_io_kernel = crear_conexion(IP_KERNEL, PUERTO_KERNEL);
     enviar_datos_interfaz(interfaz_actual, fd_io_kernel, CONEXION_INTERFAZ);

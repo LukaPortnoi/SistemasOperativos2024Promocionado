@@ -230,10 +230,16 @@ t_pcb *recibir_pcb_CPU(int fd_cpu)
         break;
 
     case ENVIAR_INTERFAZ_STDIN:
-        pcb_recibido = recibir_pcb_para_interfaz_stdin(fd_cpu, &nombre_interfaz, &direccion_fisica, &tamanioMaximo, &instruccion_de_IO_a_ejecutar);
+        pcb_recibido = recibir_pcb_para_interfaz_stdin(fd_cpu, &nombre_interfaz, direcciones_fisicas, &instruccion_de_IO_a_ejecutar);
+        for (int i = 0; i < list_size(direcciones_fisicas); i++)
+			        {
+                        t_direcciones_fisicas *direccionAmostrar = list_get(direcciones_fisicas, i);
+                        printf("Direccion Fisica %d recibida: %d\n", i, direccionAmostrar->direccion_fisica);
+                        printf("Tamanio %d recibido: %d\n", i, direccionAmostrar->tamanio);
+			        }
         break;
     case ENVIAR_INTERFAZ_STDOUT:
-        pcb_recibido = recibir_pcb_para_interfaz_stdin(fd_cpu, &nombre_interfaz, &direccion_fisica, &tamanioMaximo, &instruccion_de_IO_a_ejecutar);
+        pcb_recibido = recibir_pcb_para_interfaz_stdin(fd_cpu, &nombre_interfaz, direcciones_fisicas, &instruccion_de_IO_a_ejecutar);
         break;
 
     default:
@@ -390,6 +396,7 @@ void iniciar_colas_y_semaforos()
     procesosEnSistema = list_create();
     interfaces_conectadas = list_create();
     RECURSOS_DISPONIBLES = list_create();
+    direcciones_fisicas = list_create();
 
     inicializar_recursos();
 
@@ -656,8 +663,8 @@ void ejecutar_intruccion_io(t_pcb *pcb_recibido)
             if (instruccion_de_IO_a_ejecutar == IO_STDIN_READ)
             {
                 bloquear_procesosIO(pcb_recibido, interfaz_a_utilizar);
-                enviar_InterfazStdin(interfaz_a_utilizar->socket_interfaz_recibida, direccion_fisica, tamanioMaximo, pcb_recibido->pid, interfaz_a_utilizar->nombre_interfaz_recibida);
-
+                enviar_InterfazStdin(interfaz_a_utilizar->socket_interfaz_recibida, direcciones_fisicas, pcb_recibido->pid, interfaz_a_utilizar->nombre_interfaz_recibida);
+                
                 // Enviar interfaz STDIN
             }
             else
@@ -671,7 +678,7 @@ void ejecutar_intruccion_io(t_pcb *pcb_recibido)
             if (instruccion_de_IO_a_ejecutar == IO_STDOUT_WRITE)
             {
                 bloquear_procesosIO(pcb_recibido, interfaz_a_utilizar);
-                enviar_InterfazStdin(interfaz_a_utilizar->socket_interfaz_recibida, direccion_fisica, tamanioMaximo, pcb_recibido->pid, interfaz_a_utilizar->nombre_interfaz_recibida);
+                enviar_InterfazStdin(interfaz_a_utilizar->socket_interfaz_recibida, direcciones_fisicas, pcb_recibido->pid, interfaz_a_utilizar->nombre_interfaz_recibida);
 
                 // Enviar interfaz STDOUT
             }

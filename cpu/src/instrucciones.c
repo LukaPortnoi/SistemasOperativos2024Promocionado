@@ -253,9 +253,11 @@ void _io_stdin_read(char *interfaz, char *direc_logica, char *tamanio, int clien
         tamanioMaximoAingresar = *(get_registry32(tamanio));
         printf("TamMaximo recibido: %d\n", tamanioMaximoAingresar);
     }
+
+    t_list  *Lista_direccionesFisica = list_create();
+    Lista_direccionesFisica = traducir_direccion(pcb_actual->pid, direccionLogica32, TAM_PAGINA, tamanioMaximoAingresar);
     
-    //uint32_t direccionFisica = traducir_direccion(pcb_actual->pid, direccionLogica32, TAM_PAGINA, tamanioMaximoAingresar);
-    //enviar_interfaz_IO_stdin(pcb_actual, interfaz, direccionFisica, tamanioMaximoAingresar, cliente_socket, IO_STDIN_READ);
+    enviar_interfaz_IO_stdin(pcb_actual, interfaz, Lista_direccionesFisica, cliente_socket, IO_STDIN_READ);
 }
 
 

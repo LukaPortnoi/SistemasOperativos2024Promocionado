@@ -34,8 +34,7 @@ nombre_instruccion instruccion_de_IO_a_ejecutar;
 int unidades_de_trabajo;
 
 // PARA INTERFAZ STDIN
-uint32_t direccion_fisica;
-uint32_t tamanioMaximo;
+t_list *direcciones_fisicas;
 
 t_pcb *pcb_ejecutandose;
 t_pcb *pcb_a_finalizar = NULL;

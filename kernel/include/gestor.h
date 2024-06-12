@@ -78,8 +78,7 @@ extern t_list *interfaces_conectadas;
 extern char *nombre_interfaz;
 extern nombre_instruccion instruccion_de_IO_a_ejecutar;
 extern int unidades_de_trabajo;
-extern uint32_t direccion_fisica;
-extern uint32_t tamanioMaximo;
+extern t_list *direcciones_fisicas;
 
 extern t_pcb *pcb_ejecutandose;
 extern t_pcb *pcb_a_finalizar;

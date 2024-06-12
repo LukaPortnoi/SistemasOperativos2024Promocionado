@@ -14,13 +14,22 @@ void procesar_sleep(int socket_cliente, t_log *logger)
 
 void procesar_stdin(int socket_cliente, t_log *logger)
 {
+
     t_interfaz_stdin *interfazRecibida = recibir_InterfazStdin(socket_cliente);
     log_info(logger, "PID: %d - Operacion: IO_STDIN_READ", interfazRecibida->pidPcb);
+    uint32_t tamanioTotal = 0;
+    for (int i = 0; i < list_size(interfazRecibida->direccionesFisicas); i++)
+			{
+				t_direcciones_fisicas *direccionAmostrar = list_get(interfazRecibida->direccionesFisicas, i);
+				printf("Direccion Fisica %d recibida: %d\n", i, direccionAmostrar->direccion_fisica);
+				printf("Tamanio %d recibido: %d\n", i, direccionAmostrar->tamanio);
+                tamanioTotal = tamanioTotal + direccionAmostrar->tamanio;
+			}
 
     char *datoRecibido;
-    datoRecibido = procesarIngresoUsuario(interfazRecibida->tamanioMaximo);
-    //enviar_dato_stdin(fd_io_memoria, interfazRecibida->direccionFisica, datoRecibido);
-    enviar_InterfazStdinConCodigoOP(socket_cliente, interfazRecibida->direccionFisica, interfazRecibida->tamanioMaximo, interfazRecibida->pidPcb, interfazRecibida->nombre_interfaz);
+    datoRecibido = procesarIngresoUsuario(tamanioTotal);
+    // enviar_dato_stdin(fd_io_memoria, interfazRecibida->direccionesFisicas, datoRecibido);
+    enviar_InterfazStdinConCodigoOPaKernel(socket_cliente, interfazRecibida->direccionesFisicas, interfazRecibida->pidPcb, interfazRecibida->nombre_interfaz);
 }
 
 
