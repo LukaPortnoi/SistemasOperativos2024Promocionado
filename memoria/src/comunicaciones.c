@@ -92,14 +92,17 @@ static void procesar_conexion_memoria(void *void_args)
 			char *valor_leido_mov_in;
 			recibir_mov_in_cpu(cliente_socket, direcciones_fisicas_mov_in);
 			printf("tamaño lista: %d\n", list_size(direcciones_fisicas_mov_in));
-				
+			uint32_t tamanio_registroTotal=0;
 			for (int i = 0; i < list_size(direcciones_fisicas_mov_in); i++)
 			{
 				t_direcciones_fisicas *direccionAmostrar = list_get(direcciones_fisicas_mov_in, i);
 				printf("Direccion Fisica %d recibida: %d\n", i, direccionAmostrar->direccion_fisica);
 				printf("(EN LECTURA) tamaño a leer es: %d, en posicion: %d\n", direccionAmostrar->tamanio, i);
-				valor_leido_mov_in = leer_memoria(direccionAmostrar->direccion_fisica, direccionAmostrar->tamanio);
+				valor_leido_mov_in = leer_memoria(direccionAmostrar->direccion_fisica, direccionAmostrar->tamanio, tamanio_registroTotal);
+				log_debug(LOGGER_MEMORIA, "Cadena final leída: %s \n", valor_leido_mov_in);
+				tamanio_registroTotal++;
 			}
+			valorGlobalDescritura = valorGlobalDescritura + tamanio_registroTotal;
 			break;
 
 		case PEDIDO_MOV_OUT: // me pasa por parametro un uint32_t y tengo que guardarlo en el marco que me dice
@@ -129,6 +132,8 @@ static void procesar_conexion_memoria(void *void_args)
 				printf("tamaño a leer es: %d, en posicion: %d \n", direccionAmostrar->tamanio, i);
 				escribir_memoria(direccionAmostrar->direccion_fisica, direccionAmostrar->tamanio, valor_parcial_a_pasar);
 			}
+			printf("tamaño DE CARACTERES ESCRITOS: %d\n", valorGlobalDescritura);
+
 
 			break;			
 

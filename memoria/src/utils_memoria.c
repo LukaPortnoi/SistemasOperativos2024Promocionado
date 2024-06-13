@@ -482,9 +482,10 @@ void escribir_memoria(uint32_t dir_fisica, uint32_t tamanio_registro, char* valo
 {
     printf("Valor recibido en ESCRIBIR_MEMORIA:: %s \n", valorObtenido);
 	pthread_mutex_lock(&mutex_memoria_usuario);
-    for(uint32_t i = 0; i < tamanio_registro; i++){
+    for(uint32_t i = 0; i < tamanio_registro ; i++){
         if(valorObtenido[i]){
         memcpy(&memoriaUsuario[dir_fisica + i],&valorObtenido[i], 1);
+        valorGlobalDescritura++;
         }
         else{
             break;
@@ -495,24 +496,30 @@ void escribir_memoria(uint32_t dir_fisica, uint32_t tamanio_registro, char* valo
 	usleep(RETARDO_RESPUESTA * 1000);
 }
 
-char* leer_memoria(uint32_t dir_fisica, uint32_t tamanio_registro)
+char *leer_memoria(uint32_t dir_fisica, uint32_t tamanio_registro, uint32_t tamanio_registroTotal)
 {
     char valor_leido;
     printf("direccion fisica recibida en leer memoria: %d \n", dir_fisica);
     printf("Tamaño a leer: %d \n", tamanio_registro);
 
+    if(tamanio_registro>valorGlobalDescritura){
+        tamanio_registro = tamanio_registro - tamanio_registroTotal;
+    }
+
     pthread_mutex_lock(&mutex_memoria_usuario);
     char* cadena = malloc(tamanio_registro + 1); // Allocate memory dynamically
     memset(cadena, 0, tamanio_registro + 1); // Initialize all elements to 0
     for(uint32_t i = 0; i < tamanio_registro; i++){
-        if(&memoriaUsuario[dir_fisica + i] != NULL){
+        if(&memoriaUsuario[dir_fisica + i] != NULL  ){
         memcpy(&valor_leido, &memoriaUsuario[dir_fisica + i], 1);
-        cadena[i] = valor_leido; // Assign the character directly
+        cadena[i] = valor_leido;
+        valorGlobalDescritura--;
+         // Assign the character directly
         }
     }
     cadena[tamanio_registro] = '\0'; // Ensure the string is null-terminated
-    log_debug(LOGGER_MEMORIA, "Cadena final leída: %s \n", cadena); // Imprimir la cadena final
-    //printf("Cadena final leída: %s \n", cadena);printf("elementos cadena: %c \n", cadena[i]); }
+    //log_debug(LOGGER_MEMORIA, "Cadena final leída: %s \n", cadena); // Imprimir la cadena final
+    // printf("Cadena final leída: %s \n", cadena);
     pthread_mutex_unlock(&mutex_memoria_usuario);
     usleep(RETARDO_RESPUESTA * 1000);
     return cadena;

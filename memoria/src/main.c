@@ -19,6 +19,8 @@ pthread_mutex_t mutex_memoria_usuario;
 
 void *memoriaUsuario;
 uint32_t tamanioMemoria;
+uint32_t valorGlobalDescritura;
+
 
 t_list *marcosPaginas;
 t_list *procesos_totales;

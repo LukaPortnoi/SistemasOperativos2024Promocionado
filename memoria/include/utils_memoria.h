@@ -28,8 +28,9 @@ void enviar_marco(int socket, uint32_t marco);
 void serializar_marco(t_paquete *paquete, uint32_t marco);
 void enviar_valor_mov_in_memoria(char* valor, int socket);
 void serializar_valor_leido_mov_in(t_paquete *paquete, char* valor);
+
 void escribir_memoria(uint32_t dir_fisica, uint32_t tamanio_registro, char* valorObtenido);
-char* leer_memoria(uint32_t dir_fisica, uint32_t tamanio_registro);
+char *leer_memoria(uint32_t dir_fisica, uint32_t tamanio_registro, uint32_t tamanio_registroTotal);
 char * int_to_char(int num);
 
 

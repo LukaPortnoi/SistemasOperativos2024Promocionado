@@ -53,6 +53,7 @@ extern int CLIENTE_CPU, CLIENTE_KERNEL, CLIENTE_IN_OU;
 
 extern t_log *LOGGER_MEMORIA;
 extern t_config *CONFIG_MEMORIA;
+extern uint32_t valorGlobalDescritura;
 
 extern int fd_memoria;
 
