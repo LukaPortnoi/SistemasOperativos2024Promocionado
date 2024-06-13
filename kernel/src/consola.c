@@ -238,7 +238,6 @@ void finalizar_proceso_consola(char *pid_string)
       squeue_remove_element(squeue_blocked, proceso);
       pcb_a_finalizar = proceso;
       proceso->contexto_ejecucion->motivo_finalizacion = INTERRUPTED_BY_USER;
-      log_warning(LOGGER_KERNEL, "El proceso esta en Entrada/Salida y sera finalizado cuando termine");
     }
 
     if (proceso->estado != FINALIZADO)

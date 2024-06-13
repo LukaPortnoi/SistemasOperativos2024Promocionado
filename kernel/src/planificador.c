@@ -278,7 +278,7 @@ void desalojo_cpu(t_pcb *pcb, pthread_t hilo_quantum_id)
         manejar_recurso(pcb, RECURSO_A_USAR);   //ojo ver si hay que hacer un free
         break;
     case INTERRUPCION_BLOQUEO:
-        log_debug(LOGGER_KERNEL, "PID %d - Desalojado por bloqueo", pcb->pid);
+        log_debug(LOGGER_KERNEL, "PID %d - Desalojado por instruccion IO", pcb->pid);
         ejecutar_intruccion_io(pcb);
         break;
     case FINALIZACION:
@@ -728,7 +728,6 @@ t_interfaz_recibida *buscar_interfaz_por_nombre(char *nombre_interfaz)
 
 void bloquear_procesosIO(t_pcb *pcbAbloquear, t_interfaz_recibida *interfaz_a_utilizar)
 {
-
     bloquear_proceso(pcbAbloquear, interfaz_a_utilizar->nombre_interfaz_recibida);
     squeue_push(interfaz_a_utilizar->cola_procesos_bloqueados, pcbAbloquear);
 }
