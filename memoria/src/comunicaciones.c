@@ -96,13 +96,15 @@ static void procesar_conexion_memoria(void *void_args)
 			for (int i = 0; i < list_size(direcciones_fisicas_mov_in); i++)
 			{
 				t_direcciones_fisicas *direccionAmostrar = list_get(direcciones_fisicas_mov_in, i);
-				printf("Direccion Fisica %d recibida: %d\n", i, direccionAmostrar->direccion_fisica);
-				printf("(EN LECTURA) tamaño a leer es: %d, en posicion: %d\n", direccionAmostrar->tamanio, i);
+				//printf("Direccion Fisica %d recibida: %d\n", i, direccionAmostrar->direccion_fisica);
+				//printf("(EN LECTURA) tamaño a leer es: %d, en posicion: %d\n", direccionAmostrar->tamanio, i);
 				valor_leido_mov_in = leer_memoria(direccionAmostrar->direccion_fisica, direccionAmostrar->tamanio, tamanio_registroTotal);
 				log_debug(LOGGER_MEMORIA, "Cadena final leída: %s \n", valor_leido_mov_in);
 				tamanio_registroTotal++;
 			}
 			valorGlobalDescritura = valorGlobalDescritura + tamanio_registroTotal;
+			list_clean_and_destroy_elements(direcciones_fisicas_mov_in, free);
+
 			break;
 
 		case PEDIDO_MOV_OUT: // me pasa por parametro un uint32_t y tengo que guardarlo en el marco que me dice
@@ -128,14 +130,42 @@ static void procesar_conexion_memoria(void *void_args)
 					k++;
 				}
 				valor_parcial_a_pasar[direccionAmostrar->tamanio] = '\0';
-				printf("Valor parcial a pasar: %s \n", valor_parcial_a_pasar);
-				printf("tamaño a leer es: %d, en posicion: %d \n", direccionAmostrar->tamanio, i);
+				//printf("Valor parcial a pasar: %s \n", valor_parcial_a_pasar);
+				//printf("tamaño a leer es: %d, en posicion: %d \n", direccionAmostrar->tamanio, i);
 				escribir_memoria(direccionAmostrar->direccion_fisica, direccionAmostrar->tamanio, valor_parcial_a_pasar);
 			}
 			printf("tamaño DE CARACTERES ESCRITOS: %d\n", valorGlobalDescritura);
+			list_clean_and_destroy_elements(direcciones_fisicas_mov_out, free);
+
+			break;
+		case PEDIDO_ESCRIBIR_DATO_STDIN:
+			t_list *direcciones_fisicas_a_escribir = list_create();
+			char *dato_obtenido_stdin;
+			dato_obtenido_stdin = recibir_dato_stdin(direcciones_fisicas_a_escribir, cliente_socket);
+    		printf("Valor ya escrito como char*: %s \n", dato_obtenido_stdin);
+			int longitud_DATO = strlen(dato_obtenido_stdin);
 
 
-			break;			
+			int h=0;
+			for (int i = 0; i < list_size(direcciones_fisicas_a_escribir); i++)
+			{
+				t_direcciones_fisicas *direccionAmostrar = list_get(direcciones_fisicas_a_escribir, i);
+				//printf("Direccion Fisica %d recibida: %d\n", i, direccionAmostrar->direccion_fisica);
+				//printf("Tamanio %d recibido: %d\n", i, direccionAmostrar->tamanio);
+				char* valor_parcial_a_pasar = malloc(direccionAmostrar->tamanio + 1);
+    			memset(valor_parcial_a_pasar, 0, direccionAmostrar->tamanio + 1);
+				for(int j=0; j < direccionAmostrar->tamanio; j++){
+					if (h<=longitud_DATO)
+					valor_parcial_a_pasar[j] = dato_obtenido_stdin[h];
+					h++;
+				}
+				valor_parcial_a_pasar[direccionAmostrar->tamanio] = '\0';
+				//printf("Valor parcial a pasar: %s \n", valor_parcial_a_pasar);
+				//printf("tamaño a leer es: %d, en posicion: %d \n", direccionAmostrar->tamanio, i);
+				escribir_memoria(direccionAmostrar->direccion_fisica, direccionAmostrar->tamanio, valor_parcial_a_pasar);
+			}
+			printf("tamaño DE CARACTERES ESCRITOS: %d\n", valorGlobalDescritura);
+			list_clean_and_destroy_elements(direcciones_fisicas_a_escribir, free);
 
 		case PEDIDO_MARCO:
 			uint32_t pid_proceso, pagina;

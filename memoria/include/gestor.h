@@ -21,6 +21,8 @@
 #include "../../utils/include/sockets_client.h"
 #include "../../utils/include/sockets_utils.h"
 #include "../../utils/include/memoria.h"
+#include "../../utils/include/IO.h"
+
 
 
 typedef struct

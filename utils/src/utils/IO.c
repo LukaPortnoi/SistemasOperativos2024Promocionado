@@ -417,7 +417,6 @@ void deserializar_pcb_para_interfaz_stdin(t_pcb *pcb, t_buffer *buffer, char **n
         free(pcb->contexto_ejecucion->registros);
         free(pcb->contexto_ejecucion);
         free(pcb);
-        return NULL;
     }
     memcpy(*nombre_interfaz, stream + desplazamiento, long_interfaz);
     desplazamiento += long_interfaz;
@@ -439,7 +438,6 @@ void deserializar_pcb_para_interfaz_stdin(t_pcb *pcb, t_buffer *buffer, char **n
             free(pcb->contexto_ejecucion->registros);
             free(pcb->contexto_ejecucion);
             free(pcb);
-            return NULL;
         }
         memcpy(&(dato->direccion_fisica), stream + desplazamiento, sizeof(uint32_t));
         desplazamiento += sizeof(uint32_t);
@@ -450,13 +448,7 @@ void deserializar_pcb_para_interfaz_stdin(t_pcb *pcb, t_buffer *buffer, char **n
     }
 }
 
-t_paquete *crear_paquete_InterfazstdinCodOp(t_interfaz_stdin *interfaz, op_cod codigo_operacion)
-{
-    t_paquete *paquete = malloc(sizeof(t_paquete));
-    paquete->codigo_operacion = codigo_operacion;
-    //paquete->buffer = crear_buffer_InterfazStdin(interfaz);
-    return paquete;
-}
+
 
 void enviar_InterfazStdin(int socket, t_list *direcciones_fisicas, uint32_t pid, char *nombre_interfaz)
 {
@@ -619,6 +611,108 @@ void enviar_InterfazStdinConCodigoOPaKernel(int socket, t_list *direcciones_fisi
     free(interfaz);
 }
 
+void enviar_dato_stdin(int socket, t_list *direcciones_fisicas, char *Dato_a_exscribir_en_memoria)
+{
+    t_paquete *paquete = crear_paquete_con_codigo_de_operacion(PEDIDO_ESCRIBIR_DATO_STDIN);
+    serializar_dato_stdin(paquete, direcciones_fisicas, Dato_a_exscribir_en_memoria);
+    enviar_paquete(paquete, socket);
+    eliminar_paquete(paquete);
+}
+
+void serializar_dato_stdin(t_paquete *paquete, t_list *direcciones_fisicas, char *Dato_a_exscribir_en_memoria) 
+{
+    uint32_t tamanio_Dato = strlen(Dato_a_exscribir_en_memoria) + 1;
+    uint32_t tamanioLista = list_size(direcciones_fisicas);
+
+    paquete->buffer->size = sizeof(uint32_t) + tamanio_Dato + sizeof(uint32_t)+ tamanioLista * (2 * sizeof(uint32_t));
+    paquete->buffer->stream = malloc(paquete->buffer->size);
+    if (paquete->buffer->stream == NULL) {
+        // Manejo de error si la asignación de memoria falla
+        return;
+    }
+
+    int desplazamiento = 0;
+
+
+    memcpy(paquete->buffer->stream + desplazamiento, &(tamanio_Dato), sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+    memcpy(paquete->buffer->stream + desplazamiento, Dato_a_exscribir_en_memoria, tamanio_Dato);
+    desplazamiento += tamanio_Dato;
+
+    memcpy(paquete->buffer->stream + desplazamiento, &tamanioLista, sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+    for (int i = 0; i < tamanioLista; i++) {
+        t_direcciones_fisicas *dato = list_get(direcciones_fisicas, i);
+        memcpy(paquete->buffer->stream + desplazamiento, &(dato->direccion_fisica), sizeof(uint32_t));
+        desplazamiento += sizeof(uint32_t);
+        memcpy(paquete->buffer->stream + desplazamiento, &(dato->tamanio), sizeof(uint32_t));
+        desplazamiento += sizeof(uint32_t);
+    }
+}
+
+
+char *recibir_dato_stdin(t_list *direcciones_fisicas ,int socket_cliente)
+{
+    char *datoObtenido;
+    t_paquete *paquete = recibir_paquete(socket_cliente);
+    datoObtenido = deserializar_dato_interfaz_STDIN(paquete, direcciones_fisicas);
+    // printf("Valor dir_fisica recv: %ls \n", direccion_fisica);
+    // printf("Valor tamanio_registro recv: %ls \n", tamanio_registro);
+    // printf("Valor valorObtenido recv: %ls \n", valorObtenido);
+    eliminar_paquete(paquete);
+    return datoObtenido;
+}
+
+
+    
+
+char *deserializar_dato_interfaz_STDIN(t_paquete *paquete, t_list *lista_datos) {
+    int desplazamiento = 0;
+    char *datoObtenido = NULL; // Inicializar el puntero
+
+    // Deserializar el tamaño del dato
+    uint32_t tamanio_Dato;
+    memcpy(&tamanio_Dato, paquete->buffer->stream + desplazamiento, sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+    // Asignar memoria para datoObtenido
+    datoObtenido = malloc(tamanio_Dato);
+    if (datoObtenido == NULL) {
+        perror("Error al asignar memoria para datoObtenido");
+        return NULL;  // O manejar el error según tu lógica de aplicación
+    }
+
+    // Deserializar el dato
+    memcpy(datoObtenido, paquete->buffer->stream + desplazamiento, tamanio_Dato);
+    desplazamiento += tamanio_Dato;
+
+    // Deserializar el tamaño de la lista
+    uint32_t tamanioLista;
+    memcpy(&tamanioLista, paquete->buffer->stream + desplazamiento, sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+    // Iterar sobre el buffer y deserializar cada elemento de la lista
+    for (size_t i = 0; i < tamanioLista; i++) {
+        t_direcciones_fisicas *direccion = malloc(sizeof(t_direcciones_fisicas));
+        if (direccion == NULL) {
+            // Manejo de error si la asignación de memoria falla
+            perror("Error al asignar memoria");
+            return NULL;  // O manejar el error según tu lógica de aplicación
+        }
+        memcpy(&(direccion->direccion_fisica), paquete->buffer->stream + desplazamiento, sizeof(uint32_t));
+        desplazamiento += sizeof(uint32_t);
+        memcpy(&(direccion->tamanio), paquete->buffer->stream + desplazamiento, sizeof(uint32_t));
+        desplazamiento += sizeof(uint32_t);
+
+        list_add(lista_datos, direccion);
+    }
+
+    return datoObtenido;
+}
+
+
 //STDOUT
 
 void enviar_interfaz_IO_stdout(t_pcb *pcb_actual, char *interfaz, t_list *direcciones_fisicas, int socket_cliente, nombre_instruccion IO)
@@ -762,13 +856,8 @@ t_interfaz_stdout *deserializar_InterfazStdout(t_buffer *buffer)
     return interfaz;
 }
 
-/* void enviar_dato_stdin(int socket, uint32_t direccionFisica, char *datoRecibido)
-{
-    t_paquete *paquete = crear_paquete_dato_stdin(direccionFisica, datoRecibido, RECIBIR_DATO_STDIN);
-    enviar_paquete(paquete, socket);
-    eliminar_paquete(paquete);
-}
-
+ 
+/*
 t_paquete *crear_paquete_dato_stdin(uint32_t direccionFisica, char *datoRecibido, op_cod codigo_operacion)
 {
     t_paquete *paquete = malloc(sizeof(t_paquete));

@@ -3,6 +3,7 @@
 
 #include "./gestor.h"
 #include "./utils_memoria.h"
+#include "./utils_memoria.h"
 
 typedef struct
 {
