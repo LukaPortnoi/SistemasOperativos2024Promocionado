@@ -106,7 +106,6 @@ t_list *traducir_direccion(uint32_t pid, uint32_t logicalAddress, uint32_t pageS
     uint32_t tamanioAleer2 = 0;
     bool ocupaMasDeUnaPagina = false;
 
-
     uint32_t cantidadPaginas = obtenerCantidadPaginas(logicalAddress, pageSize, tamanio_registro);
 
     printf("Cantidad de paginas: %d\n", cantidadPaginas);
@@ -117,7 +116,7 @@ t_list *traducir_direccion(uint32_t pid, uint32_t logicalAddress, uint32_t pageS
     }
 
     uint32_t marco = buscar_en_tlb(pid, pagina);
-    if (marco != -1 )
+    if (marco != -1)
     {
         // TLB Hit
         printf("TLB Hit\n");
@@ -130,14 +129,14 @@ t_list *traducir_direccion(uint32_t pid, uint32_t logicalAddress, uint32_t pageS
             }
         }
         direccion->tamanio = tamanioAleer;
-        //printf("direccion: %d\n", direccion->direccion_fisica);
-        //printf("tamanio direccion: %d\n", direccion->tamanio);
+        // printf("direccion: %d\n", direccion->direccion_fisica);
+        // printf("tamanio direccion: %d\n", direccion->tamanio);
         list_add(listaDirecciones, direccion);
     }
     else
     {
         // TLB Miss
-        //printf("TLB Miss\n");
+        // printf("TLB Miss\n");
         // pido marco a memoria enviando la pagina y el pid y me devuelve un marco
         enviar_Pid_Pagina_Memoria(pid, pagina);
         marco = recibir_marco_memoria(fd_cpu_memoria);
@@ -152,8 +151,8 @@ t_list *traducir_direccion(uint32_t pid, uint32_t logicalAddress, uint32_t pageS
         }
         direccion->tamanio = tamanioAleer;
         list_add(listaDirecciones, direccion);
-        //printf("direccion: %d\n", direccion->direccion_fisica);
-        //printf("tamanio direccion: %d\n", direccion->tamanio);
+        // printf("direccion: %d\n", direccion->direccion_fisica);
+        // printf("tamanio direccion: %d\n", direccion->tamanio);
         cantidadPaginas++;
     }
 
@@ -178,7 +177,7 @@ t_list *traducir_direccion(uint32_t pid, uint32_t logicalAddress, uint32_t pageS
                     offset2 = (logicalAddress + tamanioAuxTotal) - paginaSig * pageSize;
                     marco2 = buscar_en_tlb(pid, paginaSig);
 
-                    if (marco2 != -1 )
+                    if (marco2 != -1)
                     {
                         // TLB Hit
                         printf("TLB Hit\n");
