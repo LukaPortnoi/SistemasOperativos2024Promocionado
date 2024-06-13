@@ -169,7 +169,7 @@ t_list *traducir_direccion(uint32_t pid, uint32_t logicalAddress, uint32_t pageS
         while (contador <= cantidadPaginas)
         {
             t_direcciones_fisicas *direccionEsdiguientes = malloc(sizeof(t_direcciones_fisicas));
-            for (int i = 0; i < tamanioAux; i++)
+            for (int i = 0; i < tamanio_registro; i++)
             {
                 if ((logicalAddress / pageSize != (logicalAddress + i) / pageSize) && contadorBreak == 0 && tamanioAuxTotal != tamanio_registro)
                 {
