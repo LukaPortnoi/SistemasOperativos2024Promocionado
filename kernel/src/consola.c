@@ -209,11 +209,7 @@ void finalizar_proceso_consola(char *pid_string)
   // Si se esta ejecutando, enviar interrupcion a CPU
   if (pcb_ejecutandose != NULL && pcb_ejecutandose->pid == pid)
   {
-    t_interrupcion *interrupcion = malloc(sizeof(t_interrupcion));
-    interrupcion->motivo_interrupcion = INTERRUPCION_FINALIZACION;
-    interrupcion->pid = pid;
-    enviar_interrupcion(fd_kernel_cpu_interrupt, interrupcion);
-    free(interrupcion);
+    crear_y_enviar_interrupcion(INTERRUPCION_FINALIZACION, pid);
   }
   else
   {

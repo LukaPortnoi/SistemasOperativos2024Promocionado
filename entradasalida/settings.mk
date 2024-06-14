@@ -10,7 +10,7 @@ CRELEASE=-O3 -Wall -DNDEBUG -fcommon
 
 # Arguments when executing with start, memcheck or helgrind
 #"./cfgs/generica.config", "./cfgs/stdin.config", "./cfgs/stdout.config", "./cfgs/dialfs.config"
-ARGS=Interfaz1 ./cfgs/stdin.config
+ARGS=SLP1 ./cfgs/SLP1.config
 
 # Valgrind flags 
 MEMCHECK_FLAGS=--track-origins=yes

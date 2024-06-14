@@ -39,20 +39,20 @@ void execute(t_instruccion *instruccion, int socket)
     switch (instruccion->nombre)
     {
     case SET:
-        _set(instruccion->parametro1, instruccion->parametro2);
         loguear_y_sumar_pc(instruccion);
+        _set(instruccion->parametro1, instruccion->parametro2);
         break;
     case SUM:
-        _sum(instruccion->parametro1, instruccion->parametro2);
         loguear_y_sumar_pc(instruccion);
+        _sum(instruccion->parametro1, instruccion->parametro2);
         break;
     case SUB:
-        _sub(instruccion->parametro1, instruccion->parametro2);
         loguear_y_sumar_pc(instruccion);
+        _sub(instruccion->parametro1, instruccion->parametro2);
         break;
     case JNZ:
-        _jnz(instruccion->parametro1, instruccion->parametro2);
         loguear_y_sumar_pc(instruccion);
+        _jnz(instruccion->parametro1, instruccion->parametro2);
         break;
     case WAIT:
         loguear_y_sumar_pc(instruccion);
@@ -69,21 +69,21 @@ void execute(t_instruccion *instruccion, int socket)
         _signal(instruccion->parametro1, socket);
         break;
     case RESIZE:
+        loguear_y_sumar_pc(instruccion);
         _resize(instruccion->parametro1);
         // esperar_respuesta_resize();
-        loguear_y_sumar_pc(instruccion);
         break;
     case MOV_IN:
-        _mov_in(instruccion->parametro1, instruccion->parametro2, fd_cpu_memoria); // ojo con este socket revisarlo (o no, recien lo cambie)
         loguear_y_sumar_pc(instruccion);
+        _mov_in(instruccion->parametro1, instruccion->parametro2, fd_cpu_memoria); // ojo con este socket revisarlo (o no, recien lo cambie)
         break;
     case MOV_OUT:
-        _mov_out(instruccion->parametro1, instruccion->parametro2, fd_cpu_memoria); // ojo con este socket revisarlo (o no, recien lo cambie)
         loguear_y_sumar_pc(instruccion);
+        _mov_out(instruccion->parametro1, instruccion->parametro2, fd_cpu_memoria); // ojo con este socket revisarlo (o no, recien lo cambie)
         break;
     case COPY_STRING:
-        _copy_string(instruccion->parametro1, fd_cpu_memoria); // ojo con este socket revisarlo (o no, recien lo cambie)
         loguear_y_sumar_pc(instruccion);
+        _copy_string(instruccion->parametro1, fd_cpu_memoria); // ojo con este socket revisarlo (o no, recien lo cambie)
         break;
     case IO_GEN_SLEEP:
         loguear_y_sumar_pc(instruccion);

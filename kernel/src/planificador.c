@@ -232,7 +232,7 @@ void recibir_pcb_CPU(t_pcb *pcb_recibido, int fd_cpu)
             printf("Tamanio %d recibido: %d\n", i, direccionAmostrar->tamanio);
         }
         break;
-       
+
     default:
         log_error(LOGGER_KERNEL, "No se pudo recibir el pcb");
         break;
@@ -275,7 +275,7 @@ void desalojo_cpu(t_pcb *pcb, pthread_t hilo_quantum_id)
         break;
     case INTERRUPCION_SYSCALL: // MANEJO RECURSO
         log_debug(LOGGER_KERNEL, "PID %d - Desalojado por manejo de recurso", pcb->pid);
-        manejar_recurso(pcb, RECURSO_A_USAR);   //ojo ver si hay que hacer un free
+        manejar_recurso(pcb, RECURSO_A_USAR); // ojo ver si hay que hacer un free
         break;
     case INTERRUPCION_BLOQUEO:
         log_debug(LOGGER_KERNEL, "PID %d - Desalojado por instruccion IO", pcb->pid);
@@ -308,9 +308,14 @@ void atender_quantum(void *arg)
 
     sleep(pcb_ejecutandose->quantum / 1000);
 
+    crear_y_enviar_interrupcion(INTERRUPCION_FIN_QUANTUM, pcb_ejecutandose->pid);
+}
+
+void crear_y_enviar_interrupcion(t_motivo_desalojo mot_interrupcion, uint32_t pid)
+{
     t_interrupcion *interrupcion = malloc(sizeof(t_interrupcion));
-    interrupcion->motivo_interrupcion = INTERRUPCION_FIN_QUANTUM;
-    interrupcion->pid = pcb_ejecutandose->pid;
+    interrupcion->motivo_interrupcion = mot_interrupcion;
+    interrupcion->pid = pid;
 
     enviar_interrupcion(fd_kernel_cpu_interrupt, interrupcion);
     free(interrupcion);

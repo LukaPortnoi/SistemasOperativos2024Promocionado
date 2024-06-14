@@ -72,8 +72,7 @@ static void procesar_conexion_dispatch(void *void_args)
 		// -- ERRORES --
 		// ---------------
 		default:
-			log_error(logger, "Algo anduvo mal en el server de aaaaaa %s", server_name);
-			log_info(logger, "Cop: %d", cop);
+			log_error(logger, "Algo anduvo mal en el server de %s, Cod OP: %d", server_name, cop);
 			break;
 		}
 	}
@@ -116,8 +115,7 @@ static void procesar_conexion_interrupt(void *void_args)
 		// -- ERRORES --
 		// ---------------
 		default:
-			log_error(logger, "Algo anduvo mal en el server de eeeeeeee%s", server_name);
-			log_info(logger, "Cop: %d", cop);
+			log_error(logger, "Algo anduvo mal en el server de %s, Cod OP: %d", server_name, cop);
 			break;
 		}
 	}

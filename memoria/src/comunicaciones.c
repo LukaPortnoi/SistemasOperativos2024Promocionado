@@ -97,6 +97,7 @@ static void procesar_conexion_memoria(void *void_args)
 				valor_leido_mov_in = leer_memoria(direccionAmostrar->direccion_fisica, direccionAmostrar->tamanio);
 			}
 			list_clean_and_destroy_elements(direcciones_fisicas_mov_in, free);
+			//TODO devolver valor_leido_mov_in a cpu
 			break;
 
 		case PEDIDO_MOV_OUT: // me pasa por parametro un uint32_t y tengo que guardarlo en el marco que me dice
@@ -104,14 +105,15 @@ static void procesar_conexion_memoria(void *void_args)
 			uint32_t valorObtenido_mov_out;
 			recibir_mov_out_cpu(direcciones_fisicas_mov_out, &valorObtenido_mov_out, cliente_socket);
 			int valor_leido = (int)valorObtenido_mov_out;
-    		char* valor_entero_a_escribir = int_to_char(valor_leido);
-			int k=0;
+			char *valor_entero_a_escribir = int_to_char(valor_leido);
+			int k = 0;
 			for (int i = 0; i < list_size(direcciones_fisicas_mov_out); i++)
 			{
 				t_direcciones_fisicas *direccionAmostrar = list_get(direcciones_fisicas_mov_out, i);
-				char* valor_parcial_a_pasar = malloc(direccionAmostrar->tamanio + 1);
-    			memset(valor_parcial_a_pasar, 0, direccionAmostrar->tamanio + 1);
-				for(int j=0; j < direccionAmostrar->tamanio; j++){
+				char *valor_parcial_a_pasar = malloc(direccionAmostrar->tamanio + 1);
+				memset(valor_parcial_a_pasar, 0, direccionAmostrar->tamanio + 1);
+				for (int j = 0; j < direccionAmostrar->tamanio; j++)
+				{
 					valor_parcial_a_pasar[j] = valor_entero_a_escribir[k];
 					k++;
 				}
@@ -126,22 +128,24 @@ static void procesar_conexion_memoria(void *void_args)
 			t_list *direcciones_fisicas_lectura = list_create();
 			uint32_t tamanio_copy_string;
 			recibir_copystring(cliente_socket, direcciones_fisicas_escritura, direcciones_fisicas_lectura, &tamanio_copy_string);
-			char* valor_leido_parcial;
-			char* valor_leido_completo = malloc(tamanio_copy_string + 1); 
+			char *valor_leido_parcial;
+			char *valor_leido_completo = malloc(tamanio_copy_string + 1);
 			memset(valor_leido_completo, 0, tamanio_copy_string + 1);
 
-			for(int i=0; i <list_size(direcciones_fisicas_lectura); i++){
+			for (int i = 0; i < list_size(direcciones_fisicas_lectura); i++)
+			{
 				t_direcciones_fisicas *direccion_fisica_actual = list_get(direcciones_fisicas_lectura, i);
 				valor_leido_parcial = leer_memoria(direccion_fisica_actual->direccion_fisica, direccion_fisica_actual->tamanio);
 				strcat(valor_leido_completo, valor_leido_parcial);
 			}
 			for (int i = 0; i < list_size(direcciones_fisicas_escritura); i++)
 			{
-				int z=0; // Reiniciar z a 0 en cada iteración del bucle externo
+				int z = 0; // Reiniciar z a 0 en cada iteración del bucle externo
 				t_direcciones_fisicas *direccion_fisica_actual = list_get(direcciones_fisicas_escritura, i);
-				char* valor_parcial_a_pasar = malloc(direccion_fisica_actual->tamanio + 1);
+				char *valor_parcial_a_pasar = malloc(direccion_fisica_actual->tamanio + 1);
 				memset(valor_parcial_a_pasar, 0, direccion_fisica_actual->tamanio + 1);
-				for(int j=0; j < direccion_fisica_actual->tamanio; j++){
+				for (int j = 0; j < direccion_fisica_actual->tamanio; j++)
+				{
 					valor_parcial_a_pasar[j] = valor_leido_completo[z];
 					z++;
 				}
@@ -156,21 +160,23 @@ static void procesar_conexion_memoria(void *void_args)
 			dato_obtenido_stdin = recibir_dato_stdin(direcciones_fisicas_a_escribir, cliente_socket);
 			int longitud_DATO = strlen(dato_obtenido_stdin);
 
-			int h=0;
+			int h = 0;
 			for (int i = 0; i < list_size(direcciones_fisicas_a_escribir); i++)
 			{
 				t_direcciones_fisicas *direccionAmostrar = list_get(direcciones_fisicas_a_escribir, i);
-				char* valor_parcial_a_pasar = malloc(direccionAmostrar->tamanio + 1);
-    			memset(valor_parcial_a_pasar, 0, direccionAmostrar->tamanio + 1);
-				for(int j=0; j < direccionAmostrar->tamanio; j++){
-					if (h<=longitud_DATO)
-					valor_parcial_a_pasar[j] = dato_obtenido_stdin[h];
+				char *valor_parcial_a_pasar = malloc(direccionAmostrar->tamanio + 1);
+				memset(valor_parcial_a_pasar, 0, direccionAmostrar->tamanio + 1);
+				for (int j = 0; j < direccionAmostrar->tamanio; j++)
+				{
+					if (h <= longitud_DATO)
+						valor_parcial_a_pasar[j] = dato_obtenido_stdin[h];
 					h++;
 				}
 				valor_parcial_a_pasar[direccionAmostrar->tamanio] = '\0';
 				escribir_memoria(direccionAmostrar->direccion_fisica, direccionAmostrar->tamanio, valor_parcial_a_pasar);
 			}
 			list_clean_and_destroy_elements(direcciones_fisicas_a_escribir, free);
+			break;
 
 		case PEDIDO_A_LEER_DATO_STDOUT:
 			t_list *direcciones_fisicas_a_leer = list_create();
@@ -185,13 +191,12 @@ static void procesar_conexion_memoria(void *void_args)
 				list_add(lista_datos_a_leer, strdup(valor_leido_stdout));
 				log_debug(LOGGER_MEMORIA, "Cadena final leída: %s \n", valor_leido_stdout);
 			}
-			char *valorTotalaDeLeer=concatenar_lista_de_cadenas(lista_datos_a_leer);
-			
-			//valorTotalaDeLeer= valorTotalaDeLeer + tamanio_registroTotal_stdout;
+			char *valorTotalaDeLeer = concatenar_lista_de_cadenas(lista_datos_a_leer);
+
+			// valorTotalaDeLeer= valorTotalaDeLeer + tamanio_registroTotal_stdout;
 			printf("Valor leido de memoria: %s \n", valorTotalaDeLeer);
 			enviar_dato_leido(cliente_socket, valorTotalaDeLeer);
 			list_clean_and_destroy_elements(direcciones_fisicas_a_leer, free);
-
 			break;
 
 		case PEDIDO_MARCO:
@@ -225,8 +230,7 @@ static void procesar_conexion_memoria(void *void_args)
 			log_error(logger, "Cliente desconectado de %s... con cop -1", server_name);
 			break;
 		default:
-			log_error(logger, "Algo anduvo mal en el server de %s", server_name);
-			log_info(logger, "Cop: %d", cop);
+			log_error(logger, "Algo anduvo mal en el server de %s, Cod OP: %d", server_name, cop);
 			break;
 		}
 	}
@@ -252,4 +256,3 @@ int server_escuchar(t_log *logger, char *server_name, int server_socket)
 	}
 	return 0;
 }
-

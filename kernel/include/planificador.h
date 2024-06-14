@@ -20,11 +20,16 @@ void desalojo_cpu(t_pcb *pcb, pthread_t hilo_quantum);
 void recibir_pcb_CPU(t_pcb *pcb, int socket);
 void atender_quantum(void *arg);
 
+// INTERRUPT
+void crear_y_enviar_interrupcion(t_motivo_desalojo mot_interrupcion, uint32_t pid);
+
 // OTRAS FUNCIONES
 void detener_planificadores();
 void iniciar_planificadores();
+
 void iniciar_colas_y_semaforos(void);
 void inicializar_recursos();
+
 uint32_t asignar_pid(void);
 void cambiar_estado_pcb(t_pcb *pcb, t_estado_proceso estado);
 void proceso_listo(t_pcb *pcb, bool es_ready_plus);

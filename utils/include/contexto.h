@@ -64,6 +64,7 @@ typedef struct
     t_motivo_desalojo motivo_interrupcion;
     int pid;
 } t_interrupcion;
+
 typedef enum
 {
     FINALIZACION_SIN_MOTIVO,
