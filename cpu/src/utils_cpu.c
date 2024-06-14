@@ -81,6 +81,10 @@ void execute(t_instruccion *instruccion, int socket)
         _mov_out(instruccion->parametro1, instruccion->parametro2, fd_cpu_memoria); // ojo con este socket revisarlo (o no, recien lo cambie)
         loguear_y_sumar_pc(instruccion);
         break;
+    case COPY_STRING:
+        _copy_string(instruccion->parametro1, fd_cpu_memoria); // ojo con este socket revisarlo (o no, recien lo cambie)
+        loguear_y_sumar_pc(instruccion);
+        break;
     case IO_GEN_SLEEP:
         loguear_y_sumar_pc(instruccion);
         pcb_actual->contexto_ejecucion->motivo_desalojo = INTERRUPCION_BLOQUEO;

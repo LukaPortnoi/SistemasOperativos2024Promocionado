@@ -27,6 +27,7 @@ void procesar_stdin(int socket_cliente, t_log *logger)
     char *datoRecibido;
     datoRecibido = procesarIngresoUsuario(tamanioTotal);
     enviar_dato_stdin(fd_io_memoria, interfazRecibida->direccionesFisicas, datoRecibido);
+
     enviar_InterfazStdinConCodigoOPaKernel(socket_cliente, interfazRecibida->direccionesFisicas, interfazRecibida->pidPcb, interfazRecibida->nombre_interfaz);
 }
 
@@ -52,12 +53,10 @@ void procesar_stdout(int socket_cliente, t_log *logger)
 {
     t_interfaz_stdout *interfazRecibida = recibir_InterfazStdout(socket_cliente);
     log_info(logger, "PID: %d - Operacion: IO_STDIN_READ", interfazRecibida->pidPcb);
-
-    //enviar_dato_stdout(fd_io_memoria, interfazRecibida->direccionesFisicas);
-    //recibir_dato_stdout(socket_cliente, interfazRecibida->direccionFisica, interfazRecibida->tamanioMaximo, interfazRecibida->pidPcb, interfazRecibida->nombre_interfaz);
-    imprimir_dato_recibido_de_memoria("Hola") ; 
-    log_trace(logger, "Durmiendo: %d segundos", TIEMPO_UNIDAD_TRABAJO);
-    sleep(TIEMPO_UNIDAD_TRABAJO);
+    
+    enviar_direcciones_stdout(fd_io_memoria, interfazRecibida->direccionesFisicas);
+    char *datoRecibido =  recibir_dato(fd_io_memoria, logger);
+    imprimir_dato_recibido_de_memoria(datoRecibido); 
     enviar_InterfazStdoutConCodigoOPaKernel(socket_cliente, interfazRecibida->direccionesFisicas, interfazRecibida->pidPcb, interfazRecibida->nombre_interfaz);
 
 }

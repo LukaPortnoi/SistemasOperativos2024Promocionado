@@ -205,7 +205,18 @@ void _resize(char *tamanioAReasignar)
     enviar_resize_a_memoria(pcb_actual, tamanioAReasignarNum);
 }
 
-void _copy_string(char *tamanio) {
+void _copy_string(char *tamanio, int socket_cliente) // tamanio es el tamaño del string que se va a leer y escribir
+{ 
+    uint32_t direc_logica_escritura = *(get_registry32("DI"));
+    uint32_t direc_logica_lectura = *(get_registry32("SI"));
+    uint32_t tamanio_string = str_to_uint32(tamanio);
+
+
+    t_list  *lista_direccionesFisica_lectura = list_create();
+    t_list  *lista_direccionesFisica_escritura = list_create();
+    lista_direccionesFisica_lectura = traducir_direccion(pcb_actual->pid, direc_logica_lectura, TAM_PAGINA, tamanio_string);
+    lista_direccionesFisica_escritura = traducir_direccion(pcb_actual->pid, direc_logica_escritura, TAM_PAGINA, tamanio_string);
+    enviar_datos_copy_string(lista_direccionesFisica_escritura, lista_direccionesFisica_lectura, tamanio_string, socket_cliente);
     
 }
 
@@ -612,5 +623,49 @@ void serializar_datos_mov_out(t_paquete *paquete, t_list *Lista_direccionesFisic
     }
 
     memcpy(paquete->buffer->stream + desplazamiento, &valorObtenido, sizeof(uint32_t));
+}
+
+
+void enviar_datos_copy_string(t_list *Lista_direccionesFisica_escritura, t_list *Lista_direccionesFisica_lectura, uint32_t tamanio, int socket)
+{
+    t_paquete *paquete_copy_string = crear_paquete_con_codigo_de_operacion(PEDIDO_COPY_STRING);
+    serializar_datos_copy_string(paquete_copy_string, Lista_direccionesFisica_escritura, Lista_direccionesFisica_lectura, tamanio);
+    enviar_paquete(paquete_copy_string, socket);
+    eliminar_paquete(paquete_copy_string);
+}
+
+void serializar_datos_copy_string(t_paquete *paquete, t_list *Lista_direccionesFisica_escritura, t_list *Lista_direccionesFisica_lectura, uint32_t tamanio) 
+{
+    
+    // Calculamos el tamaño total del buffer necesario
+    paquete->buffer->size = list_size(Lista_direccionesFisica_escritura) * sizeof(t_direcciones_fisicas) 
+                            + list_size(Lista_direccionesFisica_lectura) * sizeof(t_direcciones_fisicas) 
+                            + sizeof(uint32_t);
+    printf("Tamanio del buffer: %d \n", paquete->buffer->size);
+    // Reservamos la memoria para el buffer
+    
+    paquete->buffer->stream = malloc(paquete->buffer->size);
+
+    int desplazamiento = 0;
+
+    // Iteramos sobre la lista de datos y serializamos cada elemento
+    for (int i = 0; i < list_size(Lista_direccionesFisica_escritura); i++) {
+        t_direcciones_fisicas *dato = list_get(Lista_direccionesFisica_escritura, i);
+        memcpy(paquete->buffer->stream + desplazamiento, &(dato->direccion_fisica), sizeof(uint32_t));
+        desplazamiento += sizeof(uint32_t);
+        memcpy(paquete->buffer->stream + desplazamiento, &(dato->tamanio), sizeof(uint32_t));
+        desplazamiento += sizeof(uint32_t);
+    }
+    
+    for (int i = 0; i < list_size(Lista_direccionesFisica_lectura); i++) {
+        t_direcciones_fisicas *dato = list_get(Lista_direccionesFisica_lectura, i);
+        memcpy(paquete->buffer->stream + desplazamiento, &(dato->direccion_fisica), sizeof(uint32_t));
+        desplazamiento += sizeof(uint32_t);
+        memcpy(paquete->buffer->stream + desplazamiento, &(dato->tamanio), sizeof(uint32_t));
+        desplazamiento += sizeof(uint32_t);
+    }
+
+     memcpy(paquete->buffer->stream + desplazamiento, &tamanio, sizeof(uint32_t));
+
 }
 

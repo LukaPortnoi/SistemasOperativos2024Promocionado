@@ -242,7 +242,7 @@ t_list *parsear_instrucciones(char *path)
         }
         else if (string_equals_ignore_case(palabras[0], "COPY_STRING"))
         {
-            list_add(instrucciones, armar_estructura_instruccion(COPY_STRING, palabras[1], palabras[2], "", "", ""));
+            list_add(instrucciones, armar_estructura_instruccion(COPY_STRING, palabras[1], "", "", "", ""));
         }
         else if (string_equals_ignore_case(palabras[0], "IO_GEN_SLEEP"))
         {
@@ -476,16 +476,60 @@ void serializar_valor_leido_mov_in(t_paquete *paquete, char *valor)
     memcpy(paquete->buffer->stream, &tamanio_valor, sizeof(uint32_t));
 }
 
+void recibir_copystring(int socket_cliente, t_list *Lista_direccionesFisica_escritura, t_list  *Lista_direccionesFisica_lectura, uint32_t *tamanio)
+{
+    t_paquete *paquete = recibir_paquete(socket_cliente);
+    deserializar_datos_copystring(paquete, Lista_direccionesFisica_escritura, Lista_direccionesFisica_lectura, tamanio);
+    eliminar_paquete(paquete);
+}
+
+void deserializar_datos_copystring(t_paquete *paquete, t_list *Lista_direccionesFisica_escritura,  t_list *Lista_direccionesFisica_lectura, uint32_t *tamanio)
+{
+    int desplazamiento = 0;
+    size_t num_elementos_escritura = (paquete->buffer->size - sizeof(uint32_t)) / (4 * sizeof(uint32_t));
+
+    // Iteramos sobre el buffer y deserializamos cada elemento
+    for (size_t i = 0; i < num_elementos_escritura; i++)
+    {
+        // Asignamos memoria para un t_direcciones_fisicas, que contiene dos uint32_t
+        t_direcciones_fisicas *dato = malloc(sizeof(t_direcciones_fisicas));
+        memcpy(&(dato->direccion_fisica), paquete->buffer->stream + desplazamiento, sizeof(uint32_t));
+        desplazamiento += sizeof(uint32_t);
+        memcpy(&(dato->tamanio), paquete->buffer->stream + desplazamiento, sizeof(uint32_t));
+        desplazamiento += sizeof(uint32_t);
+
+        list_add(Lista_direccionesFisica_escritura, dato);
+    }
+
+    size_t num_elementos_lectura = (paquete->buffer->size - sizeof(uint32_t) - desplazamiento) / (2 * sizeof(uint32_t));
+
+    for (size_t i = 0; i < num_elementos_lectura; i++)
+    {
+        // Asignamos memoria para un t_direcciones_fisicas, que contiene dos uint32_t
+        t_direcciones_fisicas *dato = malloc(sizeof(t_direcciones_fisicas));
+        memcpy(&(dato->direccion_fisica), paquete->buffer->stream + desplazamiento, sizeof(uint32_t));
+        desplazamiento += sizeof(uint32_t);
+        memcpy(&(dato->tamanio), paquete->buffer->stream + desplazamiento, sizeof(uint32_t));
+        desplazamiento += sizeof(uint32_t);
+
+        list_add(Lista_direccionesFisica_lectura, dato);
+    }
+
+    if (desplazamiento < paquete->buffer->size) {
+        *tamanio = *(uint32_t*)(paquete->buffer->stream + desplazamiento);
+    }
+}
+
 void escribir_memoria(uint32_t dir_fisica, uint32_t tamanio_registro, char *valorObtenido)
 {
-    printf("Valor recibido en ESCRIBIR_MEMORIA:: %s \n", valorObtenido);
     pthread_mutex_lock(&mutex_memoria_usuario);
     for (uint32_t i = 0; i < tamanio_registro; i++)
     {
         if (valorObtenido[i])
         {
             memcpy(&memoriaUsuario[dir_fisica + i], &valorObtenido[i], 1);
-            valorGlobalDescritura++;
+           // valorGlobalDescritura++;
+            //valorTotalaDeLeer++;
         }
         else
         {
@@ -493,38 +537,36 @@ void escribir_memoria(uint32_t dir_fisica, uint32_t tamanio_registro, char *valo
         }
     }
     pthread_mutex_unlock(&mutex_memoria_usuario);
-
+    log_info(LOGGER_MEMORIA, "PID: <%d> - Accion: <ESCRIBIR> - Direccion Fisica: <%d> - Tamaño <%d> \n", proceso_memoria->pid, dir_fisica, tamanio_registro); 
     usleep(RETARDO_RESPUESTA * 1000);
 }
 
-char *leer_memoria(uint32_t dir_fisica, uint32_t tamanio_registro, uint32_t tamanio_registroTotal)
+char *leer_memoria(uint32_t dir_fisica, uint32_t tamanio_registro)
 {
     char valor_leido;
-    printf("direccion fisica recibida en leer memoria: %d \n", dir_fisica);
-    printf("Tamaño a leer: %d \n", tamanio_registro);
 
-    if (tamanio_registro > valorGlobalDescritura)
+    /*if (tamanio_registro > valorTotalaDeLeer)
     {
         tamanio_registro = tamanio_registro - tamanio_registroTotal;
-    }
-
+    }*/
+    uint32_t valorTotalaDeLeer = 0;
     pthread_mutex_lock(&mutex_memoria_usuario);
     char *cadena = malloc(tamanio_registro + 1); // Allocate memory dynamically
     memset(cadena, 0, tamanio_registro + 1);     // Initialize all elements to 0
     for (uint32_t i = 0; i < tamanio_registro; i++)
     {
-        if (&memoriaUsuario[dir_fisica + i] != NULL)
+        if (&memoriaUsuario[dir_fisica + i] != 0)
         {
             memcpy(&valor_leido, &memoriaUsuario[dir_fisica + i], 1);
             cadena[i] = valor_leido;
-            valorGlobalDescritura--;
+            valorTotalaDeLeer++;
             // Assign the character directly
         }
     }
-    cadena[tamanio_registro] = '\0'; // Ensure the string is null-terminated
-    // log_debug(LOGGER_MEMORIA, "Cadena final leída: %s \n", cadena); // Imprimir la cadena final
-    //  printf("Cadena final leída: %s \n", cadena);
+    cadena[tamanio_registro] = '\0';
     pthread_mutex_unlock(&mutex_memoria_usuario);
+    log_info(LOGGER_MEMORIA, "PID: <%d> - Accion: <LEER> - Direccion Fisica: <%d> - Tamaño <%d> \n", proceso_memoria->pid, dir_fisica, valorTotalaDeLeer); 
+    printf("Cadena leida: %s \n", cadena);
     usleep(RETARDO_RESPUESTA * 1000);
     return cadena;
 }
@@ -542,37 +584,33 @@ char *int_to_char(int num)
 
     return s;
 }
-/*char numero1 = 'H';
-char numero2 = 'o';
-char numero3 = 'l';
-char numero4 = 'a';
 
-TESTEO
-memcpy(&memoriaUsuario[dir_fisica], &numero1, 1);
-memcpy(&memoriaUsuario[dir_fisica + 1], &numero2, 1);
-memcpy(&memoriaUsuario[dir_fisica + 2], &numero3, 1);
-memcpy(&memoriaUsuario[dir_fisica + 3], &numero4, 1);
-//TESTEO
+char* concatenar_lista_de_cadenas(t_list *lista) {
+    // Calcular el tamaño total necesario
+    size_t tam_total = 1; // Inicia en 1 para el carácter nulo
+    for (int i = 0; i <list_size(lista); i++) {
+        tam_total += strlen(list_get(lista, i));
 
-Entiendo, si quieres que la función leer_memoria sea genérica y pueda leer cualquier tipo de datos (no solo uint32_t), puedes hacerlo pasando un puntero a la función y luego usando memcpy para copiar los datos en ese puntero. Aquí te dejo un ejemplo de cómo podrías hacerlo:
+                
+    }
 
-En este código, destino es un puntero al lugar donde quieres almacenar los datos leídos de la memoria. dir_fisica es la dirección de inicio desde donde quieres leer los datos, y tamanio_registro es la cantidad de bytes que quieres leer.
+    // Asignar memoria para la cadena concatenada
+    char *cadena_concatenada = (char *)malloc(tam_total);
+    if (cadena_concatenada == NULL) {
+        return NULL; // Manejo de error si la asignación de memoria falla
+    }
 
-Por favor, ten en cuenta que este código asume que destino apunta a un bloque de memoria que es lo suficientemente grande para almacenar tamanio_registro bytes. Si no es así, este código podría causar un desbordamiento de búfer.
+    // Inicializar la cadena concatenada como una cadena vacía
+    cadena_concatenada[0] = '\0';
 
-void leer_memoria(void* destino, uint32_t dir_fisica, size_t tamanio_registro)
-{
-printf("Entro a leer memoria \n");
+    // Copiar cada cadena de la lista en la cadena concatenada
+    for (int i = 0; i < list_size(lista); i++) {
+        strcat(cadena_concatenada, list_get(lista, i));
+    }
 
-int numero_marco = dir_fisica / TAM_PAGINA;
-printf("Numero de marco al leer memoria: %d \n", numero_marco);
-
-pthread_mutex_lock(&mutex_memoria_usuario);
-for(size_t i = 0; i < tamanio_registro; i++){
-    printf("valor de i: %zu \n", i);
-    memcpy(destino + i, (char*)memoriaUsuario + (dir_fisica + i), 1);
+    return cadena_concatenada;
 }
-pthread_mutex_unlock(&mutex_memoria_usuario);
-usleep(RETARDO_RESPUESTA * 1000);
-}
+
+/*
+
 */

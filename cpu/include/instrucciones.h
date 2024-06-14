@@ -11,7 +11,7 @@ void _sum(char *registro_destino, char *registro_origen);
 void _sub(char *registro_destino, char *registro_origen);
 void _jnz(char *registro, char *instruccion);
 void _resize(char *tamanioAReasignar);
-void _copy_string(char *tamanio);
+void _copy_string(char *tamanio, int socket_cliente);
 void _wait(char *recurso, int cliente_socket);
 void _signal(char *recurso, int cliente_socket);
 void _io_gen_sleep(char *interfaz, char *unidades_de_trabajo, int cliente_socket);
@@ -29,6 +29,8 @@ void enviar_valor_mov_in_cpu(t_list *Lista_direccionesFisica, int socket);
 void serializar_datos_mov_in(t_paquete *paquete, t_list *lista_direcciones);
 void serializar_datos_mov_out(t_paquete *paquete, t_list *Lista_direccionesFisica , uint32_t valorObtenido);
 void enviar_valor_mov_out_cpu(t_list *Lista_direccionesFisica, uint32_t valorObtenido, int socket);
+void enviar_datos_copy_string(t_list *Lista_direccionesFisica_escritura, t_list *Lista_direccionesFisica_lectura, uint32_t tamanio, int socket);
+void serializar_datos_copy_string(t_paquete *paquete, t_list *Lista_direccionesFisica_escritura, t_list *Lista_direccionesFisica_lectura, uint32_t tamanio);
 
 // UTILS
 uint32_t *get_registry32(char *registro);

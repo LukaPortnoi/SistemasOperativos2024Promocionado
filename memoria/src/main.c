@@ -20,8 +20,14 @@ pthread_mutex_t mutex_memoria_usuario;
 void *memoriaUsuario;
 uint32_t tamanioMemoria;
 uint32_t valorGlobalDescritura;
+uint32_t valorTotalaDeLeer;
 
 
+
+// Función para crear una nueva lista
+
+
+t_list *lista_datos_a_leer;
 t_list *marcosPaginas;
 t_list *procesos_totales;
 
@@ -55,7 +61,7 @@ void inicializar_config()
 void iniciar_memoria_usuario()
 {
 	memoriaUsuario = malloc(TAM_MEMORIA);
-	//memset(memoriaUsuario, 0, TAM_MEMORIA);
+	memset(memoriaUsuario, 0, TAM_MEMORIA);
 	tamanioMemoria = TAM_MEMORIA;
 	if (memoriaUsuario == NULL)
 	{
@@ -67,6 +73,7 @@ void iniciar_memoria_usuario()
 	
 	marcosPaginas = list_create();
 	procesos_totales = list_create();
+	lista_datos_a_leer = list_create();
 
 	iniciar_marcos();
 }

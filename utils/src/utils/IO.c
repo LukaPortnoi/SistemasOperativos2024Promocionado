@@ -919,4 +919,147 @@ void enviar_InterfazStdoutConCodigoOPaKernel(int socket, t_list *direcciones_fis
     free(interfaz);
 }
 
+void enviar_direcciones_stdout(int socket, t_list *direcciones_fisicas)
+{
+    t_paquete *paquete = crear_paquete_con_codigo_de_operacion(PEDIDO_A_LEER_DATO_STDOUT);
+    serializar_direcciones_stdout(paquete, direcciones_fisicas);
+    enviar_paquete(paquete, socket);
+    eliminar_paquete(paquete);
+}
 
+void serializar_direcciones_stdout(t_paquete *paquete, t_list *direcciones_fisicas) 
+{
+    uint32_t tamanioLista = list_size(direcciones_fisicas);
+
+    paquete->buffer->size = sizeof(uint32_t) +tamanioLista * (2 * sizeof(uint32_t));
+    paquete->buffer->stream = malloc(paquete->buffer->size);
+    if (paquete->buffer->stream == NULL) {
+        // Manejo de error si la asignación de memoria falla
+        return;
+    }
+
+    int desplazamiento = 0;
+
+    memcpy(paquete->buffer->stream + desplazamiento, &tamanioLista, sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+    for (int i = 0; i < tamanioLista; i++) {
+        t_direcciones_fisicas *dato = list_get(direcciones_fisicas, i);
+        memcpy(paquete->buffer->stream + desplazamiento, &(dato->direccion_fisica), sizeof(uint32_t));
+        desplazamiento += sizeof(uint32_t);
+        memcpy(paquete->buffer->stream + desplazamiento, &(dato->tamanio), sizeof(uint32_t));
+        desplazamiento += sizeof(uint32_t);
+    }
+}
+
+
+void recibir_direcciones_de_stdout(int socket_cliente, t_list *lista_direcciones)
+{
+    t_paquete *paquete = recibir_paquete(socket_cliente);
+    deserializar_direcciones_de_stdout(paquete, lista_direcciones);
+    eliminar_paquete(paquete);
+}
+
+void deserializar_direcciones_de_stdout(t_paquete *paquete, t_list *lista_datos) {
+    int desplazamiento = 0;
+    uint32_t tamanioLista;
+
+    // Leer el tamaño de la lista del stream
+    memcpy(&tamanioLista, paquete->buffer->stream + desplazamiento, sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+    // Iteramos sobre el buffer y deserializamos cada elemento
+    for (uint32_t i = 0; i < tamanioLista; i++) {
+        t_direcciones_fisicas *dato = malloc(sizeof(t_direcciones_fisicas));
+        memcpy(&(dato->direccion_fisica), paquete->buffer->stream + desplazamiento, sizeof(uint32_t));
+        desplazamiento += sizeof(uint32_t);
+        memcpy(&(dato->tamanio), paquete->buffer->stream + desplazamiento, sizeof(uint32_t));
+        desplazamiento += sizeof(uint32_t);
+
+        list_add(lista_datos, dato);
+    }
+}
+
+void enviar_dato_leido (int socket, char *dato)
+{
+    t_paquete *paquete = crear_paquete_con_codigo_de_operacion(RESPUESTA_DATO_STDOUT);
+    serializar_dato_leido(paquete, dato);
+    enviar_paquete(paquete, socket);
+    eliminar_paquete(paquete);
+}
+
+void serializar_dato_leido(t_paquete *paquete, char *dato)
+{
+    uint32_t tamanio_dato = strlen(dato) + 1;
+
+    paquete->buffer->size = sizeof(uint32_t) + tamanio_dato;
+    paquete->buffer->stream = malloc(paquete->buffer->size);
+    if (paquete->buffer->stream == NULL) {
+        // Manejo de error si la asignación de memoria falla
+        return;
+    }
+
+    int desplazamiento = 0;
+
+    memcpy(paquete->buffer->stream + desplazamiento, &tamanio_dato, sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+    memcpy(paquete->buffer->stream + desplazamiento, dato, tamanio_dato);
+}
+
+char *recibir_dato_stdout(int socket_cliente){
+    char *datoObtenido;
+    t_paquete *paquete = recibir_paquete(socket_cliente);
+    datoObtenido = deserializar_dato_interfaz_STDOUT(paquete);
+    eliminar_paquete(paquete);
+    return datoObtenido;
+}
+
+char *deserializar_dato_interfaz_STDOUT(t_paquete *paquete) {
+    int desplazamiento = 0;
+    char *datoObtenido = NULL; // Inicializar el puntero
+
+    // Deserializar el tamaño del dato
+    uint32_t tamanio_Dato;
+    memcpy(&tamanio_Dato, paquete->buffer->stream + desplazamiento, sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+    // Asignar memoria para datoObtenido
+    datoObtenido = malloc(tamanio_Dato);
+    if (datoObtenido == NULL) {
+        perror("Error al asignar memoria para datoObtenido");
+        return NULL;  // O manejar el error según tu lógica de aplicación
+    }
+
+    // Deserializar el dato
+    memcpy(datoObtenido, paquete->buffer->stream + desplazamiento, tamanio_Dato);
+    desplazamiento += tamanio_Dato;
+
+    return datoObtenido;
+}
+
+char *recibir_dato(int socket, t_log *logger)
+{
+    op_cod cop;
+    char *datoRecibido = NULL;
+
+    recv(socket, &cop, sizeof(op_cod), 0);
+    switch (cop)
+    {
+    case RESPUESTA_DATO_STDOUT:
+        datoRecibido = recibir_dato_stdout(socket);
+        break;
+
+    default:
+        log_error(logger, "No se pudo recibir el dato");
+        break;
+    }
+
+    if (datoRecibido == NULL)
+    {
+        log_error(logger, "No se leyo nada de memoria");
+        return -1;
+    }
+
+    return datoRecibido;
+}

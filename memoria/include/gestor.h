@@ -56,6 +56,7 @@ extern int CLIENTE_CPU, CLIENTE_KERNEL, CLIENTE_IN_OU;
 extern t_log *LOGGER_MEMORIA;
 extern t_config *CONFIG_MEMORIA;
 extern uint32_t valorGlobalDescritura;
+extern uint32_t valorTotalaDeLeer;
 
 extern int fd_memoria;
 
@@ -68,5 +69,7 @@ extern void *memoriaUsuario;
 extern uint32_t tamanioMemoria;
 extern t_list *marcosPaginas;
 extern t_list *procesos_totales;
+extern t_list *lista_datos_a_leer;
+
 
 #endif /* GESTOR_H_ */
