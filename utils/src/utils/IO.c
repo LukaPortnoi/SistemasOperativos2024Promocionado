@@ -980,6 +980,14 @@ void deserializar_direcciones_de_stdout(t_paquete *paquete, t_list *lista_datos)
     }
 }
 
+void enviar_dato_movIn(int socket, char *dato)
+{
+    t_paquete *paquete = crear_paquete_con_codigo_de_operacion(RESPUESTA_DATO_MOVIN);
+    serializar_dato_leido(paquete, dato);
+    enviar_paquete(paquete, socket);
+    eliminar_paquete(paquete);
+}
+
 void enviar_dato_leido (int socket, char *dato)
 {
     t_paquete *paquete = crear_paquete_con_codigo_de_operacion(RESPUESTA_DATO_STDOUT);
@@ -1058,7 +1066,7 @@ char *recibir_dato(int socket, t_log *logger)
     if (datoRecibido == NULL)
     {
         log_error(logger, "No se leyo nada de memoria");
-        return -1;
+        return NULL;
     }
 
     return datoRecibido;

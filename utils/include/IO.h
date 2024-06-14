@@ -96,4 +96,8 @@ void enviar_dato_leido (int socket, char *dato);
 void serializar_dato_leido(t_paquete *paquete, char *dato);
 void deserializar_direcciones_de_stdout(t_paquete *paquete, t_list *lista_datos) ;
 
+
+//MOV IN XD
+void enviar_dato_movIn(int socket, char *dato);
+
 #endif // IO_H_

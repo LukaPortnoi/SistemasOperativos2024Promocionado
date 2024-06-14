@@ -27,7 +27,6 @@ uint32_t valorTotalaDeLeer;
 // Función para crear una nueva lista
 
 
-t_list *lista_datos_a_leer;
 t_list *marcosPaginas;
 t_list *procesos_totales;
 
@@ -73,7 +72,6 @@ void iniciar_memoria_usuario()
 	
 	marcosPaginas = list_create();
 	procesos_totales = list_create();
-	lista_datos_a_leer = list_create();
 
 	iniciar_marcos();
 }

@@ -573,13 +573,41 @@ char *leer_memoria(uint32_t dir_fisica, uint32_t tamanio_registro)
 
 char *int_to_char(int num)
 {
-    int i = log10(num) + 1;
-    char *s = (char *)calloc(i + 1, sizeof(char));
-
-    for (i--; num != 0; i--)
+    if (num == 0)
     {
+        char *s = (char *)calloc(2, sizeof(char));  // Si num es 0, devolver "0"
+        if (s == NULL) {
+            fprintf(stderr, "Error al asignar memoria en int_to_char\n");
+            exit(EXIT_FAILURE);  // En caso de fallo de asignación de memoria
+        }
+        s[0] = '0';
+        s[1] = '\0';  // Terminador de cadena
+        return s;
+    }
+
+    // Calcular el tamaño necesario para la cadena
+    int i = log10(abs(num)) + 1;
+    char *s = (char *)calloc(i + 1, sizeof(char));  // +1 para el terminador nulo
+
+    if (s == NULL) {
+        fprintf(stderr, "Error al asignar memoria en int_to_char\n");
+        exit(EXIT_FAILURE);  // En caso de fallo de asignación de memoria
+    }
+
+    int negativo = 0;  // Variable para manejar números negativos
+    if (num < 0) {
+        negativo = 1;
+        num = -num;
+    }
+
+    // Llenar el arreglo con los digitos de num
+    for (i--; num != 0; i--) {
         s[i] = (num % 10) + '0';
         num /= 10;
+    }
+
+    if (negativo) {
+        s[i] = '-';
     }
 
     return s;
