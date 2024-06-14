@@ -2,6 +2,7 @@
 
 t_tlb *tlb;
 
+
 // Inicializar TLB
 t_tlb *inicializar_tlb()
 {
@@ -32,10 +33,12 @@ void destruir_tlb()
 // Busqueda en la TLB
 uint32_t buscar_en_tlb(uint32_t pid, uint32_t pagina)
 {
+    time_t tiempo_actual = time(NULL);
     for (int i = 0; i < tlb->size_actual_tlb; i++)
     {
         if (tlb->entradas[i].pid == pid && tlb->entradas[i].pagina == pagina)
         {
+            tlb->entradas[i].tiempo_lru = (uint32_t)tiempo_actual;
             return tlb->entradas[i].marco; // TLB-HIT
         }
     }
@@ -45,10 +48,14 @@ uint32_t buscar_en_tlb(uint32_t pid, uint32_t pagina)
 // Reemplazo por FIFO
 void reemplazo_algoritmo_FIFO(uint32_t pid, uint32_t pagina, uint32_t marco)
 {
+    printf("Reemplazando página %u y marco %u del proceso %u con página %u y marco %u del proceso %u\n", tlb->entradas[0].pagina, tlb->entradas[0].marco ,tlb->entradas[0].pid, pagina, marco , pid);
+
+    
     for (int i = 1; i < tlb->size_actual_tlb; i++)
     {
         tlb->entradas[i - 1] = tlb->entradas[i];
     }
+
     tlb->entradas[tlb->size_actual_tlb - 1].pid = pid;
     tlb->entradas[tlb->size_actual_tlb - 1].pagina = pagina;
     tlb->entradas[tlb->size_actual_tlb - 1].marco = marco;
@@ -58,6 +65,7 @@ void reemplazo_algoritmo_FIFO(uint32_t pid, uint32_t pagina, uint32_t marco)
 void reemplazo_algoritmo_LRU(uint32_t pid, uint32_t pagina, uint32_t marco)
 {
     int lruIndex = 0;
+    time_t tiempo_actual = time(NULL);
     for (int i = 1; i < tlb->size_actual_tlb; i++)
     {
         if (tlb->entradas[i].tiempo_lru < tlb->entradas[lruIndex].tiempo_lru)
@@ -65,21 +73,25 @@ void reemplazo_algoritmo_LRU(uint32_t pid, uint32_t pagina, uint32_t marco)
             lruIndex = i;
         }
     }
+    printf("Reemplazando página %u y marco %u del proceso %u con página %u y marco %u del proceso %u\n", tlb->entradas[lruIndex].pagina, tlb->entradas[lruIndex].marco ,tlb->entradas[lruIndex].pid, pagina, marco , pid);
     tlb->entradas[lruIndex].pid = pid;
     tlb->entradas[lruIndex].pagina = pagina;
     tlb->entradas[lruIndex].marco = marco;
-    // tlb->entradas[lruIndex].tiempo_lru = tiempo_transcurrido;
+    tlb->entradas[lruIndex].tiempo_lru = tiempo_actual;
 }
 
 // Actualizar TLB
 void actualizar_TLB(uint32_t pid, uint32_t pagina, uint32_t marco)
 {
+    time_t tiempo_actual = time(NULL);
     if (tlb->size_actual_tlb < tlb->size_tlb)
     {
         tlb->entradas[tlb->size_actual_tlb].pid = pid;
         tlb->entradas[tlb->size_actual_tlb].pagina = pagina;
         tlb->entradas[tlb->size_actual_tlb].marco = marco;
-        // tlb->entradas[tlb->size_actual_tlb].tiempo_lru = tiempo_transcurrido;
+        if(tlb->algoritmo == LRU){
+             tlb->entradas[tlb->size_actual_tlb].tiempo_lru = (uint32_t)tiempo_actual;
+        }
         tlb->size_actual_tlb++;
     }
     else
