@@ -9,21 +9,29 @@ void iniciar_estructura_proceso_memoria(t_proceso_memoria *proceso_memoria)
 
 void liberar_estructura_proceso_memoria(t_proceso_memoria *proceso_memoria)
 {
-    uint32_t i;
-    for (i = 0; i < proceso_memoria->tabla_paginas->elements_count; i++)
+    // Liberar elementos de la tabla de páginas
+    while (proceso_memoria->tabla_paginas->elements_count > 0)
     {
-        uint32_t nro_marco = (uint32_t)list_remove(proceso_memoria->tabla_paginas, i);
+        uint32_t nro_marco = (uint32_t)list_remove(proceso_memoria->tabla_paginas, 0);
         liberar_marco(nro_marco);
     }
     list_destroy(proceso_memoria->tabla_paginas);
 
     // Liberar elementos de la lista de instrucciones
-    for (i = 0; i < proceso_memoria->instrucciones->elements_count; i++)
+    while (proceso_memoria->instrucciones->elements_count > 0)
     {
         // Suponiendo que los elementos son punteros que han sido asignados dinámicamente
-        free(list_get(proceso_memoria->instrucciones, i));
+        free(list_remove(proceso_memoria->instrucciones, 0));
     }
     list_destroy(proceso_memoria->instrucciones);
+
+    //tambien deberia eliminarlo de la lista de procesos totales
+    bool _buscar_proceso(void *element)
+    {
+        return element == proceso_memoria;
+    }
+    
+    list_remove_by_condition(procesos_totales, _buscar_proceso);
 
     free(proceso_memoria->path);
     free(proceso_memoria);
@@ -185,4 +193,10 @@ void liberar_marco(uint32_t nro_marco)
 uint32_t obtener_marco_de_pagina(t_proceso_memoria *proceso_memoria, uint32_t nro_pagina)
 {
     return (uint32_t)list_get(proceso_memoria->tabla_paginas, nro_pagina);
+}
+
+void recibir_finalizar_proceso(uint32_t *pid, int socket)
+{
+    recv(socket, pid, sizeof(uint32_t), 0);
+    log_debug(LOGGER_MEMORIA, "Finalizar proceso %d", *pid);
 }

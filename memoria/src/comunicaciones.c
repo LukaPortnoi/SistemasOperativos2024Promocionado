@@ -37,6 +37,21 @@ static void procesar_conexion_memoria(void *void_args)
 			proceso_memoria = iniciar_proceso_path(proceso_memoria);
 			break;
 
+		case FINALIZAR_PROCESO:
+			uint32_t pid;
+			recibir_finalizar_proceso(&pid, cliente_socket);
+			proceso_memoria = obtener_proceso_pid(pid);
+			if (proceso_memoria == NULL)
+			{
+				log_error(logger, "No se encontro el proceso con PID %d", pid);
+				break;
+			}
+			else
+			{
+				liberar_estructura_proceso_memoria(proceso_memoria);
+				break;
+			}
+
 		// -------------------
 		// -- CPU - MEMORIA --
 		// -------------------

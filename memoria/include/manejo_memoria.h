@@ -15,4 +15,6 @@ uint32_t obtener_nro_marco_disponible();
 void liberar_marco(uint32_t nro_marco);
 uint32_t obtener_marco_de_pagina(t_proceso_memoria *proceso_memoria, uint32_t nro_pagina);
 
+void recibir_finalizar_proceso(uint32_t *pid, int socket);
+
 #endif // MANEJO_MEMORIA_H_
