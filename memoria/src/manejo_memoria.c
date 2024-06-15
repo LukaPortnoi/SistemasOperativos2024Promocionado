@@ -12,8 +12,9 @@ void liberar_estructura_proceso_memoria(t_proceso_memoria *proceso_memoria)
     // Liberar elementos de la tabla de páginas
     while (proceso_memoria->tabla_paginas->elements_count > 0)
     {
-        uint32_t nro_marco = (uint32_t)list_remove(proceso_memoria->tabla_paginas, 0);
-        liberar_marco(nro_marco);
+        uint32_t *nro_marco = (uint32_t*)list_remove(proceso_memoria->tabla_paginas, 0);
+        liberar_marco(*nro_marco);
+        free(nro_marco);
     }
     list_destroy(proceso_memoria->tabla_paginas);
 
@@ -95,8 +96,9 @@ op_cod aumentar_tamanio_proceso_memoria(t_proceso_memoria *proceso_memoria, uint
             // Obtén el marco de la lista y actualiza su pid
             t_marco *marco = list_get(marcosPaginas, nro_marco);
             marco->pid = proceso_memoria->pid;
-
-            list_add(proceso_memoria->tabla_paginas, (void *)nro_marco);
+            uint32_t *nro_marco_aux = malloc(sizeof(uint32_t));
+            *nro_marco_aux = nro_marco;
+            list_add(proceso_memoria->tabla_paginas, nro_marco_aux);
         }
         proceso_memoria->tamanio = tamanio;
         resultado = RESIZE_OK;
@@ -129,8 +131,9 @@ op_cod disminuir_tamanio_proceso_memoria(t_proceso_memoria *proceso_memoria, uin
         uint32_t i;
         for (i = 0; i < cantidad_paginas_disminucion; i++)
         {
-            uint32_t nro_marco = (uint32_t)list_remove(proceso_memoria->tabla_paginas, proceso_memoria->tabla_paginas->elements_count - 1);
-            liberar_marco(nro_marco);
+            uint32_t *nro_marco = (uint32_t*)list_remove(proceso_memoria->tabla_paginas, proceso_memoria->tabla_paginas->elements_count - 1);
+            liberar_marco(*nro_marco);
+            free(nro_marco);
         }
         proceso_memoria->tamanio = tamanio;
         resultado = RESIZE_OK;
@@ -192,11 +195,13 @@ void liberar_marco(uint32_t nro_marco)
 
 uint32_t obtener_marco_de_pagina(t_proceso_memoria *proceso_memoria, uint32_t nro_pagina)
 {
-    return (uint32_t)list_get(proceso_memoria->tabla_paginas, nro_pagina);
+    return *(uint32_t*)list_get(proceso_memoria->tabla_paginas, nro_pagina);
 }
 
 void recibir_finalizar_proceso(uint32_t *pid, int socket)
 {
-    recv(socket, pid, sizeof(uint32_t), 0);
+    uint32_t size;
+    recv(socket, &size, sizeof(uint32_t), 0);
+    recv(socket, pid, size, 0);
     log_debug(LOGGER_MEMORIA, "Finalizar proceso %d", *pid);
 }

@@ -473,6 +473,7 @@ void finalizar_proceso(t_pcb *pcb)
     cambiar_estado_pcb(pcb, FINALIZADO);
     squeue_push(squeue_exit, pcb);
     liberar_recursos(pcb);
+    log_warning(LOGGER_KERNEL, "PID ENVIANDO A FINALIZAR: %d", pcb->pid);
     liberar_estructuras_memoria(pcb->pid);
     sem_post(&semMultiprogramacion);
     if (sem_getvalue(&semMultiprogramacion, &sem_value) == 0)
@@ -485,7 +486,6 @@ void liberar_estructuras_memoria(uint32_t pid)
 {
     t_paquete *paquete = crear_paquete_con_codigo_de_operacion(FINALIZAR_PROCESO);
 
-    //lo serializo y envio aqui mismo
     paquete->buffer->size = sizeof(uint32_t);
     paquete->buffer->stream = malloc(sizeof(uint32_t));
 
@@ -494,6 +494,7 @@ void liberar_estructuras_memoria(uint32_t pid)
     memcpy(paquete->buffer->stream + desplazamiento, &pid, sizeof(uint32_t));
 
     enviar_paquete(paquete, fd_kernel_memoria);
+    eliminar_paquete(paquete);
 }
 
 void bloquear_proceso(t_pcb *pcb, char *motivo)

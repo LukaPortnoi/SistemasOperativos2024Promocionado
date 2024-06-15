@@ -36,18 +36,20 @@ void _mov_in(char *registro, char *direc_logica, int socket)
     printf("tamanio de la lista de direcciones fisicas: %d \n", list_size(Lista_direccionesFisica));
     enviar_valor_mov_in_cpu(Lista_direccionesFisica, socket);
     char *datoObtenido = recibir_dato_de_memoria_movIn(socket, LOGGER_CPU);
-    int datoint = (int)datoObtenido[0];
+    //int datoint = (int)datoObtenido[0];
     
     uint32_t registroFina;
     if (revisar_registro(registro))
     {
-        *(get_registry8(registro)) = datoint;
+        //*(get_registry8(registro)) = datoint;
+        memcpy((get_registry8(registro)),datoObtenido,1);
         registroFina = *(get_registry8(registro));
         printf("Registro Obtenido %d \n", registroFina);
     }
     else
     {
-        *(get_registry32(registro)) = datoint;
+       // *(get_registry32(registro)) = datoint;
+        memcpy((get_registry32(registro)),datoObtenido,4);
         registroFina = *(get_registry32(registro));
         printf("Registro Obtenido %d \n", registroFina);
     }

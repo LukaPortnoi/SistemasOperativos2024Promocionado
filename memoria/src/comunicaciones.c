@@ -38,12 +38,12 @@ static void procesar_conexion_memoria(void *void_args)
 			break;
 
 		case FINALIZAR_PROCESO:
-			uint32_t pid;
-			recibir_finalizar_proceso(&pid, cliente_socket);
-			proceso_memoria = obtener_proceso_pid(pid);
+			uint32_t pid_a_finalizar;
+			recibir_finalizar_proceso(&pid_a_finalizar, cliente_socket);
+			proceso_memoria = obtener_proceso_pid(pid_a_finalizar);
 			if (proceso_memoria == NULL)
 			{
-				log_error(logger, "No se encontro el proceso con PID %d", pid);
+				log_error(logger, "No se encontro el proceso con PID %d", pid_a_finalizar);
 				break;
 			}
 			else
@@ -107,9 +107,9 @@ static void procesar_conexion_memoria(void *void_args)
 			t_list *lista_datos_a_leer_mov_in = list_create();
 
 			char *valor_leido_mov_in;
-			
+
 			recibir_mov_in_cpu(cliente_socket, direcciones_fisicas_mov_in);
-			
+
 			for (int i = 0; i < list_size(direcciones_fisicas_mov_in); i++)
 			{
 				t_direcciones_fisicas *direccionAmostrar = list_get(direcciones_fisicas_mov_in, i);
@@ -119,25 +119,23 @@ static void procesar_conexion_memoria(void *void_args)
 			char *valorTotalaDeLeerMovIn = concatenar_lista_de_cadenas(lista_datos_a_leer_mov_in);
 			enviar_dato_movIn(cliente_socket, valorTotalaDeLeerMovIn);
 
-
-
 			list_clean_and_destroy_elements(direcciones_fisicas_mov_in, free);
 			list_clean_and_destroy_elements(lista_datos_a_leer_mov_in, free);
 
-			
-			//TODO devolver valor_leido_mov_in a cpu
+			// TODO devolver valor_leido_mov_in a cpu
 			break;
 
 		case PEDIDO_MOV_OUT: // me pasa por parametro un uint32_t y tengo que guardarlo en el marco que me dice
 			t_list *direcciones_fisicas_mov_out = list_create();
 			uint32_t valorObtenido_mov_out;
 			recibir_mov_out_cpu(direcciones_fisicas_mov_out, &valorObtenido_mov_out, cliente_socket);
-			int valor_mov_out_int = (int)valorObtenido_mov_out;
+			/* int valor_mov_out_int = (int)valorObtenido_mov_out;
 			log_debug(LOGGER_MEMORIA, "valor int: %d \n", valor_mov_out_int);
-			char valor_mov_out_char = (char) valor_mov_out_int;
-			//char *valor_entero_a_escribir = int_to_char(valor_leido); //Anda mal el int_to_char de los cojones
-			//int tamanioAescribir = strlen(valor_entero_a_escribir);
-			char *valor_a_escribir = malloc(2);
+			char* valor_mov_out_char = (char)valor_mov_out_int;
+
+			char *valor_entero_a_escribir = int_to_char(valor_leido); //Anda mal el int_to_char de los cojones
+			int tamanioAescribir = strlen(valor_entero_a_escribir);*/
+			/* char *valor_a_escribir = malloc(2);
 			memset(valor_a_escribir, 0, 2);
 			valor_a_escribir[0] = valor_mov_out_char;
 			valor_a_escribir[1] = '\0';
@@ -145,24 +143,40 @@ static void procesar_conexion_memoria(void *void_args)
 			t_direcciones_fisicas *direccionAmostrar = list_get(direcciones_fisicas_mov_out, 0);
 			escribir_memoria(direccionAmostrar->direccion_fisica, direccionAmostrar->tamanio, valor_a_escribir);
 
-			/*int k = 0;
+			int aux = 0;
+
+			void escribir_todo(void *a_escribir){
+				t_direcciones_fisicas *dir_fisica = a_escribir;
+				escribir_memoria()
+			}*/
+
+			/* char *valor_entero_a_escribir = int_to_char(valor_leido); //Anda mal el int_to_char de los cojones
+			int tamanioAescribir = strlen(valor_entero_a_escribir); */
+
+			void *aux = calloc(sizeof(uint32_t), 1);
+			memcpy(aux, &valorObtenido_mov_out, sizeof(uint32_t));
+
+			int k = 0;
 			for (int i = 0; i < list_size(direcciones_fisicas_mov_out); i++)
 			{
 				t_direcciones_fisicas *direccionAmostrar = list_get(direcciones_fisicas_mov_out, i);
 				char *valor_parcial_a_pasar = malloc(direccionAmostrar->tamanio + 1);
 				memset(valor_parcial_a_pasar, 0, direccionAmostrar->tamanio + 1);
-				for (int j = 0; j < direccionAmostrar->tamanio; j++)
+				memcpy(valor_parcial_a_pasar, aux + k, direccionAmostrar->tamanio);
+				/* for (int j = 0; j < direccionAmostrar->tamanio; j++)
 				{
 					if ( k < tamanioAescribir){
 						valor_parcial_a_pasar[j] = valor_entero_a_escribir[k];
 						k++;
 					}
-					
-				}
+
+				} */
 				valor_parcial_a_pasar[direccionAmostrar->tamanio] = '\0';
 				log_debug(LOGGER_MEMORIA, "Cadena parcial a escribir: %s \n", valor_parcial_a_pasar);
 				escribir_memoria(direccionAmostrar->direccion_fisica, direccionAmostrar->tamanio, valor_parcial_a_pasar);
-			}*/
+				k += direccionAmostrar->tamanio;
+			}
+			free(aux);
 			list_clean_and_destroy_elements(direcciones_fisicas_mov_out, free);
 			break;
 
@@ -181,11 +195,11 @@ static void procesar_conexion_memoria(void *void_args)
 				valor_leido_parcial = leer_memoria(direccion_fisica_actual->direccion_fisica, direccion_fisica_actual->tamanio);
 				strcat(valor_leido_completo, valor_leido_parcial);
 			}
-			
-			int contador_del_tamanio_del_valor_leido_completo = 0; // Reiniciar z a 0 en cada iteración del bucle externo
-			for (int i = 0; i < list_size(direcciones_fisicas_escritura); i++) //Algo aca esta mal
+
+			int contador_del_tamanio_del_valor_leido_completo = 0;			   // Reiniciar z a 0 en cada iteración del bucle externo
+			for (int i = 0; i < list_size(direcciones_fisicas_escritura); i++) // Algo aca esta mal
 			{
-				
+
 				t_direcciones_fisicas *direccion_fisica_actual = list_get(direcciones_fisicas_escritura, i);
 				char *valor_parcial_a_pasar = malloc(direccion_fisica_actual->tamanio + 1);
 				memset(valor_parcial_a_pasar, 0, direccion_fisica_actual->tamanio + 1);
@@ -194,7 +208,7 @@ static void procesar_conexion_memoria(void *void_args)
 					valor_parcial_a_pasar[j] = valor_leido_completo[contador_del_tamanio_del_valor_leido_completo];
 					contador_del_tamanio_del_valor_leido_completo++;
 				}
-				
+
 				valor_parcial_a_pasar[direccion_fisica_actual->tamanio] = '\0';
 
 				escribir_memoria(direccion_fisica_actual->direccion_fisica, direccion_fisica_actual->tamanio, valor_parcial_a_pasar);
@@ -221,7 +235,6 @@ static void procesar_conexion_memoria(void *void_args)
 				}
 				valor_parcial_a_pasar[direccionAmostrar->tamanio] = '\0';
 				escribir_memoria(direccionAmostrar->direccion_fisica, direccionAmostrar->tamanio, valor_parcial_a_pasar);
-
 			}
 			list_clean_and_destroy_elements(direcciones_fisicas_a_escribir, free);
 			break;
