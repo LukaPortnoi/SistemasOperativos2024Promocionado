@@ -1,5 +1,8 @@
 #include "../include/consola.h"
 
+pthread_t hilo_detener_planificacion;
+pthread_t hilo_iniciar_planificacion;
+
 void iniciar_consola_interactiva()
 {
   log_trace(LOGGER_KERNEL, "<CONSOLA INTERACTIVA>");
@@ -303,11 +306,13 @@ t_pcb *buscar_proceso_en_cola(t_squeue *squeue, uint32_t pid)
 
 void detener_planificacion()
 {
-  detener_planificadores();
+  pthread_create(&hilo_detener_planificacion, NULL, (void *)detener_planificadores, NULL);
+  pthread_detach(hilo_detener_planificacion);
 }
 void iniciar_planificacion()
 {
-  iniciar_planificadores();
+  pthread_create(&hilo_iniciar_planificacion, NULL, (void *)iniciar_planificadores, NULL);
+  pthread_detach(hilo_iniciar_planificacion);
 }
 
 void cambiar_multiprogramacion(char *grado_multiprogramacion_string)

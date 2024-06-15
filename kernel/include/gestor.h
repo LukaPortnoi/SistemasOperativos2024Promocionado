@@ -66,6 +66,7 @@ extern int fd_kernel_cpu_dispatch;
 extern int fd_kernel_cpu_interrupt;
 
 extern uint32_t PID_GLOBAL;
+extern bool PLANIFICACION_DETENIDA;
 
 // GLOBALES PARA MANEJO DE RECURSOS
 extern t_list *RECURSOS_DISPONIBLES;

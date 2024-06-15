@@ -28,11 +28,10 @@ t_squeue *squeue_blocked;
 t_squeue *squeue_exit;
 
 uint32_t PID_GLOBAL = 1;
-
+bool PLANIFICACION_DETENIDA = false;
 pthread_t hilo_quantum;
-
-int sem_value;
 t_temporal *temporizador;
+int sem_value;
 
 // PLANIFICADOR LARGO PLAZO
 void iniciar_planificador_largo_plazo()
@@ -65,7 +64,10 @@ void chequear_grado_de_multiprogramacion()
     while (1)
     {
         sem_wait(&semNew);
-        // sem_wait(&sem_planificador_largo_plazo);
+        if (PLANIFICACION_DETENIDA)
+        {
+            sem_wait(&sem_planificador_largo_plazo);
+        }
 
         int largo_plazo;
         sem_getvalue(&sem_planificador_largo_plazo, &largo_plazo);
@@ -87,7 +89,6 @@ void chequear_grado_de_multiprogramacion()
 
         t_pcb *pcb_a_mover = squeue_pop(squeue_new);
         proceso_listo(pcb_a_mover, false);
-        // sem_post(&sem_planificador_largo_plazo);
     }
 }
 
@@ -137,7 +138,10 @@ void planificar_PCB_cortoPlazo()
     while (1)
     {
         sem_wait(&semReady);
-        // sem_wait(&sem_planificador_corto_plazo);
+        if (PLANIFICACION_DETENIDA)
+        {
+            sem_wait(&sem_planificador_corto_plazo);
+        }
 
         t_pcb *pcb;
 
@@ -157,7 +161,6 @@ void planificar_PCB_cortoPlazo()
         }
 
         ejecutar_PCB(pcb);
-        // sem_post(&sem_planificador_corto_plazo);
     }
 }
 
@@ -181,16 +184,16 @@ void ejecutar_PCB(t_pcb *pcb)
         pthread_create(&hilo_quantum, NULL, (void *)atender_quantum, NULL);
     }
 
-    recibir_pcb_CPU(pcb, fd_kernel_cpu_dispatch); // Tener en cuenta la funcion para I/O
+    recibir_pcb_CPU(pcb, fd_kernel_cpu_dispatch);
 
     if (pcb == NULL)
     {
         log_error(LOGGER_KERNEL, "Error al recibir PCB de CPU");
-        desalojo_cpu(pcb, hilo_quantum); // Manejar el desalojo en caso de error
+        desalojo_cpu(pcb, hilo_quantum);
         return;
     }
 
-    desalojo_cpu(pcb, hilo_quantum); // Manejar el desalojo y finalización del hilo de quantum
+    desalojo_cpu(pcb, hilo_quantum);
 }
 
 void recibir_pcb_CPU(t_pcb *pcb_recibido, int fd_cpu)
@@ -297,7 +300,7 @@ void desalojo_cpu(t_pcb *pcb, pthread_t hilo_quantum_id)
         log_debug(LOGGER_KERNEL, "PID: %d - Desalojado por OUT OF MEMORY", pcb->pid);
         finalizar_proceso(pcb);
         break;
-    
+
     default:
         log_error(LOGGER_KERNEL, "PID: %d - Desalojado por motivo desconocido", pcb->pid);
         break;
@@ -341,6 +344,8 @@ void detener_planificadores()
         sem_wait(&sem_planificador_largo_plazo);
     }
 
+    PLANIFICACION_DETENIDA = true;
+
     sem_getvalue(&sem_planificador_largo_plazo, &largo_plazo);
     sem_getvalue(&sem_planificador_corto_plazo, &corto_plazo);
     log_trace(LOGGER_KERNEL, "Valor semaforo LARGO plazo: %d", largo_plazo);
@@ -356,13 +361,13 @@ void iniciar_planificadores()
     sem_getvalue(&sem_planificador_largo_plazo, &largo_plazo);
     sem_getvalue(&sem_planificador_corto_plazo, &corto_plazo);
 
-    // planificar = 1;
-
     if (largo_plazo == 0 && corto_plazo == 0)
     {
-        sem_post(&sem_planificador_corto_plazo);
         sem_post(&sem_planificador_largo_plazo);
+        sem_post(&sem_planificador_corto_plazo);
     }
+
+    PLANIFICACION_DETENIDA = false;
 
     sem_getvalue(&sem_planificador_largo_plazo, &largo_plazo);
     sem_getvalue(&sem_planificador_corto_plazo, &corto_plazo);

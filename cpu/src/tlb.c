@@ -191,7 +191,7 @@ t_list *traducir_direccion(uint32_t pid, uint32_t logicalAddress, uint32_t pageS
                 {
                     paginaSig = (logicalAddress + tamanioAuxTotal) / pageSize;
                     offset2 = (logicalAddress + tamanioAuxTotal) - paginaSig * pageSize;
-                    uint32_t marco2=0;
+                    marco2=0;
                     if (CANTIDAD_ENTRADAS_TLB > 0){
                         marco2 = buscar_en_tlb(pid, paginaSig);
 

@@ -36,17 +36,18 @@ void _mov_in(char *registro, char *direc_logica, int socket)
     printf("tamanio de la lista de direcciones fisicas: %d \n", list_size(Lista_direccionesFisica));
     enviar_valor_mov_in_cpu(Lista_direccionesFisica, socket);
     char *datoObtenido = recibir_dato_de_memoria_movIn(socket, LOGGER_CPU);
-
+    int datoint = (int)datoObtenido[0];
+    
     uint32_t registroFina;
     if (revisar_registro(registro))
     {
-        *(get_registry8(registro)) = str_to_uint8(datoObtenido);
+        *(get_registry8(registro)) = datoint;
         registroFina = *(get_registry8(registro));
         printf("Registro Obtenido %d \n", registroFina);
     }
     else
     {
-        *(get_registry32(registro)) = str_to_uint32(datoObtenido);
+        *(get_registry32(registro)) = datoint;
         registroFina = *(get_registry32(registro));
         printf("Registro Obtenido %d \n", registroFina);
     }
@@ -233,6 +234,9 @@ void _resize(char *tamanioAReasignar)
         pcb_actual->contexto_ejecucion->motivo_desalojo = INTERRUPCION_OUT_OF_MEMORY;
         pcb_actual->contexto_ejecucion->motivo_finalizacion = OUT_OF_MEMORY;
         esSyscall = true;
+        break;
+    default:
+        log_error(LOGGER_CPU, "Recibi un dato no valido");
         break;
     }
 }

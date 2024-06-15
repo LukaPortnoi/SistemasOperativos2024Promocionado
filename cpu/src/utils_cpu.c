@@ -5,14 +5,12 @@ void ejecutar_ciclo_instruccion(int socket)
     t_instruccion *instruccion = fetch(pcb_actual->pid, pcb_actual->contexto_ejecucion->registros->program_counter);
     // TODO decode: manejo de TLB y MMU
     execute(instruccion, socket);
-    
+
     liberar_instruccion(instruccion);
 }
 
 t_instruccion *fetch(uint32_t pid, uint32_t pc)
 {
-    // TODO -- chequear que en los casos de instruccion con memoria logica puede dar PAGE FAULT y no hay que aumentar el pc (restarlo dentro del decode en esos casos) -- En este TP no hay page fault
-    // log_trace(LOGGER_CPU, "PID Y PC PARA PEDIR INSTRUCCION A MEMORIA: %d - %d\n", pid, pc);
     pedir_instruccion_memoria(pid, pc, fd_cpu_memoria);
 
     op_cod codigo_op = recibir_operacion(fd_cpu_memoria);
@@ -74,15 +72,15 @@ void execute(t_instruccion *instruccion, int socket)
         break;
     case MOV_IN:
         loguear_y_sumar_pc(instruccion);
-        _mov_in(instruccion->parametro1, instruccion->parametro2, fd_cpu_memoria); // ojo con este socket revisarlo (o no, recien lo cambie)
+        _mov_in(instruccion->parametro1, instruccion->parametro2, fd_cpu_memoria);
         break;
     case MOV_OUT:
         loguear_y_sumar_pc(instruccion);
-        _mov_out(instruccion->parametro1, instruccion->parametro2, fd_cpu_memoria); // ojo con este socket revisarlo (o no, recien lo cambie)
+        _mov_out(instruccion->parametro1, instruccion->parametro2, fd_cpu_memoria);
         break;
     case COPY_STRING:
         loguear_y_sumar_pc(instruccion);
-        _copy_string(instruccion->parametro1, fd_cpu_memoria); // ojo con este socket revisarlo (o no, recien lo cambie)
+        _copy_string(instruccion->parametro1, fd_cpu_memoria);
         break;
     case IO_GEN_SLEEP:
         loguear_y_sumar_pc(instruccion);
@@ -144,24 +142,24 @@ t_instruccion *deserializar_instruccion(int socket)
     memcpy(&(instruccion->nombre), stream + desplazamiento, sizeof(nombre_instruccion));
     desplazamiento += sizeof(nombre_instruccion);
 
-    uint32_t tamanio_parametro1;                                              // Cambio aquí
-    memcpy(&(tamanio_parametro1), stream + desplazamiento, sizeof(uint32_t)); // Cambio aquí
+    uint32_t tamanio_parametro1;
+    memcpy(&(tamanio_parametro1), stream + desplazamiento, sizeof(uint32_t));
     desplazamiento += sizeof(uint32_t);
 
-    uint32_t tamanio_parametro2;                                              // Cambio aquí
-    memcpy(&(tamanio_parametro2), stream + desplazamiento, sizeof(uint32_t)); // Cambio aquí
+    uint32_t tamanio_parametro2;
+    memcpy(&(tamanio_parametro2), stream + desplazamiento, sizeof(uint32_t));
     desplazamiento += sizeof(uint32_t);
 
-    uint32_t tamanio_parametro3;                                              // Cambio aquí
-    memcpy(&(tamanio_parametro3), stream + desplazamiento, sizeof(uint32_t)); // Cambio aquí
+    uint32_t tamanio_parametro3;
+    memcpy(&(tamanio_parametro3), stream + desplazamiento, sizeof(uint32_t));
     desplazamiento += sizeof(uint32_t);
 
-    uint32_t tamanio_parametro4;                                              // Cambio aquí
-    memcpy(&(tamanio_parametro4), stream + desplazamiento, sizeof(uint32_t)); // Cambio aquí
+    uint32_t tamanio_parametro4;
+    memcpy(&(tamanio_parametro4), stream + desplazamiento, sizeof(uint32_t));
     desplazamiento += sizeof(uint32_t);
 
-    uint32_t tamanio_parametro5;                                              // Cambio aquí
-    memcpy(&(tamanio_parametro5), stream + desplazamiento, sizeof(uint32_t)); // Cambio aquí
+    uint32_t tamanio_parametro5;
+    memcpy(&(tamanio_parametro5), stream + desplazamiento, sizeof(uint32_t));
     desplazamiento += sizeof(uint32_t);
 
     instruccion->parametro1 = malloc(tamanio_parametro1);
