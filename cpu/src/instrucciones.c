@@ -217,6 +217,24 @@ void _resize(char *tamanioAReasignar)
 {
     uint32_t tamanioAReasignarNum = str_to_uint32(tamanioAReasignar);
     enviar_resize_a_memoria(pcb_actual, tamanioAReasignarNum);
+    //recibo el codigo de operacion de la memoria
+    op_cod cop;
+    recv(fd_cpu_memoria, &cop, sizeof(op_cod), 0);
+    switch (cop)
+    {
+    case RESIZE_OK:
+        log_debug(LOGGER_CPU, "Se redimensiono correctamente");
+        break;
+    case MISMO_TAMANIO:
+        log_debug(LOGGER_CPU, "El tamanio es el mismo");
+        break;
+    case OUT_OF_MEMORY:
+        log_debug(LOGGER_CPU, "No hay memoria suficiente");
+        pcb_actual->contexto_ejecucion->motivo_desalojo = INTERRUPCION_OUT_OF_MEMORY;
+        pcb_actual->contexto_ejecucion->motivo_finalizacion = OUT_OF_MEMORY;
+        esSyscall = true;
+        break;
+    }
 }
 
 void _copy_string(char *tamanio, int socket_cliente) // tamanio es el tamaño del string que se va a leer y escribir

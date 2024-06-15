@@ -71,7 +71,6 @@ void execute(t_instruccion *instruccion, int socket)
     case RESIZE:
         loguear_y_sumar_pc(instruccion);
         _resize(instruccion->parametro1);
-        // esperar_respuesta_resize();
         break;
     case MOV_IN:
         loguear_y_sumar_pc(instruccion);

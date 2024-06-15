@@ -293,6 +293,11 @@ void desalojo_cpu(t_pcb *pcb, pthread_t hilo_quantum_id)
             log_trace(LOGGER_KERNEL, "Se libera un espacio de multiprogramacion, semaforo: %d", sem_value);
         }
         break;
+    case INTERRUPCION_OUT_OF_MEMORY:
+        log_debug(LOGGER_KERNEL, "PID: %d - Desalojado por OUT OF MEMORY", pcb->pid);
+        finalizar_proceso(pcb);
+        break;
+    
     default:
         log_error(LOGGER_KERNEL, "PID: %d - Desalojado por motivo desconocido", pcb->pid);
         break;
@@ -462,13 +467,7 @@ void finalizar_proceso(t_pcb *pcb)
     log_info(LOGGER_KERNEL, "Finaliza el proceso %d - Motivo: %s", pcb->pid, motivo_finalizacion_to_string(pcb->contexto_ejecucion->motivo_finalizacion));
     cambiar_estado_pcb(pcb, FINALIZADO);
     squeue_push(squeue_exit, pcb);
-    if (list_size(pcb->recursos_asignados) > 0)
-    {
-        for (int i = 0; i < list_size(pcb->recursos_asignados); i++)
-        {
-            liberar_recurso(pcb, list_get(pcb->recursos_asignados, i));
-        }
-    }
+    liberar_recursos(pcb);
     // liberar_estructuras_memoria(pcb->pid); // TODO: Liberar estructuras de memoria
     sem_post(&semMultiprogramacion);
     if (sem_getvalue(&semMultiprogramacion, &sem_value) == 0)
@@ -623,6 +622,17 @@ void liberar_recurso(t_pcb *pcb, t_recurso *recurso)
     {
         t_pcb *pcb_desbloquear = squeue_pop(recurso->cola_procesos_bloqueados);
         desbloquear_proceso(pcb_desbloquear->pid);
+    }
+}
+
+void liberar_recursos(t_pcb *pcb)
+{
+    if (list_size(pcb->recursos_asignados) > 0)
+    {
+        for (int i = 0; i < list_size(pcb->recursos_asignados); i++)
+        {
+            liberar_recurso(pcb, list_get(pcb->recursos_asignados, i));
+        }
     }
 }
 

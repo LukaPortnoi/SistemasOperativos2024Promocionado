@@ -23,12 +23,10 @@
 #include "../../utils/include/memoria.h"
 #include "../../utils/include/IO.h"
 
-
-
 typedef struct
 {
-	uint32_t numeroMarco;
-	uint32_t pid;
+    uint32_t numeroMarco;
+    uint32_t pid;
 } t_marco;
 typedef struct
 {
@@ -70,6 +68,5 @@ extern uint32_t tamanioMemoria;
 extern t_list *marcosPaginas;
 extern t_list *procesos_totales;
 extern t_list *lista_datos_a_leer;
-
 
 #endif /* GESTOR_H_ */

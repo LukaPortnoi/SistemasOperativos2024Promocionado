@@ -476,14 +476,14 @@ void serializar_valor_leido_mov_in(t_paquete *paquete, char *valor)
     memcpy(paquete->buffer->stream, &tamanio_valor, sizeof(uint32_t));
 }
 
-void recibir_copystring(int socket_cliente, t_list *Lista_direccionesFisica_escritura, t_list  *Lista_direccionesFisica_lectura, uint32_t *tamanio)
+void recibir_copystring(int socket_cliente, t_list *Lista_direccionesFisica_escritura, t_list *Lista_direccionesFisica_lectura, uint32_t *tamanio)
 {
     t_paquete *paquete = recibir_paquete(socket_cliente);
     deserializar_datos_copystring(paquete, Lista_direccionesFisica_escritura, Lista_direccionesFisica_lectura, tamanio);
     eliminar_paquete(paquete);
 }
 
-void deserializar_datos_copystring(t_paquete *paquete, t_list *Lista_direccionesFisica_escritura,  t_list *Lista_direccionesFisica_lectura, uint32_t *tamanio)
+void deserializar_datos_copystring(t_paquete *paquete, t_list *Lista_direccionesFisica_escritura, t_list *Lista_direccionesFisica_lectura, uint32_t *tamanio)
 {
     int desplazamiento = 0;
     size_t num_elementos_escritura = (paquete->buffer->size - sizeof(uint32_t)) / (4 * sizeof(uint32_t));
@@ -515,8 +515,9 @@ void deserializar_datos_copystring(t_paquete *paquete, t_list *Lista_direcciones
         list_add(Lista_direccionesFisica_lectura, dato);
     }
 
-    if (desplazamiento < paquete->buffer->size) {
-        *tamanio = *(uint32_t*)(paquete->buffer->stream + desplazamiento);
+    if (desplazamiento < paquete->buffer->size)
+    {
+        *tamanio = *(uint32_t *)(paquete->buffer->stream + desplazamiento);
     }
 }
 
@@ -528,8 +529,8 @@ void escribir_memoria(uint32_t dir_fisica, uint32_t tamanio_registro, char *valo
         if (valorObtenido[i])
         {
             memcpy(&memoriaUsuario[dir_fisica + i], &valorObtenido[i], 1);
-           // valorGlobalDescritura++;
-            //valorTotalaDeLeer++;
+            // valorGlobalDescritura++;
+            // valorTotalaDeLeer++;
         }
         else
         {
@@ -537,19 +538,19 @@ void escribir_memoria(uint32_t dir_fisica, uint32_t tamanio_registro, char *valo
         }
     }
     pthread_mutex_unlock(&mutex_memoria_usuario);
-    log_info(LOGGER_MEMORIA, "PID: <%d> - Accion: <ESCRIBIR> - Direccion Fisica: <%d> - Tamaño <%d> \n", proceso_memoria->pid, dir_fisica, tamanio_registro); 
+    log_info(LOGGER_MEMORIA, "PID: <%d> - Accion: <ESCRIBIR> - Direccion Fisica: <%d> - Tamaño <%d> \n", proceso_memoria->pid, dir_fisica, tamanio_registro);
     usleep(RETARDO_RESPUESTA * 1000);
 }
 
 char *leer_memoria(uint32_t dir_fisica, uint32_t tamanio_registro)
 {
-    char valor_leido;
+    char valor_leido; // Cambiar a int
 
     /*if (tamanio_registro > valorTotalaDeLeer)
     {
         tamanio_registro = tamanio_registro - tamanio_registroTotal;
     }*/
-    uint32_t valorTotalaDeLeer = 0;
+    int valorTotalaDeLeer = 0;
     pthread_mutex_lock(&mutex_memoria_usuario);
     char *cadena = malloc(tamanio_registro + 1); // Allocate memory dynamically
     memset(cadena, 0, tamanio_registro + 1);     // Initialize all elements to 0
@@ -559,72 +560,92 @@ char *leer_memoria(uint32_t dir_fisica, uint32_t tamanio_registro)
         {
             memcpy(&valor_leido, &memoriaUsuario[dir_fisica + i], 1);
             cadena[i] = valor_leido;
+            printf("Valor a agregar a cadena: %c \n", valor_leido);
             valorTotalaDeLeer++;
             // Assign the character directly
         }
     }
     cadena[tamanio_registro] = '\0';
     pthread_mutex_unlock(&mutex_memoria_usuario);
-    log_info(LOGGER_MEMORIA, "PID: <%d> - Accion: <LEER> - Direccion Fisica: <%d> - Tamaño <%d> \n", proceso_memoria->pid, dir_fisica, valorTotalaDeLeer); 
+    log_info(LOGGER_MEMORIA, "PID: <%d> - Accion: <LEER> - Direccion Fisica: <%d> - Tamaño <%d> \n", proceso_memoria->pid, dir_fisica, valorTotalaDeLeer);
     printf("Cadena leida: %s \n", cadena);
     usleep(RETARDO_RESPUESTA * 1000);
     return cadena;
 }
 
-char *int_to_char(int num)
+char * int_to_char(int num)
 {
-    if (num == 0)
+
+    int i = log10(num) + 1;
+    char *s = (char*)calloc(i + 1, sizeof(char));
+
+    for(i--; num != 0; i--)
     {
-        char *s = (char *)calloc(2, sizeof(char));  // Si num es 0, devolver "0"
-        if (s == NULL) {
+        s[i] = (num % 10) + '0';
+        num /= 10;
+    }
+
+    return s;
+
+    /*if (num == 0)
+    {
+        char *s = (char *)calloc(2, sizeof(char)); // Si num es 0, devolver "0"
+        if (s == NULL)
+        {
             fprintf(stderr, "Error al asignar memoria en int_to_char\n");
-            exit(EXIT_FAILURE);  // En caso de fallo de asignación de memoria
+            exit(EXIT_FAILURE); // En caso de fallo de asignación de memoria
         }
         s[0] = '0';
-        s[1] = '\0';  // Terminador de cadena
+        s[1] = '\0'; // Terminador de cadena
         return s;
     }
 
     // Calcular el tamaño necesario para la cadena
     int i = log10(abs(num)) + 1;
-    char *s = (char *)calloc(i + 1, sizeof(char));  // +1 para el terminador nulo
+    char *s = (char *)calloc(i + 1, sizeof(char)); // +1 para el terminador nulo
 
-    if (s == NULL) {
+    if (s == NULL)
+    {
         fprintf(stderr, "Error al asignar memoria en int_to_char\n");
-        exit(EXIT_FAILURE);  // En caso de fallo de asignación de memoria
+        exit(EXIT_FAILURE); // En caso de fallo de asignación de memoria
     }
 
-    int negativo = 0;  // Variable para manejar números negativos
-    if (num < 0) {
+    int negativo = 0; // Variable para manejar números negativos
+    if (num < 0)
+    {
         negativo = 1;
         num = -num;
     }
 
     // Llenar el arreglo con los digitos de num
-    for (i--; num != 0; i--) {
+    for (i--; num != 0; i--)
+    {
         s[i] = (num % 10) + '0';
         num /= 10;
     }
 
-    if (negativo) {
+    if (negativo)
+    {
         s[i] = '-';
     }
 
     return s;
+    */
 }
 
-char* concatenar_lista_de_cadenas(t_list *lista) {
+char *concatenar_lista_de_cadenas(t_list *lista)
+{
     // Calcular el tamaño total necesario
     size_t tam_total = 1; // Inicia en 1 para el carácter nulo
-    for (int i = 0; i <list_size(lista); i++) {
+    for (int i = 0; i < list_size(lista); i++)
+    {
         tam_total += strlen(list_get(lista, i));
-
-                
     }
 
     // Asignar memoria para la cadena concatenada
     char *cadena_concatenada = (char *)malloc(tam_total);
-    if (cadena_concatenada == NULL) {
+    if (cadena_concatenada == NULL)
+    {
         return NULL; // Manejo de error si la asignación de memoria falla
     }
 
@@ -632,7 +653,8 @@ char* concatenar_lista_de_cadenas(t_list *lista) {
     cadena_concatenada[0] = '\0';
 
     // Copiar cada cadena de la lista en la cadena concatenada
-    for (int i = 0; i < list_size(lista); i++) {
+    for (int i = 0; i < list_size(lista); i++)
+    {
         strcat(cadena_concatenada, list_get(lista, i));
     }
 
@@ -640,5 +662,5 @@ char* concatenar_lista_de_cadenas(t_list *lista) {
 }
 
 /*
-
+INICIAR_PROCESO /scripts_memoria/MEMORIA_3
 */

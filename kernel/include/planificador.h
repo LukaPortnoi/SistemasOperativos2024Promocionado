@@ -43,6 +43,7 @@ void deserializar_pcb_recurso(t_pcb *pcb, t_buffer *buffer, char **recurso);
 void manejar_recurso(t_pcb *pcb, char *recurso);
 void asignar_recurso(t_pcb *pcb, t_recurso *recurso);
 void liberar_recurso(t_pcb *pcb, t_recurso *recurso);
+void liberar_recursos(t_pcb *pcb);
 t_recurso *encontrar_recurso(char *recurso);
 
 // INTERFACES

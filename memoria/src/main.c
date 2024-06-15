@@ -22,11 +22,6 @@ uint32_t tamanioMemoria;
 uint32_t valorGlobalDescritura;
 uint32_t valorTotalaDeLeer;
 
-
-
-// Función para crear una nueva lista
-
-
 t_list *marcosPaginas;
 t_list *procesos_totales;
 
@@ -69,15 +64,15 @@ void iniciar_memoria_usuario()
 	}
 
 	log_debug(LOGGER_MEMORIA, "Memoria reservada para el usuario");
-	
+
 	marcosPaginas = list_create();
 	procesos_totales = list_create();
 
 	iniciar_marcos();
 }
 
-void iniciar_marcos(){
-
+void iniciar_marcos()
+{
 	int cantidadMarcos = TAM_MEMORIA / TAM_PAGINA;
 	for (int i = 0; i < cantidadMarcos; i++)
 	{

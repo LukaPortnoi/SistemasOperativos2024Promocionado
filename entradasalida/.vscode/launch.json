@@ -8,7 +8,7 @@
       "type": "cppdbg",
       "request": "launch",
       "program": "${workspaceFolder}/bin/${workspaceFolderBasename}",
-      "args": ["Interfaz1", "./cfgs/generica.config"], //"./cfgs/generica.config", "./cfgs/stdin.config", "./cfgs/stdout.config", "./cfgs/dialfs.config"
+      "args": ["./cfgs/GENERICA.config"], //"./cfgs/generica.config", "./cfgs/stdin.config", "./cfgs/stdout.config", "./cfgs/dialfs.config"
       "stopAtEntry": false,
       "cwd": "${workspaceFolder}",
       "environment": [],
@@ -25,3 +25,13 @@
     }
   ]
 }
+
+//./bin/entradasalida ./cfgs/GENERICA.config
+//./bin/entradasalida ./cfgs/ESPERA.config
+//./bin/entradasalida ./cfgs/dialfs.config
+//./bin/entradasalida ./cfgs/MONITOR.config
+//./bin/entradasalida ./cfgs/SLP1.config
+//./bin/entradasalida ./cfgs/stdin.config
+//./bin/entradasalida ./cfgs/stdout.config
+//./bin/entradasalida ./cfgs/TECLADO.config
+// EJECUTAR_SCRIPT /scripts_kernel/PRUEBA_IO
