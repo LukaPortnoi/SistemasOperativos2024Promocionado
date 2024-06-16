@@ -604,14 +604,11 @@ char *int_to_char(int num)
     */
 }
 
-char *concatenar_lista_de_cadenas(t_list *lista)
+char *concatenar_lista_de_cadenas(t_list *lista , int tamanio)
 {
     // Calcular el tamaño total necesario
-    size_t tam_total = 1; // Inicia en 1 para el carácter nulo
-    for (int i = 0; i < list_size(lista); i++)
-    {
-        tam_total += strlen(list_get(lista, i));
-    }
+    size_t tam_total = tamanio + 1; // Inicia en 1 para el carácter nulo
+    
 
     // Asignar memoria para la cadena concatenada
     char *cadena_concatenada = (char *)malloc(tam_total);

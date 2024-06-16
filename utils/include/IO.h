@@ -92,12 +92,13 @@ void recibir_direcciones_de_stdout(int socket_cliente, t_list *lista_direcciones
 char *recibir_dato_stdout(int socket_cliente);
 char *recibir_dato(int socket, t_log *logger);
 char *deserializar_dato_interfaz_STDOUT(t_paquete *paquete) ;
-void enviar_dato_leido (int socket, char *dato);
-void serializar_dato_leido(t_paquete *paquete, char *dato);
+
+void enviar_dato_leido (int socket, char *dato, int tamanio);
+void serializar_dato_leido(t_paquete *paquete, char *dato  , int tamanio);
 void deserializar_direcciones_de_stdout(t_paquete *paquete, t_list *lista_datos) ;
 
 
 //MOV IN XD
-void enviar_dato_movIn(int socket, char *dato);
+void enviar_dato_movIn(int socket, char *dato, int tamanio);
 
 #endif // IO_H_

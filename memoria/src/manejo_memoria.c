@@ -12,7 +12,7 @@ void liberar_estructura_proceso_memoria(t_proceso_memoria *proceso_memoria)
     // Liberar elementos de la tabla de páginas
     while (proceso_memoria->tabla_paginas->elements_count > 0)
     {
-        uint32_t *nro_marco = (uint32_t*)list_remove(proceso_memoria->tabla_paginas, 0);
+        uint32_t *nro_marco = (uint32_t *)list_remove(proceso_memoria->tabla_paginas, 0);
         liberar_marco(*nro_marco);
         free(nro_marco);
     }
@@ -26,12 +26,12 @@ void liberar_estructura_proceso_memoria(t_proceso_memoria *proceso_memoria)
     }
     list_destroy(proceso_memoria->instrucciones);
 
-    //tambien deberia eliminarlo de la lista de procesos totales
+    // tambien deberia eliminarlo de la lista de procesos totales
     bool _buscar_proceso(void *element)
     {
         return element == proceso_memoria;
     }
-    
+
     list_remove_by_condition(procesos_totales, _buscar_proceso);
 
     free(proceso_memoria->path);
@@ -131,7 +131,7 @@ op_cod disminuir_tamanio_proceso_memoria(t_proceso_memoria *proceso_memoria, uin
         uint32_t i;
         for (i = 0; i < cantidad_paginas_disminucion; i++)
         {
-            uint32_t *nro_marco = (uint32_t*)list_remove(proceso_memoria->tabla_paginas, proceso_memoria->tabla_paginas->elements_count - 1);
+            uint32_t *nro_marco = (uint32_t *)list_remove(proceso_memoria->tabla_paginas, proceso_memoria->tabla_paginas->elements_count - 1);
             liberar_marco(*nro_marco);
             free(nro_marco);
         }
@@ -153,7 +153,7 @@ uint32_t cantidad_paginas_disponibles_memoria()
     uint32_t i;
 
     log_trace(LOGGER_MEMORIA, "Cantidad de marcos en la lista: %d", list_size(marcosPaginas));
-    
+
     for (i = 0; i < list_size(marcosPaginas); i++)
     {
         t_marco *marco = list_get(marcosPaginas, i);
@@ -188,14 +188,14 @@ uint32_t obtener_nro_marco_disponible()
 
 void liberar_marco(uint32_t nro_marco)
 {
-    t_marco* marco = list_get(marcosPaginas, nro_marco);
+    t_marco *marco = list_get(marcosPaginas, nro_marco);
     marco->pid = -1;
     list_replace(marcosPaginas, nro_marco, marco);
 }
 
 uint32_t obtener_marco_de_pagina(t_proceso_memoria *proceso_memoria, uint32_t nro_pagina)
 {
-    return *(uint32_t*)list_get(proceso_memoria->tabla_paginas, nro_pagina);
+    return *(uint32_t *)list_get(proceso_memoria->tabla_paginas, nro_pagina);
 }
 
 void recibir_finalizar_proceso(uint32_t *pid, int socket)

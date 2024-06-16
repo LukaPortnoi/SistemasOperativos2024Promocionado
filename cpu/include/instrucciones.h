@@ -27,13 +27,14 @@ char *recibir_valor_mov_in_memoria(int socket);
 char *deserializar_valor_mov_in_memoria(t_buffer *buffer);
 void enviar_valor_mov_in_cpu(t_list *Lista_direccionesFisica, int socket);
 void serializar_datos_mov_in(t_paquete *paquete, t_list *lista_direcciones);
-void serializar_datos_mov_out(t_paquete *paquete, t_list *Lista_direccionesFisica , uint32_t valorObtenido);
+void serializar_datos_mov_out(t_paquete *paquete, t_list *Lista_direccionesFisica, uint32_t valorObtenido);
 void enviar_valor_mov_out_cpu(t_list *Lista_direccionesFisica, uint32_t valorObtenido, int socket);
 void enviar_datos_copy_string(t_list *Lista_direccionesFisica_escritura, t_list *Lista_direccionesFisica_lectura, uint32_t tamanio, int socket);
 void serializar_datos_copy_string(t_paquete *paquete, t_list *Lista_direccionesFisica_escritura, t_list *Lista_direccionesFisica_lectura, uint32_t tamanio);
 char *recibir_dato_de_memoria_movIn(int socket, t_log *logger);
-char *deserializar_dato_movIN(t_paquete *paquete) ;
+char *deserializar_dato_movIN(t_paquete *paquete);
 char *recibir_dato_movIN(int socket_cliente);
+
 // UTILS
 uint32_t *get_registry32(char *registro);
 uint8_t *get_registry8(char *registro);

@@ -109,15 +109,17 @@ static void procesar_conexion_memoria(void *void_args)
 			char *valor_leido_mov_in;
 
 			recibir_mov_in_cpu(cliente_socket, direcciones_fisicas_mov_in);
-
+			int tamanioTotal = 0;
 			for (int i = 0; i < list_size(direcciones_fisicas_mov_in); i++)
 			{
 				t_direcciones_fisicas *direccionAmostrar = list_get(direcciones_fisicas_mov_in, i);
 				valor_leido_mov_in = leer_memoria(direccionAmostrar->direccion_fisica, direccionAmostrar->tamanio);
 				list_add(lista_datos_a_leer_mov_in, strdup(valor_leido_mov_in));
+				tamanioTotal += direccionAmostrar->tamanio;
 			}
-			char *valorTotalaDeLeerMovIn = concatenar_lista_de_cadenas(lista_datos_a_leer_mov_in);
-			enviar_dato_movIn(cliente_socket, valorTotalaDeLeerMovIn);
+			char *valorTotalaDeLeerMovIn = concatenar_lista_de_cadenas(lista_datos_a_leer_mov_in, tamanioTotal);
+			printf("Valor leido de memoria: %s \n", valorTotalaDeLeerMovIn);
+			enviar_dato_movIn(cliente_socket, valorTotalaDeLeerMovIn, tamanioTotal);
 
 			list_clean_and_destroy_elements(direcciones_fisicas_mov_in, free);
 			list_clean_and_destroy_elements(lista_datos_a_leer_mov_in, free);
@@ -244,18 +246,20 @@ static void procesar_conexion_memoria(void *void_args)
 			t_list *lista_datos_a_leer = list_create();
 			char *valor_leido_stdout;
 			recibir_direcciones_de_stdout(cliente_socket, direcciones_fisicas_a_leer);
+			int tamanio_registroTotal_stdout = 0;
 			for (int i = 0; i < list_size(direcciones_fisicas_a_leer); i++)
 			{
 				t_direcciones_fisicas *direccionAmostrar = list_get(direcciones_fisicas_a_leer, i);
 				valor_leido_stdout = leer_memoria(direccionAmostrar->direccion_fisica, direccionAmostrar->tamanio);
 				list_add(lista_datos_a_leer, strdup(valor_leido_stdout));
 				log_debug(LOGGER_MEMORIA, "Cadena final leída: %s \n", valor_leido_stdout);
+				tamanio_registroTotal_stdout += direccionAmostrar->tamanio;
 			}
-			char *valorTotalaDeLeer = concatenar_lista_de_cadenas(lista_datos_a_leer);
+			char *valorTotalaDeLeer = concatenar_lista_de_cadenas(lista_datos_a_leer, tamanio_registroTotal_stdout);
 
 			// valorTotalaDeLeer= valorTotalaDeLeer + tamanio_registroTotal_stdout;
-			printf("Valor leido de memoria: %s \n", valorTotalaDeLeer);
-			enviar_dato_leido(cliente_socket, valorTotalaDeLeer);
+			// printf("Valor leido de memoria: %s \n", valorTotalaDeLeer);
+			enviar_dato_leido(cliente_socket, valorTotalaDeLeer, tamanio_registroTotal_stdout);
 			list_clean_and_destroy_elements(direcciones_fisicas_a_leer, free);
 			list_clean_and_destroy_elements(lista_datos_a_leer, free);
 
@@ -267,7 +271,7 @@ static void procesar_conexion_memoria(void *void_args)
 			proceso_memoria = obtener_proceso_pid(pid_proceso);
 			if (proceso_memoria == NULL)
 			{
-				log_error(logger, "No se encontro el proceso con PID %d", pid_proceso); // El parametro decia "pidMarco" y se cambio a "pid_proceso" porque no existia, consultar que se quiso hacer ahi
+				log_error(logger, "No se encontro el proceso con PID %d", pid_proceso);
 				break;
 			}
 			else

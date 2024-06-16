@@ -16,6 +16,7 @@
 #include <commons/string.h>
 #include <commons/config.h>
 #include <commons/collections/list.h>
+#include <commons/memory.h>
 #include <readline/readline.h>
 
 #include "../../utils/include/sockets_server.h"

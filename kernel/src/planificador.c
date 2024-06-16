@@ -231,8 +231,8 @@ void recibir_pcb_CPU(t_pcb *pcb_recibido, int fd_cpu)
         for (int i = 0; i < list_size(direcciones_fisicas); i++)
         {
             t_direcciones_fisicas *direccionAmostrar = list_get(direcciones_fisicas, i);
-            printf("Direccion Fisica %d recibida: %d\n", i, direccionAmostrar->direccion_fisica);
-            printf("Tamanio %d recibido: %d\n", i, direccionAmostrar->tamanio);
+            //printf("Direccion Fisica %d recibida: %d\n", i, direccionAmostrar->direccion_fisica);
+            //printf("Tamanio %d recibido: %d\n", i, direccionAmostrar->tamanio);
         }
         break;
 

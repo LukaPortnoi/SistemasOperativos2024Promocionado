@@ -985,25 +985,25 @@ void deserializar_direcciones_de_stdout(t_paquete *paquete, t_list *lista_datos)
     }
 }
 
-void enviar_dato_movIn(int socket, char *dato)
+void enviar_dato_movIn(int socket, char *dato, int tamanio)
 {
     t_paquete *paquete = crear_paquete_con_codigo_de_operacion(RESPUESTA_DATO_MOVIN);
-    serializar_dato_leido(paquete, dato);
+    serializar_dato_leido(paquete, dato, tamanio);
     enviar_paquete(paquete, socket);
     eliminar_paquete(paquete);
 }
 
-void enviar_dato_leido(int socket, char *dato)
+void enviar_dato_leido(int socket, char *dato, int tamanio)
 {
     t_paquete *paquete = crear_paquete_con_codigo_de_operacion(RESPUESTA_DATO_STDOUT);
-    serializar_dato_leido(paquete, dato);
+    serializar_dato_leido(paquete, dato, tamanio);
     enviar_paquete(paquete, socket);
     eliminar_paquete(paquete);
 }
 
-void serializar_dato_leido(t_paquete *paquete, char *dato)
+void serializar_dato_leido(t_paquete *paquete, char *dato, int tamanio)
 {
-    uint32_t tamanio_dato = strlen(dato) + 1;
+    uint32_t tamanio_dato = tamanio + 1;
 
     paquete->buffer->size = sizeof(uint32_t) + tamanio_dato;
     paquete->buffer->stream = malloc(paquete->buffer->size);
