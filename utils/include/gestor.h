@@ -8,16 +8,15 @@
 #include <sys/socket.h>
 #include <netdb.h>
 #include <string.h>
-#include <commons/log.h>
-#include <commons/config.h>
-#include <commons/temporal.h>
 #include <assert.h>
 #include <pthread.h>
 #include <readline/readline.h>
 
 #include <commons/log.h>
-#include <commons/string.h>
 #include <commons/config.h>
+#include <commons/temporal.h>
+#include <commons/string.h>
 #include <commons/collections/queue.h>
+#include <commons/collections/list.h>
 
 #endif /* GESTOR_H_ */

@@ -138,7 +138,7 @@ t_paquete *crear_paquete_interrupcion(t_interrupcion *interrupcion)
 	paquete->buffer = crear_buffer_interrupcion(interrupcion);
 	return paquete;
 }
-
+	
 t_buffer *crear_buffer_interrupcion(t_interrupcion *interrupcion)
 {
 	t_buffer *buffer = malloc(sizeof(t_buffer));

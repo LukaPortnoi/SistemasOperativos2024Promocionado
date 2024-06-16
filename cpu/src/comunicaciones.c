@@ -8,6 +8,7 @@ typedef struct
 } t_procesar_conexion_args;
 
 bool esSyscall = false;
+bool envioPcb = false;
 bool interrupciones[5] = {0, 0, 0, 0, 0};
 
 static void procesar_conexion_dispatch(void *void_args)
@@ -42,23 +43,25 @@ static void procesar_conexion_dispatch(void *void_args)
 			break;
 
 		case PCB:
-			pcb_actual = recibir_pcb(cliente_socket);
+			pthread_mutex_lock(&mutex_pcb_actual);
+			recibir_pcb(pcb_actual, cliente_socket);
+			pthread_mutex_unlock(&mutex_pcb_actual);
 
-			while (!hayInterrupciones() && pcb_actual != NULL && !esSyscall /* && !page_fault*/) // Aca deberia ir el check_interrupt()
+			while (!hayInterrupciones() && pcb_actual != NULL && !esSyscall)
 			{
 				ejecutar_ciclo_instruccion(cliente_socket);
 			}
 
-			log_debug(LOGGER_CPU, "PID: %d - Estado: %s, Contexto: %s\n", pcb_actual->pid, estado_to_string(pcb_actual->estado), motivo_desalojo_to_string(pcb_actual->contexto_ejecucion->motivo_desalojo));
+			log_debug(LOGGER_CPU, "PID: %d, Contexto: %s\n", pcb_actual->pid, motivo_desalojo_to_string(pcb_actual->contexto_ejecucion->motivo_desalojo));
 
-			// Envia el PCB actualizado si no ejecuto una syscall de IO
-			if (pcb_actual->contexto_ejecucion->motivo_desalojo != INTERRUPCION_BLOQUEO)
+			// Envia el PCB actualizado si no ejecuto una syscall de pedido de recurso o IO
+			if (!envioPcb)
 			{
 				enviar_pcb(pcb_actual, cliente_socket);
 			}
 
+			envioPcb = false;
 			esSyscall = false;
-			pcb_actual = NULL;
 
 			pthread_mutex_lock(&mutex_interrupt);
 			limpiar_interrupciones();
@@ -69,8 +72,7 @@ static void procesar_conexion_dispatch(void *void_args)
 		// -- ERRORES --
 		// ---------------
 		default:
-			log_error(logger, "Algo anduvo mal en el server de %s", server_name);
-			log_info(logger, "Cop: %d", cop);
+			log_error(logger, "Algo anduvo mal en el server de %s, Cod OP: %d", server_name, cop);
 			break;
 		}
 	}
@@ -113,8 +115,7 @@ static void procesar_conexion_interrupt(void *void_args)
 		// -- ERRORES --
 		// ---------------
 		default:
-			log_error(logger, "Algo anduvo mal en el server de %s", server_name);
-			log_info(logger, "Cop: %d", cop);
+			log_error(logger, "Algo anduvo mal en el server de %s, Cod OP: %d", server_name, cop);
 			break;
 		}
 	}
@@ -151,6 +152,8 @@ void recibir_interrupciones(int cliente_socket, t_log *logger)
 {
 	t_interrupcion *interrupcion = recibir_interrupcion(cliente_socket);
 
+	pthread_mutex_lock(&mutex_pcb_actual);
+
 	switch (interrupcion->motivo_interrupcion)
 	{
 	case INTERRUPCION_FIN_QUANTUM:
@@ -181,6 +184,10 @@ void recibir_interrupciones(int cliente_socket, t_log *logger)
 	default:
 		break;
 	}
+
+	pthread_mutex_unlock(&mutex_pcb_actual);
+
+	free(interrupcion);
 }
 
 bool hayInterrupciones(void)

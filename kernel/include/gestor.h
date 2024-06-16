@@ -16,6 +16,7 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 
+#include <commons/temporal.h>
 #include <commons/log.h>
 #include <commons/string.h>
 #include <commons/config.h>
@@ -29,6 +30,12 @@
 #include "../../utils/include/pcb.h"
 #include "../../utils/include/IO.h"
 
+typedef struct
+{
+    char *nombre_recurso;
+    int instancias;
+    t_squeue *cola_procesos_bloqueados;
+} t_recurso;
 typedef struct
 {
     char *nombre_interfaz_recibida;
@@ -59,14 +66,26 @@ extern int fd_kernel_cpu_dispatch;
 extern int fd_kernel_cpu_interrupt;
 
 extern uint32_t PID_GLOBAL;
+extern bool PLANIFICACION_DETENIDA;
 
+// GLOBALES PARA MANEJO DE RECURSOS
+extern t_list *RECURSOS_DISPONIBLES;
+extern char *RECURSO_A_USAR;
+extern nombre_instruccion INSTRUCCION_RECURSO_A_USAR;
+extern pthread_mutex_t MUTEX_RECURSO;
+
+// GLOBALES PARA MANEJO DE INTERFACES
 extern t_list *interfaces_conectadas;
 extern char *nombre_interfaz;
-extern int unidades_de_trabajo;
 extern nombre_instruccion instruccion_de_IO_a_ejecutar;
+extern int unidades_de_trabajo;
+extern t_list *direcciones_fisicas;
 
 extern t_pcb *pcb_ejecutandose;
+extern t_pcb *pcb_a_finalizar;
 
+extern sem_t sem_planificador_largo_plazo;
+extern sem_t sem_planificador_corto_plazo;
 extern sem_t semMultiprogramacion;
 extern sem_t semNew;
 extern sem_t semReady;
@@ -82,12 +101,12 @@ extern pthread_mutex_t procesoMutex;
 extern pthread_mutex_t procesosEnSistemaMutex;
 extern pthread_mutex_t mutex_pid;
 extern pthread_mutex_t mutex_lista_interfaces;
-extern pthread_mutex_t mutex_lista_blocked;
 
 extern t_squeue *squeue_new;
 extern t_squeue *squeue_ready;
+extern t_squeue *squeue_readyPlus;
 extern t_squeue *squeue_exec;
-extern t_list *list_blocked;
+extern t_squeue *squeue_blocked;
 extern t_squeue *squeue_exit;
 
 extern pthread_t hilo_quantum;

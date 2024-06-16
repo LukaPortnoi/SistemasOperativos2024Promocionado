@@ -17,19 +17,38 @@ void planificar_PCB_cortoPlazo(void);
 
 void ejecutar_PCB(t_pcb *pcb);
 void desalojo_cpu(t_pcb *pcb, pthread_t hilo_quantum);
-t_pcb *recibir_pcb_CPU(int socket);
-void atender_quantum(void* arg);
-void atender_interrupcionBloqueo(t_pcb *pcb);
+void recibir_pcb_CPU(t_pcb *pcb, int socket);
+void atender_quantum(void *arg);
+
+// INTERRUPT
+void crear_y_enviar_interrupcion(t_motivo_desalojo mot_interrupcion, uint32_t pid);
 
 // OTRAS FUNCIONES
+void detener_planificadores();
+void iniciar_planificadores();
+
 void iniciar_colas_y_semaforos(void);
+void inicializar_recursos();
+
 uint32_t asignar_pid(void);
 void cambiar_estado_pcb(t_pcb *pcb, t_estado_proceso estado);
+void proceso_listo(t_pcb *pcb, bool es_ready_plus);
 void finalizar_proceso(t_pcb *pcb);
-void bloquear_proceso(t_pcb *pcb);
+void liberar_estructuras_memoria(uint32_t pid);
+void bloquear_proceso(t_pcb *pcb, char *motivo);
 void desbloquear_proceso(uint32_t pid);
 
+// RECURSOS
+void recibir_pcb_para_manejo_recurso(t_pcb *pcb, int socket, char **recurso);
+void deserializar_pcb_recurso(t_pcb *pcb, t_buffer *buffer, char **recurso);
+void manejar_recurso(t_pcb *pcb, char *recurso);
+void asignar_recurso(t_pcb *pcb, t_recurso *recurso);
+void liberar_recurso(t_pcb *pcb, t_recurso *recurso);
+void liberar_recursos(t_pcb *pcb);
+t_recurso *encontrar_recurso(char *recurso);
+
 // INTERFACES
+void bloquear_procesosIO(t_pcb *pcbAbloquear, t_interfaz_recibida *interfaz_a_utilizar);
 void ejecutar_intruccion_io(t_pcb *pcb_recibido);
 t_interfaz_recibida *buscar_interfaz_por_nombre(char *nombre_interfaz);
 

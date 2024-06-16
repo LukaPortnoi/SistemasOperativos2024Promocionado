@@ -35,6 +35,10 @@ typedef struct
     uint32_t longitud_parametro2;
     char *parametro3;
     char *parametro4;
+    char *parametro5;
+    uint32_t longitud_parametro4;
+    uint32_t longitud_parametro3;
+    uint32_t longitud_parametro5;
 } t_instruccion;
 
 typedef struct
@@ -50,7 +54,9 @@ typedef enum
     INTERRUPCION_FIN_QUANTUM,
     INTERRUPCION_BLOQUEO,
     INTERRUPCION_FINALIZACION,
+    FINALIZACION,
     INTERRUPCION_ERROR,
+    INTERRUPCION_OUT_OF_MEMORY,
     INTERRUPCION_SYSCALL
 } t_motivo_desalojo;
 
@@ -59,11 +65,12 @@ typedef struct
     t_motivo_desalojo motivo_interrupcion;
     int pid;
 } t_interrupcion;
+
 typedef enum
 {
     FINALIZACION_SIN_MOTIVO,
     SUCCESS,
-    INVALID_RESOURCE,
+    INVALID_RESOURCE, 
     INVALID_INTERFACE,
     OUT_OF_MEMORY,
     INTERRUPTED_BY_USER

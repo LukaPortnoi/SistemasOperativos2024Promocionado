@@ -1,6 +1,5 @@
 #include "../include/utils_memoria.h"
 
-t_list *procesos_totales;
 t_proceso_memoria *proceso_memoria;
 
 t_proceso_memoria *recibir_proceso_memoria(int socket_cliente)
@@ -123,22 +122,24 @@ char *instruccion_to_string(nombre_instruccion instruccion)
 
 void enviar_instruccion(int socket, t_instruccion *instruccion)
 {
-    t_paquete *paquete = crear_paquete_Instruccion(instruccion);
-    agregar_a_paquete_Instruccion(paquete, instruccion);
+    t_paquete *paquete = crear_paquete_con_codigo_de_operacion(INSTRUCCION);
+    serializar_instruccion(paquete, instruccion);
     enviar_paquete(paquete, socket);
     eliminar_paquete(paquete);
 }
 
-t_paquete *crear_paquete_Instruccion(t_instruccion *instruccion)
+void serializar_instruccion(t_paquete *paquete, t_instruccion *instruccion)
 {
-    t_paquete *paquete = malloc(sizeof(t_paquete));
-    paquete->codigo_operacion = INSTRUCCION;
-    paquete->buffer = crear_buffer_instruccion(instruccion);
-    return paquete;
-}
+    paquete->buffer->size = sizeof(nombre_instruccion) +
+                            sizeof(uint32_t) * 5 +
+                            instruccion->longitud_parametro1 +
+                            instruccion->longitud_parametro2 +
+                            instruccion->longitud_parametro3 +
+                            instruccion->longitud_parametro4 +
+                            instruccion->longitud_parametro5;
 
-void agregar_a_paquete_Instruccion(t_paquete *paquete, t_instruccion *instruccion)
-{
+    paquete->buffer->stream = malloc(paquete->buffer->size);
+
     int desplazamiento = 0;
 
     memcpy(paquete->buffer->stream + desplazamiento, &(instruccion->nombre), sizeof(nombre_instruccion));
@@ -152,53 +153,41 @@ void agregar_a_paquete_Instruccion(t_paquete *paquete, t_instruccion *instruccio
     memcpy(paquete->buffer->stream + desplazamiento, &longitud_parametro2, sizeof(uint32_t)); // Cambio aquí
     desplazamiento += sizeof(uint32_t);
 
+    uint32_t longitud_parametro3 = instruccion->longitud_parametro3;                          // Cambio aquí
+    memcpy(paquete->buffer->stream + desplazamiento, &longitud_parametro3, sizeof(uint32_t)); // Cambio aquí
+    desplazamiento += sizeof(uint32_t);
+
+    uint32_t longitud_parametro4 = instruccion->longitud_parametro4;                          // Cambio aquí
+    memcpy(paquete->buffer->stream + desplazamiento, &longitud_parametro4, sizeof(uint32_t)); // Cambio aquí
+    desplazamiento += sizeof(uint32_t);
+
+    uint32_t longitud_parametro5 = instruccion->longitud_parametro5;                          // Cambio aquí
+    memcpy(paquete->buffer->stream + desplazamiento, &longitud_parametro5, sizeof(uint32_t)); // Cambio aquí
+    desplazamiento += sizeof(uint32_t);
+
     memcpy(paquete->buffer->stream + desplazamiento, instruccion->parametro1, instruccion->longitud_parametro1);
     desplazamiento += instruccion->longitud_parametro1;
 
     memcpy(paquete->buffer->stream + desplazamiento, instruccion->parametro2, instruccion->longitud_parametro2);
     desplazamiento += instruccion->longitud_parametro2;
+
+    memcpy(paquete->buffer->stream + desplazamiento, instruccion->parametro3, instruccion->longitud_parametro3);
+    desplazamiento += instruccion->longitud_parametro3;
+
+    memcpy(paquete->buffer->stream + desplazamiento, instruccion->parametro4, instruccion->longitud_parametro4);
+    desplazamiento += instruccion->longitud_parametro4;
+
+    memcpy(paquete->buffer->stream + desplazamiento, instruccion->parametro5, instruccion->longitud_parametro5);
 }
 
-t_buffer *crear_buffer_instruccion(t_instruccion *instruccion)
-{
-    t_buffer *buffer = malloc(sizeof(t_buffer));
-
-    buffer->size = sizeof(nombre_instruccion) +
-                   sizeof(uint32_t) * 2 +
-                   instruccion->longitud_parametro1 +
-                   instruccion->longitud_parametro2;
-
-    buffer->stream = malloc(buffer->size);
-
-    int desplazamiento = 0;
-
-    memcpy(buffer->stream + desplazamiento, &(instruccion->nombre), sizeof(nombre_instruccion));
-    desplazamiento += sizeof(nombre_instruccion);
-
-    memcpy(buffer->stream + desplazamiento, &(instruccion->longitud_parametro1), sizeof(uint32_t));
-    desplazamiento += sizeof(uint32_t);
-
-    memcpy(buffer->stream + desplazamiento, &(instruccion->longitud_parametro2), sizeof(uint32_t));
-    desplazamiento += sizeof(uint32_t);
-
-    memcpy(buffer->stream + desplazamiento, instruccion->parametro1, instruccion->longitud_parametro1);
-    desplazamiento += instruccion->longitud_parametro1;
-
-    memcpy(buffer->stream + desplazamiento, instruccion->parametro2, instruccion->longitud_parametro2);
-    desplazamiento += instruccion->longitud_parametro2;
-
-    return buffer;
-}
-
-// NO ME CIERRA LA FUNCION, SE REVISARA MAS TARDE (MAS QUE NADA AL DEVOLVER EL PROCESO_NUEVO, YA QUE SE INICIALIZA PREVIAMENTE Y NO SE DESARROLLO LA FUNCION POR EL TEMA DE LA ESTRUCTURA DE LOS PROCESOS EN MEMORIA)
 t_proceso_memoria *iniciar_proceso_path(t_proceso_memoria *proceso_nuevo)
 {
     pthread_mutex_lock(&mutex_procesos);
     proceso_nuevo->instrucciones = parsear_instrucciones(proceso_nuevo->path);
     log_debug(LOGGER_MEMORIA, "Instrucciones bien parseadas para el proceso PID [%d]", proceso_nuevo->pid);
-    list_add(procesos_totales, proceso_nuevo); // SOPORTE: ACA ESTARIA AGREGANDO EL PROCESO
+    list_add(procesos_totales, proceso_nuevo);
     pthread_mutex_unlock(&mutex_procesos);
-    // inicializar_nuevo_proceso(proceso_nuevo); -> Se usa para inicializar las estructuras de memoria del proceso. Se agregara despues si es que no hay drama con la funcion actual. Si genera problema, se eliminara y buscara otra alternativa
+    iniciar_estructura_proceso_memoria(proceso_nuevo);
     return proceso_nuevo;
 }
 
@@ -217,27 +206,59 @@ t_list *parsear_instrucciones(char *path)
         char **palabras = string_split(split_instrucciones[indice_split], " ");
         if (string_equals_ignore_case(palabras[0], "SET"))
         {
-            list_add(instrucciones, armar_estructura_instruccion(SET, palabras[1], palabras[2]));
+            list_add(instrucciones, armar_estructura_instruccion(SET, palabras[1], palabras[2], "", "", ""));
         }
         else if (string_equals_ignore_case(palabras[0], "SUM"))
         {
-            list_add(instrucciones, armar_estructura_instruccion(SUM, palabras[1], palabras[2]));
+            list_add(instrucciones, armar_estructura_instruccion(SUM, palabras[1], palabras[2], "", "", ""));
         }
         else if (string_equals_ignore_case(palabras[0], "SUB"))
         {
-            list_add(instrucciones, armar_estructura_instruccion(SUB, palabras[1], palabras[2]));
+            list_add(instrucciones, armar_estructura_instruccion(SUB, palabras[1], palabras[2], "", "", ""));
         }
         else if (string_equals_ignore_case(palabras[0], "JNZ"))
         {
-            list_add(instrucciones, armar_estructura_instruccion(JNZ, palabras[1], palabras[2]));
+            list_add(instrucciones, armar_estructura_instruccion(JNZ, palabras[1], palabras[2], "", "", ""));
+        }
+        else if (string_equals_ignore_case(palabras[0], "WAIT"))
+        {
+            list_add(instrucciones, armar_estructura_instruccion(WAIT, palabras[1], "", "", "", ""));
+        }
+        else if (string_equals_ignore_case(palabras[0], "SIGNAL"))
+        {
+            list_add(instrucciones, armar_estructura_instruccion(SIGNAL, palabras[1], "", "", "", ""));
+        }
+        else if (string_equals_ignore_case(palabras[0], "RESIZE"))
+        {
+            list_add(instrucciones, armar_estructura_instruccion(RESIZE, palabras[1], "", "", "", ""));
+        }
+        else if (string_equals_ignore_case(palabras[0], "MOV_IN"))
+        {
+            list_add(instrucciones, armar_estructura_instruccion(MOV_IN, palabras[1], palabras[2], "", "", ""));
+        }
+        else if (string_equals_ignore_case(palabras[0], "MOV_OUT"))
+        {
+            list_add(instrucciones, armar_estructura_instruccion(MOV_OUT, palabras[1], palabras[2], "", "", ""));
+        }
+        else if (string_equals_ignore_case(palabras[0], "COPY_STRING"))
+        {
+            list_add(instrucciones, armar_estructura_instruccion(COPY_STRING, palabras[1], "", "", "", ""));
         }
         else if (string_equals_ignore_case(palabras[0], "IO_GEN_SLEEP"))
         {
-            list_add(instrucciones, armar_estructura_instruccion(IO_GEN_SLEEP, palabras[1], palabras[2]));
+            list_add(instrucciones, armar_estructura_instruccion(IO_GEN_SLEEP, palabras[1], palabras[2], "", "", ""));
+        }
+        else if (string_equals_ignore_case(palabras[0], "IO_STDIN_READ"))
+        {
+            list_add(instrucciones, armar_estructura_instruccion(IO_STDIN_READ, palabras[1], palabras[2], palabras[3], "", ""));
+        }
+        else if (string_equals_ignore_case(palabras[0], "IO_STDOUT_WRITE"))
+        {
+            list_add(instrucciones, armar_estructura_instruccion(IO_STDOUT_WRITE, palabras[1], palabras[2], palabras[3], "", ""));
         }
         else if (string_equals_ignore_case(palabras[0], "EXIT"))
         {
-            list_add(instrucciones, armar_estructura_instruccion(EXIT, "", ""));
+            list_add(instrucciones, armar_estructura_instruccion(EXIT, "", "", "", "", ""));
         }
 
         indice_split++;
@@ -251,7 +272,7 @@ t_list *parsear_instrucciones(char *path)
     return instrucciones;
 }
 
-t_instruccion *armar_estructura_instruccion(nombre_instruccion instruccion, char *parametro1, char *parametro2)
+t_instruccion *armar_estructura_instruccion(nombre_instruccion instruccion, char *parametro1, char *parametro2, char *parametro3, char *parametro4, char *parametro5)
 {
     t_instruccion *estructura = (t_instruccion *)malloc(sizeof(t_instruccion));
 
@@ -261,6 +282,15 @@ t_instruccion *armar_estructura_instruccion(nombre_instruccion instruccion, char
 
     estructura->longitud_parametro1 = strlen(estructura->parametro1) + 1;
     estructura->longitud_parametro2 = strlen(estructura->parametro2) + 1;
+
+    estructura->parametro3 = (parametro3[0] != '\0') ? strdup(parametro3) : parametro3;
+    estructura->longitud_parametro3 = strlen(estructura->parametro3) + 1;
+
+    estructura->parametro4 = (parametro4[0] != '\0') ? strdup(parametro4) : parametro4;
+    estructura->longitud_parametro4 = strlen(estructura->parametro4) + 1;
+
+    estructura->parametro5 = (parametro5[0] != '\0') ? strdup(parametro5) : parametro5;
+    estructura->longitud_parametro5 = strlen(estructura->parametro5) + 1;
 
     return estructura;
 }
@@ -301,8 +331,300 @@ char *leer_archivo(char *path)
     return cadena;
 }
 
+void recibir_pedido_resize(uint32_t *pid, uint32_t *nueva_cantidad_paginas, int socket)
+{
+    t_paquete *paquete = recibir_paquete(socket);
+    deserializar_pedido_resize(pid, nueva_cantidad_paginas, paquete->buffer);
+    eliminar_paquete(paquete);
+}
+
+void deserializar_pedido_resize(uint32_t *pid, uint32_t *tamanio, t_buffer *buffer)
+{
+    int desplazamiento = 0;
+    memcpy(pid, buffer->stream + desplazamiento, sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+    memcpy(tamanio, buffer->stream + desplazamiento, sizeof(uint32_t));
+}
+
 void iniciar_semaforos()
 {
     pthread_mutex_init(&mutex_procesos, NULL);
     pthread_mutex_init(&mutex_comunicacion_procesos, NULL);
+}
+
+void recibir_mov_out_cpu(t_list *lista_direcciones, uint32_t *valorObtenido, int cliente_socket)
+{
+    t_paquete *paquete = recibir_paquete(cliente_socket);
+    deserializar_datos_mov_out(paquete, lista_direcciones, valorObtenido);
+    // printf("Valor dir_fisica recv: %ls \n", direccion_fisica);
+    // printf("Valor tamanio_registro recv: %ls \n", tamanio_registro);
+    // printf("Valor valorObtenido recv: %ls \n", valorObtenido);
+    eliminar_paquete(paquete);
+}
+
+void deserializar_datos_mov_out(t_paquete *paquete, t_list *lista_datos, uint32_t *valorObtenido)
+{
+    int desplazamiento = 0;
+    size_t num_elementos = (paquete->buffer->size - sizeof(uint32_t)) / (2 * sizeof(uint32_t));
+
+    // Iteramos sobre el buffer y deserializamos cada elemento
+    for (size_t i = 0; i < num_elementos; i++)
+    {
+        t_direcciones_fisicas *dato = malloc(sizeof(t_direcciones_fisicas));
+        memcpy(&(dato->direccion_fisica), paquete->buffer->stream + desplazamiento, sizeof(uint32_t));
+        desplazamiento += sizeof(uint32_t);
+        memcpy(&(dato->tamanio), paquete->buffer->stream + desplazamiento, sizeof(uint32_t));
+        desplazamiento += sizeof(uint32_t);
+
+        list_add(lista_datos, dato);
+    }
+
+    memcpy(valorObtenido, paquete->buffer->stream + desplazamiento, sizeof(uint32_t));
+}
+
+void recibir_mov_in_cpu(int socket_cliente, t_list *lista_direcciones)
+{
+    t_paquete *paquete = recibir_paquete(socket_cliente);
+    deserializar_datos_mov_in(paquete, lista_direcciones);
+    eliminar_paquete(paquete);
+}
+
+void deserializar_datos_mov_in(t_paquete *paquete, t_list *lista_datos)
+{
+    int desplazamiento = 0;
+    size_t num_elementos = paquete->buffer->size / (2 * sizeof(uint32_t));
+
+    // Iteramos sobre el buffer y deserializamos cada elemento
+    for (size_t i = 0; i < num_elementos; i++)
+    {
+        t_direcciones_fisicas *dato = malloc(sizeof(t_direcciones_fisicas));
+        memcpy(&(dato->direccion_fisica), paquete->buffer->stream + desplazamiento, sizeof(uint32_t));
+        desplazamiento += sizeof(uint32_t);
+        memcpy(&(dato->tamanio), paquete->buffer->stream + desplazamiento, sizeof(uint32_t));
+        desplazamiento += sizeof(uint32_t);
+
+        list_add(lista_datos, dato);
+    }
+}
+
+void recibir_pedido_marco(uint32_t *pagina, uint32_t *pid_proceso, int socket)
+{
+    t_paquete *paquete = recibir_paquete(socket);
+    deserializar_pedido_marco(pagina, pid_proceso, paquete->buffer);
+    eliminar_paquete(paquete);
+}
+
+void deserializar_pedido_marco(uint32_t *pagina, uint32_t *pid_proceso, t_buffer *buffer)
+{
+    int desplazamiento = 0;
+    memcpy(pid_proceso, buffer->stream + desplazamiento, sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+    memcpy(pagina, buffer->stream + desplazamiento, sizeof(uint32_t));
+}
+
+void enviar_marco(int socket, uint32_t marco)
+{
+    t_paquete *paquete = crear_paquete_con_codigo_de_operacion(ENVIAR_MARCO); // ??????
+    serializar_marco(paquete, marco);
+    enviar_paquete(paquete, socket);
+    eliminar_paquete(paquete);
+}
+
+void serializar_marco(t_paquete *paquete, uint32_t marco)
+{
+    paquete->buffer->size = sizeof(uint32_t);
+    paquete->buffer->stream = malloc(paquete->buffer->size);
+    memcpy(paquete->buffer->stream, &(marco), sizeof(uint32_t));
+}
+
+void enviar_valor_mov_in_memoria(char *valor, int socket)
+{
+    t_paquete *paquete_mov_in = crear_paquete_con_codigo_de_operacion(PEDIDO_MOV_IN);
+    serializar_valor_leido_mov_in(paquete_mov_in, valor);
+    enviar_paquete(paquete_mov_in, socket);
+    eliminar_paquete(paquete_mov_in);
+}
+
+void serializar_valor_leido_mov_in(t_paquete *paquete, char *valor)
+{
+    uint32_t tamanio_valor = strlen(valor) + 1;
+    paquete->buffer->size = sizeof(uint32_t);
+    paquete->buffer->stream = malloc(paquete->buffer->size);
+    memcpy(paquete->buffer->stream, &tamanio_valor, sizeof(uint32_t));
+}
+
+void recibir_copystring(int socket_cliente, t_list *Lista_direccionesFisica_escritura, t_list *Lista_direccionesFisica_lectura, uint32_t *tamanio)
+{
+    t_paquete *paquete = recibir_paquete(socket_cliente);
+    deserializar_datos_copystring(paquete, Lista_direccionesFisica_escritura, Lista_direccionesFisica_lectura, tamanio);
+    eliminar_paquete(paquete);
+}
+
+void deserializar_datos_copystring(t_paquete *paquete, t_list *Lista_direccionesFisica_escritura, t_list *Lista_direccionesFisica_lectura, uint32_t *tamanio)
+{
+    int desplazamiento = 0;
+    size_t num_elementos_escritura = (paquete->buffer->size - sizeof(uint32_t)) / (4 * sizeof(uint32_t));
+
+    // Iteramos sobre el buffer y deserializamos cada elemento
+    for (size_t i = 0; i < num_elementos_escritura; i++)
+    {
+        // Asignamos memoria para un t_direcciones_fisicas, que contiene dos uint32_t
+        t_direcciones_fisicas *dato = malloc(sizeof(t_direcciones_fisicas));
+        memcpy(&(dato->direccion_fisica), paquete->buffer->stream + desplazamiento, sizeof(uint32_t));
+        desplazamiento += sizeof(uint32_t);
+        memcpy(&(dato->tamanio), paquete->buffer->stream + desplazamiento, sizeof(uint32_t));
+        desplazamiento += sizeof(uint32_t);
+
+        list_add(Lista_direccionesFisica_escritura, dato);
+    }
+
+    size_t num_elementos_lectura = (paquete->buffer->size - sizeof(uint32_t) - desplazamiento) / (2 * sizeof(uint32_t));
+
+    for (size_t i = 0; i < num_elementos_lectura; i++)
+    {
+        // Asignamos memoria para un t_direcciones_fisicas, que contiene dos uint32_t
+        t_direcciones_fisicas *dato = malloc(sizeof(t_direcciones_fisicas));
+        memcpy(&(dato->direccion_fisica), paquete->buffer->stream + desplazamiento, sizeof(uint32_t));
+        desplazamiento += sizeof(uint32_t);
+        memcpy(&(dato->tamanio), paquete->buffer->stream + desplazamiento, sizeof(uint32_t));
+        desplazamiento += sizeof(uint32_t);
+
+        list_add(Lista_direccionesFisica_lectura, dato);
+    }
+
+    if (desplazamiento < paquete->buffer->size)
+    {
+        *tamanio = *(uint32_t *)(paquete->buffer->stream + desplazamiento);
+    }
+}
+
+void escribir_memoria(uint32_t dir_fisica, uint32_t tamanio_registro, char *valorObtenido)
+{
+    pthread_mutex_lock(&mutex_memoria_usuario);
+    /* for (uint32_t i = 0; i < tamanio_registro; i++)
+    {
+        if (valorObtenido[i])
+        {
+            memcpy(memoriaUsuario + dir_fisica + i, &valorObtenido[i], 1);
+        }
+        else
+        {
+            break;
+        }
+    } */
+    memcpy(memoriaUsuario + dir_fisica, valorObtenido, tamanio_registro);
+    pthread_mutex_unlock(&mutex_memoria_usuario);
+    log_info(LOGGER_MEMORIA, "PID: <%d> - Accion: <ESCRIBIR> - Direccion Fisica: <%d> - Tamaño <%d> \n", proceso_memoria->pid, dir_fisica, tamanio_registro);
+    usleep(RETARDO_RESPUESTA * 1000);
+}
+
+char *leer_memoria(uint32_t dir_fisica, uint32_t tamanio_registro)
+{
+    /* char valor_leido; // Cambiar a int
+    int valorTotalaDeLeer = 0; */
+    pthread_mutex_lock(&mutex_memoria_usuario);
+    char *cadena = malloc(tamanio_registro + 1); // Allocate memory dynamically
+    memset(cadena, 0, tamanio_registro + 1);     // Initialize all elements to 0
+    /* for (uint32_t i = 0; i < tamanio_registro; i++)
+    {
+        if (&memoriaUsuario[dir_fisica + i] != 0)
+        {
+            memcpy(&valor_leido, &memoriaUsuario[dir_fisica + i], 1);
+            cadena[i] = valor_leido;
+            printf("Valor a agregar a cadena: %c \n", valor_leido);
+            valorTotalaDeLeer++;
+            // Assign the character directly
+        }
+    } */
+    memcpy(cadena, memoriaUsuario + dir_fisica, tamanio_registro);
+    cadena[tamanio_registro] = '\0';
+    pthread_mutex_unlock(&mutex_memoria_usuario);
+    log_info(LOGGER_MEMORIA, "PID: <%d> - Accion: <LEER> - Direccion Fisica: <%d> - Tamaño <%d> \n", proceso_memoria->pid, dir_fisica, tamanio_registro);
+    printf("Cadena leida: %s \n", cadena);
+    usleep(RETARDO_RESPUESTA * 1000);
+    return cadena;
+}
+
+char *int_to_char(int num)
+{
+    int i = log10(num) + 1;
+    char *s = (char *)calloc(i + 1, sizeof(char));
+
+    for (i--; num != 0; i--)
+    {
+        s[i] = (num % 10) + '0';
+        num /= 10;
+    }
+
+    return s;
+
+    /*if (num == 0)
+    {
+        char *s = (char *)calloc(2, sizeof(char)); // Si num es 0, devolver "0"
+        if (s == NULL)
+        {
+            fprintf(stderr, "Error al asignar memoria en int_to_char\n");
+            exit(EXIT_FAILURE); // En caso de fallo de asignación de memoria
+        }
+        s[0] = '0';
+        s[1] = '\0'; // Terminador de cadena
+        return s;
+    }
+
+    // Calcular el tamaño necesario para la cadena
+    int i = log10(abs(num)) + 1;
+    char *s = (char *)calloc(i + 1, sizeof(char)); // +1 para el terminador nulo
+
+    if (s == NULL)
+    {
+        fprintf(stderr, "Error al asignar memoria en int_to_char\n");
+        exit(EXIT_FAILURE); // En caso de fallo de asignación de memoria
+    }
+
+    int negativo = 0; // Variable para manejar números negativos
+    if (num < 0)
+    {
+        negativo = 1;
+        num = -num;
+    }
+
+    // Llenar el arreglo con los digitos de num
+    for (i--; num != 0; i--)
+    {
+        s[i] = (num % 10) + '0';
+        num /= 10;
+    }
+
+    if (negativo)
+    {
+        s[i] = '-';
+    }
+
+    return s;
+    */
+}
+
+char *concatenar_lista_de_cadenas(t_list *lista , int tamanio)
+{
+    // Calcular el tamaño total necesario
+    size_t tam_total = tamanio + 1; // Inicia en 1 para el carácter nulo
+    
+
+    // Asignar memoria para la cadena concatenada
+    char *cadena_concatenada = (char *)malloc(tam_total);
+    if (cadena_concatenada == NULL)
+    {
+        return NULL; // Manejo de error si la asignación de memoria falla
+    }
+
+    // Inicializar la cadena concatenada como una cadena vacía
+    cadena_concatenada[0] = '\0';
+
+    // Copiar cada cadena de la lista en la cadena concatenada
+    for (int i = 0; i < list_size(lista); i++)
+    {
+        strcat(cadena_concatenada, list_get(lista, i));
+    }
+
+    return cadena_concatenada;
 }

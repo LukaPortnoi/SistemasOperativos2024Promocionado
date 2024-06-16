@@ -3,6 +3,7 @@
 
 #include "./gestor.h"
 #include "./utils_memoria.h"
+#include "./utils_memoria.h"
 
 typedef struct
 {
@@ -12,5 +13,6 @@ typedef struct
 } t_procesar_conexion_args;
 
 int server_escuchar(t_log *logger, char *server_name, int server_socket);
+void enviar_respuesta_resize(int cliente_socket, op_cod response);
 
 #endif

@@ -6,5 +6,7 @@
 
 void sighandler(int s);
 void inicializar_config(void);
+void iniciar_memoria_usuario(void);
+void iniciar_marcos(void);
 
 #endif

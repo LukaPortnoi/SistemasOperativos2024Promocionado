@@ -18,7 +18,7 @@ t_config *iniciar_config(char *file_name, char *name)
 	nuevo_config = config_create(file_name);
 	if (nuevo_config == NULL)
 	{
-		printf("No se pudo leer la config %s\n", name);
+		printf("No se pudo leer la config %s\n", file_name);
 		exit(2);
 	};
 	return nuevo_config;

@@ -53,9 +53,8 @@ int iniciar_servidor(t_log *logger, const char *name, char *ip, char *puerto)
 
 int esperar_cliente(int socket_servidor, t_log *logger)
 {
-	// Aceptamos un nuevo cliente
 	int socket_cliente = accept(socket_servidor, NULL, NULL);
-	log_info(logger, "Se conecto un cliente!");
+	log_debug(logger, "Se conecto un cliente!");
 
 	return socket_cliente;
 }
@@ -121,28 +120,6 @@ t_paquete *recibir_paquete(int socket_cliente)
 	return paquete;
 }
 
-/* t_paquete *recibir_paquete2(int socket_cliente)
-{
-		int size;
-	int desplazamiento = 0;
-	void *buffer;
-	t_list *valores = list_create();
-	int tamanio;
-
-	buffer = recibir_buffer(&size, socket_cliente);
-	while (desplazamiento < size)
-	{
-		memcpy(&tamanio, buffer + desplazamiento, sizeof(int));
-		desplazamiento += sizeof(int);
-		char *valor = malloc(tamanio);
-		memcpy(valor, buffer + desplazamiento, tamanio);
-		desplazamiento += tamanio;
-		list_add(valores, valor);
-	}
-	free(buffer);
-	return valores;
-} */
-
 t_interrupcion *recibir_interrupcion(int socket_cliente)
 {
 	t_paquete *paquete = recibir_paquete(socket_cliente);
@@ -162,5 +139,4 @@ t_interrupcion *deserializar_interrupcion(t_buffer *buffer)
 	memcpy(&(interrupcion->pid), stream + desplazamiento, sizeof(int));
 
 	return interrupcion;
-
 }

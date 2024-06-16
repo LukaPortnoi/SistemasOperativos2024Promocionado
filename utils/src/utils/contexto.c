@@ -12,6 +12,8 @@ char *motivo_desalojo_to_string(t_motivo_desalojo motivo)
 		return "INTERRUPCION BLOQUEO";
 	case INTERRUPCION_FINALIZACION:
 		return "INTERRUPCION FINALIZACION";
+	case FINALIZACION:
+		return "FINALIZACION";
 	case INTERRUPCION_ERROR:
 		return "INTERRUPCION ERROR";
 	case INTERRUPCION_SYSCALL:
@@ -44,6 +46,26 @@ char *nombre_instruccion_to_string(nombre_instruccion instruccion)
 {
 	switch (instruccion)
 	{
+	case SET:
+		return "SET";
+	case SUM:
+		return "SUM";
+	case SUB:
+		return "SUB";
+	case JNZ:
+		return "JNZ";
+	case WAIT:
+		return "WAIT";
+	case SIGNAL:
+		return "SIGNAL";
+	case RESIZE:
+		return "RESIZE";
+	case MOV_IN:
+		return "MOV_IN";
+	case MOV_OUT:
+		return "MOV_OUT";
+	case COPY_STRING:
+		return "COPY_STRING";
 	case IO_GEN_SLEEP:
 		return "IO_GEN_SLEEP";
 	case IO_STDIN_READ:

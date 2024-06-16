@@ -1,5 +1,16 @@
 #include "../include/pcb.h"
 
+/*  siempre que trabaje con PCBs va a ser de esta forma
+typedef struct
+{
+    uint32_t pid;
+    t_estado_proceso estado;
+    uint32_t quantum;
+    uint64_t tiempo_q;
+    t_contexto_ejecucion *contexto_ejecucion;
+} t_pcb;
+*/
+
 // Inicializar Registros
 
 void inicializar_contexto_y_registros(t_pcb *pcb)
@@ -19,12 +30,15 @@ t_pcb *crear_pcb(uint32_t pid, t_estado_proceso estado, uint32_t quantum)
     pcb->pid = pid;
     pcb->estado = estado;
     pcb->quantum = quantum;
+    pcb->tiempo_q = 0;
+    pcb->recursos_asignados = list_create();
     inicializar_contexto_y_registros(pcb);
     return pcb;
 }
 
 void destruir_pcb(t_pcb *pcb)
 {
+    list_destroy_and_destroy_elements(pcb->recursos_asignados, free);
     free(pcb->contexto_ejecucion->registros);
     free(pcb->contexto_ejecucion);
     free(pcb);
@@ -43,6 +57,7 @@ t_buffer *crear_buffer_pcb(t_pcb *pcb)
     buffer->size = sizeof(uint32_t) +
                    sizeof(t_estado_proceso) +
                    sizeof(uint32_t) +
+                   sizeof(uint64_t) +
                    tam_registros +
                    sizeof(t_motivo_desalojo) +
                    sizeof(t_motivo_finalizacion);
@@ -58,6 +73,9 @@ t_buffer *crear_buffer_pcb(t_pcb *pcb)
 
     memcpy(buffer->stream + desplazamiento, &(pcb->quantum), sizeof(uint32_t));
     desplazamiento += sizeof(uint32_t);
+
+    memcpy(buffer->stream + desplazamiento, &(pcb->tiempo_q), sizeof(uint64_t));
+    desplazamiento += sizeof(uint64_t);
 
     memcpy(buffer->stream + desplazamiento, pcb->contexto_ejecucion->registros, tam_registros);
     desplazamiento += tam_registros;
@@ -78,14 +96,8 @@ t_paquete *crear_paquete_PCB(t_pcb *pcb)
     return paquete;
 }
 
-t_pcb *deserializar_pcb(t_buffer *buffer)
+void deserializar_pcb(t_buffer *buffer, t_pcb *pcb)
 {
-    t_pcb *pcb = malloc(sizeof(t_pcb));
-    if (pcb == NULL)
-    {
-        return NULL;
-    }
-
     void *stream = buffer->stream;
     int desplazamiento = 0;
 
@@ -98,20 +110,8 @@ t_pcb *deserializar_pcb(t_buffer *buffer)
     memcpy(&(pcb->quantum), stream + desplazamiento, sizeof(uint32_t));
     desplazamiento += sizeof(uint32_t);
 
-    pcb->contexto_ejecucion = malloc(sizeof(t_contexto_ejecucion));
-    if (pcb->contexto_ejecucion == NULL)
-    {
-        free(pcb);
-        return NULL;
-    }
-
-    pcb->contexto_ejecucion->registros = malloc(sizeof(t_registros));
-    if (pcb->contexto_ejecucion->registros == NULL)
-    {
-        free(pcb->contexto_ejecucion);
-        free(pcb);
-        return NULL;
-    }
+    memcpy(&(pcb->tiempo_q), stream + desplazamiento, sizeof(uint64_t));
+    desplazamiento += sizeof(uint64_t);
 
     memcpy(pcb->contexto_ejecucion->registros, stream + desplazamiento, sizeof(t_registros));
     desplazamiento += sizeof(t_registros);
@@ -120,8 +120,6 @@ t_pcb *deserializar_pcb(t_buffer *buffer)
     desplazamiento += sizeof(t_motivo_desalojo);
 
     memcpy(&(pcb->contexto_ejecucion->motivo_finalizacion), stream + desplazamiento, sizeof(t_motivo_finalizacion));
-
-    return pcb;
 }
 
 // Funciones de Envio y Recepcion
@@ -133,12 +131,11 @@ void enviar_pcb(t_pcb *pcb, int socket_cliente)
     eliminar_paquete(paquete);
 }
 
-t_pcb *recibir_pcb(int socket_cliente)
+void recibir_pcb(t_pcb *pcb, int socket_cliente)
 {
     t_paquete *paquete = recibir_paquete(socket_cliente);
-    t_pcb *pcb = deserializar_pcb(paquete->buffer);
+    deserializar_pcb(paquete->buffer, pcb);
     eliminar_paquete(paquete);
-    return pcb;
 }
 
 uint32_t str_to_uint32(char *str)
@@ -169,51 +166,6 @@ uint8_t str_to_uint8(char *str)
     }
 
     return result;
-}
-
-t_pcb *recibir_pcbTOP(int socket_cliente)
-{
-    int size;
-    void *buffer;
-
-    buffer = recibir_bufferTOP(socket_cliente, &size);
-
-    // vamos a printear el buffer recibido
-
-    t_pcb *pcb = malloc(sizeof(t_pcb));
-    int desplazamiento = 0;
-
-    memcpy(&(pcb->pid), buffer + desplazamiento, sizeof(uint32_t));
-    desplazamiento += sizeof(uint32_t);
-
-    memcpy(&(pcb->estado), buffer + desplazamiento, sizeof(t_estado_proceso));
-    desplazamiento += sizeof(t_estado_proceso);
-
-    memcpy(&(pcb->quantum), buffer + desplazamiento, sizeof(uint32_t));
-    desplazamiento += sizeof(uint32_t);
-
-    pcb->contexto_ejecucion = malloc(sizeof(t_contexto_ejecucion));
-    pcb->contexto_ejecucion->registros = malloc(sizeof(t_registros));
-
-    memcpy(pcb->contexto_ejecucion->registros, buffer + desplazamiento, sizeof(t_registros));
-    desplazamiento += sizeof(t_registros);
-
-    memcpy(&(pcb->contexto_ejecucion->motivo_desalojo), buffer + desplazamiento, sizeof(t_motivo_desalojo));
-
-    free(buffer);
-
-    return pcb;
-}
-
-void *recibir_bufferTOP(int socket_cliente, int *size)
-{
-    void *buffer;
-
-    recv(socket_cliente, size, sizeof(int), MSG_WAITALL);
-    buffer = malloc(*size);
-    recv(socket_cliente, buffer, *size, MSG_WAITALL);
-
-    return buffer;
 }
 
 char *estado_to_string(t_estado_proceso estado)

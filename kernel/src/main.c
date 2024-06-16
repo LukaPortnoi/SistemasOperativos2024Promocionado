@@ -21,11 +21,23 @@ int fd_kernel_memoria;
 int fd_kernel_cpu_dispatch;
 int fd_kernel_cpu_interrupt;
 
+// GLOBALES PARA MANEJO DE RECURSOS
+t_list *RECURSOS_DISPONIBLES;
+char *RECURSO_A_USAR;
+nombre_instruccion INSTRUCCION_RECURSO_A_USAR;
+
+// GLOBALES PARA MANEJO DE INTERFACES
 char *nombre_interfaz;
-int unidades_de_trabajo;
 nombre_instruccion instruccion_de_IO_a_ejecutar;
 
+// PARA INTERFAZ GENERICA
+int unidades_de_trabajo;
+
+// PARA INTERFAZ STDIN
+t_list *direcciones_fisicas;
+
 t_pcb *pcb_ejecutandose;
+t_pcb *pcb_a_finalizar = NULL;
 
 pthread_t hilo_server_kernel;
 

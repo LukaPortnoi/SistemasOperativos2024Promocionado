@@ -5,13 +5,12 @@ void ejecutar_ciclo_instruccion(int socket)
     t_instruccion *instruccion = fetch(pcb_actual->pid, pcb_actual->contexto_ejecucion->registros->program_counter);
     // TODO decode: manejo de TLB y MMU
     execute(instruccion, socket);
-    // if (!page_fault)
+
+    liberar_instruccion(instruccion);
 }
 
 t_instruccion *fetch(uint32_t pid, uint32_t pc)
 {
-    // TODO -- chequear que en los casos de instruccion con memoria logica puede dar PAGE FAULT y no hay que aumentar el pc (restarlo dentro del decode en esos casos)
-    // log_trace(LOGGER_CPU, "PID Y PC PARA PEDIR INSTRUCCION A MEMORIA: %d - %d\n", pid, pc);
     pedir_instruccion_memoria(pid, pc, fd_cpu_memoria);
 
     op_cod codigo_op = recibir_operacion(fd_cpu_memoria);
@@ -21,7 +20,7 @@ t_instruccion *fetch(uint32_t pid, uint32_t pc)
     if (codigo_op == INSTRUCCION)
     {
         instruccion = deserializar_instruccion(fd_cpu_memoria);
-        }
+    }
     else
     {
         log_warning(LOGGER_CPU, "Operación desconocida. No se pudo recibir la instruccion de memoria.");
@@ -38,31 +37,76 @@ void execute(t_instruccion *instruccion, int socket)
     switch (instruccion->nombre)
     {
     case SET:
-        _set(instruccion->parametro1, instruccion->parametro2);
         loguear_y_sumar_pc(instruccion);
+        _set(instruccion->parametro1, instruccion->parametro2);
         break;
     case SUM:
-        _sum(instruccion->parametro1, instruccion->parametro2);
         loguear_y_sumar_pc(instruccion);
+        _sum(instruccion->parametro1, instruccion->parametro2);
         break;
     case SUB:
-        _sub(instruccion->parametro1, instruccion->parametro2);
         loguear_y_sumar_pc(instruccion);
+        _sub(instruccion->parametro1, instruccion->parametro2);
         break;
     case JNZ:
-        _jnz(instruccion->parametro1, instruccion->parametro2);
         loguear_y_sumar_pc(instruccion);
+        _jnz(instruccion->parametro1, instruccion->parametro2);
+        break;
+    case WAIT:
+        loguear_y_sumar_pc(instruccion);
+        pcb_actual->contexto_ejecucion->motivo_desalojo = INTERRUPCION_SYSCALL;
+        esSyscall = true;
+        envioPcb = true;
+        _wait(instruccion->parametro1, socket);
+        break;
+    case SIGNAL:
+        loguear_y_sumar_pc(instruccion);
+        pcb_actual->contexto_ejecucion->motivo_desalojo = INTERRUPCION_SYSCALL;
+        esSyscall = true;
+        envioPcb = true;
+        _signal(instruccion->parametro1, socket);
+        break;
+    case RESIZE:
+        loguear_y_sumar_pc(instruccion);
+        _resize(instruccion->parametro1);
+        break;
+    case MOV_IN:
+        loguear_y_sumar_pc(instruccion);
+        _mov_in(instruccion->parametro1, instruccion->parametro2, fd_cpu_memoria);
+        break;
+    case MOV_OUT:
+        loguear_y_sumar_pc(instruccion);
+        _mov_out(instruccion->parametro1, instruccion->parametro2, fd_cpu_memoria);
+        break;
+    case COPY_STRING:
+        loguear_y_sumar_pc(instruccion);
+        _copy_string(instruccion->parametro1, fd_cpu_memoria);
         break;
     case IO_GEN_SLEEP:
         loguear_y_sumar_pc(instruccion);
         pcb_actual->contexto_ejecucion->motivo_desalojo = INTERRUPCION_BLOQUEO;
         esSyscall = true;
+        envioPcb = true;
         _io_gen_sleep(instruccion->parametro1, instruccion->parametro2, socket);
+        break;
+    case IO_STDIN_READ:
+        loguear_y_sumar_pc(instruccion);
+        pcb_actual->contexto_ejecucion->motivo_desalojo = INTERRUPCION_BLOQUEO;
+        esSyscall = true;
+        envioPcb = true;
+        _io_stdin_read(instruccion->parametro1, instruccion->parametro2, instruccion->parametro3, socket);
+        break;
+    case IO_STDOUT_WRITE:
+        loguear_y_sumar_pc(instruccion);
+        pcb_actual->contexto_ejecucion->motivo_desalojo = INTERRUPCION_BLOQUEO;
+        esSyscall = true;
+        envioPcb = true;
+        _io_stdout_write(instruccion->parametro1, instruccion->parametro2, instruccion->parametro3, socket);
         break;
     case EXIT:
         log_info(LOGGER_CPU, "PID: %d - Ejecutando: %s", pcb_actual->pid, instruccion_to_string(instruccion->nombre));
         esSyscall = true;
-        pcb_actual->contexto_ejecucion->motivo_desalojo = INTERRUPCION_FINALIZACION;
+        pcb_actual->contexto_ejecucion->motivo_desalojo = FINALIZACION;
         pcb_actual->contexto_ejecucion->motivo_finalizacion = SUCCESS;
         break;
     default:
@@ -98,12 +142,24 @@ t_instruccion *deserializar_instruccion(int socket)
     memcpy(&(instruccion->nombre), stream + desplazamiento, sizeof(nombre_instruccion));
     desplazamiento += sizeof(nombre_instruccion);
 
-    uint32_t tamanio_parametro1;                                              // Cambio aquí
-    memcpy(&(tamanio_parametro1), stream + desplazamiento, sizeof(uint32_t)); // Cambio aquí
+    uint32_t tamanio_parametro1;
+    memcpy(&(tamanio_parametro1), stream + desplazamiento, sizeof(uint32_t));
     desplazamiento += sizeof(uint32_t);
 
-    uint32_t tamanio_parametro2;                                              // Cambio aquí
-    memcpy(&(tamanio_parametro2), stream + desplazamiento, sizeof(uint32_t)); // Cambio aquí
+    uint32_t tamanio_parametro2;
+    memcpy(&(tamanio_parametro2), stream + desplazamiento, sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+    uint32_t tamanio_parametro3;
+    memcpy(&(tamanio_parametro3), stream + desplazamiento, sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+    uint32_t tamanio_parametro4;
+    memcpy(&(tamanio_parametro4), stream + desplazamiento, sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+    uint32_t tamanio_parametro5;
+    memcpy(&(tamanio_parametro5), stream + desplazamiento, sizeof(uint32_t));
     desplazamiento += sizeof(uint32_t);
 
     instruccion->parametro1 = malloc(tamanio_parametro1);
@@ -112,6 +168,18 @@ t_instruccion *deserializar_instruccion(int socket)
 
     instruccion->parametro2 = malloc(tamanio_parametro2);
     memcpy(instruccion->parametro2, stream + desplazamiento, tamanio_parametro2);
+    desplazamiento += tamanio_parametro2;
+
+    instruccion->parametro3 = malloc(tamanio_parametro3);
+    memcpy(instruccion->parametro3, stream + desplazamiento, tamanio_parametro3);
+    desplazamiento += tamanio_parametro3;
+
+    instruccion->parametro4 = malloc(tamanio_parametro4);
+    memcpy(instruccion->parametro4, stream + desplazamiento, tamanio_parametro4);
+    desplazamiento += tamanio_parametro4;
+
+    instruccion->parametro5 = malloc(tamanio_parametro5);
+    memcpy(instruccion->parametro5, stream + desplazamiento, tamanio_parametro5);
 
     eliminar_paquete(paquete);
 
@@ -127,4 +195,15 @@ void log_instruccion_ejecutada(nombre_instruccion nombre, char *param1, char *pa
 void iniciar_semaforos_etc()
 {
     pthread_mutex_init(&mutex_interrupt, NULL);
+    pthread_mutex_init(&mutex_pcb_actual, NULL);
+}
+
+void liberar_instruccion(t_instruccion *instruccion)
+{
+    free(instruccion->parametro1);
+    free(instruccion->parametro2);
+    free(instruccion->parametro3);
+    free(instruccion->parametro4);
+    free(instruccion->parametro5);
+    free(instruccion);
 }
