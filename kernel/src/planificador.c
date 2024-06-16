@@ -314,7 +314,7 @@ void atender_quantum(void *arg)
     pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
     pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
 
-    sleep(pcb_ejecutandose->quantum / 1000);
+    usleep(pcb_ejecutandose->quantum * 1000);
 
     crear_y_enviar_interrupcion(INTERRUPCION_FIN_QUANTUM, pcb_ejecutandose->pid);
 }
@@ -338,10 +338,16 @@ void detener_planificadores()
     sem_getvalue(&sem_planificador_largo_plazo, &largo_plazo);
     sem_getvalue(&sem_planificador_corto_plazo, &corto_plazo);
 
-    if (largo_plazo == 1 && corto_plazo == 1)
+    while (largo_plazo > 0)
+    {
+        sem_wait(&sem_planificador_largo_plazo);
+        sem_getvalue(&sem_planificador_largo_plazo, &largo_plazo);
+    }
+
+    while (corto_plazo > 0)
     {
         sem_wait(&sem_planificador_corto_plazo);
-        sem_wait(&sem_planificador_largo_plazo);
+        sem_getvalue(&sem_planificador_corto_plazo, &corto_plazo);
     }
 
     PLANIFICACION_DETENIDA = true;

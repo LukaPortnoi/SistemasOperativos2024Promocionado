@@ -306,13 +306,27 @@ t_pcb *buscar_proceso_en_cola(t_squeue *squeue, uint32_t pid)
 
 void detener_planificacion()
 {
-  pthread_create(&hilo_detener_planificacion, NULL, (void *)detener_planificadores, NULL);
-  pthread_detach(hilo_detener_planificacion);
+  if(!PLANIFICACION_DETENIDA){
+    pthread_create(&hilo_detener_planificacion, NULL, (void *)detener_planificadores, NULL);
+    pthread_detach(hilo_detener_planificacion);
+  }
+  else
+  {
+    log_warning(LOGGER_KERNEL, "La planificacion ya esta detenida");
+  }
+
 }
 void iniciar_planificacion()
 {
+  if(PLANIFICACION_DETENIDA){
   pthread_create(&hilo_iniciar_planificacion, NULL, (void *)iniciar_planificadores, NULL);
   pthread_detach(hilo_iniciar_planificacion);
+  }
+  else
+  {
+    log_warning(LOGGER_KERNEL, "La planificacion ya esta iniciada");
+  }
+
 }
 
 void cambiar_multiprogramacion(char *grado_multiprogramacion_string)

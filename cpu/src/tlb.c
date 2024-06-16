@@ -7,7 +7,6 @@ t_tlb *inicializar_tlb()
 {
     tlb = (t_tlb *)malloc(sizeof(t_tlb));
     tlb->entradas = (entrada_tlb *)malloc(sizeof(entrada_tlb) * CANTIDAD_ENTRADAS_TLB);
-    tlb->algoritmo = (algoritmos_tlb)malloc(sizeof(algoritmos_tlb));
     tlb->size_tlb = CANTIDAD_ENTRADAS_TLB;
     tlb->size_actual_tlb = 0; // Inicialmente la TLB esta vacia
     if (strcmp(ALGORITMO_TLB, "FIFO") == 0)
