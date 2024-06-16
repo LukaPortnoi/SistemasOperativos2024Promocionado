@@ -15,4 +15,3 @@ ARGS=TECLADO ./cfgs/TECLADO.config
 # Valgrind flags 
 MEMCHECK_FLAGS=--track-origins=yes
 HELGRIND_FLAGS=
-
