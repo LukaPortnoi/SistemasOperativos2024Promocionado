@@ -512,6 +512,7 @@ void escribir_memoria(uint32_t dir_fisica, uint32_t tamanio_registro, char *valo
             break;
         }
     } */
+    printf("Cosa a escribir en memoria: %s", valorObtenido);
     memcpy(memoriaUsuario + dir_fisica, valorObtenido, tamanio_registro);
     pthread_mutex_unlock(&mutex_memoria_usuario);
     log_info(LOGGER_MEMORIA, "PID: <%d> - Accion: <ESCRIBIR> - Direccion Fisica: <%d> - Tamaño <%d> \n", proceso_memoria->pid, dir_fisica, tamanio_registro);
@@ -547,8 +548,16 @@ char *leer_memoria(uint32_t dir_fisica, uint32_t tamanio_registro)
 
 char *int_to_char(int num)
 {
+    if (num == 0) // Añade este caso especial para cuando num es 0
+    {
+        char *s = (char *)calloc(2, sizeof(char)); // Asigna espacio para '0' y '\0'
+        s[0] = '0';
+        s[1] = '\0';
+        return s;
+    }
+
     int i = log10(num) + 1;
-    char *s = (char *)calloc(i + 1, sizeof(char));
+    char *s = (char *)calloc(i + 1, sizeof(char)); // Añadir espacio para el carácter nulo
 
     for (i--; num != 0; i--)
     {
@@ -629,4 +638,56 @@ char *concatenar_lista_de_cadenas(t_list *lista , int tamanio)
     cadena_concatenada[tam_total - 1] = '\0';
 
     return cadena_concatenada;
+}
+
+char* decimal_a_binario(int numero) 
+{
+    // Array temporal para almacenar los dígitos binarios (máximo 32 bits para un entero)
+    char temp[33];
+    int index = 0;
+
+    // Manejo del caso cuando el número es 0
+    if (numero == 0) {
+        temp[index++] = '0';
+    } else {
+        // Convertir el número decimal a binario
+        while (numero > 0) {
+            temp[index++] = (numero % 2) + '0';
+            numero = numero / 2;
+        }
+    }
+
+    // Añadir el carácter nulo al final de la cadena
+    temp[index] = '\0';
+
+    // Asignar memoria para la cadena final
+    char* binaryNum = (char*)malloc((index + 1) * sizeof(char*));
+
+    // Copiar los elementos en orden inverso al array final
+    for (int i = 0; i < index; i++) {
+        binaryNum[i] = temp[index - 1 - i];
+    }
+
+    // Añadir el carácter nulo al final de la cadena
+    binaryNum[index] = '\0';
+
+    return binaryNum;
+}
+
+
+int binario_a_decimal(int binario) 
+{
+    int decimal = 0;
+    int posicion = 0;
+
+    while (binario > 0) {
+        int digito = binario % 10; // Obtiene el último dígito del número binario
+        if (digito == 1) {
+            decimal += pow(2, posicion);
+        }
+        binario /= 10; // Elimina el último dígito del número binario
+        posicion++;
+    }
+
+    return decimal;
 }

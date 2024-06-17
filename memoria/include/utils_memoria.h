@@ -35,6 +35,8 @@ void escribir_memoria(uint32_t dir_fisica, uint32_t tamanio_registro, char *valo
 char *leer_memoria(uint32_t dir_fisica, uint32_t tamanio_registro);
 char *int_to_char(int num);
 char *concatenar_lista_de_cadenas(t_list *lista, int tamanio);
+char* decimal_a_binario(int numero);
+int binario_a_decimal(int binario); 
 
 // mov in y mov out
 void recibir_mov_in_cpu(int socket_cliente, t_list *lista_direcciones);

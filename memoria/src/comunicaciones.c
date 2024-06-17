@@ -114,6 +114,7 @@ static void procesar_conexion_memoria(void *void_args)
 			{
 				t_direcciones_fisicas *direccionAmostrar = list_get(direcciones_fisicas_mov_in, i);
 				valor_leido_mov_in = leer_memoria(direccionAmostrar->direccion_fisica, direccionAmostrar->tamanio);
+				printf("Valor leido de memoria en pedacitos: %s \n", valor_leido_mov_in);
 				list_add(lista_datos_a_leer_mov_in, strdup(valor_leido_mov_in));
 				tamanioTotal += direccionAmostrar->tamanio;
 			}
@@ -131,8 +132,60 @@ static void procesar_conexion_memoria(void *void_args)
 
 		case PEDIDO_MOV_OUT: // me pasa por parametro un uint32_t y tengo que guardarlo en el marco que me dice
 			t_list *direcciones_fisicas_mov_out = list_create();
-			uint32_t valorObtenido_mov_out;
-			recibir_mov_out_cpu(direcciones_fisicas_mov_out, &valorObtenido_mov_out, cliente_socket);
+			uint32_t valor_obtenido_mov_out;
+			recibir_mov_out_cpu(direcciones_fisicas_mov_out, &valor_obtenido_mov_out, cliente_socket);
+			int numero_recibido = (int)valor_obtenido_mov_out;
+			printf("Numero en decimal: %d \n", numero_recibido);
+			char* valor_mov_out_binario = decimal_a_binario(numero_recibido);
+			printf("Numero en binario: %s \n", valor_mov_out_binario);
+
+			int indice_valor_mov_out_binario = 0;
+			for (int i = 0; i < list_size(direcciones_fisicas_mov_out); i++)
+			{
+				t_direcciones_fisicas *direccionAmostrar = list_get(direcciones_fisicas_mov_out, i);
+				char* valor_parcial_binario = calloc(9, sizeof(char)); // Asegúrate de tener espacio para 8 caracteres y el carácter nulo
+				char* valor_parcial_decimal_a_escribir = calloc(direccionAmostrar->tamanio + 1, sizeof(char)); // Asegúrate de tener espacio para direccionAmostrar->tamanio caracteres y el carácter nulo
+
+				int desplazamiento = 0;
+				int cantidad_bits_llenados = 0;
+				for(int k = 0; k < (direccionAmostrar->tamanio) * 8; k++)
+				{
+					if(valor_mov_out_binario[indice_valor_mov_out_binario])
+					{
+						valor_parcial_binario[k] = valor_mov_out_binario[indice_valor_mov_out_binario]; //Numero binario parcial a pasar
+						printf("Bit pasado al valor parcial: %c \n", valor_parcial_binario[k]);
+						cantidad_bits_llenados++;
+						indice_valor_mov_out_binario++;
+					}else
+					{
+						printf("Valor binario a parcial menor a 8 bits a transformar: %s \n", valor_parcial_binario);
+						int decimal_a_mandar = binario_a_decimal(atoi(valor_parcial_binario));
+						printf("Valor transformado del binario al decimal menor a 8 bits: %d \n", decimal_a_mandar);
+						valor_parcial_decimal_a_escribir = int_to_char(decimal_a_mandar);
+						printf("Valor decimal en char a enviar menor a 8 bits: %s \n", valor_parcial_decimal_a_escribir);
+						escribir_memoria(direccionAmostrar->direccion_fisica + desplazamiento, 1, valor_parcial_decimal_a_escribir);
+						break;
+					}
+
+					if(cantidad_bits_llenados % 8 == 0)
+					{
+						printf("Valor binario a parcial a transformar: %s \n", valor_parcial_binario);    
+						int decimal_a_mandar = binario_a_decimal(atoi(valor_parcial_binario));
+						printf("Valor transformado del binario al decimal: %d \n", decimal_a_mandar);
+						free(valor_parcial_decimal_a_escribir); // Libera la memoria antigua antes de asignar una nueva
+						valor_parcial_decimal_a_escribir = int_to_char(decimal_a_mandar);
+						printf("Valor decimal en char a enviar: %s \n", valor_parcial_decimal_a_escribir);
+						escribir_memoria(direccionAmostrar->direccion_fisica + desplazamiento, 1, valor_parcial_decimal_a_escribir);
+						memset(valor_parcial_binario, 0, 9); // Asegúrate de limpiar todo el espacio que has asignado
+						desplazamiento++;
+						cantidad_bits_llenados = 0;
+						k = -1;
+					}
+				}
+			} 
+			
+
+
 			/* int valor_mov_out_int = (int)valorObtenido_mov_out;
 			log_debug(LOGGER_MEMORIA, "valor int: %d \n", valor_mov_out_int);
 			char* valor_mov_out_char = (char)valor_mov_out_int;
@@ -157,6 +210,10 @@ static void procesar_conexion_memoria(void *void_args)
 			/* char *valor_entero_a_escribir = int_to_char(valor_leido); //Anda mal el int_to_char de los cojones
 			int tamanioAescribir = strlen(valor_entero_a_escribir); */
 
+
+
+
+			/*
 			void *aux = calloc(sizeof(uint32_t), 1);
 			memcpy(aux, &valorObtenido_mov_out, sizeof(uint32_t));
 			printf("Valor aux MOV_OUT: %p", &aux);
@@ -175,13 +232,17 @@ static void procesar_conexion_memoria(void *void_args)
 						k++;
 					}
 
-				} */
+				} 
 				valor_parcial_a_pasar[direccionAmostrar->tamanio] = '\0';
 				log_debug(LOGGER_MEMORIA, "Cadena parcial a escribir: %s \n", valor_parcial_a_pasar);
 				escribir_memoria(direccionAmostrar->direccion_fisica, direccionAmostrar->tamanio, valor_parcial_a_pasar);
 				k += direccionAmostrar->tamanio;
 			}
 			free(aux);
+			*/
+
+
+
 			list_clean_and_destroy_elements(direcciones_fisicas_mov_out, free);
 			break;
 
