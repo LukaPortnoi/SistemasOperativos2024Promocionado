@@ -608,10 +608,9 @@ char *concatenar_lista_de_cadenas(t_list *lista , int tamanio)
 {
     // Calcular el tamaño total necesario
     size_t tam_total = tamanio + 1; // Inicia en 1 para el carácter nulo
-    
 
     // Asignar memoria para la cadena concatenada
-    char *cadena_concatenada = (char *)malloc(tam_total);
+    char *cadena_concatenada = (char *)calloc(tam_total, sizeof(char));
     if (cadena_concatenada == NULL)
     {
         return NULL; // Manejo de error si la asignación de memoria falla
@@ -623,8 +622,11 @@ char *concatenar_lista_de_cadenas(t_list *lista , int tamanio)
     // Copiar cada cadena de la lista en la cadena concatenada
     for (int i = 0; i < list_size(lista); i++)
     {
-        strcat(cadena_concatenada, list_get(lista, i));
+        strncat(cadena_concatenada, list_get(lista, i), tam_total - strlen(cadena_concatenada) - 1);
     }
+
+    // Asegurarse de que la cadena esté terminada con un carácter nulo
+    cadena_concatenada[tam_total - 1] = '\0';
 
     return cadena_concatenada;
 }

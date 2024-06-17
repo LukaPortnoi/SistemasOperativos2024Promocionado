@@ -59,7 +59,7 @@ void _mov_in(char *registro, char *direc_logica, int socket)
     for (int i = 0; i < list_size(Lista_direccionesFisica); i++)
     {
         t_direcciones_fisicas *direccionAmostrar = list_get(Lista_direccionesFisica, i);
-        int *valor_parcial_a_pasar = malloc(4);
+        int *valor_parcial_a_pasar = malloc(direccionAmostrar->tamanio * sizeof(int)); //cambiamos esto ojo//int *valor_parcial_a_pasar = malloc(4); //Tenia que mostrar numero o chars?
         memset(valor_parcial_a_pasar, 0, 4);
         for (int j = 0; j < direccionAmostrar->tamanio; j++)
         {

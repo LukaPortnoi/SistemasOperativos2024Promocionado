@@ -117,7 +117,9 @@ static void procesar_conexion_memoria(void *void_args)
 				list_add(lista_datos_a_leer_mov_in, strdup(valor_leido_mov_in));
 				tamanioTotal += direccionAmostrar->tamanio;
 			}
-			char *valorTotalaDeLeerMovIn = concatenar_lista_de_cadenas(lista_datos_a_leer_mov_in, tamanioTotal);
+			char *valorTotalaDeLeerMovIn = malloc(tamanioTotal + 1);
+			memset(valorTotalaDeLeerMovIn, 0, tamanioTotal + 1);
+			valorTotalaDeLeerMovIn = concatenar_lista_de_cadenas(lista_datos_a_leer_mov_in, tamanioTotal);
 			printf("Valor leido de memoria: %s \n", valorTotalaDeLeerMovIn);
 			enviar_dato_movIn(cliente_socket, valorTotalaDeLeerMovIn, tamanioTotal);
 
@@ -157,6 +159,7 @@ static void procesar_conexion_memoria(void *void_args)
 
 			void *aux = calloc(sizeof(uint32_t), 1);
 			memcpy(aux, &valorObtenido_mov_out, sizeof(uint32_t));
+			printf("Valor aux MOV_OUT: %p", &aux);
 
 			int k = 0;
 			for (int i = 0; i < list_size(direcciones_fisicas_mov_out); i++)
