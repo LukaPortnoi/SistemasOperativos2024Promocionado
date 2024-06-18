@@ -985,10 +985,11 @@ void deserializar_direcciones_de_stdout(t_paquete *paquete, t_list *lista_datos)
     }
 }
 
-void enviar_dato_movIn(int socket, char *dato, int tamanio)
+void enviar_dato_movIn(int socket, t_list *lista)
 {
     t_paquete *paquete = crear_paquete_con_codigo_de_operacion(RESPUESTA_DATO_MOVIN);
-    serializar_dato_leido(paquete, dato, tamanio);
+    //serializar_dato_leido(paquete, dato, tamanio);
+    serializar_datos_leidos(paquete, lista);
     enviar_paquete(paquete, socket);
     eliminar_paquete(paquete);
 }
@@ -1019,6 +1020,48 @@ void serializar_dato_leido(t_paquete *paquete, char *dato, int tamanio)
     desplazamiento += sizeof(uint32_t);
 
     memcpy(paquete->buffer->stream + desplazamiento, dato, tamanio_dato);
+}
+
+void serializar_datos_leidos(t_paquete *paquete, t_list *lista)
+{
+    uint32_t tamanioLista = list_size(lista);
+
+    // Calcular el tamaño total necesario para el buffer
+    uint32_t sizeTotal = sizeof(uint32_t); // Para almacenar el tamaño de la lista
+    for (int i = 0; i < tamanioLista; i++)
+    {
+        char *dato = list_get(lista, i);
+        uint32_t longitud = strlen(dato) + 1; // +1 para incluir el carácter nulo
+        sizeTotal += sizeof(uint32_t) + longitud; // Para longitud + datos
+    }
+
+    paquete->buffer->size = sizeTotal;
+    paquete->buffer->stream = malloc(paquete->buffer->size);
+    if (paquete->buffer->stream == NULL)
+    {
+        perror("Error al asignar memoria para paquete->buffer->stream");
+        return;
+    }
+
+    int desplazamiento = 0;
+
+    // Copiar el tamaño de la lista al inicio del stream
+    memcpy(paquete->buffer->stream + desplazamiento, &tamanioLista, sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+    // Iterar sobre cada elemento de la lista
+    for (int i = 0; i < tamanioLista; i++)
+    {
+        char *dato = list_get(lista, i);
+
+        // Serializar cada dato en el stream
+        uint32_t longitud = strlen(dato) + 1; // +1 para incluir el carácter nulo
+        memcpy(paquete->buffer->stream + desplazamiento, &longitud, sizeof(uint32_t));
+        desplazamiento += sizeof(uint32_t);
+
+        memcpy(paquete->buffer->stream + desplazamiento, dato, longitud);
+        desplazamiento += longitud;
+    }
 }
 
 char *recibir_dato_stdout(int socket_cliente)

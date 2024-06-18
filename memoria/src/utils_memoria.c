@@ -498,20 +498,20 @@ void deserializar_datos_copystring(t_paquete *paquete, t_list *Lista_direcciones
     }
 }
 
-void escribir_memoria(uint32_t dir_fisica, uint32_t tamanio_registro, char *valorObtenido)
+void escribir_memoria(uint32_t dir_fisica, uint32_t tamanio_registro, char *valorObtenido) //Revisar char* en valorObtenido
 {
     pthread_mutex_lock(&mutex_memoria_usuario);
     /* for (uint32_t i = 0; i < tamanio_registro; i++)
     {
-        if (valorObtenido[i])
+        if (valorObtenido[indiceAux])
         {
-            memcpy(memoriaUsuario + dir_fisica + i, &valorObtenido[i], 1);
-        }
-        else
-        {
-            break;
+            printf("Cosa escrita en memoria: %c\n", valorObtenido[indiceAux]);
+            memcpy(memoriaUsuario + dir_fisica + i, &valorObtenido[indiceAux], 1);
+                    indiceAux++;
+
         }
     } */
+
     printf("Cosa a escribir en memoria: %s", valorObtenido);
     memcpy(memoriaUsuario + dir_fisica, valorObtenido, tamanio_registro);
     pthread_mutex_unlock(&mutex_memoria_usuario);
@@ -519,31 +519,57 @@ void escribir_memoria(uint32_t dir_fisica, uint32_t tamanio_registro, char *valo
     usleep(RETARDO_RESPUESTA * 1000);
 }
 
+void escribir_memoria_mov_out(uint32_t dir_fisica, uint32_t tamanio_registro,  char *valorObtenido)
+{
+
+    
+
+
+    pthread_mutex_lock(&mutex_memoria_usuario);
+
+    unsigned char valorConvertido = (unsigned char)atoi(valorObtenido);
+    
+    printf("Cosa a escribir en memoria: %u\n", valorConvertido);
+    *((unsigned char*)memoriaUsuario + dir_fisica) = valorConvertido;
+
+    // Verificar que el valor se escribió correctamente
+    unsigned char valorLeido = *((unsigned char*)memoriaUsuario + dir_fisica);
+    if (valorLeido == valorConvertido) {
+        printf("Valor escrito correctamente en la posición %u: %u\n", dir_fisica, valorLeido);
+    } else {
+        printf("Error al escribir el valor en la posición %u. Valor esperado: %u, valor leído: %u\n", dir_fisica, valorConvertido, valorLeido);
+    }
+
+    pthread_mutex_unlock(&mutex_memoria_usuario);
+    log_info(LOGGER_MEMORIA, "PID: <%d> - Accion: <ESCRIBIR> - Direccion Fisica: <%d> - Tamaño <%d> \n", 0, dir_fisica, tamanio_registro);
+    usleep(RETARDO_RESPUESTA * 1000);
+}
+
 char *leer_memoria(uint32_t dir_fisica, uint32_t tamanio_registro)
 {
-    /* char valor_leido; // Cambiar a int
-    int valorTotalaDeLeer = 0; */
     pthread_mutex_lock(&mutex_memoria_usuario);
-    char *cadena = malloc(tamanio_registro + 1); // Allocate memory dynamically
-    memset(cadena, 0, tamanio_registro + 1);     // Initialize all elements to 0
-    /* for (uint32_t i = 0; i < tamanio_registro; i++)
-    {
-        if (&memoriaUsuario[dir_fisica + i] != 0)
-        {
-            memcpy(&valor_leido, &memoriaUsuario[dir_fisica + i], 1);
-            cadena[i] = valor_leido;
-            printf("Valor a agregar a cadena: %c \n", valor_leido);
-            valorTotalaDeLeer++;
-            // Assign the character directly
-        }
-    } */
-    memcpy(cadena, memoriaUsuario + dir_fisica, tamanio_registro);
-    cadena[tamanio_registro] = '\0';
+    
+    // Asignar memoria para un solo byte que contendrá el dato leído
+    char *dato_leido = malloc(4); // Asignamos espacio para un solo byte
+    if (dato_leido == NULL) {
+        perror("Error al asignar memoria para dato_leido");
+        pthread_mutex_unlock(&mutex_memoria_usuario);
+        return NULL;
+    }
+    
+    // Leer el dato de la memoria
+    unsigned char valorLeido = *((unsigned char*)memoriaUsuario + dir_fisica);
+    sprintf(dato_leido, "%u", valorLeido);
+    // Registrar la acción en el log
+    log_info("LOGGER_MEMORIA", "PID: <%d> - Accion: <LEER> - Direccion Fisica: <%d> - Tamaño <%d> \n", 0, dir_fisica, tamanio_registro);
+    
+    // Mostrar el dato leído en la consola
+    printf("Dato leido: %s\n", dato_leido);
+    
     pthread_mutex_unlock(&mutex_memoria_usuario);
-    log_info(LOGGER_MEMORIA, "PID: <%d> - Accion: <LEER> - Direccion Fisica: <%d> - Tamaño <%d> \n", proceso_memoria->pid, dir_fisica, tamanio_registro);
-    printf("Cadena leida: %s \n", cadena);
     usleep(RETARDO_RESPUESTA * 1000);
-    return cadena;
+    
+    return dato_leido;
 }
 
 char *int_to_char(int num)

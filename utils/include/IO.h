@@ -99,6 +99,8 @@ void deserializar_direcciones_de_stdout(t_paquete *paquete, t_list *lista_datos)
 
 
 //MOV IN XD
-void enviar_dato_movIn(int socket, char *dato, int tamanio);
+void enviar_dato_movIn(int socket, t_list *lista);
+void serializar_datos_leidos(t_paquete *paquete, t_list *lista);
+
 
 #endif // IO_H_

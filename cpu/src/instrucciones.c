@@ -19,6 +19,7 @@ void _set(char *registro, char *valor)
 void _mov_in(char *registro, char *direc_logica, int socket)
 {
     uint32_t direccionLogica32;
+    t_list *datosRecibidos = list_create();
 
     if (revisar_registro(direc_logica))
     {
@@ -35,41 +36,44 @@ void _mov_in(char *registro, char *direc_logica, int socket)
     Lista_direccionesFisica = traducir_direccion(pcb_actual->pid, direccionLogica32, TAM_PAGINA, tamanio_registro);
     // printf("tamanio de la lista de direcciones fisicas: %d \n", list_size(Lista_direccionesFisica));
     enviar_valor_mov_in_cpu(Lista_direccionesFisica, socket);
-    char *datoObtenido = recibir_dato_de_memoria_movIn(socket, LOGGER_CPU);
-    printf("Dato obtenido en MOV_IN: %s", datoObtenido);
-    // int datoint = (int)datoObtenido[0];
-    printf("tamanio obtenido dato: %d \n", strlen(datoObtenido));
-    mem_hexdump(datoObtenido, strlen(datoObtenido));
-    uint32_t registro_final;
-    if (revisar_registro(registro))
-    {
-        //*(get_registry8(registro)) = datoint;
-        memcpy((get_registry8(registro)), datoObtenido, 1);
-        registro_final = *(get_registry8(registro));
-        // printf("Registro Obtenido %d \n", registro_final);
-    }
-    else
-    {
-        // *(get_registry32(registro)) = datoint;
-        memcpy((get_registry32(registro)), datoObtenido, 4);
-        registro_final = *(get_registry32(registro));
-        // printf("Registro Obtenido %d \n", registro_final);
-    }
+    datosRecibidos = recibir_dato_de_memoria_movIn(socket, LOGGER_CPU);
+    
+    uint32_t registro_final= 0;
+    for(int g = 0; g < list_size(datosRecibidos); g++){
+			char *aMostrar = list_get(datosRecibidos, g);
+			printf("Valor YA LEIDO de memoria: %s \n", aMostrar);
+            
+            if(strcmp(aMostrar, "") != 0){
+                
+                if (revisar_registro(registro))
+                {
+                    //*(get_registry8(registro)) = datoint;
+                    *(get_registry8(registro)) = str_to_uint8(aMostrar);
+                    registro_final = *(get_registry8(registro));
+                }
+                else
+                {
+                    // *(get_registry32(registro)) = datoint;
+                    *(get_registry32(registro)) = str_to_uint32(aMostrar);
+                    registro_final = *(get_registry32(registro));
+                }
+            }
+
+	}
+
+    printf("Registro Obtenido %d \n", registro_final);
+    //mem_hexdump(datoObtenido, strlen(datoObtenido));
+    
 
     int contador_del_tamanio_del_valor_leido_completo = 0; // Reiniciar z a 0 en cada iteración del bucle externo
     for (int i = 0; i < list_size(Lista_direccionesFisica); i++)
     {
         t_direcciones_fisicas *direccionAmostrar = list_get(Lista_direccionesFisica, i);
-        int *valor_parcial_a_pasar = malloc(direccionAmostrar->tamanio * sizeof(int)); //cambiamos esto ojo//int *valor_parcial_a_pasar = malloc(4); //Tenia que mostrar numero o chars?
-        memset(valor_parcial_a_pasar, 0, 4);
-        for (int j = 0; j < direccionAmostrar->tamanio; j++)
-        {
-            valor_parcial_a_pasar[j] = datoObtenido[contador_del_tamanio_del_valor_leido_completo];
-            contador_del_tamanio_del_valor_leido_completo++;
-        }
+        char *aMostrar = list_get(datosRecibidos, i);
 
-        log_info(LOGGER_CPU, "PID: %d - Acción: LEER - Dirección Física: %d - Valor: %d", pcb_actual->pid, direccionAmostrar->direccion_fisica, *valor_parcial_a_pasar);
-        free(valor_parcial_a_pasar);
+
+        log_info(LOGGER_CPU, "PID: %d - Acción: LEER - Dirección Física: %d - Valor: %s", pcb_actual->pid, direccionAmostrar->direccion_fisica, aMostrar);
+        free(aMostrar);
     }
 
     // printf("Registro Obtenido %d \n", registroFina);
@@ -726,44 +730,49 @@ void serializar_datos_copy_string(t_paquete *paquete, t_list *Lista_direccionesF
     memcpy(paquete->buffer->stream + desplazamiento, &tamanio, sizeof(uint32_t));
 }
 
-char *recibir_dato_movIN(int socket_cliente)
+t_list *recibir_dato_movIN(int socket_cliente)
 {
-    char *datoObtenido;
     t_paquete *paquete = recibir_paquete(socket_cliente);
-    datoObtenido = deserializar_dato_movIN(paquete);
+    t_list *datoObtenido = deserializar_dato_movIN(paquete);
     eliminar_paquete(paquete);
     return datoObtenido;
 }
 
-char *deserializar_dato_movIN(t_paquete *paquete)
+t_list *deserializar_dato_movIN(t_paquete *paquete)
 {
-    int desplazamiento = 0;
-    char *datoObtenido = NULL; // Inicializar el puntero
+    t_list *lista_deserializada = list_create();
 
-    // Deserializar el tamaño del dato
-    uint32_t tamanio_Dato;
-    memcpy(&tamanio_Dato, paquete->buffer->stream + desplazamiento, sizeof(uint32_t));
+    int desplazamiento = 0;
+    uint32_t tamanioLista;
+
+    // Copiar el tamaño de la lista desde el stream
+    memcpy(&tamanioLista, paquete->buffer->stream + desplazamiento, sizeof(uint32_t));
     desplazamiento += sizeof(uint32_t);
 
-    // Asignar memoria para datoObtenido
-    datoObtenido = malloc(tamanio_Dato);
-    if (datoObtenido == NULL)
+    // Iterar sobre cada elemento serializado en el stream
+    for (int i = 0; i < tamanioLista; i++)
     {
-        perror("Error al asignar memoria para datoObtenido");
-        return NULL; // O manejar el error según tu lógica de aplicación
+        // Leer la longitud de la cadena
+        uint32_t longitud;
+        memcpy(&longitud, paquete->buffer->stream + desplazamiento, sizeof(uint32_t));
+        desplazamiento += sizeof(uint32_t);
+
+        // Leer la cadena en sí
+        char *dato = malloc(longitud); // Reservar memoria para la cadena
+        memcpy(dato, paquete->buffer->stream + desplazamiento, longitud);
+        desplazamiento += longitud;
+
+        // Agregar el dato deserializado a la lista
+        list_add(lista_deserializada, dato);
     }
 
-    // Deserializar el dato
-    memcpy(datoObtenido, paquete->buffer->stream + desplazamiento, tamanio_Dato);
-    desplazamiento += tamanio_Dato;
-
-    return datoObtenido;
+    return lista_deserializada;
 }
 
-char *recibir_dato_de_memoria_movIn(int socket, t_log *logger)
+t_list *recibir_dato_de_memoria_movIn(int socket, t_log *logger)
 {
     op_cod cop;
-    char *datoRecibido = NULL;
+    t_list *datoRecibido = list_create();
 
     recv(socket, &cop, sizeof(op_cod), 0);
     switch (cop)

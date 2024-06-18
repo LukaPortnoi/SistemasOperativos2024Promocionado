@@ -105,27 +105,45 @@ static void procesar_conexion_memoria(void *void_args)
 		case PEDIDO_MOV_IN: // Lee el valor del marco y lo devuelve para guardarlo en el registro (se pide la direccion) - recibo direccion fisica
 			t_list *direcciones_fisicas_mov_in = list_create();
 			t_list *lista_datos_a_leer_mov_in = list_create();
+			t_list *lista_datos_leidos_mov_in = list_create();
+
 
 			char *valor_leido_mov_in;
-
+			char *valorTotalaDeLeerMovIn;
 			recibir_mov_in_cpu(cliente_socket, direcciones_fisicas_mov_in);
-			int tamanioTotal = 0;
+			int tamanioTotalstrlen = 0;
+			int desplazamientoLeer;
 			for (int i = 0; i < list_size(direcciones_fisicas_mov_in); i++)
 			{
 				t_direcciones_fisicas *direccionAmostrar = list_get(direcciones_fisicas_mov_in, i);
-				valor_leido_mov_in = leer_memoria(direccionAmostrar->direccion_fisica, direccionAmostrar->tamanio);
-				printf("Valor leido de memoria en pedacitos: %s \n", valor_leido_mov_in);
-				list_add(lista_datos_a_leer_mov_in, strdup(valor_leido_mov_in));
-				tamanioTotal += direccionAmostrar->tamanio;
+				desplazamientoLeer=0;
+				for(int j = 0; j < direccionAmostrar->tamanio; j++){
+					valor_leido_mov_in = leer_memoria(direccionAmostrar->direccion_fisica + desplazamientoLeer, direccionAmostrar->tamanio);
+					printf("Valor leido de memoria en pedacitos: %s \n", valor_leido_mov_in);
+					if(strcmp(valor_leido_mov_in, "0") != 0){
+						list_add(lista_datos_a_leer_mov_in, strdup(valor_leido_mov_in));
+					}
+					tamanioTotalstrlen += strlen(valor_leido_mov_in);
+					desplazamientoLeer++;
+				}
+				valorTotalaDeLeerMovIn = malloc(tamanioTotalstrlen + 1);
+				memset(valorTotalaDeLeerMovIn, 0, tamanioTotalstrlen + 1);
+				valorTotalaDeLeerMovIn = concatenar_lista_de_cadenas(lista_datos_a_leer_mov_in, tamanioTotalstrlen);
+				printf("Valor leido de memoria: %s \n", valorTotalaDeLeerMovIn);
+				list_add(lista_datos_leidos_mov_in, strdup(valorTotalaDeLeerMovIn));
+				list_clean_and_destroy_elements(lista_datos_a_leer_mov_in, free);
 			}
-			char *valorTotalaDeLeerMovIn = malloc(tamanioTotal + 1);
-			memset(valorTotalaDeLeerMovIn, 0, tamanioTotal + 1);
-			valorTotalaDeLeerMovIn = concatenar_lista_de_cadenas(lista_datos_a_leer_mov_in, tamanioTotal);
-			printf("Valor leido de memoria: %s \n", valorTotalaDeLeerMovIn);
-			enviar_dato_movIn(cliente_socket, valorTotalaDeLeerMovIn, tamanioTotal);
+			/*for(int g = 0; g < list_size(lista_datos_leidos_mov_in); g++){
+				char *aMostrar = list_get(lista_datos_leidos_mov_in, g);
+				printf("Valor YA LEIDO de memoria: %s \n", aMostrar);
+
+			}*/
+
+			enviar_dato_movIn(cliente_socket, lista_datos_leidos_mov_in);
 
 			list_clean_and_destroy_elements(direcciones_fisicas_mov_in, free);
 			list_clean_and_destroy_elements(lista_datos_a_leer_mov_in, free);
+			list_clean_and_destroy_elements(lista_datos_leidos_mov_in, free);
 
 			// TODO devolver valor_leido_mov_in a cpu
 			break;
@@ -140,6 +158,8 @@ static void procesar_conexion_memoria(void *void_args)
 			printf("Numero en binario: %s \n", valor_mov_out_binario);
 
 			int indice_valor_mov_out_binario = 0;
+			int cantidadBits = 0;
+			int indice = 0;
 			for (int i = 0; i < list_size(direcciones_fisicas_mov_out); i++)
 			{
 				t_direcciones_fisicas *direccionAmostrar = list_get(direcciones_fisicas_mov_out, i);
@@ -150,38 +170,54 @@ static void procesar_conexion_memoria(void *void_args)
 				int cantidad_bits_llenados = 0;
 				for(int k = 0; k < (direccionAmostrar->tamanio) * 8; k++)
 				{
-					if(valor_mov_out_binario[indice_valor_mov_out_binario])
-					{
-						valor_parcial_binario[k] = valor_mov_out_binario[indice_valor_mov_out_binario]; //Numero binario parcial a pasar
-						printf("Bit pasado al valor parcial: %c \n", valor_parcial_binario[k]);
-						cantidad_bits_llenados++;
-						indice_valor_mov_out_binario++;
-					}else
-					{
-						printf("Valor binario a parcial menor a 8 bits a transformar: %s \n", valor_parcial_binario);
-						int decimal_a_mandar = binario_a_decimal(atoi(valor_parcial_binario));
-						printf("Valor transformado del binario al decimal menor a 8 bits: %d \n", decimal_a_mandar);
-						valor_parcial_decimal_a_escribir = int_to_char(decimal_a_mandar);
-						printf("Valor decimal en char a enviar menor a 8 bits: %s \n", valor_parcial_decimal_a_escribir);
-						escribir_memoria(direccionAmostrar->direccion_fisica + desplazamiento, 1, valor_parcial_decimal_a_escribir);
-						break;
-					}
+					
+					if(indice_valor_mov_out_binario <= strlen(valor_mov_out_binario)){
+						if(valor_mov_out_binario[indice_valor_mov_out_binario])
+						{
+							valor_parcial_binario[k] = valor_mov_out_binario[indice_valor_mov_out_binario]; //Numero binario parcial a pasar
+							printf("Bit pasado al valor parcial: %c \n", valor_parcial_binario[k]);
+							cantidad_bits_llenados++;
+							indice_valor_mov_out_binario++;
+							cantidadBits++;
+						}
+						else 
+						{
+							printf("Valor binario a parcial menor a 8 bits a transformar: %s \n", valor_parcial_binario);
+							int decimal_a_mandar = binario_a_decimal(atoi(valor_parcial_binario));
+							printf("Valor transformado del binario al decimal menor a 8 bits: %d \n", decimal_a_mandar);
+							valor_parcial_decimal_a_escribir = int_to_char(decimal_a_mandar);
+							//printf("Valor decimal en char a enviar menor a 8 bits: %s \n", valor_parcial_decimal_a_escribir);
+							escribir_memoria_mov_out(direccionAmostrar->direccion_fisica + desplazamiento, 1, valor_parcial_decimal_a_escribir);
 
-					if(cantidad_bits_llenados % 8 == 0)
-					{
-						printf("Valor binario a parcial a transformar: %s \n", valor_parcial_binario);    
-						int decimal_a_mandar = binario_a_decimal(atoi(valor_parcial_binario));
-						printf("Valor transformado del binario al decimal: %d \n", decimal_a_mandar);
-						free(valor_parcial_decimal_a_escribir); // Libera la memoria antigua antes de asignar una nueva
-						valor_parcial_decimal_a_escribir = int_to_char(decimal_a_mandar);
-						printf("Valor decimal en char a enviar: %s \n", valor_parcial_decimal_a_escribir);
-						escribir_memoria(direccionAmostrar->direccion_fisica + desplazamiento, 1, valor_parcial_decimal_a_escribir);
-						memset(valor_parcial_binario, 0, 9); // Asegúrate de limpiar todo el espacio que has asignado
-						desplazamiento++;
-						cantidad_bits_llenados = 0;
-						k = -1;
+							break;
+						}
+						if(cantidad_bits_llenados % 8 == 0 && valor_mov_out_binario[indice_valor_mov_out_binario])
+						{
+							printf("Valor binario a parcial a transformar: %s \n", valor_parcial_binario);    
+							int decimal_a_mandar = binario_a_decimal(atoi(valor_parcial_binario));
+							printf("Valor transformado del binario al decimal: %d \n", decimal_a_mandar);
+							free(valor_parcial_decimal_a_escribir); // Libera la memoria antigua antes de asignar una nueva
+							valor_parcial_decimal_a_escribir = int_to_char(decimal_a_mandar);
+								//unsigned char hola = (unsigned char)valor_parcial_decimal_a_escribir;
+							//printf("Valor decimal en char a enviar: %s \n", valor_parcial_decimal_a_escribir);
+							escribir_memoria_mov_out(direccionAmostrar->direccion_fisica + desplazamiento, 1, valor_parcial_decimal_a_escribir);
+							memset(valor_parcial_binario, 0, 9); // Asegúrate de limpiar todo el espacio que has asignado
+							desplazamiento++;
+							cantidad_bits_llenados = 0;
+							
+							k = -1;
+						//indice_valor_mov_out_binario = 0;
+						}
 					}
+					 
+					
+					
+					
+
 				}
+				cantidadBits=0;
+				//indice_valor_mov_out_binario = 0;
+				indice = indice + direccionAmostrar->tamanio;
 			} 
 			
 
