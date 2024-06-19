@@ -180,7 +180,7 @@ static void procesar_conexion_memoria(void *void_args)
 							indice_valor_mov_out_binario++;
 							cantidadBits++;
 						}
-						else 
+						else
 						{
 							printf("Valor binario a parcial menor a 8 bits a transformar: %s \n", valor_parcial_binario);
 							int decimal_a_mandar = binario_a_decimal(atoi(valor_parcial_binario));
@@ -188,7 +188,7 @@ static void procesar_conexion_memoria(void *void_args)
 							valor_parcial_decimal_a_escribir = int_to_char(decimal_a_mandar);
 							//printf("Valor decimal en char a enviar menor a 8 bits: %s \n", valor_parcial_decimal_a_escribir);
 							escribir_memoria_mov_out(direccionAmostrar->direccion_fisica + desplazamiento, 1, valor_parcial_decimal_a_escribir);
-
+							indice_valor_mov_out_binario++;
 							break;
 						}
 						if(cantidad_bits_llenados % 8 == 0 && valor_mov_out_binario[indice_valor_mov_out_binario])
@@ -294,7 +294,7 @@ static void procesar_conexion_memoria(void *void_args)
 			for (int i = 0; i < list_size(direcciones_fisicas_lectura); i++)
 			{
 				t_direcciones_fisicas *direccion_fisica_actual = list_get(direcciones_fisicas_lectura, i);
-				valor_leido_parcial = leer_memoria(direccion_fisica_actual->direccion_fisica, direccion_fisica_actual->tamanio);
+				valor_leido_parcial = leer_memoria_IO(direccion_fisica_actual->direccion_fisica, direccion_fisica_actual->tamanio);
 				strcat(valor_leido_completo, valor_leido_parcial);
 			}
 
@@ -350,7 +350,7 @@ static void procesar_conexion_memoria(void *void_args)
 			for (int i = 0; i < list_size(direcciones_fisicas_a_leer); i++)
 			{
 				t_direcciones_fisicas *direccionAmostrar = list_get(direcciones_fisicas_a_leer, i);
-				valor_leido_stdout = leer_memoria(direccionAmostrar->direccion_fisica, direccionAmostrar->tamanio);
+				valor_leido_stdout = leer_memoria_IO(direccionAmostrar->direccion_fisica, direccionAmostrar->tamanio);
 				list_add(lista_datos_a_leer, strdup(valor_leido_stdout));
 				log_debug(LOGGER_MEMORIA, "Cadena final leída: %s \n", valor_leido_stdout);
 				tamanio_registroTotal_stdout += direccionAmostrar->tamanio;

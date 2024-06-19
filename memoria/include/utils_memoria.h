@@ -30,6 +30,7 @@ void enviar_valor_mov_in_memoria(char *valor, int socket);
 void serializar_valor_leido_mov_in(t_paquete *paquete, char *valor);
 void recibir_copystring(int socket_cliente, t_list *Lista_direccionesFisica_escritura, t_list *Lista_direccionesFisica_lectura, uint32_t *tamanio);
 void deserializar_datos_copystring(t_paquete *paquete, t_list *Lista_direccionesFisica_escritura, t_list *Lista_direccionesFisica_lectura, uint32_t *tamanio);
+char *leer_memoria_IO(uint32_t dir_fisica, uint32_t tamanio_registro);
 
 void escribir_memoria(uint32_t dir_fisica, uint32_t tamanio_registro, char *valorObtenido);
 

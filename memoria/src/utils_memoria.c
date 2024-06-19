@@ -572,6 +572,33 @@ char *leer_memoria(uint32_t dir_fisica, uint32_t tamanio_registro)
     return dato_leido;
 }
 
+char *leer_memoria_IO(uint32_t dir_fisica, uint32_t tamanio_registro)
+{
+    /* char valor_leido; // Cambiar a int
+    int valorTotalaDeLeer = 0; */
+    pthread_mutex_lock(&mutex_memoria_usuario);
+    char *cadena = malloc(tamanio_registro + 1); // Allocate memory dynamically
+    memset(cadena, 0, tamanio_registro + 1);     // Initialize all elements to 0
+    /* for (uint32_t i = 0; i < tamanio_registro; i++)
+    {
+        if (&memoriaUsuario[dir_fisica + i] != 0)
+        {
+            memcpy(&valor_leido, &memoriaUsuario[dir_fisica + i], 1);
+            cadena[i] = valor_leido;
+            printf("Valor a agregar a cadena: %c \n", valor_leido);
+            valorTotalaDeLeer++;
+            // Assign the character directly
+        }
+    } */
+    memcpy(cadena, memoriaUsuario + dir_fisica, tamanio_registro);
+    cadena[tamanio_registro] = '\0';
+    pthread_mutex_unlock(&mutex_memoria_usuario);
+    log_info(LOGGER_MEMORIA, "PID: <%d> - Accion: <LEER> - Direccion Fisica: <%d> - Tamaño <%d> \n", proceso_memoria->pid, dir_fisica, tamanio_registro);
+    printf("Cadena leida: %s \n", cadena);
+    usleep(RETARDO_RESPUESTA * 1000);
+    return cadena;
+}
+
 char *int_to_char(int num)
 {
     if (num == 0) // Añade este caso especial para cuando num es 0
