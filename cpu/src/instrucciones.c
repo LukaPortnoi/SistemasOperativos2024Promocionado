@@ -65,7 +65,6 @@ void _mov_in(char *registro, char *direc_logica, int socket)
     //mem_hexdump(datoObtenido, strlen(datoObtenido));
     
 
-    int contador_del_tamanio_del_valor_leido_completo = 0; // Reiniciar z a 0 en cada iteración del bucle externo
     for (int i = 0; i < list_size(Lista_direccionesFisica); i++)
     {
         t_direcciones_fisicas *direccionAmostrar = list_get(Lista_direccionesFisica, i);
@@ -114,17 +113,21 @@ void _mov_out(char *direc_logica, char *registro, int socket)
 
     enviar_valor_mov_out_cpu(Lista_direccionesFisica, valorObtenido, socket);
 
-    int contador_del_tamanio_del_valor_leido_completo = 0; // Reiniciar z a 0 en cada iteración del bucle externo
     for (int i = 0; i < list_size(Lista_direccionesFisica); i++)
     {
         t_direcciones_fisicas *direccionAmostrar = list_get(Lista_direccionesFisica, i);
-        int *valor_parcial_a_pasar = malloc(4);
-        memset(valor_parcial_a_pasar, 0, 4);
-        memcpy(valor_parcial_a_pasar, &valorObtenido, direccionAmostrar->tamanio);
+        //int *valor_parcial_a_pasar = malloc(4);
+        //memset(valor_parcial_a_pasar, 0, 4);
+        //memcpy(valor_parcial_a_pasar, &valorObtenido, direccionAmostrar->tamanio);
+        if (i==0){
+                    log_info(LOGGER_CPU, "PID: %d - Acción: ESCRIBIR - Dirección Física: %d - Valor: %d", pcb_actual->pid, direccionAmostrar->direccion_fisica, valorObtenido);
 
-        log_info(LOGGER_CPU, "PID: %d - Acción: ESCRIBIR - Dirección Física: %d - Valor: %d", pcb_actual->pid, direccionAmostrar->direccion_fisica, *valor_parcial_a_pasar);
-        free(valor_parcial_a_pasar);
+        }
+        //free(valor_parcial_a_pasar);
+        free(direccionAmostrar);
     }
+
+   // list_destroy_and_destroy_elements(Lista_direccionesFisica, free);
 }
 
 // (Registro Destino, Registro Origen): Suma al Registro Destino el
@@ -629,12 +632,7 @@ void enviar_valor_mov_in_cpu(t_list *Lista_direccionesFisica, int socket)
     t_paquete *paquete_mov_in = crear_paquete_con_codigo_de_operacion(PEDIDO_MOV_IN);
     serializar_datos_mov_in(paquete_mov_in, Lista_direccionesFisica);
     // printf("tamaño lista: %d \n", list_size(Lista_direccionesFisica));
-    for (int i = 0; i < list_size(Lista_direccionesFisica); i++)
-    {
-        t_direcciones_fisicas *direccionAmostrar = list_get(Lista_direccionesFisica, i);
-        // printf("Direccion Fisica %d recibida: %d\n", i, direccionAmostrar->direccion_fisica);
-        // printf("Tamaño a leer es: %d, en posicion: %d\n", direccionAmostrar->tamanio, i);
-    }
+    
     enviar_paquete(paquete_mov_in, socket);
     eliminar_paquete(paquete_mov_in);
 }

@@ -216,6 +216,7 @@ static void procesar_conexion_memoria(void *void_args)
 
 				}
 				cantidadBits=0;
+											free(valor_parcial_binario);
 				//indice_valor_mov_out_binario = 0;
 				indice = indice + direccionAmostrar->tamanio;
 			} 
@@ -278,7 +279,6 @@ static void procesar_conexion_memoria(void *void_args)
 			*/
 
 
-
 			list_clean_and_destroy_elements(direcciones_fisicas_mov_out, free);
 			break;
 
@@ -314,7 +314,13 @@ static void procesar_conexion_memoria(void *void_args)
 				valor_parcial_a_pasar[direccion_fisica_actual->tamanio] = '\0';
 
 				escribir_memoria(direccion_fisica_actual->direccion_fisica, direccion_fisica_actual->tamanio, valor_parcial_a_pasar);
+				free(valor_parcial_a_pasar);
+
 			}
+
+			free(valor_leido_completo);
+			list_clean_and_destroy_elements(direcciones_fisicas_escritura, free);
+			list_clean_and_destroy_elements(direcciones_fisicas_lectura, free);
 			break;
 
 		case PEDIDO_ESCRIBIR_DATO_STDIN:
@@ -337,6 +343,7 @@ static void procesar_conexion_memoria(void *void_args)
 				}
 				valor_parcial_a_pasar[direccionAmostrar->tamanio] = '\0';
 				escribir_memoria(direccionAmostrar->direccion_fisica, direccionAmostrar->tamanio, valor_parcial_a_pasar);
+				free(direccionAmostrar);
 			}
 			list_clean_and_destroy_elements(direcciones_fisicas_a_escribir, free);
 			break;
@@ -354,6 +361,7 @@ static void procesar_conexion_memoria(void *void_args)
 				list_add(lista_datos_a_leer, strdup(valor_leido_stdout));
 				log_debug(LOGGER_MEMORIA, "Cadena final leída: %s \n", valor_leido_stdout);
 				tamanio_registroTotal_stdout += direccionAmostrar->tamanio;
+				free(direccionAmostrar);
 			}
 			char *valorTotalaDeLeer = concatenar_lista_de_cadenas(lista_datos_a_leer, tamanio_registroTotal_stdout);
 

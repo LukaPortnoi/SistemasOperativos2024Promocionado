@@ -257,12 +257,14 @@ t_list *traducir_direccion(uint32_t pid, uint32_t logicalAddress, uint32_t pageS
         }
     }
 
+    // ESTO ES PARA MOSTRAR LAS DIRECCIONES
+    /* 
     for (int i = 0; i < list_size(listaDirecciones); i++)
     {
         t_direcciones_fisicas *direccionAmostrar = list_get(listaDirecciones, i);
         // printf("Direccion Fisica: %d\n", direccionAmostrar->direccion_fisica);
         // printf("Tamanio: %d\n", direccionAmostrar->tamanio);
-    }
+    }*/
 
     return listaDirecciones;
 }

@@ -529,7 +529,7 @@ void escribir_memoria_mov_out(uint32_t dir_fisica, uint32_t tamanio_registro,  c
 
     unsigned char valorConvertido = (unsigned char)atoi(valorObtenido);
     
-    printf("Cosa a escribir en memoria: %u\n", valorConvertido);
+    //printf("Cosa a escribir en memoria: %u\n", valorConvertido);
     *((unsigned char*)memoriaUsuario + dir_fisica) = valorConvertido;
 
     // Verificar que el valor se escribió correctamente
@@ -561,7 +561,7 @@ char *leer_memoria(uint32_t dir_fisica, uint32_t tamanio_registro)
     unsigned char valorLeido = *((unsigned char*)memoriaUsuario + dir_fisica);
     sprintf(dato_leido, "%u", valorLeido);
     // Registrar la acción en el log
-    log_info("LOGGER_MEMORIA", "PID: <%d> - Accion: <LEER> - Direccion Fisica: <%d> - Tamaño <%d> \n", 0, dir_fisica, tamanio_registro);
+    log_info(LOGGER_MEMORIA, "PID: <%d> - Accion: <LEER> - Direccion Fisica: <%d> - Tamaño <%d> \n", 0, dir_fisica, tamanio_registro);
     
     // Mostrar el dato leído en la consola
     printf("Dato leido: %s\n", dato_leido);
