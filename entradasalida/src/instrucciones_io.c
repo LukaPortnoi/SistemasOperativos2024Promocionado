@@ -27,7 +27,7 @@ void procesar_stdin(int socket_cliente, t_log *logger)
 
     char *datoRecibido;
     datoRecibido = procesarIngresoUsuario(tamanioTotal);
-    enviar_dato_stdin(fd_io_memoria, interfazRecibida->direccionesFisicas, datoRecibido);
+    enviar_dato_stdin(fd_io_memoria, interfazRecibida->direccionesFisicas, datoRecibido, interfazRecibida->pidPcb );
     free(datoRecibido);
 
     enviar_InterfazStdinConCodigoOPaKernel(socket_cliente, interfazRecibida->direccionesFisicas, interfazRecibida->pidPcb, interfazRecibida->nombre_interfaz);
@@ -53,7 +53,7 @@ void procesar_stdout(int socket_cliente, t_log *logger)
     t_interfaz_stdout *interfazRecibida = recibir_InterfazStdout(socket_cliente);
     log_info(logger, "PID: %d - Operacion: IO_STDOUT_WRITE", interfazRecibida->pidPcb);
 
-    enviar_direcciones_stdout(fd_io_memoria, interfazRecibida->direccionesFisicas);
+    enviar_direcciones_stdout(fd_io_memoria, interfazRecibida->direccionesFisicas, interfazRecibida->pidPcb);
     char *datoRecibido = recibir_dato(fd_io_memoria, logger);
     imprimir_dato_recibido_de_memoria(datoRecibido);
 

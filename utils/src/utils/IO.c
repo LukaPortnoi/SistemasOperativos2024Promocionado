@@ -615,20 +615,20 @@ void enviar_InterfazStdinConCodigoOPaKernel(int socket, t_list *direcciones_fisi
     free(interfaz);
 }
 
-void enviar_dato_stdin(int socket, t_list *direcciones_fisicas, char *Dato_a_exscribir_en_memoria)
+void enviar_dato_stdin(int socket, t_list *direcciones_fisicas, char *Dato_a_exscribir_en_memoria, uint32_t pid)
 {
     t_paquete *paquete = crear_paquete_con_codigo_de_operacion(PEDIDO_ESCRIBIR_DATO_STDIN);
-    serializar_dato_stdin(paquete, direcciones_fisicas, Dato_a_exscribir_en_memoria);
+    serializar_dato_stdin(paquete, direcciones_fisicas, Dato_a_exscribir_en_memoria, pid);
     enviar_paquete(paquete, socket);
     eliminar_paquete(paquete);
 }
 
-void serializar_dato_stdin(t_paquete *paquete, t_list *direcciones_fisicas, char *Dato_a_exscribir_en_memoria)
+void serializar_dato_stdin(t_paquete *paquete, t_list *direcciones_fisicas, char *Dato_a_exscribir_en_memoria, uint32_t pid)
 {
     uint32_t tamanio_Dato = strlen(Dato_a_exscribir_en_memoria) + 1;
     uint32_t tamanioLista = list_size(direcciones_fisicas);
 
-    paquete->buffer->size = sizeof(uint32_t) + tamanio_Dato + sizeof(uint32_t) + tamanioLista * (2 * sizeof(uint32_t));
+    paquete->buffer->size = sizeof(uint32_t) + sizeof(uint32_t) + tamanio_Dato + sizeof(uint32_t) + tamanioLista * (2 * sizeof(uint32_t));
     paquete->buffer->stream = malloc(paquete->buffer->size);
     if (paquete->buffer->stream == NULL)
     {
@@ -655,18 +655,20 @@ void serializar_dato_stdin(t_paquete *paquete, t_list *direcciones_fisicas, char
         memcpy(paquete->buffer->stream + desplazamiento, &(dato->tamanio), sizeof(uint32_t));
         desplazamiento += sizeof(uint32_t);
     }
+
+    memcpy(paquete->buffer->stream + desplazamiento, &pid, sizeof(uint32_t));
 }
 
-char *recibir_dato_stdin(t_list *direcciones_fisicas, int socket_cliente)
+char *recibir_dato_stdin(t_list *direcciones_fisicas, int socket_cliente , uint32_t *pid)
 {
     char *datoObtenido;
     t_paquete *paquete = recibir_paquete(socket_cliente);
-    datoObtenido = deserializar_dato_interfaz_STDIN(paquete, direcciones_fisicas);
+    datoObtenido = deserializar_dato_interfaz_STDIN(paquete, direcciones_fisicas, pid);
     eliminar_paquete(paquete);
     return datoObtenido;
 }
 
-char *deserializar_dato_interfaz_STDIN(t_paquete *paquete, t_list *lista_datos)
+char *deserializar_dato_interfaz_STDIN(t_paquete *paquete, t_list *lista_datos, uint32_t *pid)
 {
     int desplazamiento = 0;
     char *datoObtenido = NULL; // Inicializar el puntero
@@ -710,6 +712,8 @@ char *deserializar_dato_interfaz_STDIN(t_paquete *paquete, t_list *lista_datos)
 
         list_add(lista_datos, direccion);
     }
+
+    memcpy(pid, paquete->buffer->stream + desplazamiento, sizeof(uint32_t));
 
     return datoObtenido;
 }
@@ -922,19 +926,19 @@ void enviar_InterfazStdoutConCodigoOPaKernel(int socket, t_list *direcciones_fis
     free(interfaz);
 }
 
-void enviar_direcciones_stdout(int socket, t_list *direcciones_fisicas)
+void enviar_direcciones_stdout(int socket, t_list *direcciones_fisicas , uint32_t pid)
 {
     t_paquete *paquete = crear_paquete_con_codigo_de_operacion(PEDIDO_A_LEER_DATO_STDOUT);
-    serializar_direcciones_stdout(paquete, direcciones_fisicas);
+    serializar_direcciones_stdout(paquete, direcciones_fisicas, pid);
     enviar_paquete(paquete, socket);
     eliminar_paquete(paquete);
 }
 
-void serializar_direcciones_stdout(t_paquete *paquete, t_list *direcciones_fisicas)
+void serializar_direcciones_stdout(t_paquete *paquete, t_list *direcciones_fisicas, uint32_t pid)
 {
     uint32_t tamanioLista = list_size(direcciones_fisicas);
 
-    paquete->buffer->size = sizeof(uint32_t) + tamanioLista * (2 * sizeof(uint32_t));
+    paquete->buffer->size =  sizeof(uint32_t) + sizeof(uint32_t) + tamanioLista * (2 * sizeof(uint32_t));
     paquete->buffer->stream = malloc(paquete->buffer->size);
     if (paquete->buffer->stream == NULL)
     {
@@ -955,16 +959,18 @@ void serializar_direcciones_stdout(t_paquete *paquete, t_list *direcciones_fisic
         memcpy(paquete->buffer->stream + desplazamiento, &(dato->tamanio), sizeof(uint32_t));
         desplazamiento += sizeof(uint32_t);
     }
+    memcpy(paquete->buffer->stream + desplazamiento, &pid, sizeof(uint32_t));
 }
 
-void recibir_direcciones_de_stdout(int socket_cliente, t_list *lista_direcciones)
+void recibir_direcciones_de_stdout(int socket_cliente, t_list *lista_direcciones , uint32_t *pid)
 {
     t_paquete *paquete = recibir_paquete(socket_cliente);
-    deserializar_direcciones_de_stdout(paquete, lista_direcciones);
+    deserializar_direcciones_de_stdout(paquete, lista_direcciones, pid);
     eliminar_paquete(paquete);
 }
 
-void deserializar_direcciones_de_stdout(t_paquete *paquete, t_list *lista_datos)
+
+void deserializar_direcciones_de_stdout(t_paquete *paquete, t_list *lista_datos, uint32_t *pid)
 {
     int desplazamiento = 0;
     uint32_t tamanioLista;
@@ -984,6 +990,7 @@ void deserializar_direcciones_de_stdout(t_paquete *paquete, t_list *lista_datos)
 
         list_add(lista_datos, dato);
     }
+    memcpy(pid, paquete->buffer->stream + desplazamiento, sizeof(uint32_t));
 }
 
 void enviar_dato_movIn(int socket, t_list *lista)

@@ -343,7 +343,6 @@ void mostrar_procesos_en_cola(t_squeue *squeue, const char *nombre_cola)
   }
   else
   {
-    log_info(LOGGER_KERNEL, "Procesos en la cola %s:", nombre_cola);
-    mostrar_procesos_en_squeue(squeue, LOGGER_KERNEL);
+    loguear_cola(squeue, nombre_cola);
   }
 }

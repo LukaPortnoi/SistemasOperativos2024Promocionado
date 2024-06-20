@@ -106,10 +106,10 @@ static void procesar_conexion_memoria(void *void_args)
 			t_list *direcciones_fisicas_mov_in = list_create();
 			t_list *lista_datos_a_leer_mov_in = list_create();
 			t_list *lista_datos_leidos_mov_in = list_create();
+			uint32_t pidMovIn;
 
-			char *valor_leido_mov_in;
 			char *valorTotalaDeLeerMovIn;
-			recibir_mov_in_cpu(cliente_socket, direcciones_fisicas_mov_in);
+			recibir_mov_in_cpu(cliente_socket, direcciones_fisicas_mov_in, &pidMovIn);
 			int tamanioTotalstrlen = 0;
 			int desplazamientoLeer;
 			for (int i = 0; i < list_size(direcciones_fisicas_mov_in); i++)
@@ -118,7 +118,7 @@ static void procesar_conexion_memoria(void *void_args)
 				desplazamientoLeer = 0;
 				for (int j = 0; j < direccionAmostrar->tamanio; j++)
 				{
-					valor_leido_mov_in = leer_memoria(direccionAmostrar->direccion_fisica + desplazamientoLeer, direccionAmostrar->tamanio);
+					char *valor_leido_mov_in = leer_memoria(direccionAmostrar->direccion_fisica + desplazamientoLeer, direccionAmostrar->tamanio, pidMovIn);
 					// printf("Valor leido de memoria en pedacitos: %s \n", valor_leido_mov_in);
 					if (strcmp(valor_leido_mov_in, "0") != 0)
 					{
@@ -126,6 +126,7 @@ static void procesar_conexion_memoria(void *void_args)
 					}
 					tamanioTotalstrlen += strlen(valor_leido_mov_in);
 					desplazamientoLeer++;
+					free(valor_leido_mov_in);
 				}
 				// el concatenar ya tiene un malloc
 				valorTotalaDeLeerMovIn = concatenar_lista_de_cadenas(lista_datos_a_leer_mov_in, tamanioTotalstrlen);
@@ -151,7 +152,8 @@ static void procesar_conexion_memoria(void *void_args)
 		case PEDIDO_MOV_OUT: // me pasa por parametro un uint32_t y tengo que guardarlo en el marco que me dice
 			t_list *direcciones_fisicas_mov_out = list_create();
 			uint32_t valor_obtenido_mov_out;
-			recibir_mov_out_cpu(direcciones_fisicas_mov_out, &valor_obtenido_mov_out, cliente_socket);
+			uint32_t pidMovOut;
+			recibir_mov_out_cpu(direcciones_fisicas_mov_out, &valor_obtenido_mov_out, cliente_socket, &pidMovOut);
 			int numero_recibido = (int)valor_obtenido_mov_out;
 			// printf("Numero en decimal: %d \n", numero_recibido);
 			char *valor_mov_out_binario = decimal_a_binario(numero_recibido);
@@ -178,32 +180,32 @@ static void procesar_conexion_memoria(void *void_args)
 						if (valor_mov_out_binario[indice_valor_mov_out_binario])
 						{
 							valor_parcial_binario[k] = valor_mov_out_binario[indice_valor_mov_out_binario]; // Numero binario parcial a pasar
-							// printf("Bit pasado al valor parcial: %c \n", valor_parcial_binario[k]);
+							 printf("Bit pasado al valor parcial: %c \n", valor_parcial_binario[k]);
 							cantidad_bits_llenados++;
 							indice_valor_mov_out_binario++;
 							cantidadBits++;
 						}
 						else
 						{
-							// printf("Valor binario a parcial menor a 8 bits a transformar: %s \n", valor_parcial_binario);
+							 printf("Valor binario a parcial menor a 8 bits a transformar: %s \n", valor_parcial_binario);
 							int decimal_a_mandar = binario_a_decimal(atoi(valor_parcial_binario));
-							// printf("Valor transformado del binario al decimal menor a 8 bits: %d \n", decimal_a_mandar);
+							//printf("Valor transformado del binario al decimal menor a 8 bits: %d \n", decimal_a_mandar);
 							valor_parcial_decimal_a_escribir = int_to_char(decimal_a_mandar);
-							// printf("Valor decimal en char a enviar menor a 8 bits: %s \n", valor_parcial_decimal_a_escribir);
-							escribir_memoria_mov_out(direccionAmostrar->direccion_fisica + desplazamiento, 1, valor_parcial_decimal_a_escribir);
+							printf("Valor decimal en char a enviar menor a 8 bits: %s \n", valor_parcial_decimal_a_escribir);
+							escribir_memoria_mov_out(direccionAmostrar->direccion_fisica + desplazamiento, 1, valor_parcial_decimal_a_escribir, pidMovOut);
 							indice_valor_mov_out_binario++;
 							free(valor_parcial_decimal_a_escribir);
 							break;
 						}
 						if (cantidad_bits_llenados % 8 == 0 && valor_mov_out_binario[indice_valor_mov_out_binario])
 						{
-							// printf("Valor binario a parcial a transformar: %s \n", valor_parcial_binario);
+							 printf("Valor binario a parcial a transformar: %s \n", valor_parcial_binario);
 							int decimal_a_mandar = binario_a_decimal(atoi(valor_parcial_binario));
 							// printf("Valor transformado del binario al decimal: %d \n", decimal_a_mandar);
 							valor_parcial_decimal_a_escribir = int_to_char(decimal_a_mandar);
 							// unsigned char hola = (unsigned char)valor_parcial_decimal_a_escribir;
-							// printf("Valor decimal en char a enviar: %s \n", valor_parcial_decimal_a_escribir);
-							escribir_memoria_mov_out(direccionAmostrar->direccion_fisica + desplazamiento, 1, valor_parcial_decimal_a_escribir);
+							 printf("Valor decimal en char a enviar: %s \n", valor_parcial_decimal_a_escribir);
+							escribir_memoria_mov_out(direccionAmostrar->direccion_fisica + desplazamiento, 1, valor_parcial_decimal_a_escribir, pidMovOut);
 							memset(valor_parcial_binario, 0, 9); // Asegúrate de limpiar todo el espacio que has asignado
 							desplazamiento++;
 							cantidad_bits_llenados = 0;
@@ -214,10 +216,10 @@ static void procesar_conexion_memoria(void *void_args)
 					}
 				}
 				cantidadBits = 0;
-				free(valor_parcial_binario);
 				// indice_valor_mov_out_binario = 0;
 				indice = indice + direccionAmostrar->tamanio;
 			}
+			free(valor_parcial_binario);
 			free(valor_mov_out_binario);
 			list_destroy_and_destroy_elements(direcciones_fisicas_mov_out, free);
 			/* int valor_mov_out_int = (int)valorObtenido_mov_out;
@@ -277,7 +279,9 @@ static void procesar_conexion_memoria(void *void_args)
 			t_list *direcciones_fisicas_escritura = list_create();
 			t_list *direcciones_fisicas_lectura = list_create();
 			uint32_t tamanio_copy_string;
-			recibir_copystring(cliente_socket, direcciones_fisicas_escritura, direcciones_fisicas_lectura, &tamanio_copy_string);
+			uint32_t pidCopyString;
+
+			recibir_copystring(cliente_socket, direcciones_fisicas_escritura, direcciones_fisicas_lectura, &tamanio_copy_string, &pidCopyString);
 			char *valor_leido_parcial;
 			char *valor_leido_completo = malloc(tamanio_copy_string + 1);
 			memset(valor_leido_completo, 0, tamanio_copy_string + 1);
@@ -285,7 +289,7 @@ static void procesar_conexion_memoria(void *void_args)
 			for (int i = 0; i < list_size(direcciones_fisicas_lectura); i++)
 			{
 				t_direcciones_fisicas *direccion_fisica_actual = list_get(direcciones_fisicas_lectura, i);
-				valor_leido_parcial = leer_memoria_IO(direccion_fisica_actual->direccion_fisica, direccion_fisica_actual->tamanio);
+				valor_leido_parcial = leer_memoria_IO(direccion_fisica_actual->direccion_fisica, direccion_fisica_actual->tamanio, pidCopyString);
 				strcat(valor_leido_completo, valor_leido_parcial);
 				free(valor_leido_parcial);
 			}
@@ -305,7 +309,7 @@ static void procesar_conexion_memoria(void *void_args)
 
 				valor_parcial_a_pasar[direccion_fisica_actual->tamanio] = '\0';
 
-				escribir_memoria(direccion_fisica_actual->direccion_fisica, direccion_fisica_actual->tamanio, valor_parcial_a_pasar);
+				escribir_memoria(direccion_fisica_actual->direccion_fisica, direccion_fisica_actual->tamanio, valor_parcial_a_pasar, pidCopyString);
 				free(valor_parcial_a_pasar);
 			}
 
@@ -317,7 +321,8 @@ static void procesar_conexion_memoria(void *void_args)
 		case PEDIDO_ESCRIBIR_DATO_STDIN:
 			t_list *direcciones_fisicas_a_escribir = list_create();
 			char *dato_obtenido_stdin;
-			dato_obtenido_stdin = recibir_dato_stdin(direcciones_fisicas_a_escribir, cliente_socket);
+			uint32_t pidStdin;
+			dato_obtenido_stdin = recibir_dato_stdin(direcciones_fisicas_a_escribir, cliente_socket, &pidStdin);
 			int longitud_DATO = strlen(dato_obtenido_stdin);
 
 			int h = 0;
@@ -333,7 +338,7 @@ static void procesar_conexion_memoria(void *void_args)
 					h++;
 				}
 				valor_parcial_a_pasar[direccionAmostrar->tamanio] = '\0';
-				escribir_memoria(direccionAmostrar->direccion_fisica, direccionAmostrar->tamanio, valor_parcial_a_pasar);
+				escribir_memoria(direccionAmostrar->direccion_fisica, direccionAmostrar->tamanio, valor_parcial_a_pasar, pidStdin);
 				free(valor_parcial_a_pasar);
 			}
 			free(dato_obtenido_stdin);
@@ -344,12 +349,14 @@ static void procesar_conexion_memoria(void *void_args)
 			t_list *direcciones_fisicas_a_leer = list_create();
 			t_list *lista_datos_a_leer = list_create();
 			char *valor_leido_stdout;
-			recibir_direcciones_de_stdout(cliente_socket, direcciones_fisicas_a_leer);
+			uint32_t pidStdout;
+
+			recibir_direcciones_de_stdout(cliente_socket, direcciones_fisicas_a_leer, &pidStdout);
 			int tamanio_registroTotal_stdout = 0;
 			for (int i = 0; i < list_size(direcciones_fisicas_a_leer); i++)
 			{
 				t_direcciones_fisicas *direccionAmostrar = list_get(direcciones_fisicas_a_leer, i);
-				valor_leido_stdout = leer_memoria_IO(direccionAmostrar->direccion_fisica, direccionAmostrar->tamanio);
+				valor_leido_stdout = leer_memoria_IO(direccionAmostrar->direccion_fisica, direccionAmostrar->tamanio, pidStdout);
 				list_add(lista_datos_a_leer, strdup(valor_leido_stdout));
 				log_debug(LOGGER_MEMORIA, "Cadena final leída: %s \n", valor_leido_stdout);
 				tamanio_registroTotal_stdout += direccionAmostrar->tamanio;

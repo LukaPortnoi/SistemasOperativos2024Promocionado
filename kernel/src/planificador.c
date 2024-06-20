@@ -456,16 +456,45 @@ void proceso_listo(t_pcb *pcb, bool es_ready_plus)
     if (es_ready_plus)
     {
         squeue_push(squeue_readyPlus, pcb);
-        log_info(LOGGER_KERNEL, "Cola Ready Plus:");
-        mostrar_procesos_en_squeue(squeue_readyPlus, LOGGER_KERNEL);
+        //log_info(LOGGER_KERNEL, "Cola Ready Prioridad:");
+        //mostrar_procesos_en_squeue(squeue_readyPlus, LOGGER_KERNEL);
+        loguear_cola(squeue_readyPlus, "Ready Prioridad");
     }
     else
     {
         squeue_push(squeue_ready, pcb);
-        log_info(LOGGER_KERNEL, "Cola Ready:");
-        mostrar_procesos_en_squeue(squeue_ready, LOGGER_KERNEL);
+        //log_info(LOGGER_KERNEL, "Cola Ready:");
+        //mostrar_procesos_en_squeue(squeue_ready, LOGGER_KERNEL);
+        loguear_cola(squeue_ready, "Ready");
     }
     sem_post(&semReady);
+}
+
+void loguear_cola(t_squeue *squeue, const char *mensaje)
+{
+    pthread_mutex_lock(squeue->mutex);
+
+    char log_message[1024];
+    snprintf(log_message, sizeof(log_message), "Cola %s: [", mensaje);
+
+    int list_size_ready = list_size(squeue->cola);
+    for (int i = 0; i < list_size_ready; i++)
+    {
+        t_pcb *proceso = list_get(squeue->cola, i);
+        char pid_str[12];
+        snprintf(pid_str, sizeof(pid_str), "%d", proceso->pid);
+
+        strcat(log_message, pid_str);
+        if (i < list_size_ready - 1)
+        {
+            strcat(log_message, ", ");
+        }
+    }
+
+    strcat(log_message, "]");
+    pthread_mutex_unlock(squeue->mutex);
+
+    log_info(LOGGER_KERNEL, "%s", log_message);
 }
 
 void finalizar_proceso(t_pcb *pcb)
@@ -681,7 +710,7 @@ void ejecutar_intruccion_io(t_pcb *pcb_recibido)
             {
                 bloquear_procesosIO(pcb_recibido, interfaz_a_utilizar);
                 enviar_InterfazGenerica(interfaz_a_utilizar->socket_interfaz_recibida, unidades_de_trabajo, pcb_recibido->pid, interfaz_a_utilizar->nombre_interfaz_recibida);
-                free(nombre_interfaz);      //añadido
+                free(nombre_interfaz); // añadido
             }
             else
             {
@@ -696,7 +725,7 @@ void ejecutar_intruccion_io(t_pcb *pcb_recibido)
                 bloquear_procesosIO(pcb_recibido, interfaz_a_utilizar);
                 enviar_InterfazStdin(interfaz_a_utilizar->socket_interfaz_recibida, direcciones_fisicas, pcb_recibido->pid, interfaz_a_utilizar->nombre_interfaz_recibida);
                 list_clean_and_destroy_elements(direcciones_fisicas, free);
-                free(nombre_interfaz);  
+                free(nombre_interfaz);
                 // Enviar interfaz STDIN
             }
             else
@@ -712,7 +741,7 @@ void ejecutar_intruccion_io(t_pcb *pcb_recibido)
                 bloquear_procesosIO(pcb_recibido, interfaz_a_utilizar);
                 enviar_InterfazStdout(interfaz_a_utilizar->socket_interfaz_recibida, direcciones_fisicas, pcb_recibido->pid, interfaz_a_utilizar->nombre_interfaz_recibida);
                 list_clean_and_destroy_elements(direcciones_fisicas, free);
-                free(nombre_interfaz);  
+                free(nombre_interfaz);
 
                 // Enviar interfaz STDOUT
             }
