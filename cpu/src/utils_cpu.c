@@ -5,7 +5,6 @@ void ejecutar_ciclo_instruccion(int socket)
     t_instruccion *instruccion = fetch(pcb_actual->pid, pcb_actual->contexto_ejecucion->registros->program_counter);
     // TODO decode: manejo de TLB y MMU
     execute(instruccion, socket);
-
     liberar_instruccion(instruccion);
 }
 

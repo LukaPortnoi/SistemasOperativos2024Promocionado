@@ -182,12 +182,14 @@ t_list *traducir_direccion(uint32_t pid, uint32_t logicalAddress, uint32_t pageS
     int contadorBreak = 0;
     uint32_t tamanioAux = tamanio_registro - direccion->tamanio;
     uint32_t tamanioAuxTotal = direccion->tamanio;
-
     if (ocupaMasDeUnaPagina)
     {
         while (contador <= cantidadPaginas)
         {
-            t_direcciones_fisicas *direccionEsdiguientes = malloc(sizeof(t_direcciones_fisicas));
+            t_direcciones_fisicas direccionEsdiguientes;
+            static int tuhermana = 0;
+            printf("Hice malloc asheee %d\n", tuhermana++);
+
             for (int i = 0; i < tamanio_registro; i++)
             {
                 if ((logicalAddress / pageSize != (logicalAddress + i) / pageSize) && contadorBreak == 0 && tamanioAuxTotal != tamanio_registro)
@@ -204,18 +206,22 @@ t_list *traducir_direccion(uint32_t pid, uint32_t logicalAddress, uint32_t pageS
                     {
                         // TLB Hit
                         log_info(LOGGER_CPU, "PID: %d - TLB HIT - Pagina: %d", pid, paginaSig);
-                        direccionEsdiguientes->direccion_fisica = marco2 * pageSize + offset2;
+                        direccionEsdiguientes.direccion_fisica = marco2 * pageSize + offset2;
                         log_info(LOGGER_CPU, "PID: %d - OBTENER MARCO - Pagina: %d - MARCO: %d", pid, paginaSig, marco2);
                         for (int j = 0; j < tamanioAux; j++)
                         {
-                            if (direccionEsdiguientes->direccion_fisica / pageSize == (direccionEsdiguientes->direccion_fisica + j) / pageSize)
+                            if (direccionEsdiguientes.direccion_fisica / pageSize == (direccionEsdiguientes.direccion_fisica + j) / pageSize)
                             {
                                 tamanioAleer2++;
                             }
                         }
-                        direccionEsdiguientes->tamanio = tamanioAleer2;
-                        tamanioAux = tamanioAux - direccionEsdiguientes->tamanio;
-                        list_add(listaDirecciones, direccionEsdiguientes);
+                        direccionEsdiguientes.tamanio = tamanioAleer2;
+                        tamanioAux = tamanioAux - direccionEsdiguientes.tamanio;
+                        
+                        t_direcciones_fisicas *copia = malloc(sizeof(t_direcciones_fisicas));
+                        copia->direccion_fisica = direccionEsdiguientes.direccion_fisica;
+                        copia->tamanio = direccionEsdiguientes.tamanio;
+                        list_add(listaDirecciones, copia);
 
                         contadorBreak++;
                     }
@@ -233,18 +239,22 @@ t_list *traducir_direccion(uint32_t pid, uint32_t logicalAddress, uint32_t pageS
                         {
                             actualizar_TLB(pid, paginaSig, marco2);
                         }
-                        direccionEsdiguientes->direccion_fisica = marco2 * pageSize + offset2;
+                        direccionEsdiguientes.direccion_fisica = marco2 * pageSize + offset2;
                         for (int j = 0; j < tamanioAux; j++)
                         {
-                            if (direccionEsdiguientes->direccion_fisica / pageSize == (direccionEsdiguientes->direccion_fisica + j) / pageSize)
+                            if (direccionEsdiguientes.direccion_fisica / pageSize == (direccionEsdiguientes.direccion_fisica + j) / pageSize)
                             {
                                 tamanioAleer2++;
                             }
                         }
 
-                        direccionEsdiguientes->tamanio = tamanioAleer2;
-                        tamanioAux = tamanioAux - direccionEsdiguientes->tamanio;
-                        list_add(listaDirecciones, direccionEsdiguientes);
+                        direccionEsdiguientes.tamanio = tamanioAleer2;
+                        tamanioAux = tamanioAux - direccionEsdiguientes.tamanio;
+
+                        t_direcciones_fisicas *copia = malloc(sizeof(t_direcciones_fisicas));
+                        copia->direccion_fisica = direccionEsdiguientes.direccion_fisica;
+                        copia->tamanio = direccionEsdiguientes.tamanio;
+                        list_add(listaDirecciones, copia);
 
                         contadorBreak++;
                     }
@@ -258,7 +268,7 @@ t_list *traducir_direccion(uint32_t pid, uint32_t logicalAddress, uint32_t pageS
     }
 
     // ESTO ES PARA MOSTRAR LAS DIRECCIONES
-    /* 
+    /*
     for (int i = 0; i < list_size(listaDirecciones); i++)
     {
         t_direcciones_fisicas *direccionAmostrar = list_get(listaDirecciones, i);

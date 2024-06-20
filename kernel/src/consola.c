@@ -173,6 +173,7 @@ void ejecutar_script(char *path_script)
   if (script == NULL)
   {
     log_error(LOGGER_KERNEL, "No se pudo abrir el archivo desde: %s", path_script);
+    free(path_archivo);
     return;
   }
 
@@ -197,6 +198,7 @@ void ejecutar_script(char *path_script)
   }
 
   free(linea);
+  free(path_archivo);
   fclose(script);
 }
 
@@ -209,57 +211,55 @@ void finalizar_proceso_consola(char *pid_string)
 {
   uint32_t pid = atoi(pid_string);
 
-  // Si se esta ejecutando, enviar interrupcion a CPU
   if (pcb_ejecutandose != NULL && pcb_ejecutandose->pid == pid)
   {
     crear_y_enviar_interrupcion(INTERRUPCION_FINALIZACION, pid);
+    return;
+  }
+
+  t_pcb *proceso = buscar_proceso_en_colas(pid);
+  if (proceso == NULL)
+  {
+    log_error(LOGGER_KERNEL, "No se encontró el proceso con PID: %d", pid);
+    return;
+  }
+
+  if (proceso->estado == FINALIZADO)
+  {
+    log_warning(LOGGER_KERNEL, "El proceso ya finalizó");
+    return;
+  }
+
+  switch (proceso->estado)
+  {
+  case NUEVO:
+    squeue_remove_element(squeue_new, proceso);
+    break;
+  case LISTO:
+    squeue_remove_element(squeue_ready, proceso);
+    break;
+  case BLOQUEADO:
+    squeue_remove_element(squeue_blocked, proceso);
+    pcb_a_finalizar = proceso;
+    break;
+  default:
+    log_warning(LOGGER_KERNEL, "Estado desconocido para el proceso PID: %d", pid);
+    return;
+  }
+
+  proceso->contexto_ejecucion->motivo_finalizacion = INTERRUPTED_BY_USER;
+
+  if (proceso->estado == NUEVO)
+  {
+    log_info(LOGGER_KERNEL, "Finaliza el proceso %d - Motivo: %s", proceso->pid, motivo_finalizacion_to_string(proceso->contexto_ejecucion->motivo_finalizacion));
+    cambiar_estado_pcb(proceso, FINALIZADO);
+    squeue_push(squeue_exit, proceso);
+    liberar_recursos(proceso);
+    liberar_estructuras_memoria(proceso->pid);
   }
   else
   {
-    t_pcb *proceso = buscar_proceso_en_colas(pid);
-
-    if (proceso == NULL)
-    {
-      log_error(LOGGER_KERNEL, "No se encontro el proceso con PID: %d", pid);
-      return;
-    }
-
-    if (proceso->estado == NUEVO)
-    {
-      squeue_remove_element(squeue_new, proceso);
-    }
-    else if (proceso->estado == LISTO)
-    {
-      squeue_remove_element(squeue_ready, proceso);
-    }
-    else if (proceso->estado == BLOQUEADO)
-    {
-      squeue_remove_element(squeue_blocked, proceso);
-      pcb_a_finalizar = proceso;
-      proceso->contexto_ejecucion->motivo_finalizacion = INTERRUPTED_BY_USER;
-    }
-
-    if (proceso->estado != FINALIZADO)
-    {
-      proceso->contexto_ejecucion->motivo_finalizacion = INTERRUPTED_BY_USER;
-      if (proceso->estado == NUEVO)
-      {
-        // FINALIZAR_PROCESO sin post a multiprogramacion
-        log_info(LOGGER_KERNEL, "Finaliza el proceso %d - Motivo: %s", proceso->pid, motivo_finalizacion_to_string(proceso->contexto_ejecucion->motivo_finalizacion));
-        cambiar_estado_pcb(proceso, FINALIZADO);
-        squeue_push(squeue_exit, proceso);
-        liberar_recursos(proceso);
-        // liberar_estructuras_memoria(proceso->pid); // TODO: Liberar estructuras de memoria
-      }
-      else
-      {
-        finalizar_proceso(proceso);
-      }
-    }
-    else
-    {
-      log_warning(LOGGER_KERNEL, "El proceso ya finalizo");
-    }
+    finalizar_proceso(proceso);
   }
 }
 
@@ -267,20 +267,13 @@ t_pcb *buscar_proceso_en_colas(uint32_t pid)
 {
   t_pcb *proceso = NULL;
 
-  proceso = buscar_proceso_en_cola(squeue_new, pid);
-  if (proceso != NULL)
+  if ((proceso = buscar_proceso_en_cola(squeue_new, pid)) != NULL)
     return proceso;
-
-  proceso = buscar_proceso_en_cola(squeue_ready, pid);
-  if (proceso != NULL)
+  if ((proceso = buscar_proceso_en_cola(squeue_ready, pid)) != NULL)
     return proceso;
-
-  proceso = buscar_proceso_en_cola(squeue_blocked, pid);
-  if (proceso != NULL)
+  if ((proceso = buscar_proceso_en_cola(squeue_blocked, pid)) != NULL)
     return proceso;
-
-  proceso = buscar_proceso_en_cola(squeue_exit, pid);
-  if (proceso != NULL)
+  if ((proceso = buscar_proceso_en_cola(squeue_exit, pid)) != NULL)
     return proceso;
 
   return NULL;
@@ -288,25 +281,21 @@ t_pcb *buscar_proceso_en_colas(uint32_t pid)
 
 t_pcb *buscar_proceso_en_cola(t_squeue *squeue, uint32_t pid)
 {
-  t_pcb *proceso = NULL;
-
   for (int i = 0; i < list_size(squeue->cola); i++)
   {
     t_pcb *proceso_actual = list_get(squeue->cola, i);
-
     if (proceso_actual->pid == pid)
     {
-      proceso = proceso_actual;
-      break;
+      return proceso_actual;
     }
   }
-
-  return proceso;
+  return NULL;
 }
 
 void detener_planificacion()
 {
-  if(!PLANIFICACION_DETENIDA){
+  if (!PLANIFICACION_DETENIDA)
+  {
     pthread_create(&hilo_detener_planificacion, NULL, (void *)detener_planificadores, NULL);
     pthread_detach(hilo_detener_planificacion);
   }
@@ -314,19 +303,18 @@ void detener_planificacion()
   {
     log_warning(LOGGER_KERNEL, "La planificacion ya esta detenida");
   }
-
 }
 void iniciar_planificacion()
 {
-  if(PLANIFICACION_DETENIDA){
-  pthread_create(&hilo_iniciar_planificacion, NULL, (void *)iniciar_planificadores, NULL);
-  pthread_detach(hilo_iniciar_planificacion);
+  if (PLANIFICACION_DETENIDA)
+  {
+    pthread_create(&hilo_iniciar_planificacion, NULL, (void *)iniciar_planificadores, NULL);
+    pthread_detach(hilo_iniciar_planificacion);
   }
   else
   {
     log_warning(LOGGER_KERNEL, "La planificacion ya esta iniciada");
   }
-
 }
 
 void cambiar_multiprogramacion(char *grado_multiprogramacion_string)

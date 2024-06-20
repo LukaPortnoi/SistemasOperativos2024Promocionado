@@ -129,7 +129,7 @@ char *agregar_prefijo_y_extension(const char *nombre_interfaz)
     char *new_path = malloc(new_size);
     if (new_path == NULL)
     {
-        fprintf(stderr, "Error de memoria.\n");
+        log_error(LOGGER_INPUT_OUTPUT, "Error de memoria al agregar prefijo y extensión al nombre de la interfaz");
         exit(1); // Terminar el programa si no hay suficiente memoria
     }
 

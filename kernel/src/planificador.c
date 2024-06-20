@@ -161,6 +161,7 @@ void planificar_PCB_cortoPlazo()
         }
 
         ejecutar_PCB(pcb);
+        pcb_ejecutandose = NULL;
     }
 }
 
@@ -680,6 +681,7 @@ void ejecutar_intruccion_io(t_pcb *pcb_recibido)
             {
                 bloquear_procesosIO(pcb_recibido, interfaz_a_utilizar);
                 enviar_InterfazGenerica(interfaz_a_utilizar->socket_interfaz_recibida, unidades_de_trabajo, pcb_recibido->pid, interfaz_a_utilizar->nombre_interfaz_recibida);
+                free(nombre_interfaz);      //añadido
             }
             else
             {
@@ -694,6 +696,7 @@ void ejecutar_intruccion_io(t_pcb *pcb_recibido)
                 bloquear_procesosIO(pcb_recibido, interfaz_a_utilizar);
                 enviar_InterfazStdin(interfaz_a_utilizar->socket_interfaz_recibida, direcciones_fisicas, pcb_recibido->pid, interfaz_a_utilizar->nombre_interfaz_recibida);
                 list_clean_and_destroy_elements(direcciones_fisicas, free);
+                free(nombre_interfaz);  
                 // Enviar interfaz STDIN
             }
             else
@@ -709,6 +712,7 @@ void ejecutar_intruccion_io(t_pcb *pcb_recibido)
                 bloquear_procesosIO(pcb_recibido, interfaz_a_utilizar);
                 enviar_InterfazStdout(interfaz_a_utilizar->socket_interfaz_recibida, direcciones_fisicas, pcb_recibido->pid, interfaz_a_utilizar->nombre_interfaz_recibida);
                 list_clean_and_destroy_elements(direcciones_fisicas, free);
+                free(nombre_interfaz);  
 
                 // Enviar interfaz STDOUT
             }

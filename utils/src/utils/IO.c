@@ -207,6 +207,7 @@ void enviar_InterfazGenerica(int socket, int unidades_trabajo, uint32_t pid, cha
     t_paquete *paquete = crear_paquete_InterfazGenericaCodOp(interfaz, PEDIDO_IO_GEN_SLEEP);
     enviar_paquete(paquete, socket);
     eliminar_paquete(paquete);
+    free(interfaz);
 }
 
 t_buffer *crear_buffer_InterfazGenerica(t_interfaz_gen *interfaz)
@@ -431,7 +432,7 @@ void deserializar_pcb_para_interfaz_stdin(t_pcb *pcb, t_buffer *buffer, char **n
         if (dato == NULL)
         {
             // Manejo de errores en caso de falla de memoria
-            list_destroy_and_destroy_elements(direcciones_fisicas, free);
+            list_clean_and_destroy_elements(direcciones_fisicas, free);
             free(*nombre_interfaz);
             free(pcb->contexto_ejecucion->registros);
             free(pcb->contexto_ejecucion);
@@ -567,7 +568,7 @@ t_interfaz_stdin *deserializar_InterfazStdin(t_buffer *buffer)
         t_direcciones_fisicas *dato = malloc(sizeof(t_direcciones_fisicas));
         if (dato == NULL)
         {
-            list_destroy_and_destroy_elements(interfaz->direccionesFisicas, free);
+            list_clean_and_destroy_elements(interfaz->direccionesFisicas, free);
             free(interfaz->nombre_interfaz);
             free(interfaz);
             return NULL;
@@ -844,7 +845,7 @@ t_interfaz_stdout *deserializar_InterfazStdout(t_buffer *buffer)
         t_direcciones_fisicas *dato = malloc(sizeof(t_direcciones_fisicas));
         if (dato == NULL)
         {
-            list_destroy_and_destroy_elements(interfaz->direccionesFisicas, free);
+            list_clean_and_destroy_elements(interfaz->direccionesFisicas, free);
             free(interfaz->nombre_interfaz);
             free(interfaz);
             return NULL;

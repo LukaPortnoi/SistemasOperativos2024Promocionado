@@ -86,7 +86,10 @@ void escuchar_interrupt()
 
 void finalizar_cpu()
 {
-    destruir_pcb(pcb_actual);
+    if (pcb_actual != NULL)
+    {
+        destruir_pcb(pcb_actual);
+    }
     log_destroy(LOGGER_CPU);
     config_destroy(CONFIG);
     liberar_conexion(fd_cpu_dispatch);

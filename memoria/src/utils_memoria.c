@@ -277,19 +277,20 @@ t_instruccion *armar_estructura_instruccion(nombre_instruccion instruccion, char
     t_instruccion *estructura = (t_instruccion *)malloc(sizeof(t_instruccion));
 
     estructura->nombre = instruccion;
-    estructura->parametro1 = (parametro1[0] != '\0') ? strdup(parametro1) : parametro1; //(parametro1 && parametro1[0] != '\0') ? strdup(parametro1) : NULL;
-    estructura->parametro2 = (parametro2[0] != '\0') ? strdup(parametro2) : parametro2; //(parametro2 && parametro2[0] != '\0') ? strdup(parametro2) : NULL;
-
+    
+    estructura->parametro1 = (parametro1[0] != '\0') ? strdup(parametro1) : string_new(); //(parametro1 && parametro1[0] != '\0') ? strdup(parametro1) : NULL;
     estructura->longitud_parametro1 = strlen(estructura->parametro1) + 1;
+    
+    estructura->parametro2 = (parametro2[0] != '\0') ? strdup(parametro2) : string_new(); //(parametro2 && parametro2[0] != '\0') ? strdup(parametro2) : NULL;
     estructura->longitud_parametro2 = strlen(estructura->parametro2) + 1;
 
-    estructura->parametro3 = (parametro3[0] != '\0') ? strdup(parametro3) : parametro3;
+    estructura->parametro3 = (parametro3[0] != '\0') ? strdup(parametro3) : string_new();
     estructura->longitud_parametro3 = strlen(estructura->parametro3) + 1;
 
-    estructura->parametro4 = (parametro4[0] != '\0') ? strdup(parametro4) : parametro4;
+    estructura->parametro4 = (parametro4[0] != '\0') ? strdup(parametro4) : string_new();
     estructura->longitud_parametro4 = strlen(estructura->parametro4) + 1;
 
-    estructura->parametro5 = (parametro5[0] != '\0') ? strdup(parametro5) : parametro5;
+    estructura->parametro5 = (parametro5[0] != '\0') ? strdup(parametro5) : string_new();
     estructura->longitud_parametro5 = strlen(estructura->parametro5) + 1;
 
     return estructura;
@@ -498,46 +499,46 @@ void deserializar_datos_copystring(t_paquete *paquete, t_list *Lista_direcciones
     }
 }
 
-void escribir_memoria(uint32_t dir_fisica, uint32_t tamanio_registro, char *valorObtenido) //Revisar char* en valorObtenido
+void escribir_memoria(uint32_t dir_fisica, uint32_t tamanio_registro, char *valorObtenido) // Revisar char* en valorObtenido
 {
     pthread_mutex_lock(&mutex_memoria_usuario);
     /* for (uint32_t i = 0; i < tamanio_registro; i++)
     {
         if (valorObtenido[indiceAux])
         {
-            printf("Cosa escrita en memoria: %c\n", valorObtenido[indiceAux]);
+            //printf("Cosa escrita en memoria: %c\n", valorObtenido[indiceAux]);
             memcpy(memoriaUsuario + dir_fisica + i, &valorObtenido[indiceAux], 1);
                     indiceAux++;
 
         }
     } */
 
-    printf("Cosa a escribir en memoria: %s", valorObtenido);
+    // printf("Cosa a escribir en memoria: %s", valorObtenido);
     memcpy(memoriaUsuario + dir_fisica, valorObtenido, tamanio_registro);
     pthread_mutex_unlock(&mutex_memoria_usuario);
     log_info(LOGGER_MEMORIA, "PID: <%d> - Accion: <ESCRIBIR> - Direccion Fisica: <%d> - Tamaño <%d> \n", proceso_memoria->pid, dir_fisica, tamanio_registro);
     usleep(RETARDO_RESPUESTA * 1000);
 }
 
-void escribir_memoria_mov_out(uint32_t dir_fisica, uint32_t tamanio_registro,  char *valorObtenido)
+void escribir_memoria_mov_out(uint32_t dir_fisica, uint32_t tamanio_registro, char *valorObtenido)
 {
-
-    
-
 
     pthread_mutex_lock(&mutex_memoria_usuario);
 
     unsigned char valorConvertido = (unsigned char)atoi(valorObtenido);
-    
-    //printf("Cosa a escribir en memoria: %u\n", valorConvertido);
-    *((unsigned char*)memoriaUsuario + dir_fisica) = valorConvertido;
+
+    // printf("Cosa a escribir en memoria: %u\n", valorConvertido);
+    *((unsigned char *)memoriaUsuario + dir_fisica) = valorConvertido;
 
     // Verificar que el valor se escribió correctamente
-    unsigned char valorLeido = *((unsigned char*)memoriaUsuario + dir_fisica);
-    if (valorLeido == valorConvertido) {
-        printf("Valor escrito correctamente en la posición %u: %u\n", dir_fisica, valorLeido);
-    } else {
-        printf("Error al escribir el valor en la posición %u. Valor esperado: %u, valor leído: %u\n", dir_fisica, valorConvertido, valorLeido);
+    unsigned char valorLeido = *((unsigned char *)memoriaUsuario + dir_fisica);
+    if (valorLeido == valorConvertido)
+    {
+        // printf("Valor escrito correctamente en la posición %u: %u\n", dir_fisica, valorLeido);
+    }
+    else
+    {
+        // printf("Error al escribir el valor en la posición %u. Valor esperado: %u, valor leído: %u\n", dir_fisica, valorConvertido, valorLeido);
     }
 
     pthread_mutex_unlock(&mutex_memoria_usuario);
@@ -548,27 +549,28 @@ void escribir_memoria_mov_out(uint32_t dir_fisica, uint32_t tamanio_registro,  c
 char *leer_memoria(uint32_t dir_fisica, uint32_t tamanio_registro)
 {
     pthread_mutex_lock(&mutex_memoria_usuario);
-    
+
     // Asignar memoria para un solo byte que contendrá el dato leído
     char *dato_leido = malloc(4); // Asignamos espacio para un solo byte
-    if (dato_leido == NULL) {
+    if (dato_leido == NULL)
+    {
         perror("Error al asignar memoria para dato_leido");
         pthread_mutex_unlock(&mutex_memoria_usuario);
         return NULL;
     }
-    
+
     // Leer el dato de la memoria
-    unsigned char valorLeido = *((unsigned char*)memoriaUsuario + dir_fisica);
-    sprintf(dato_leido, "%u", valorLeido);
-    // Registrar la acción en el log
+    // unsigned char valorLeido = *((unsigned char *)memoriaUsuario + dir_fisica);
+    // sprintf(dato_leido, "%u", valorLeido);
+    //  Registrar la acción en el log
     log_info(LOGGER_MEMORIA, "PID: <%d> - Accion: <LEER> - Direccion Fisica: <%d> - Tamaño <%d> \n", 0, dir_fisica, tamanio_registro);
-    
+
     // Mostrar el dato leído en la consola
-    printf("Dato leido: %s\n", dato_leido);
-    
+    // printf("Dato leido: %s\n", dato_leido);
+
     pthread_mutex_unlock(&mutex_memoria_usuario);
     usleep(RETARDO_RESPUESTA * 1000);
-    
+
     return dato_leido;
 }
 
@@ -585,7 +587,7 @@ char *leer_memoria_IO(uint32_t dir_fisica, uint32_t tamanio_registro)
         {
             memcpy(&valor_leido, &memoriaUsuario[dir_fisica + i], 1);
             cadena[i] = valor_leido;
-            printf("Valor a agregar a cadena: %c \n", valor_leido);
+            //printf("Valor a agregar a cadena: %c \n", valor_leido);
             valorTotalaDeLeer++;
             // Assign the character directly
         }
@@ -594,7 +596,7 @@ char *leer_memoria_IO(uint32_t dir_fisica, uint32_t tamanio_registro)
     cadena[tamanio_registro] = '\0';
     pthread_mutex_unlock(&mutex_memoria_usuario);
     log_info(LOGGER_MEMORIA, "PID: <%d> - Accion: <LEER> - Direccion Fisica: <%d> - Tamaño <%d> \n", proceso_memoria->pid, dir_fisica, tamanio_registro);
-    printf("Cadena leida: %s \n", cadena);
+    // printf("Cadena leida: %s \n", cadena);
     usleep(RETARDO_RESPUESTA * 1000);
     return cadena;
 }
@@ -666,7 +668,7 @@ char *int_to_char(int num)
     */
 }
 
-char *concatenar_lista_de_cadenas(t_list *lista , int tamanio)
+char *concatenar_lista_de_cadenas(t_list *lista, int tamanio)
 {
     // Calcular el tamaño total necesario
     size_t tam_total = tamanio + 1; // Inicia en 1 para el carácter nulo
@@ -693,18 +695,22 @@ char *concatenar_lista_de_cadenas(t_list *lista , int tamanio)
     return cadena_concatenada;
 }
 
-char* decimal_a_binario(int numero) 
+char *decimal_a_binario(int numero)
 {
     // Array temporal para almacenar los dígitos binarios (máximo 32 bits para un entero)
     char temp[33];
     int index = 0;
 
     // Manejo del caso cuando el número es 0
-    if (numero == 0) {
+    if (numero == 0)
+    {
         temp[index++] = '0';
-    } else {
+    }
+    else
+    {
         // Convertir el número decimal a binario
-        while (numero > 0) {
+        while (numero > 0)
+        {
             temp[index++] = (numero % 2) + '0';
             numero = numero / 2;
         }
@@ -714,10 +720,11 @@ char* decimal_a_binario(int numero)
     temp[index] = '\0';
 
     // Asignar memoria para la cadena final
-    char* binaryNum = (char*)malloc((index + 1) * sizeof(char*));
+    char *binaryNum = (char *)malloc((index + 1) * sizeof(char));
 
     // Copiar los elementos en orden inverso al array final
-    for (int i = 0; i < index; i++) {
+    for (int i = 0; i < index; i++)
+    {
         binaryNum[i] = temp[index - 1 - i];
     }
 
@@ -727,15 +734,16 @@ char* decimal_a_binario(int numero)
     return binaryNum;
 }
 
-
-int binario_a_decimal(int binario) 
+int binario_a_decimal(int binario)
 {
     int decimal = 0;
     int posicion = 0;
 
-    while (binario > 0) {
+    while (binario > 0)
+    {
         int digito = binario % 10; // Obtiene el último dígito del número binario
-        if (digito == 1) {
+        if (digito == 1)
+        {
             decimal += pow(2, posicion);
         }
         binario /= 10; // Elimina el último dígito del número binario

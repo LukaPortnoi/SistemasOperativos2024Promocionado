@@ -67,6 +67,8 @@ static void procesar_conexion_kernel(void *void_args)
 				finalizar_proceso(pcb_a_finalizar);
 				log_trace(logger, "Se finalizo el proceso luego de I/O %d", pcb_a_finalizar->pid);
 			}
+			free(interfazRecibidaIO->nombre_interfaz);
+			free(interfazRecibidaIO);
 			break;
 
 		case FINALIZACION_INTERFAZ_STDIN:
@@ -89,6 +91,9 @@ static void procesar_conexion_kernel(void *void_args)
 				finalizar_proceso(pcb_a_finalizar);
 				log_trace(logger, "Se finalizo el proceso luego de I/O %d", pcb_a_finalizar->pid);
 			}
+			free(interfazRecibidaIOstdin->nombre_interfaz);
+			list_destroy_and_destroy_elements(interfazRecibidaIOstdin->direccionesFisicas, (void *)free);
+			free(interfazRecibidaIOstdin);
 			break;
 		case FINALIZACION_INTERFAZ_STDOUT:
 			log_trace(logger, "Finalizacion de instruccion de interfaz");
@@ -110,6 +115,9 @@ static void procesar_conexion_kernel(void *void_args)
 				finalizar_proceso(pcb_a_finalizar);
 				log_trace(logger, "Se finalizo el proceso luego de I/O %d", pcb_a_finalizar->pid);
 			}
+			free(interfazRecibidaIOstdout->nombre_interfaz);
+			list_destroy_and_destroy_elements(interfazRecibidaIOstdout->direccionesFisicas, (void *)free);
+			free(interfazRecibidaIOstdout);
 			break;
 		// ---------------
 		// -- ERRORES --

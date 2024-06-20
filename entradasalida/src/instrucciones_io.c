@@ -9,6 +9,8 @@ void procesar_sleep(int socket_cliente, t_log *logger)
     sleep(interfazRecibida->unidades_de_trabajo);
 
     enviar_InterfazGenericaConCodigoOP(socket_cliente, interfazRecibida->unidades_de_trabajo, interfazRecibida->pidPcb, interfazRecibida->nombre_interfaz);
+    free(interfazRecibida->nombre_interfaz);
+    free(interfazRecibida);
 }
 
 void procesar_stdin(int socket_cliente, t_log *logger)
