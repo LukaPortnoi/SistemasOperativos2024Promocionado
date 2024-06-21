@@ -63,8 +63,6 @@ void iniciar_memoria_usuario()
 		exit(EXIT_FAILURE);
 	}
 
-	log_debug(LOGGER_MEMORIA, "Memoria reservada para el usuario");
-
 	marcosPaginas = list_create();
 	procesos_totales = list_create();
 

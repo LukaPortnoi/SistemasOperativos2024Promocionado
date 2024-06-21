@@ -13,7 +13,7 @@ static void procesar_conexion_memoria(void *void_args)
 	{
 		if (recv(cliente_socket, &cop, sizeof(op_cod), 0) != sizeof(op_cod))
 		{
-			log_info(logger, "Se desconecto el cliente!\n");
+			log_debug(logger, "Cliente desconectado.\n");
 			return;
 		}
 
@@ -180,16 +180,16 @@ static void procesar_conexion_memoria(void *void_args)
 						if (valor_mov_out_binario[indice_valor_mov_out_binario])
 						{
 							valor_parcial_binario[k] = valor_mov_out_binario[indice_valor_mov_out_binario]; // Numero binario parcial a pasar
-							 printf("Bit pasado al valor parcial: %c \n", valor_parcial_binario[k]);
+							printf("Bit pasado al valor parcial: %c \n", valor_parcial_binario[k]);
 							cantidad_bits_llenados++;
 							indice_valor_mov_out_binario++;
 							cantidadBits++;
 						}
 						else
 						{
-							 printf("Valor binario a parcial menor a 8 bits a transformar: %s \n", valor_parcial_binario);
+							printf("Valor binario a parcial menor a 8 bits a transformar: %s \n", valor_parcial_binario);
 							int decimal_a_mandar = binario_a_decimal(atoi(valor_parcial_binario));
-							//printf("Valor transformado del binario al decimal menor a 8 bits: %d \n", decimal_a_mandar);
+							// printf("Valor transformado del binario al decimal menor a 8 bits: %d \n", decimal_a_mandar);
 							valor_parcial_decimal_a_escribir = int_to_char(decimal_a_mandar);
 							printf("Valor decimal en char a enviar menor a 8 bits: %s \n", valor_parcial_decimal_a_escribir);
 							escribir_memoria_mov_out(direccionAmostrar->direccion_fisica + desplazamiento, 1, valor_parcial_decimal_a_escribir, pidMovOut);
@@ -199,12 +199,12 @@ static void procesar_conexion_memoria(void *void_args)
 						}
 						if (cantidad_bits_llenados % 8 == 0 && valor_mov_out_binario[indice_valor_mov_out_binario])
 						{
-							 printf("Valor binario a parcial a transformar: %s \n", valor_parcial_binario);
+							printf("Valor binario a parcial a transformar: %s \n", valor_parcial_binario);
 							int decimal_a_mandar = binario_a_decimal(atoi(valor_parcial_binario));
 							// printf("Valor transformado del binario al decimal: %d \n", decimal_a_mandar);
 							valor_parcial_decimal_a_escribir = int_to_char(decimal_a_mandar);
 							// unsigned char hola = (unsigned char)valor_parcial_decimal_a_escribir;
-							 printf("Valor decimal en char a enviar: %s \n", valor_parcial_decimal_a_escribir);
+							printf("Valor decimal en char a enviar: %s \n", valor_parcial_decimal_a_escribir);
 							escribir_memoria_mov_out(direccionAmostrar->direccion_fisica + desplazamiento, 1, valor_parcial_decimal_a_escribir, pidMovOut);
 							memset(valor_parcial_binario, 0, 9); // Asegúrate de limpiar todo el espacio que has asignado
 							desplazamiento++;

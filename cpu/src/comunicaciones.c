@@ -24,7 +24,7 @@ static void procesar_conexion_dispatch(void *void_args)
 	{
 		if (recv(cliente_socket, &cop, sizeof(op_cod), 0) != sizeof(op_cod))
 		{
-			log_info(logger, "Se desconecto el cliente!\n");
+			log_debug(logger, "Cliente desconectado.\n");
 			return;
 		}
 
@@ -94,7 +94,7 @@ static void procesar_conexion_interrupt(void *void_args)
 	{
 		if (recv(cliente_socket, &cop, sizeof(op_cod), 0) != sizeof(op_cod))
 		{
-			log_info(logger, "Se desconecto el cliente!\n");
+			log_debug(logger, "Cliente desconectado.\n");
 			return;
 		}
 

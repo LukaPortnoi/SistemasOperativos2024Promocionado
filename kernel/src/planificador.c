@@ -37,7 +37,6 @@ int sem_value;
 void iniciar_planificador_largo_plazo()
 {
     pthread_t hilo_largo_plazo;
-    log_debug(LOGGER_KERNEL, "Inicia Planificador Largo Plazo");
     pthread_create(&hilo_largo_plazo, NULL, (void *)chequear_grado_de_multiprogramacion, NULL);
     pthread_detach(hilo_largo_plazo);
 }
@@ -126,9 +125,7 @@ void serializar_inicializar_proceso(t_paquete *paquete, int pid_nuevo, char *pat
 // PLANIFICADOR CORTO PLAZO
 void iniciar_planificador_corto_plazo()
 {
-    log_debug(LOGGER_KERNEL, "Inicia Planificador Corto Plazo");
     pthread_t hilo_corto_plazo;
-
     pthread_create(&hilo_corto_plazo, NULL, (void *)planificar_PCB_cortoPlazo, NULL);
     pthread_detach(hilo_corto_plazo);
 }

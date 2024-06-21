@@ -19,20 +19,9 @@ t_interfaz *interfaz_actual;
 int main(int argc, char **argv)
 {
     signal(SIGINT, manejador_signals);
-    char *config_path = agregar_prefijo_y_extension(argv[1]);
-    inicializar_config(config_path);
-    char *nombre_interfaz = extraer_nombre_interfaz(config_path);
-    eliminar_extension(nombre_interfaz);
-    interfaz_actual = malloc(sizeof(t_interfaz));                           // creamos la interfaz actual
-    interfaz_actual->tamanio_nombre_interfaz = strlen(nombre_interfaz) + 1; // argv[1] es el nombre de la interfaz
-    interfaz_actual->nombre_interfaz = nombre_interfaz;                     // asignamos el nombre de la interfaz
-    log_debug(LOGGER_INPUT_OUTPUT, "Iniciando la interfaz %s de tipo %s", nombre_interfaz, TIPO_INTERFAZ);
-
-    asignar_tipo_interfaz(TIPO_INTERFAZ);
-
+    iniciar_io(argv[1]);
     iniciar_conexiones();
     procesar_conexion_IO(fd_io_kernel, LOGGER_INPUT_OUTPUT);
-
     finalizar_io();
 }
 
@@ -61,6 +50,20 @@ void iniciar_conexiones()
     enviar_datos_interfaz(interfaz_actual, fd_io_kernel, CONEXION_INTERFAZ);
 }
 
+void iniciar_io(char *arg)
+{
+    char *config_path = agregar_prefijo_y_extension(arg);
+    inicializar_config(config_path);
+    char *nombre_interfaz = extraer_nombre_interfaz(config_path);
+    eliminar_extension(nombre_interfaz);
+    interfaz_actual = malloc(sizeof(t_interfaz));
+    interfaz_actual->tamanio_nombre_interfaz = strlen(nombre_interfaz) + 1;
+    interfaz_actual->nombre_interfaz = nombre_interfaz;
+    log_debug(LOGGER_INPUT_OUTPUT, "Interfaz %s - %s iniciada", nombre_interfaz, TIPO_INTERFAZ);
+    asignar_tipo_interfaz(TIPO_INTERFAZ);
+    free(config_path);
+}
+
 void finalizar_io()
 {
     log_destroy(LOGGER_INPUT_OUTPUT);
@@ -82,7 +85,6 @@ void manejador_signals(int signum)
         break;
 
     case SIGINT:
-        log_trace(LOGGER_INPUT_OUTPUT, "Se recibio la señal SIGINT\n");
         log_trace(LOGGER_INPUT_OUTPUT, "Se recibió SIGINT, cerrando conexiones y liberando recursos...");
         enviar_datos_interfaz(interfaz_actual, fd_io_kernel, DESCONEXION_INTERFAZ);
         finalizar_io();

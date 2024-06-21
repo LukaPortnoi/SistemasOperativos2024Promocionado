@@ -7,7 +7,7 @@ void procesar_conexion_IO(int server_socket, t_log *logger)
 	{
 		if (recv(server_socket, &cop, sizeof(op_cod), 0) != sizeof(op_cod))
 		{
-			log_info(logger, "Se desconecto el cliente!\n");
+			log_debug(logger, "Cliente desconectado.\n");
 			return;
 		}
 

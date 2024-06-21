@@ -110,7 +110,6 @@ void manejador_signals(int signum)
         break;
 
     case SIGINT:
-        log_trace(LOGGER_CPU, "Se recibio la señal SIGINT\n");
         log_trace(LOGGER_CPU, "Se recibió SIGINT, cerrando conexiones y liberando recursos...");
         finalizar_cpu();
         destruir_tlb();

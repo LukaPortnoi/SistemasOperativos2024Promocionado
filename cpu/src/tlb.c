@@ -17,7 +17,6 @@ t_tlb *inicializar_tlb()
     {
         tlb->algoritmo = LRU;
     }
-    log_debug(LOGGER_CPU, "Iniciando TLB");
     return tlb;
 }
 
