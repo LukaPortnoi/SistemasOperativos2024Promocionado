@@ -42,9 +42,15 @@ typedef struct
 
 typedef struct
 {
+    uint32_t pidPcb;
+    char *nombre_interfaz;
+    char *path;
+    int tamanio;
     int unidades_de_trabajo;
-    uint32_t tamanio_nombre_interfaz;
 } t_interfaz_DIALFS;
+
+t_interfaz *crear_interfaz(char *nombre_interfaz, t_tipo_interfaz tipo_interfaz);
+void destruir_interfaz(t_interfaz *interfaz);
 
 // generica
 void enviar_interfaz_IO(t_pcb *pcb_actual, char *interfaz, int unidades_de_trabajo, int socket_cliente, nombre_instruccion instruccion);

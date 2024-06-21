@@ -8,10 +8,13 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <signal.h>
+#include <fcntl.h>
+#include <sys/stat.h>
 
 #include <commons/log.h>
 #include <commons/string.h>
 #include <commons/config.h>
+#include <commons/bitarray.h>
 
 #include "../../utils/include/sockets_server.h"
 #include "../../utils/include/sockets_client.h"

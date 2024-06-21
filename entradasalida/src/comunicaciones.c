@@ -26,23 +26,23 @@ void procesar_conexion_IO(int server_socket, t_log *logger)
 			break;
 
 		case PEDIDO_IO_FS_CREATE:
-			// procesar_dialfs_create(server_socket, logger);
+			procesar_dialfs_create(server_socket, logger);
 			break;
 
 		case PEDIDO_IO_FS_DELETE:
-			// procesar_dialfs_delete(server_socket, logger);
+			procesar_dialfs_delete(server_socket, logger);
 			break;
 
 		case PEDIDO_IO_FS_TRUNCATE:
-			// procesar_dialfs_truncate(server_socket, logger);
+			procesar_dialfs_truncate(server_socket, logger);
 			break;
 
 		case PEDIDO_IO_FS_WRITE:
-			// procesar_dialfs_write(server_socket, logger);
+			procesar_dialfs_write(server_socket, logger);
 			break;
 
 		case PEDIDO_IO_FS_READ:
-			// procesar_dialfs_read(server_socket, logger);
+			procesar_dialfs_read(server_socket, logger);
 			break;
 
 		default:

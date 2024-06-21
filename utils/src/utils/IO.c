@@ -1,7 +1,21 @@
 #include "../include/IO.h"
 
-// Envia el nombre interfaz , las unidades de trabajo y el pcb de cpu a kernel
+t_interfaz *crear_interfaz(char *nombre_interfaz, t_tipo_interfaz tipo_interfaz)
+{
+    t_interfaz *interfaz = malloc(sizeof(t_interfaz));
+    interfaz->nombre_interfaz = nombre_interfaz;
+    interfaz->tamanio_nombre_interfaz = strlen(nombre_interfaz) + 1;
+    interfaz->tipo_interfaz = tipo_interfaz;
+    return interfaz;
+}
 
+void destruir_interfaz(t_interfaz *interfaz)
+{
+    free(interfaz->nombre_interfaz);
+    free(interfaz);
+}
+
+// Envia el nombre interfaz , las unidades de trabajo y el pcb de cpu a kernel
 void enviar_interfaz_IO(t_pcb *pcb_actual, char *interfaz, int unidades_de_trabajo, int socket_cliente, nombre_instruccion IO)
 {
     t_paquete *paquete = crear_paquete_con_codigo_de_operacion(ENVIAR_INTERFAZ);
@@ -659,7 +673,7 @@ void serializar_dato_stdin(t_paquete *paquete, t_list *direcciones_fisicas, char
     memcpy(paquete->buffer->stream + desplazamiento, &pid, sizeof(uint32_t));
 }
 
-char *recibir_dato_stdin(t_list *direcciones_fisicas, int socket_cliente , uint32_t *pid)
+char *recibir_dato_stdin(t_list *direcciones_fisicas, int socket_cliente, uint32_t *pid)
 {
     char *datoObtenido;
     t_paquete *paquete = recibir_paquete(socket_cliente);
@@ -926,7 +940,7 @@ void enviar_InterfazStdoutConCodigoOPaKernel(int socket, t_list *direcciones_fis
     free(interfaz);
 }
 
-void enviar_direcciones_stdout(int socket, t_list *direcciones_fisicas , uint32_t pid)
+void enviar_direcciones_stdout(int socket, t_list *direcciones_fisicas, uint32_t pid)
 {
     t_paquete *paquete = crear_paquete_con_codigo_de_operacion(PEDIDO_A_LEER_DATO_STDOUT);
     serializar_direcciones_stdout(paquete, direcciones_fisicas, pid);
@@ -938,7 +952,7 @@ void serializar_direcciones_stdout(t_paquete *paquete, t_list *direcciones_fisic
 {
     uint32_t tamanioLista = list_size(direcciones_fisicas);
 
-    paquete->buffer->size =  sizeof(uint32_t) + sizeof(uint32_t) + tamanioLista * (2 * sizeof(uint32_t));
+    paquete->buffer->size = sizeof(uint32_t) + sizeof(uint32_t) + tamanioLista * (2 * sizeof(uint32_t));
     paquete->buffer->stream = malloc(paquete->buffer->size);
     if (paquete->buffer->stream == NULL)
     {
@@ -962,13 +976,12 @@ void serializar_direcciones_stdout(t_paquete *paquete, t_list *direcciones_fisic
     memcpy(paquete->buffer->stream + desplazamiento, &pid, sizeof(uint32_t));
 }
 
-void recibir_direcciones_de_stdout(int socket_cliente, t_list *lista_direcciones , uint32_t *pid)
+void recibir_direcciones_de_stdout(int socket_cliente, t_list *lista_direcciones, uint32_t *pid)
 {
     t_paquete *paquete = recibir_paquete(socket_cliente);
     deserializar_direcciones_de_stdout(paquete, lista_direcciones, pid);
     eliminar_paquete(paquete);
 }
-
 
 void deserializar_direcciones_de_stdout(t_paquete *paquete, t_list *lista_datos, uint32_t *pid)
 {
@@ -996,7 +1009,7 @@ void deserializar_direcciones_de_stdout(t_paquete *paquete, t_list *lista_datos,
 void enviar_dato_movIn(int socket, t_list *lista)
 {
     t_paquete *paquete = crear_paquete_con_codigo_de_operacion(RESPUESTA_DATO_MOVIN);
-    //serializar_dato_leido(paquete, dato, tamanio);
+    // serializar_dato_leido(paquete, dato, tamanio);
     serializar_datos_leidos(paquete, lista);
     enviar_paquete(paquete, socket);
     eliminar_paquete(paquete);
@@ -1039,7 +1052,7 @@ void serializar_datos_leidos(t_paquete *paquete, t_list *lista)
     for (int i = 0; i < tamanioLista; i++)
     {
         char *dato = list_get(lista, i);
-        uint32_t longitud = strlen(dato) + 1; // +1 para incluir el carácter nulo
+        uint32_t longitud = strlen(dato) + 1;     // +1 para incluir el carácter nulo
         sizeTotal += sizeof(uint32_t) + longitud; // Para longitud + datos
     }
 

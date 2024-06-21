@@ -56,12 +56,13 @@ void iniciar_io(char *arg)
     inicializar_config(config_path);
     char *nombre_interfaz = extraer_nombre_interfaz(config_path);
     eliminar_extension(nombre_interfaz);
-    interfaz_actual = malloc(sizeof(t_interfaz));
-    interfaz_actual->tamanio_nombre_interfaz = strlen(nombre_interfaz) + 1;
-    interfaz_actual->nombre_interfaz = nombre_interfaz;
-    log_debug(LOGGER_INPUT_OUTPUT, "Interfaz %s - %s iniciada", nombre_interfaz, TIPO_INTERFAZ);
-    asignar_tipo_interfaz(TIPO_INTERFAZ);
-    free(config_path);
+    interfaz_actual = crear_interfaz(nombre_interfaz, obtener_tipo_interfaz(TIPO_INTERFAZ));
+    log_debug(LOGGER_INPUT_OUTPUT, "Interfaz %s - %s iniciada", interfaz_actual->nombre_interfaz, TIPO_INTERFAZ);
+
+    if (interfaz_actual->tipo_interfaz == DIALFS)
+    {
+        manejar_archivos_fs();
+    }
 }
 
 void finalizar_io()
@@ -88,6 +89,7 @@ void manejador_signals(int signum)
         log_trace(LOGGER_INPUT_OUTPUT, "Se recibió SIGINT, cerrando conexiones y liberando recursos...");
         enviar_datos_interfaz(interfaz_actual, fd_io_kernel, DESCONEXION_INTERFAZ);
         finalizar_io();
+        // destruir_interfaz(interfaz_actual); // COMPROBAR SI ESTO ESTA BIEN
         exit(0);
         break;
 
@@ -143,26 +145,27 @@ char *agregar_prefijo_y_extension(const char *nombre_interfaz)
     return new_path;
 }
 
-void asignar_tipo_interfaz(const char *t_interfaz)
+t_tipo_interfaz obtener_tipo_interfaz(const char *t_interfaz)
 {
     if (strcmp(t_interfaz, "GENERICA") == 0)
     {
-        interfaz_actual->tipo_interfaz = GENERICA;
+        return GENERICA;
     }
     else if (strcmp(t_interfaz, "STDIN") == 0)
     {
-        interfaz_actual->tipo_interfaz = STDIN;
+        return STDIN;
     }
     else if (strcmp(t_interfaz, "STDOUT") == 0)
     {
-        interfaz_actual->tipo_interfaz = STDOUT;
+        return STDOUT;
     }
     else if (strcmp(t_interfaz, "DIALFS") == 0)
     {
-        interfaz_actual->tipo_interfaz = DIALFS;
+        return DIALFS;
     }
     else
     {
         log_error(LOGGER_INPUT_OUTPUT, "Tipo de interfaz no reconocido");
+        return -1;
     }
 }

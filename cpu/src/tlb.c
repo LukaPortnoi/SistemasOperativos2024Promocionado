@@ -186,8 +186,6 @@ t_list *traducir_direccion(uint32_t pid, uint32_t logicalAddress, uint32_t pageS
         while (contador <= cantidadPaginas)
         {
             t_direcciones_fisicas direccionEsdiguientes;
-            static int tuhermana = 0;
-            //printf("Hice malloc asheee %d\n", tuhermana++);
 
             for (int i = 0; i < tamanio_registro; i++)
             {
