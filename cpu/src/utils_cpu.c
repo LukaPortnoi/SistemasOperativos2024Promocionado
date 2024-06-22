@@ -102,6 +102,41 @@ void execute(t_instruccion *instruccion, int socket)
         envioPcb = true;
         _io_stdout_write(instruccion->parametro1, instruccion->parametro2, instruccion->parametro3, socket);
         break;
+    case IO_FS_CREATE:
+        loguear_y_sumar_pc(instruccion);
+        pcb_actual->contexto_ejecucion->motivo_desalojo = INTERRUPCION_BLOQUEO;
+        esSyscall = true;
+        envioPcb = true;
+        _io_fs_create(instruccion->parametro1, instruccion->parametro2, socket);
+        break;
+    case IO_FS_DELETE:
+        loguear_y_sumar_pc(instruccion);
+        pcb_actual->contexto_ejecucion->motivo_desalojo = INTERRUPCION_BLOQUEO;
+        esSyscall = true;
+        envioPcb = true;
+        _io_fs_delete(instruccion->parametro1, instruccion->parametro2, socket);
+        break;
+    case IO_FS_TRUNCATE:
+        loguear_y_sumar_pc(instruccion);
+        pcb_actual->contexto_ejecucion->motivo_desalojo = INTERRUPCION_BLOQUEO;
+        esSyscall = true;
+        envioPcb = true;
+        _io_fs_truncate(instruccion->parametro1, instruccion->parametro2, instruccion->parametro3, socket);
+        break;
+    case IO_FS_WRITE:
+        loguear_y_sumar_pc(instruccion);
+        pcb_actual->contexto_ejecucion->motivo_desalojo = INTERRUPCION_BLOQUEO;
+        esSyscall = true;
+        envioPcb = true;
+        _io_fs_write(instruccion->parametro1, instruccion->parametro2, instruccion->parametro3, instruccion->parametro4, instruccion->parametro5, socket);
+        break;
+    case IO_FS_READ:
+        loguear_y_sumar_pc(instruccion);
+        pcb_actual->contexto_ejecucion->motivo_desalojo = INTERRUPCION_BLOQUEO;
+        esSyscall = true;
+        envioPcb = true;
+        _io_fs_read(instruccion->parametro1, instruccion->parametro2, instruccion->parametro3, instruccion->parametro4, instruccion->parametro5, socket);
+        break;
     case EXIT:
         log_info(LOGGER_CPU, "PID: %d - Ejecutando: %s", pcb_actual->pid, instruccion_to_string(instruccion->nombre));
         esSyscall = true;
@@ -115,7 +150,7 @@ void execute(t_instruccion *instruccion, int socket)
 
 void loguear_y_sumar_pc(t_instruccion *instruccion)
 {
-    log_instruccion_ejecutada(instruccion->nombre, instruccion->parametro1, instruccion->parametro2);
+    log_instruccion_ejecutada(instruccion->nombre, instruccion->parametro1, instruccion->parametro2, instruccion->parametro3, instruccion->parametro4, instruccion->parametro5);
     pcb_actual->contexto_ejecucion->registros->program_counter++;
 }
 
@@ -185,10 +220,10 @@ t_instruccion *deserializar_instruccion(int socket)
     return instruccion;
 }
 
-void log_instruccion_ejecutada(nombre_instruccion nombre, char *param1, char *param2)
+void log_instruccion_ejecutada(nombre_instruccion nombre, char *param1, char *param2, char *param3, char *param4, char *param5)
 {
     char *nombre_instruccion = instruccion_to_string(nombre);
-    log_info(LOGGER_CPU, "PID: %d - Ejecutando: %s - Parametros: %s - %s", pcb_actual->pid, nombre_instruccion, param1, param2);
+    log_info(LOGGER_CPU, "PID: %d - Ejecutando: %s - Parametros: %s %s %s %s %s", pcb_actual->pid, nombre_instruccion, param1, param2, param3, param4, param5);
 }
 
 void iniciar_semaforos_etc()

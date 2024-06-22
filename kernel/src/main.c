@@ -33,8 +33,14 @@ nombre_instruccion instruccion_de_IO_a_ejecutar;
 // PARA INTERFAZ GENERICA
 int unidades_de_trabajo;
 
-// PARA INTERFAZ STDIN
+// PARA INTERFAZ STDIN/STDOUT
 t_list *direcciones_fisicas;
+
+// PARA INTERFAZ DIALFS
+char *nombre_archivo;
+char *direccion_logica_fs;
+char *direccion_fisica_fs;
+uint32_t tamanio_fs;
 
 t_pcb *pcb_ejecutandose;
 t_pcb *pcb_a_finalizar = NULL;
@@ -48,9 +54,7 @@ int main()
 	iniciar_colas_y_semaforos();
 	iniciar_planificador_largo_plazo();
 	iniciar_planificador_corto_plazo();
-
 	iniciar_consola_interactiva();
-
 	finalizar_kernel();
 }
 

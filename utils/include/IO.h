@@ -44,10 +44,37 @@ typedef struct
 {
     uint32_t pidPcb;
     char *nombre_interfaz;
-    char *path;
-    int tamanio;
-    int unidades_de_trabajo;
-} t_interfaz_DIALFS;
+    char *nombre_archivo;
+    uint32_t tamanio;
+    uint32_t unidades_de_trabajo;
+} t_interfaz_dialfs;
+
+// dialfs
+void destroyInterfazDialfs(t_interfaz_dialfs *interfaz);
+
+// ENVIO RECEPCION CON DIALFS
+
+//EN CPU
+void enviar_fs_create_delete(t_pcb* pcb, char* interfaz, char* path, int socket, nombre_instruccion instruccion);   
+void serializar_fs_create_delete(t_paquete* paquete, t_pcb* pcb, char* interfaz, char* path, nombre_instruccion instruccion); 
+
+//EN KERNEL A IO
+void enviar_interfaz_dialFS_create_delete(int socket, char *nombre_archivo, uint32_t pid, char *nombre_interfaz, nombre_instruccion instruccion);
+void serializar_interfaz_dialFS_create_delete(t_paquete *paquete, char *nombre_archivo, uint32_t pid, char *nombre_interfaz);
+
+//EN KERNEL DE IO
+t_interfaz_dialfs *recibir_InterfazDialfs_iO_create_delete(int socket);
+void deserializar_InterfazDialfs_iO_create_delete(t_buffer *buffer, t_interfaz_dialfs *interfaz);
+
+//EN IO DE KERNEL
+t_interfaz_dialfs *crearInterfazDialfs();
+void recibir_InterfazDialfs(int socket, t_interfaz_dialfs *interfaz, op_cod codigo_operacion);
+void deserializar_InterfazDialfs(t_buffer *buffer, t_interfaz_dialfs *interfaz, op_cod codigo_operacion);
+void deserializar_interfaz_dialfs_create_delete(t_buffer *buffer, t_interfaz_dialfs *interfaz);
+
+//EN IO A KERNEL
+void enviar_create_delete_terminado(int socket, uint32_t pid, char *nombre_interfaz);
+void serializar_create_delete_terminado(t_paquete *paquete, uint32_t pid, char *nombre_interfaz);
 
 t_interfaz *crear_interfaz(char *nombre_interfaz, t_tipo_interfaz tipo_interfaz);
 void destruir_interfaz(t_interfaz *interfaz);
@@ -73,7 +100,7 @@ t_paquete *crear_paquete_InterfazGenericaCodOp(t_interfaz_gen *interfaz, op_cod 
 // stdin
 void enviar_interfaz_IO_stdin(t_pcb *pcb_actual, char *interfaz, t_list *Lista_direccionesFisica, int socket_cliente, nombre_instruccion IO);
 void serializar_IO_instruccion_stdin(t_paquete *paquete, t_pcb *pcb, char *interfaz, t_list *Lista_direccionesFisica, nombre_instruccion IO);
-void recibir_pcb_para_interfaz_stdin(t_pcb *pcb, int socket_cliente, char **nombre_interfaz, t_list *direcciones_fisicas, nombre_instruccion *IO);
+void recibir_pcb_para_interfaz_in_out(t_pcb *pcb, int socket_cliente, char **nombre_interfaz, t_list *direcciones_fisicas, nombre_instruccion *IO);
 void deserializar_pcb_para_interfaz_stdin(t_pcb *pcb, t_buffer *buffer, char **nombre_interfaz, t_list *direcciones_fisicas, nombre_instruccion *IO);
 void enviar_InterfazStdinConCodigoOPaKernel(int socket, t_list *direcciones_fisicas, uint32_t pid, char *nombre_interfaz);
 t_interfaz_stdin *recibir_InterfazStdin(int socket);
@@ -84,8 +111,8 @@ void serializarInterfazStdin_de_Kernale_a_Memoria(t_paquete *paquete, t_interfaz
 void enviar_InterfazStdin(int socket, t_list *direcciones_fisicas, uint32_t pid, char *nombre_interfaz);
 char *recibir_dato_stdin(t_list *direcciones_fisicas, int socket_cliente, uint32_t *pid);
 char *deserializar_dato_interfaz_STDIN(t_paquete *paquete, t_list *lista_datos, uint32_t *pid);
-// stdout
 
+// stdout
 void enviar_InterfazStdout(int socket, t_list *direcciones_fisicas, uint32_t pid, char *nombre_interfaz);
 t_interfaz_stdout *recibir_InterfazStdout(int socket_cliente);
 t_interfaz_stdout *deserializar_InterfazStdout(t_buffer *buffer);
@@ -102,9 +129,8 @@ char *deserializar_dato_interfaz_STDOUT(t_paquete *paquete);
 void enviar_dato_leido(int socket, char *dato, int tamanio);
 void serializar_dato_leido(t_paquete *paquete, char *dato, int tamanio);
 void deserializar_direcciones_de_stdout(t_paquete *paquete, t_list *lista_datos, uint32_t *pid);
-;
 
-// MOV IN XD
+// MOV IN
 void enviar_dato_movIn(int socket, t_list *lista);
 void serializar_datos_leidos(t_paquete *paquete, t_list *lista);
 

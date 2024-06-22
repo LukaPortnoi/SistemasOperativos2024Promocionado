@@ -80,6 +80,10 @@ extern char *nombre_interfaz;
 extern nombre_instruccion instruccion_de_IO_a_ejecutar;
 extern int unidades_de_trabajo;
 extern t_list *direcciones_fisicas;
+extern char *nombre_archivo;
+extern char *direccion_logica_fs;
+extern char *direccion_fisica_fs;
+extern uint32_t tamanio_fs;
 
 extern t_pcb *pcb_ejecutandose;
 extern t_pcb *pcb_a_finalizar;

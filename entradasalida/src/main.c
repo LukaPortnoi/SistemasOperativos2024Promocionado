@@ -16,12 +16,15 @@ t_log *LOGGER_INPUT_OUTPUT;
 t_config *CONFIG_INPUT_OUTPUT;
 t_interfaz *interfaz_actual;
 
+char BITMAP_PATH[256];
+char BLOQUES_PATH[256];
+
 int main(int argc, char **argv)
 {
     signal(SIGINT, manejador_signals);
     iniciar_io(argv[1]);
     iniciar_conexiones();
-    procesar_conexion_IO(fd_io_kernel, LOGGER_INPUT_OUTPUT);
+    procesar_conexion_IO(fd_io_kernel);
     finalizar_io();
 }
 
@@ -61,6 +64,8 @@ void iniciar_io(char *arg)
 
     if (interfaz_actual->tipo_interfaz == DIALFS)
     {
+        snprintf(BITMAP_PATH, sizeof(BITMAP_PATH), "%s/bitmap.dat", PATH_BASE_DIALFS);
+        snprintf(BLOQUES_PATH, sizeof(BLOQUES_PATH), "%s/bloques.dat", PATH_BASE_DIALFS);
         manejar_archivos_fs();
     }
 }
@@ -89,7 +94,6 @@ void manejador_signals(int signum)
         log_trace(LOGGER_INPUT_OUTPUT, "Se recibió SIGINT, cerrando conexiones y liberando recursos...");
         enviar_datos_interfaz(interfaz_actual, fd_io_kernel, DESCONEXION_INTERFAZ);
         finalizar_io();
-        // destruir_interfaz(interfaz_actual); // COMPROBAR SI ESTO ESTA BIEN
         exit(0);
         break;
 

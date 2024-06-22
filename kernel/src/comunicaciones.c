@@ -39,12 +39,16 @@ static void procesar_conexion_kernel(void *void_args)
 		case CONEXION_INTERFAZ:
 			t_interfaz *interfaz_recibida_de_IO = recibir_datos_interfaz(cliente_socket);
 			agregar_interfaz_a_lista(interfaz_recibida_de_IO, cliente_socket);
+			free(interfaz_recibida_de_IO->nombre_interfaz);
+			free(interfaz_recibida_de_IO);
 			break;
 
 		case DESCONEXION_INTERFAZ:
 			t_interfaz *interfaz_desconectada = recibir_datos_interfaz(cliente_socket);
 			log_debug(logger, "Desconexion de %s", interfaz_desconectada->nombre_interfaz);
 			eliminar_interfaz_de_lista(interfaz_desconectada->nombre_interfaz);
+			free(interfaz_desconectada->nombre_interfaz);
+			free(interfaz_desconectada);
 			break;
 
 		case FINALIZACION_INTERFAZ:
@@ -127,6 +131,32 @@ static void procesar_conexion_kernel(void *void_args)
 			free(interfazRecibidaIOstdout);
 			break;
 
+		case FINALIZACION_INTERFAZ_DIALFS:
+			log_trace(logger, "Finalizacion de instruccion de interfaz");
+			t_interfaz_dialfs *interfazRecibidaIOdialfs = recibir_InterfazDialfs_iO_create_delete(cliente_socket);
+
+			if (pcb_a_finalizar == NULL)
+			{
+				desbloquear_proceso(interfazRecibidaIOdialfs->pidPcb);
+				t_interfaz_recibida *interfaz_recibida = buscar_interfaz_por_nombre(interfazRecibidaIOdialfs->nombre_interfaz);
+				squeue_pop(interfaz_recibida->cola_procesos_bloqueados);
+			}
+			else if (interfazRecibidaIOdialfs->pidPcb != pcb_a_finalizar->pid)
+			{
+				desbloquear_proceso(interfazRecibidaIOdialfs->pidPcb);
+				t_interfaz_recibida *interfaz_recibida = buscar_interfaz_por_nombre(interfazRecibidaIOdialfs->nombre_interfaz);
+				squeue_pop(interfaz_recibida->cola_procesos_bloqueados);
+			}
+			else if (interfazRecibidaIOdialfs->pidPcb == pcb_a_finalizar->pid)
+			{
+				finalizar_proceso(pcb_a_finalizar);
+				log_trace(logger, "Se finalizo el proceso luego de I/O %d", pcb_a_finalizar->pid);
+			}
+
+			free(interfazRecibidaIOdialfs->nombre_interfaz);
+			free(interfazRecibidaIOdialfs);
+			break;
+		
 		// ---------------
 		// -- ERRORES --
 		// ---------------
@@ -181,7 +211,7 @@ void finalizar_proceso_post_io(t_interfaz_gen *interfazRecibidaIO, t_log *logger
 
 void agregar_interfaz_a_lista(t_interfaz *interfaz_recibida, int cliente_socket)
 {
-	interfaz_aux->nombre_interfaz_recibida = interfaz_recibida->nombre_interfaz;
+	interfaz_aux->nombre_interfaz_recibida = strdup(interfaz_recibida->nombre_interfaz);
 	interfaz_aux->tipo_interfaz_recibida = interfaz_recibida->tipo_interfaz;
 	interfaz_aux->socket_interfaz_recibida = cliente_socket;
 	interfaz_aux->cola_procesos_bloqueados = squeue_create();

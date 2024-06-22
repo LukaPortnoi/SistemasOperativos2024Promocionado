@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <readline/readline.h>
 #include <sys/socket.h>
+#include <sys/mman.h>
 #include <unistd.h>
 #include <signal.h>
 #include <fcntl.h>
@@ -35,5 +36,8 @@ extern int fd_io_kernel;
 
 extern t_log *LOGGER_INPUT_OUTPUT;
 extern t_config *CONFIG_INPUT_OUTPUT;
+
+extern char BITMAP_PATH[256];
+extern char BLOQUES_PATH[256];
 
 #endif /* GESTOR_H_ */

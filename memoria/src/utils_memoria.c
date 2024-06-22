@@ -256,6 +256,26 @@ t_list *parsear_instrucciones(char *path)
         {
             list_add(instrucciones, armar_estructura_instruccion(IO_STDOUT_WRITE, palabras[1], palabras[2], palabras[3], "", ""));
         }
+        else if (string_equals_ignore_case(palabras[0], "IO_FS_CREATE"))
+        {
+            list_add(instrucciones, armar_estructura_instruccion(IO_FS_CREATE, palabras[1], palabras[2], "", "", ""));
+        }
+        else if (string_equals_ignore_case(palabras[0], "IO_FS_DELETE"))
+        {
+            list_add(instrucciones, armar_estructura_instruccion(IO_FS_DELETE, palabras[1], palabras[2], "", "", ""));
+        }
+        else if (string_equals_ignore_case(palabras[0], "IO_FS_TRUNCATE"))
+        {
+            list_add(instrucciones, armar_estructura_instruccion(IO_FS_TRUNCATE, palabras[1], palabras[2], palabras[3], "", ""));
+        }
+        else if (string_equals_ignore_case(palabras[0], "IO_FS_WRITE"))
+        {
+            list_add(instrucciones, armar_estructura_instruccion(IO_FS_WRITE, palabras[1], palabras[2], palabras[3], palabras[4], palabras[5]));
+        }
+        else if (string_equals_ignore_case(palabras[0], "IO_FS_READ"))
+        {
+            list_add(instrucciones, armar_estructura_instruccion(IO_FS_READ, palabras[1], palabras[2], palabras[3], palabras[4], palabras[5]));
+        }
         else if (string_equals_ignore_case(palabras[0], "EXIT"))
         {
             list_add(instrucciones, armar_estructura_instruccion(EXIT, "", "", "", "", ""));

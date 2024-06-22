@@ -221,11 +221,15 @@ void recibir_pcb_CPU(t_pcb *pcb_recibido, int fd_cpu)
         break;
 
     case ENVIAR_INTERFAZ_STDIN:
-        recibir_pcb_para_interfaz_stdin(pcb_recibido, fd_cpu, &nombre_interfaz, direcciones_fisicas, &instruccion_de_IO_a_ejecutar);
+        recibir_pcb_para_interfaz_in_out(pcb_recibido, fd_cpu, &nombre_interfaz, direcciones_fisicas, &instruccion_de_IO_a_ejecutar);
         break;
 
     case ENVIAR_INTERFAZ_STDOUT:
-        recibir_pcb_para_interfaz_stdin(pcb_recibido, fd_cpu, &nombre_interfaz, direcciones_fisicas, &instruccion_de_IO_a_ejecutar);
+        recibir_pcb_para_interfaz_in_out(pcb_recibido, fd_cpu, &nombre_interfaz, direcciones_fisicas, &instruccion_de_IO_a_ejecutar);
+        break;
+
+    case FS_CREATE_DELETE:
+        recibir_pcb_fs_create_delete(pcb_recibido, fd_cpu, &nombre_interfaz, &nombre_archivo, &instruccion_de_IO_a_ejecutar); 
         break;
 
     default:
@@ -282,17 +286,11 @@ void desalojo_cpu(t_pcb *pcb, pthread_t hilo_quantum_id)
     case INTERRUPCION_FINALIZACION:
         pcb->contexto_ejecucion->motivo_finalizacion = INTERRUPTED_BY_USER;
         finalizar_proceso(pcb);
-
-        if (sem_getvalue(&semMultiprogramacion, &sem_value) == 0)
-        {
-            log_trace(LOGGER_KERNEL, "Se libera un espacio de multiprogramacion, semaforo: %d", sem_value);
-        }
         break;
     case INTERRUPCION_OUT_OF_MEMORY:
         log_debug(LOGGER_KERNEL, "PID: %d - Desalojado por OUT OF MEMORY", pcb->pid);
         finalizar_proceso(pcb);
         break;
-
     default:
         log_error(LOGGER_KERNEL, "PID: %d - Desalojado por motivo desconocido", pcb->pid);
         break;
@@ -426,12 +424,10 @@ void inicializar_recursos()
 uint32_t asignar_pid()
 {
     uint32_t valor_pid;
-
     pthread_mutex_lock(&mutex_pid);
     valor_pid = PID_GLOBAL;
     PID_GLOBAL++;
     pthread_mutex_unlock(&mutex_pid);
-
     return valor_pid;
 }
 
@@ -453,15 +449,11 @@ void proceso_listo(t_pcb *pcb, bool es_ready_plus)
     if (es_ready_plus)
     {
         squeue_push(squeue_readyPlus, pcb);
-        //log_info(LOGGER_KERNEL, "Cola Ready Prioridad:");
-        //mostrar_procesos_en_squeue(squeue_readyPlus, LOGGER_KERNEL);
         loguear_cola(squeue_readyPlus, "Ready Prioridad");
     }
     else
     {
         squeue_push(squeue_ready, pcb);
-        //log_info(LOGGER_KERNEL, "Cola Ready:");
-        //mostrar_procesos_en_squeue(squeue_ready, LOGGER_KERNEL);
         loguear_cola(squeue_ready, "Ready");
     }
     sem_post(&semReady);
@@ -500,7 +492,6 @@ void finalizar_proceso(t_pcb *pcb)
     cambiar_estado_pcb(pcb, FINALIZADO);
     squeue_push(squeue_exit, pcb);
     liberar_recursos(pcb);
-    log_warning(LOGGER_KERNEL, "PID ENVIANDO A FINALIZAR: %d", pcb->pid);
     liberar_estructuras_memoria(pcb->pid);
     sem_post(&semMultiprogramacion);
     if (sem_getvalue(&semMultiprogramacion, &sem_value) == 0)
@@ -609,7 +600,6 @@ void manejar_recurso(t_pcb *pcb, char *recurso)
     log_trace(LOGGER_KERNEL, "PID %d - Recurso %s - Instruccion %s", pcb->pid, recurso_a_utilizar->nombre_recurso, nombre_instruccion_to_string(INSTRUCCION_RECURSO_A_USAR));
     if (recurso_a_utilizar)
     {
-
         if (pcb->recursos_asignados == NULL)
         {
             log_error(LOGGER_KERNEL, "PID %d - Recursos asignados no inicializados", pcb->pid);
@@ -707,7 +697,7 @@ void ejecutar_intruccion_io(t_pcb *pcb_recibido)
             {
                 bloquear_procesosIO(pcb_recibido, interfaz_a_utilizar);
                 enviar_InterfazGenerica(interfaz_a_utilizar->socket_interfaz_recibida, unidades_de_trabajo, pcb_recibido->pid, interfaz_a_utilizar->nombre_interfaz_recibida);
-                free(nombre_interfaz); // añadido
+                free(nombre_interfaz);
             }
             else
             {
@@ -723,7 +713,6 @@ void ejecutar_intruccion_io(t_pcb *pcb_recibido)
                 enviar_InterfazStdin(interfaz_a_utilizar->socket_interfaz_recibida, direcciones_fisicas, pcb_recibido->pid, interfaz_a_utilizar->nombre_interfaz_recibida);
                 list_clean_and_destroy_elements(direcciones_fisicas, free);
                 free(nombre_interfaz);
-                // Enviar interfaz STDIN
             }
             else
             {
@@ -739,8 +728,6 @@ void ejecutar_intruccion_io(t_pcb *pcb_recibido)
                 enviar_InterfazStdout(interfaz_a_utilizar->socket_interfaz_recibida, direcciones_fisicas, pcb_recibido->pid, interfaz_a_utilizar->nombre_interfaz_recibida);
                 list_clean_and_destroy_elements(direcciones_fisicas, free);
                 free(nombre_interfaz);
-
-                // Enviar interfaz STDOUT
             }
             else
             {
@@ -754,9 +741,10 @@ void ejecutar_intruccion_io(t_pcb *pcb_recibido)
                 instruccion_de_IO_a_ejecutar == IO_FS_TRUNCATE || instruccion_de_IO_a_ejecutar == IO_FS_WRITE ||
                 instruccion_de_IO_a_ejecutar == IO_FS_READ)
             {
-                bloquear_proceso(pcb_recibido, interfaz_a_utilizar->nombre_interfaz_recibida);
-                squeue_push(interfaz_a_utilizar->cola_procesos_bloqueados, pcb_recibido);
-                // Enviar interfaz DIALFS
+                bloquear_procesosIO(pcb_recibido, interfaz_a_utilizar);
+                enviar_InterfazDialFS(interfaz_a_utilizar->socket_interfaz_recibida, pcb_recibido->pid, interfaz_a_utilizar->nombre_interfaz_recibida, instruccion_de_IO_a_ejecutar);
+                free(nombre_interfaz);
+                free(nombre_archivo);
             }
             else
             {
@@ -796,4 +784,88 @@ void bloquear_procesosIO(t_pcb *pcbAbloquear, t_interfaz_recibida *interfaz_a_ut
 {
     bloquear_proceso(pcbAbloquear, interfaz_a_utilizar->nombre_interfaz_recibida);
     squeue_push(interfaz_a_utilizar->cola_procesos_bloqueados, pcbAbloquear);
+}
+
+void recibir_pcb_fs_create_delete(t_pcb *pcb, int socket, char **nombre_interfaz, char **nombre_archivo, nombre_instruccion *instruccion)
+{
+    t_paquete *paquete = recibir_paquete(socket);
+    deserializar_pcb_fs_create_delete(pcb, paquete->buffer, nombre_interfaz, nombre_archivo, instruccion);
+    eliminar_paquete(paquete);
+}
+
+void deserializar_pcb_fs_create_delete(t_pcb *pcb, t_buffer *buffer, char **nombre_interfaz, char **nombre_archivo, nombre_instruccion *instruccion)
+{
+    uint32_t long_nombre_interfaz;
+    uint32_t long_nombre_archivo;
+    void *stream = buffer->stream;
+    int desplazamiento = 0;
+
+    memcpy(&(pcb->pid), stream + desplazamiento, sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+    memcpy(&(pcb->estado), stream + desplazamiento, sizeof(t_estado_proceso));
+    desplazamiento += sizeof(t_estado_proceso);
+
+    memcpy(&(pcb->quantum), stream + desplazamiento, sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+    memcpy(&(pcb->tiempo_q), stream + desplazamiento, sizeof(uint64_t));
+    desplazamiento += sizeof(uint64_t);
+
+    memcpy(pcb->contexto_ejecucion->registros, stream + desplazamiento, sizeof(t_registros));
+    desplazamiento += sizeof(t_registros);
+
+    memcpy(&(pcb->contexto_ejecucion->motivo_desalojo), stream + desplazamiento, sizeof(t_motivo_desalojo));
+    desplazamiento += sizeof(t_motivo_desalojo);
+
+    memcpy(&(pcb->contexto_ejecucion->motivo_finalizacion), stream + desplazamiento, sizeof(t_motivo_finalizacion));
+    desplazamiento += sizeof(t_motivo_finalizacion);
+
+    memcpy(&long_nombre_interfaz, stream + desplazamiento, sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+    *nombre_interfaz = malloc(long_nombre_interfaz);
+
+    memcpy(*nombre_interfaz, stream + desplazamiento, long_nombre_interfaz);
+    desplazamiento += long_nombre_interfaz;
+
+    memcpy(&long_nombre_archivo, stream + desplazamiento, sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+    *nombre_archivo = malloc(long_nombre_archivo);
+
+    memcpy(*nombre_archivo, stream + desplazamiento, long_nombre_archivo);
+    desplazamiento += long_nombre_archivo;
+
+    memcpy(instruccion, stream + desplazamiento, sizeof(nombre_instruccion));
+}
+
+void enviar_InterfazDialFS(int socket, uint32_t pid, char *nombre_interfaz, nombre_instruccion instruccion)
+{
+    switch (instruccion)
+    {
+    case IO_FS_CREATE:
+        enviar_interfaz_dialFS_create_delete(socket, nombre_archivo, pid, nombre_interfaz, instruccion);
+        break;
+    
+    case IO_FS_DELETE:
+        enviar_interfaz_dialFS_create_delete(socket, nombre_archivo, pid, nombre_interfaz, instruccion);
+        break;
+    /*
+    case IO_FS_TRUNCATE:
+        enviar_interfaz_dialFS_truncate(socket, nombre_archivo, pid, nombre_interfaz);
+        break;
+    
+    case IO_FS_WRITE:
+        enviar_interfaz_dialFS_write(socket, nombre_archivo, pid, nombre_interfaz);
+        break;
+
+    case IO_FS_READ:
+        enviar_interfaz_dialFS_read(socket, nombre_archivo, pid, nombre_interfaz);
+        break;*/
+
+    default:
+        log_error(LOGGER_KERNEL, "Instruccion %s no reconocida", nombre_instruccion_to_string(instruccion));
+        break;
+    }
 }

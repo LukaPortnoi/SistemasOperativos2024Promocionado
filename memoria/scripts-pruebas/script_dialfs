@@ -1,0 +1,6 @@
+IO_FS_DELETE DIALFS notas.txt
+IO_FS_CREATE DIALFS notas.txt
+IO_FS_DELETE DIALFS notas.txt
+IO_FS_CREATE DIALFS thomas.xd
+IO_FS_CREATE DIALFS mashiaj.dat
+EXIT

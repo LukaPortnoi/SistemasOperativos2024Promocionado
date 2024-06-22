@@ -3,18 +3,12 @@
 // Fijarse si existen los archivos bloques.dat y bitmap.dat en el PATH_BASE_DIALFS. Si no existen, crearlos.
 void manejar_archivos_fs()
 {
-    char path_bloques[256];
-    char path_bitmap[256];
-
-    snprintf(path_bloques, sizeof(path_bloques), "%s/bloques.dat", PATH_BASE_DIALFS);
-    snprintf(path_bitmap, sizeof(path_bitmap), "%s/bitmap.dat", PATH_BASE_DIALFS);
-
     // Verificar y crear bloques.dat si no existe
-    FILE *bloques_file = fopen(path_bloques, "rb+");
+    FILE *bloques_file = fopen(BLOQUES_PATH, "rb+");
     if (bloques_file == NULL)
     {
         // El archivo no existe, crearlo
-        bloques_file = fopen(path_bloques, "wb+");
+        bloques_file = fopen(BLOQUES_PATH, "wb+");
         if (bloques_file == NULL)
         {
             log_error(LOGGER_INPUT_OUTPUT, "Error al crear bloques.dat");
@@ -33,11 +27,11 @@ void manejar_archivos_fs()
     log_trace(LOGGER_INPUT_OUTPUT, "Archivo bloques.dat verificado/creado con éxito");
 
     // Verificar y crear bitmap.dat si no existe
-    FILE *bitmap_file = fopen(path_bitmap, "rb+");
+    FILE *bitmap_file = fopen(BITMAP_PATH, "rb+");
     if (bitmap_file == NULL)
     {
         // El archivo no existe, crearlo
-        bitmap_file = fopen(path_bitmap, "wb+");
+        bitmap_file = fopen(BITMAP_PATH, "wb+");
         if (bitmap_file == NULL)
         {
             log_error(LOGGER_INPUT_OUTPUT, "Error al crear bitmap.dat");
@@ -78,4 +72,50 @@ void manejar_archivos_fs()
     }
     fclose(bitmap_file);
     log_trace(LOGGER_INPUT_OUTPUT, "Archivo bitmap.dat verificado/creado con éxito");
+}
+
+void actualizar_bloque_inicial(t_config *metadata_config, uint32_t bloque_inicial)
+{
+    char *bloque_inicial_str = string_itoa(bloque_inicial);
+    config_set_value(metadata_config, "BLOQUE_INICIAL", bloque_inicial_str);
+    free(bloque_inicial_str);
+}
+
+void actualizar_tamanio_archivo(t_config *metadata_config, uint32_t tamanio)
+{
+    char *tamanio_str = string_itoa(tamanio);
+    config_set_value(metadata_config, "TAMANIO", tamanio_str);
+    free(tamanio_str);
+}
+
+uint32_t encontrar_bloque_libre()
+{
+    FILE *bitmap_file = fopen(BITMAP_PATH, "r+");
+
+    size_t bitmap_size = BLOCK_COUNT / 8;
+    char *bitmap = mmap(NULL, bitmap_size, PROT_READ | PROT_WRITE, MAP_SHARED, fileno(bitmap_file), 0);
+
+    for (int i = 0; i < BLOCK_COUNT; i++)
+    {
+        int byte_index = i / 8;
+        int bit_index = i % 8;
+        if (!(bitmap[byte_index] & (1 << bit_index)))
+        {
+            fclose(bitmap_file);
+            munmap(bitmap, bitmap_size);
+            return i;
+        }
+    }
+
+    fclose(bitmap_file);
+    munmap(bitmap, bitmap_size);
+    return -1;
+}
+
+uint32_t obtener_bloque_inicial(char path[])
+{
+    t_config *metadata_config = iniciar_config(path, "METADATA");
+    uint32_t bloque_inicial = config_get_int_value(metadata_config, "BLOQUE_INICIAL");
+    config_destroy(metadata_config);
+    return bloque_inicial;
 }
