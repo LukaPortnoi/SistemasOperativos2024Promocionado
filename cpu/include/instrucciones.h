@@ -31,9 +31,9 @@ void serializar_datos_mov_out(t_paquete *paquete, t_list *Lista_direccionesFisic
 void enviar_valor_mov_out_cpu(t_list *Lista_direccionesFisica, uint32_t valorObtenido, int socket, uint32_t pid);
 void enviar_datos_copy_string(t_list *Lista_direccionesFisica_escritura, t_list *Lista_direccionesFisica_lectura, uint32_t tamanio, int socket, uint32_t pid);
 void serializar_datos_copy_string(t_paquete *paquete, t_list *Lista_direccionesFisica_escritura, t_list *Lista_direccionesFisica_lectura, uint32_t tamanio , uint32_t pid);
-t_list *recibir_dato_de_memoria_movIn(int socket, t_log *logger);
-t_list *deserializar_dato_movIN(t_paquete *paquete);
-t_list *recibir_dato_movIN(int socket_cliente);
+t_list *recibir_dato_de_memoria_movIn(int socket, t_log *logger, uint32_t *valor);
+t_list *deserializar_dato_movIN(t_paquete *paquete, uint32_t *valor);
+t_list *recibir_dato_movIN(int socket_cliente, uint32_t *valor);
 
 
 // UTILS

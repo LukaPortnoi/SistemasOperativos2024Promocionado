@@ -104,11 +104,28 @@ static void procesar_conexion_memoria(void *void_args)
 
 		case PEDIDO_MOV_IN: // Lee el valor del marco y lo devuelve para guardarlo en el registro (se pide la direccion) - recibo direccion fisica
 			t_list *direcciones_fisicas_mov_in = list_create();
-			t_list *lista_datos_a_leer_mov_in = list_create();
 			t_list *lista_datos_leidos_mov_in = list_create();
 			uint32_t pidMovIn;
+			recibir_mov_in_cpu(cliente_socket, direcciones_fisicas_mov_in, &pidMovIn);
+			int tamanio_registro = 0;
 
-			char *valorTotalaDeLeerMovIn;
+			for (int i = 0; i < list_size(direcciones_fisicas_mov_in); i++)
+			{
+				t_direcciones_fisicas *direccionAmostrar = list_get(direcciones_fisicas_mov_in, i);
+				tamanio_registro += direccionAmostrar->tamanio;
+				// free(direccionAmostrar);
+			}
+
+			void *mostrar = leer_memoria_pro(direcciones_fisicas_mov_in, pidMovIn, tamanio_registro, lista_datos_leidos_mov_in);
+			uint32_t valor = *(uint32_t *)mostrar;
+			printf("valor leido de manera PRO comunicacio0nes: %d \n", valor);
+
+			for (int i = 0; i < list_size(lista_datos_leidos_mov_in); i++)
+			{
+				printf("Valor leido de manera PRO (testeo comunicaciones): %d \n", *(int *)list_get(lista_datos_leidos_mov_in, i));
+			}
+
+			/*char *valorTotalaDeLeerMovIn;
 			recibir_mov_in_cpu(cliente_socket, direcciones_fisicas_mov_in, &pidMovIn);
 			int tamanioTotalstrlen = 0;
 			int desplazamientoLeer;
@@ -138,15 +155,15 @@ static void procesar_conexion_memoria(void *void_args)
 				char *aMostrar = list_get(lista_datos_leidos_mov_in, g);
 				//printf("Valor YA LEIDO de memoria: %s \n", aMostrar);
 
-			}*/
+			}
 
-			enviar_dato_movIn(cliente_socket, lista_datos_leidos_mov_in);
-
-			list_clean_and_destroy_elements(direcciones_fisicas_mov_in, free);
-			list_clean_and_destroy_elements(lista_datos_a_leer_mov_in, free);
-			list_clean_and_destroy_elements(lista_datos_leidos_mov_in, free);
+			*/
 
 			// TODO devolver valor_leido_mov_in a cpu
+			enviar_dato_movIn(cliente_socket, lista_datos_leidos_mov_in, valor);
+			list_clean_and_destroy_elements(direcciones_fisicas_mov_in, free);
+			list_clean_and_destroy_elements(lista_datos_leidos_mov_in, free);
+			free(mostrar);
 			break;
 
 		case PEDIDO_MOV_OUT: // me pasa por parametro un uint32_t y tengo que guardarlo en el marco que me dice
@@ -154,19 +171,19 @@ static void procesar_conexion_memoria(void *void_args)
 			uint32_t valor_obtenido_mov_out;
 			uint32_t pidMovOut;
 			recibir_mov_out_cpu(direcciones_fisicas_mov_out, &valor_obtenido_mov_out, cliente_socket, &pidMovOut);
-			//void *dato_recibido = (void *)valor_obtenido_mov_out;
-			char *dato = "Hola";
-			// printf("Numero en decimal: %d \n", numero_recibido);
-			//char *valorAescribir = int_to_char(numero_recibido);
+			// void *dato_recibido = (void *)valor_obtenido_mov_out;
+			// char *dato = "Hola"; //Por si Luka quiere chusmear algo, lo dejo aca
+			//  printf("Numero en decimal: %d \n", numero_recibido);
+			// char *valorAescribir = int_to_char(numero_recibido);
 			int tamanioTotal = 0;
 			for (int i = 0; i < list_size(direcciones_fisicas_mov_out); i++)
 			{
 				t_direcciones_fisicas *direccionAmostrar = list_get(direcciones_fisicas_mov_out, i);
 				tamanioTotal += direccionAmostrar->tamanio;
+				// free(direccionAmostrar);
 			}
 
-			
-			escribir_memoria_mov_out(direcciones_fisicas_mov_out, &valor_obtenido_mov_out, pidMovOut,tamanioTotal);
+			escribir_memoria_mov_out(direcciones_fisicas_mov_out, &valor_obtenido_mov_out, pidMovOut, tamanioTotal);
 
 			list_destroy_and_destroy_elements(direcciones_fisicas_mov_out, free);
 
@@ -232,8 +249,8 @@ static void procesar_conexion_memoria(void *void_args)
 				// indice_valor_mov_out_binario = 0;
 				indice = indice + direccionAmostrar->tamanio;
 			} */
-			//free(valor_parcial_binario);
-			//free(valor_mov_out_binario);
+			// free(valor_parcial_binario);
+			// free(valor_mov_out_binario);
 			/* int valor_mov_out_int = (int)valorObtenido_mov_out;
 			log_debug(LOGGER_MEMORIA, "valor int: %d \n", valor_mov_out_int);
 			char* valor_mov_out_char = (char)valor_mov_out_int;
@@ -290,11 +307,25 @@ static void procesar_conexion_memoria(void *void_args)
 		case PEDIDO_COPY_STRING:
 			t_list *direcciones_fisicas_escritura = list_create();
 			t_list *direcciones_fisicas_lectura = list_create();
+			t_list *lista_aux = list_create();
 			uint32_t tamanio_copy_string;
 			uint32_t pidCopyString;
 
 			recibir_copystring(cliente_socket, direcciones_fisicas_escritura, direcciones_fisicas_lectura, &tamanio_copy_string, &pidCopyString);
-			char *valor_leido_parcial;
+
+			void *dato_leido_copy = leer_memoria_pro(direcciones_fisicas_mov_in, pidMovIn, tamanio_copy_string, lista_aux);
+			char *valor_copy = (char *)dato_leido_copy;
+			printf("valor leido copy string: %s \n", valor_copy);
+			escribir_memoria_mov_out(direcciones_fisicas_escritura, valor_copy, pidCopyString, tamanio_copy_string);
+
+			list_clean_and_destroy_elements(direcciones_fisicas_escritura, free);
+			list_clean_and_destroy_elements(direcciones_fisicas_lectura, free);
+			list_clean_and_destroy_elements(lista_aux, free);
+
+			// void *mostrar = leer_memoria_pro(direcciones_fisicas_lectura, pidCopyString, tamanio_copy_string, datos_leidos);
+			// char *valor = calloc(tamanio_registro + 1, 1);
+
+			/*char *valor_leido_parcial;
 			char *valor_leido_completo = malloc(tamanio_copy_string + 1);
 			memset(valor_leido_completo, 0, tamanio_copy_string + 1);
 
@@ -326,8 +357,8 @@ static void procesar_conexion_memoria(void *void_args)
 			}
 
 			free(valor_leido_completo);
-			list_clean_and_destroy_elements(direcciones_fisicas_escritura, free);
-			list_clean_and_destroy_elements(direcciones_fisicas_lectura, free);
+			*/
+
 			break;
 
 		case PEDIDO_ESCRIBIR_DATO_STDIN:
@@ -336,6 +367,7 @@ static void procesar_conexion_memoria(void *void_args)
 			uint32_t pidStdin;
 			dato_obtenido_stdin = recibir_dato_stdin(direcciones_fisicas_a_escribir, cliente_socket, &pidStdin);
 			int longitud_DATO = strlen(dato_obtenido_stdin);
+			printf("tamanio de stdin: %d \n", longitud_DATO);
 
 			escribir_memoria_mov_out(direcciones_fisicas_a_escribir, dato_obtenido_stdin, pidStdin, longitud_DATO);
 
@@ -362,7 +394,6 @@ static void procesar_conexion_memoria(void *void_args)
 		case PEDIDO_A_LEER_DATO_STDOUT:
 			t_list *direcciones_fisicas_a_leer = list_create();
 			t_list *lista_datos_a_leer = list_create();
-			char *valor_leido_stdout;
 			uint32_t pidStdout;
 
 			recibir_direcciones_de_stdout(cliente_socket, direcciones_fisicas_a_leer, &pidStdout);
@@ -370,18 +401,19 @@ static void procesar_conexion_memoria(void *void_args)
 			for (int i = 0; i < list_size(direcciones_fisicas_a_leer); i++)
 			{
 				t_direcciones_fisicas *direccionAmostrar = list_get(direcciones_fisicas_a_leer, i);
-				valor_leido_stdout = leer_memoria_IO(direccionAmostrar->direccion_fisica, direccionAmostrar->tamanio, pidStdout);
-				list_add(lista_datos_a_leer, strdup(valor_leido_stdout));
-				log_debug(LOGGER_MEMORIA, "Cadena final leída: %s \n", valor_leido_stdout);
 				tamanio_registroTotal_stdout += direccionAmostrar->tamanio;
-				free(valor_leido_stdout);
 			}
-			char *valorTotalaDeLeer = concatenar_lista_de_cadenas(lista_datos_a_leer, tamanio_registroTotal_stdout);
+
+			void *valor_leido_stdout = leer_memoria_pro(direcciones_fisicas_a_leer, pidStdout, tamanio_registroTotal_stdout, lista_datos_a_leer);
+			char *valor_stdout = calloc(tamanio_registroTotal_stdout + 1, 1);
+			memcpy(valor_stdout, mostrar, tamanio_registro);
+			printf("valor leido de manera PRO STDOUT: %s \n", valor_stdout);
+			// char *valorTotalaDeLeer = concatenar_lista_de_cadenas(lista_datos_a_leer, tamanio_registroTotal_stdout);
 
 			// valorTotalaDeLeer= valorTotalaDeLeer + tamanio_registroTotal_stdout;
 			// printf("Valor leido de memoria: %s \n", valorTotalaDeLeer);
-			enviar_dato_leido(cliente_socket, valorTotalaDeLeer, tamanio_registroTotal_stdout);
-			free(valorTotalaDeLeer);
+			enviar_dato_leido(cliente_socket, valor_stdout, tamanio_registroTotal_stdout);
+			// free(valorTotalaDeLeer);
 			list_destroy_and_destroy_elements(direcciones_fisicas_a_leer, free);
 			list_destroy_and_destroy_elements(lista_datos_a_leer, free);
 
@@ -448,22 +480,3 @@ void enviar_respuesta_resize(int cliente_socket, op_cod response)
 {
 	send(cliente_socket, &response, sizeof(op_cod), 0);
 }
-
-
-/*==12956== Thread 2:
-==12956== Invalid read of size 1
-==12956==    at 0x484ED84: __strlen_sse2 (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
-==12956==    by 0x49D2D30: __vfprintf_internal (vfprintf-internal.c:1517)
-==12956==    by 0x49BC79E: printf (printf.c:33)
-==12956==    by 0x10DE02: escribir_memoria_mov_out (utils_memoria.c:564)
-==12956==    by 0x10AFEF: procesar_conexion_memoria (comunicaciones.c:163)
-==12956==    by 0x49F0AC2: start_thread (pthread_create.c:442)
-==12956==    by 0x4A81A03: clone (clone.S:100)
-==12956==  Address 0x61be9d4 is 0 bytes after a block of size 4 alloc'd
-==12956==    at 0x484DA83: calloc (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
-==12956==    by 0x10DDC1: escribir_memoria_mov_out (utils_memoria.c:561)
-==12956==    by 0x10AFEF: procesar_conexion_memoria (comunicaciones.c:163)
-==12956==    by 0x49F0AC2: start_thread (pthread_create.c:442)
-==12956==    by 0x4A81A03: clone (clone.S:100)
-==12956== 
-*/

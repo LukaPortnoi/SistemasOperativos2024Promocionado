@@ -538,7 +538,7 @@ void escribir_memoria_mov_out(t_list *direcciones, void* valor_obtenido, uint32_
     int tamanioValor = tamanio_registro;
     void *copia = calloc(tamanioValor, 1);
     memcpy(copia, valor_obtenido, tamanioValor);
-    mem_hexdump(copia,tamanioValor);
+    //mem_hexdump(copia,tamanioValor);
   
     int aux = 0;
     for (int i = 0; i < list_size(direcciones) ; i++)
@@ -549,10 +549,22 @@ void escribir_memoria_mov_out(t_list *direcciones, void* valor_obtenido, uint32_
         aux += direccion->tamanio;
     }
 
-    mem_hexdump(memoriaUsuario,1024);
+    //t_list *datos_leidos = list_create();
+   // void *mostrar = leer_memoria_pro(direcciones, pid, tamanio_registro, datos_leidos);
+   // char *valor = calloc(tamanio_registro + 1, 1);
+    //memcpy(valor, mostrar, tamanio_registro);
+    //printf("valor leido de manera PRO: %s \n", valor);
+
+    //int valor = *(int *)mostrar;
+    //printf("valor leido de manera PRO: %d \n", valor);
+
+    //mem_hexdump(memoriaUsuario,1024);
+
+    
 
 
     //LEER DE MEMORIA
+    /*
     void *resultado =calloc(4,1);
     int aux2=0;
     for(int i =0; i < 2; i++){
@@ -564,8 +576,9 @@ void escribir_memoria_mov_out(t_list *direcciones, void* valor_obtenido, uint32_
     char *resultado_final = calloc(4 + 1, 1); // +1 para el carácter nulo
     memcpy(resultado_final, resultado, 4);
     resultado_final[4] = '\0'; // Aseguramos el carácter nulo
-
     printf("me llego algo: %s\n", resultado_final);
+    */
+
 
     /* for (uint32_t i = 0; i < tamanio_registro; i++)
     {
@@ -582,28 +595,34 @@ void escribir_memoria_mov_out(t_list *direcciones, void* valor_obtenido, uint32_
     
     usleep(RETARDO_RESPUESTA * 1000);
 
+}
 
-    /*pthread_mutex_lock(&mutex_memoria_usuario);
+void *leer_memoria_pro(t_list *direcciones,  uint32_t pid, int tamanio_registro, t_list *datos_leidos)
+{
+    void *resultado = calloc(tamanio_registro,1);
 
-    unsigned char valorConvertido = (unsigned char)atoi(valorObtenido);
-
-    // printf("Cosa a escribir en memoria: %u\n", valorConvertido);
-    *((unsigned char *)memoriaUsuario + dir_fisica) = valorConvertido;
-
-    // Verificar que el valor se escribió correctamente
-    unsigned char valorLeido = *((unsigned char *)memoriaUsuario + dir_fisica);
-    if (valorLeido == valorConvertido)
-    {
-        // printf("Valor escrito correctamente en la posición %u: %u\n", dir_fisica, valorLeido);
+    int aux = 0;
+    for(int i = 0; i < list_size(direcciones); i++){
+        void *resultado_parcial = calloc(tamanio_registro,1);
+        t_direcciones_fisicas *direccion = list_get(direcciones, i);
+        memcpy((char *)resultado + aux,memoriaUsuario + direccion->direccion_fisica,direccion->tamanio);
+        memcpy((char *)resultado_parcial,memoriaUsuario + direccion->direccion_fisica,direccion->tamanio);
+        list_add(datos_leidos, resultado_parcial);
+        printf("Valor leido de manera PRO (testeo ADENTRO FOR): %d \n", *(int *)resultado_parcial);
+        aux+=direccion->tamanio;
+        //free(resultado_parcial);
+        //resultado_parcial = NULL;
     }
-    else
-    {
-        // printf("Error al escribir el valor en la posición %u. Valor esperado: %u, valor leído: %u\n", dir_fisica, valorConvertido, valorLeido);
+
+    for(int i = 0; i < list_size(datos_leidos); i++){
+        printf("Valor leido de manera PRO (testeo AFUERA FOR): %d \n", *(int *)list_get(datos_leidos, i));
     }
 
-    pthread_mutex_unlock(&mutex_memoria_usuario);
-    log_info(LOGGER_MEMORIA, "PID: <%d> - Accion: <ESCRIBIR> - Direccion Fisica: <%d> - Tamaño <%d> \n", pid, dir_fisica, tamanio_registro);
-    usleep(RETARDO_RESPUESTA * 1000);*/
+    void *resultado_final = calloc(tamanio_registro, 1); 
+    memcpy(resultado_final, resultado, tamanio_registro);
+    usleep(RETARDO_RESPUESTA * 1000);
+
+    return resultado_final;
 }
 
 char *leer_memoria(uint32_t dir_fisica, uint32_t tamanio_registro, uint32_t pid)
@@ -812,3 +831,47 @@ int binario_a_decimal(int binario)
 
     return decimal;
 }
+/*
+==5969== Thread 2:
+==5969== Invalid read of size 4
+==5969==    at 0x10DC7A: leer_memoria_pro (utils_memoria.c:617)
+==5969==    by 0x10DAF6: escribir_memoria_mov_out (utils_memoria.c:553)
+==5969==    by 0x10AEDB: procesar_conexion_memoria (comunicaciones.c:176)
+==5969==    by 0x49F0AC2: start_thread (pthread_create.c:442)
+==5969==    by 0x4A81A03: clone (clone.S:100)
+==5969==  Address 0x4b9a490 is 0 bytes inside a block of size 4 free'd
+==5969==    at 0x484B27F: free (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
+==5969==    by 0x10DC46: leer_memoria_pro (utils_memoria.c:612)
+==5969==    by 0x10DAF6: escribir_memoria_mov_out (utils_memoria.c:553)
+==5969==    by 0x10AEDB: procesar_conexion_memoria (comunicaciones.c:176)
+==5969==    by 0x49F0AC2: start_thread (pthread_create.c:442)
+==5969==    by 0x4A81A03: clone (clone.S:100)
+==5969==  Block was alloc'd at
+==5969==    at 0x484DA83: calloc (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
+==5969==    by 0x10DB86: leer_memoria_pro (utils_memoria.c:605)
+==5969==    by 0x10DAF6: escribir_memoria_mov_out (utils_memoria.c:553)
+==5969==    by 0x10AEDB: procesar_conexion_memoria (comunicaciones.c:176)
+==5969==    by 0x49F0AC2: start_thread (pthread_create.c:442)
+==5969==    by 0x4A81A03: clone (clone.S:100)
+==5969== 
+*/
+
+/*
+==6440== Thread 2:
+==6440== Invalid read of size 1
+==6440==    at 0x484ED84: __strlen_sse2 (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
+==6440==    by 0x49D2D30: __vfprintf_internal (vfprintf-internal.c:1517)
+==6440==    by 0x49BC79E: printf (printf.c:33)
+==6440==    by 0x10DB2E: escribir_memoria_mov_out (utils_memoria.c:555)
+==6440==    by 0x10AEE3: procesar_conexion_memoria (comunicaciones.c:176)
+==6440==    by 0x49F0AC2: start_thread (pthread_create.c:442)
+==6440==    by 0x4A81A03: clone (clone.S:100)
+==6440==  Address 0x4b9a6c4 is 0 bytes after a block of size 4 alloc'd
+==6440==    at 0x484DA83: calloc (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
+==6440==    by 0x10DCD6: leer_memoria_pro (utils_memoria.c:620)
+==6440==    by 0x10DB07: escribir_memoria_mov_out (utils_memoria.c:553)
+==6440==    by 0x10AEE3: procesar_conexion_memoria (comunicaciones.c:176)
+==6440==    by 0x49F0AC2: start_thread (pthread_create.c:442)
+==6440==    by 0x4A81A03: clone (clone.S:100)
+==6440== 
+*/

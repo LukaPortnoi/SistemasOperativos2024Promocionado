@@ -35,6 +35,7 @@ char *leer_memoria_IO(uint32_t dir_fisica, uint32_t tamanio_registro, uint32_t p
 void escribir_memoria(uint32_t dir_fisica, uint32_t tamanio_registro, char *valorObtenido, uint32_t pid);
 
 void escribir_memoria_mov_out(t_list *direcciones, void* valor_obtenido, uint32_t pid, int tamanio_registro);
+void *leer_memoria_pro(t_list *direcciones,  uint32_t pid, int tamanio_registro, t_list *datos_leidos);
 
 char *leer_memoria(uint32_t dir_fisica, uint32_t tamanio_registro, uint32_t pid);
 char *int_to_char(int num);

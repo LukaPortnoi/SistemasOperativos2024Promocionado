@@ -1006,11 +1006,11 @@ void deserializar_direcciones_de_stdout(t_paquete *paquete, t_list *lista_datos,
     memcpy(pid, paquete->buffer->stream + desplazamiento, sizeof(uint32_t));
 }
 
-void enviar_dato_movIn(int socket, t_list *lista)
+void enviar_dato_movIn(int socket, t_list *lista, uint32_t valor)
 {
     t_paquete *paquete = crear_paquete_con_codigo_de_operacion(RESPUESTA_DATO_MOVIN);
     // serializar_dato_leido(paquete, dato, tamanio);
-    serializar_datos_leidos(paquete, lista);
+    serializar_datos_leidos(paquete, lista, valor);
     enviar_paquete(paquete, socket);
     eliminar_paquete(paquete);
 }
@@ -1043,18 +1043,16 @@ void serializar_dato_leido(t_paquete *paquete, char *dato, int tamanio)
     memcpy(paquete->buffer->stream + desplazamiento, dato, tamanio_dato);
 }
 
-void serializar_datos_leidos(t_paquete *paquete, t_list *lista)
+void serializar_datos_leidos(t_paquete *paquete, t_list *lista, uint32_t valor)
 {
     uint32_t tamanioLista = list_size(lista);
 
     // Calcular el tamaño total necesario para el buffer
     uint32_t sizeTotal = sizeof(uint32_t); // Para almacenar el tamaño de la lista
-    for (int i = 0; i < tamanioLista; i++)
-    {
-        char *dato = list_get(lista, i);
-        uint32_t longitud = strlen(dato) + 1;     // +1 para incluir el carácter nulo
-        sizeTotal += sizeof(uint32_t) + longitud; // Para longitud + datos
-    }
+    sizeTotal += tamanioLista * sizeof(uint32_t); // Cada entero en la lista
+
+    // Incluir espacio para el valor adicional
+    sizeTotal += sizeof(uint32_t);
 
     paquete->buffer->size = sizeTotal;
     paquete->buffer->stream = malloc(paquete->buffer->size);
@@ -1073,16 +1071,16 @@ void serializar_datos_leidos(t_paquete *paquete, t_list *lista)
     // Iterar sobre cada elemento de la lista
     for (int i = 0; i < tamanioLista; i++)
     {
-        char *dato = list_get(lista, i);
+        uint32_t dato = *(uint32_t *)list_get(lista, i);
 
         // Serializar cada dato en el stream
-        uint32_t longitud = strlen(dato) + 1; // +1 para incluir el carácter nulo
-        memcpy(paquete->buffer->stream + desplazamiento, &longitud, sizeof(uint32_t));
+        memcpy(paquete->buffer->stream + desplazamiento, &dato, sizeof(uint32_t));
         desplazamiento += sizeof(uint32_t);
-
-        memcpy(paquete->buffer->stream + desplazamiento, dato, longitud);
-        desplazamiento += longitud;
     }
+
+    // Serializar el valor adicional al final del stream
+    memcpy(paquete->buffer->stream + desplazamiento, &valor, sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
 }
 
 char *recibir_dato_stdout(int socket_cliente)
