@@ -510,6 +510,8 @@ void deserializar_datos_copystring(t_paquete *paquete, t_list *Lista_direcciones
 void escribir_memoria(uint32_t dir_fisica, uint32_t tamanio_registro, char *valorObtenido, uint32_t pid) // Revisar char* en valorObtenido
 {
     pthread_mutex_lock(&mutex_memoria_usuario);
+
+    
     /* for (uint32_t i = 0; i < tamanio_registro; i++)
     {
         if (valorObtenido[indiceAux])
@@ -528,9 +530,60 @@ void escribir_memoria(uint32_t dir_fisica, uint32_t tamanio_registro, char *valo
     usleep(RETARDO_RESPUESTA * 1000);
 }
 
-void escribir_memoria_mov_out(uint32_t dir_fisica, uint32_t tamanio_registro, char *valorObtenido, uint32_t pid)
+void escribir_memoria_mov_out(t_list *direcciones, void* valor_obtenido, uint32_t pid, int tamanio_registro)
 {
+
     pthread_mutex_lock(&mutex_memoria_usuario);
+
+    int tamanioValor = tamanio_registro;
+    void *copia = calloc(tamanioValor, 1);
+    memcpy(copia, valor_obtenido, tamanioValor);
+    mem_hexdump(copia,tamanioValor);
+  
+    int aux = 0;
+    for (int i = 0; i < list_size(direcciones) ; i++)
+    {
+        t_direcciones_fisicas *direccion = list_get(direcciones, i);
+        memcpy(memoriaUsuario + direccion->direccion_fisica, (char *) copia + aux, direccion->tamanio);
+        log_info(LOGGER_MEMORIA, "PID: <%d> - Accion: <ESCRIBIR> - Direccion Fisica: <%d> - Tamaño <%d> \n", pid, direccion->direccion_fisica, direccion->tamanio);
+        aux += direccion->tamanio;
+    }
+
+    mem_hexdump(memoriaUsuario,1024);
+
+
+    //LEER DE MEMORIA
+    void *resultado =calloc(4,1);
+    int aux2=0;
+    for(int i =0; i < 2; i++){
+        t_direcciones_fisicas *direccion = list_get(direcciones, i);
+        memcpy((char *)resultado+aux2,memoriaUsuario + direccion->direccion_fisica,direccion->tamanio);
+        aux2+=direccion->tamanio;
+    }
+
+    char *resultado_final = calloc(4 + 1, 1); // +1 para el carácter nulo
+    memcpy(resultado_final, resultado, 4);
+    resultado_final[4] = '\0'; // Aseguramos el carácter nulo
+
+    printf("me llego algo: %s\n", resultado_final);
+
+    /* for (uint32_t i = 0; i < tamanio_registro; i++)
+    {
+        if (valorObtenido[indiceAux])
+        {
+            //printf("Cosa escrita en memoria: %c\n", valorObtenido[indiceAux]);
+            memcpy(memoriaUsuario + dir_fisica + i, &valorObtenido[indiceAux], 1);
+                    indiceAux++;
+
+        }
+    } */
+
+    // printf("Cosa a escribir en memoria: %s", valorObtenido);
+    
+    usleep(RETARDO_RESPUESTA * 1000);
+
+
+    /*pthread_mutex_lock(&mutex_memoria_usuario);
 
     unsigned char valorConvertido = (unsigned char)atoi(valorObtenido);
 
@@ -550,7 +603,7 @@ void escribir_memoria_mov_out(uint32_t dir_fisica, uint32_t tamanio_registro, ch
 
     pthread_mutex_unlock(&mutex_memoria_usuario);
     log_info(LOGGER_MEMORIA, "PID: <%d> - Accion: <ESCRIBIR> - Direccion Fisica: <%d> - Tamaño <%d> \n", pid, dir_fisica, tamanio_registro);
-    usleep(RETARDO_RESPUESTA * 1000);
+    usleep(RETARDO_RESPUESTA * 1000);*/
 }
 
 char *leer_memoria(uint32_t dir_fisica, uint32_t tamanio_registro, uint32_t pid)

@@ -154,12 +154,25 @@ static void procesar_conexion_memoria(void *void_args)
 			uint32_t valor_obtenido_mov_out;
 			uint32_t pidMovOut;
 			recibir_mov_out_cpu(direcciones_fisicas_mov_out, &valor_obtenido_mov_out, cliente_socket, &pidMovOut);
-			int numero_recibido = (int)valor_obtenido_mov_out;
+			//void *dato_recibido = (void *)valor_obtenido_mov_out;
+			char *dato = "Hola";
 			// printf("Numero en decimal: %d \n", numero_recibido);
-			char *valor_mov_out_binario = decimal_a_binario(numero_recibido);
+			//char *valorAescribir = int_to_char(numero_recibido);
+			int tamanioTotal = 0;
+			for (int i = 0; i < list_size(direcciones_fisicas_mov_out); i++)
+			{
+				t_direcciones_fisicas *direccionAmostrar = list_get(direcciones_fisicas_mov_out, i);
+				tamanioTotal += direccionAmostrar->tamanio;
+			}
+
+			
+			escribir_memoria_mov_out(direcciones_fisicas_mov_out, &valor_obtenido_mov_out, pidMovOut,tamanioTotal);
+
+			list_destroy_and_destroy_elements(direcciones_fisicas_mov_out, free);
+
 			// printf("Numero en binario: %s \n", valor_mov_out_binario);
 
-			int indice_valor_mov_out_binario = 0;
+			/* int indice_valor_mov_out_binario = 0;
 			int cantidadBits = 0;
 			int indice = 0;
 			char *valor_parcial_binario = calloc(9, sizeof(char));
@@ -218,10 +231,9 @@ static void procesar_conexion_memoria(void *void_args)
 				cantidadBits = 0;
 				// indice_valor_mov_out_binario = 0;
 				indice = indice + direccionAmostrar->tamanio;
-			}
-			free(valor_parcial_binario);
-			free(valor_mov_out_binario);
-			list_destroy_and_destroy_elements(direcciones_fisicas_mov_out, free);
+			} */
+			//free(valor_parcial_binario);
+			//free(valor_mov_out_binario);
 			/* int valor_mov_out_int = (int)valorObtenido_mov_out;
 			log_debug(LOGGER_MEMORIA, "valor int: %d \n", valor_mov_out_int);
 			char* valor_mov_out_char = (char)valor_mov_out_int;
@@ -325,7 +337,9 @@ static void procesar_conexion_memoria(void *void_args)
 			dato_obtenido_stdin = recibir_dato_stdin(direcciones_fisicas_a_escribir, cliente_socket, &pidStdin);
 			int longitud_DATO = strlen(dato_obtenido_stdin);
 
-			int h = 0;
+			escribir_memoria_mov_out(direcciones_fisicas_a_escribir, dato_obtenido_stdin, pidStdin, longitud_DATO);
+
+			/* int h = 0;
 			for (int i = 0; i < list_size(direcciones_fisicas_a_escribir); i++)
 			{
 				t_direcciones_fisicas *direccionAmostrar = list_get(direcciones_fisicas_a_escribir, i);
@@ -340,7 +354,7 @@ static void procesar_conexion_memoria(void *void_args)
 				valor_parcial_a_pasar[direccionAmostrar->tamanio] = '\0';
 				escribir_memoria(direccionAmostrar->direccion_fisica, direccionAmostrar->tamanio, valor_parcial_a_pasar, pidStdin);
 				free(valor_parcial_a_pasar);
-			}
+			} */
 			free(dato_obtenido_stdin);
 			list_destroy_and_destroy_elements(direcciones_fisicas_a_escribir, free);
 			break;
@@ -434,3 +448,22 @@ void enviar_respuesta_resize(int cliente_socket, op_cod response)
 {
 	send(cliente_socket, &response, sizeof(op_cod), 0);
 }
+
+
+/*==12956== Thread 2:
+==12956== Invalid read of size 1
+==12956==    at 0x484ED84: __strlen_sse2 (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
+==12956==    by 0x49D2D30: __vfprintf_internal (vfprintf-internal.c:1517)
+==12956==    by 0x49BC79E: printf (printf.c:33)
+==12956==    by 0x10DE02: escribir_memoria_mov_out (utils_memoria.c:564)
+==12956==    by 0x10AFEF: procesar_conexion_memoria (comunicaciones.c:163)
+==12956==    by 0x49F0AC2: start_thread (pthread_create.c:442)
+==12956==    by 0x4A81A03: clone (clone.S:100)
+==12956==  Address 0x61be9d4 is 0 bytes after a block of size 4 alloc'd
+==12956==    at 0x484DA83: calloc (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
+==12956==    by 0x10DDC1: escribir_memoria_mov_out (utils_memoria.c:561)
+==12956==    by 0x10AFEF: procesar_conexion_memoria (comunicaciones.c:163)
+==12956==    by 0x49F0AC2: start_thread (pthread_create.c:442)
+==12956==    by 0x4A81A03: clone (clone.S:100)
+==12956== 
+*/
