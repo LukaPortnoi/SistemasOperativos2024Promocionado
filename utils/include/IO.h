@@ -100,9 +100,9 @@ char *recibir_dato(int socket, t_log *logger);
 char *deserializar_dato_interfaz_STDOUT(t_paquete *paquete);
 
 void enviar_dato_leido(int socket, char *dato, int tamanio);
-void serializar_dato_leido(t_paquete *paquete, char *dato, int tamanio);
 void deserializar_direcciones_de_stdout(t_paquete *paquete, t_list *lista_datos, uint32_t *pid);
-;
+void serializar_dato_leido(t_paquete *paquete, char *dato);
+
 
 // MOV IN XD
 void enviar_dato_movIn(int socket, t_list *lista, uint32_t valor);

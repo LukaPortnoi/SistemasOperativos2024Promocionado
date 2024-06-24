@@ -507,97 +507,44 @@ void deserializar_datos_copystring(t_paquete *paquete, t_list *Lista_direcciones
     memcpy(pid, paquete->buffer->stream + desplazamiento, sizeof(uint32_t));
 }
 
-void escribir_memoria(uint32_t dir_fisica, uint32_t tamanio_registro, char *valorObtenido, uint32_t pid) // Revisar char* en valorObtenido
+
+
+void escribir_memoria(t_list *direcciones, void* valor_obtenido, uint32_t pid, int tamanio_registro)
 {
     pthread_mutex_lock(&mutex_memoria_usuario);
 
-    
-    /* for (uint32_t i = 0; i < tamanio_registro; i++)
-    {
-        if (valorObtenido[indiceAux])
-        {
-            //printf("Cosa escrita en memoria: %c\n", valorObtenido[indiceAux]);
-            memcpy(memoriaUsuario + dir_fisica + i, &valorObtenido[indiceAux], 1);
-                    indiceAux++;
-
-        }
-    } */
-
-    // printf("Cosa a escribir en memoria: %s", valorObtenido);
-    memcpy(memoriaUsuario + dir_fisica, valorObtenido, tamanio_registro);
-    pthread_mutex_unlock(&mutex_memoria_usuario);
-    log_info(LOGGER_MEMORIA, "PID: <%d> - Accion: <ESCRIBIR> - Direccion Fisica: <%d> - Tamaño <%d> \n", pid, dir_fisica, tamanio_registro);
-    usleep(RETARDO_RESPUESTA * 1000);
-}
-
-void escribir_memoria_mov_out(t_list *direcciones, void* valor_obtenido, uint32_t pid, int tamanio_registro)
-{
-
-    pthread_mutex_lock(&mutex_memoria_usuario);
-
-    int tamanioValor = tamanio_registro;
+    int tamanioValor = tamanio_registro; // Utilizar el tamaño real pasado como parámetro
     void *copia = calloc(tamanioValor, 1);
+    
+    // Copiar los datos de valor_obtenido
     memcpy(copia, valor_obtenido, tamanioValor);
-    //mem_hexdump(copia,tamanioValor);
-  
+
     int aux = 0;
-    for (int i = 0; i < list_size(direcciones) ; i++)
+    for (int i = 0; i < list_size(direcciones); i++)
     {
         t_direcciones_fisicas *direccion = list_get(direcciones, i);
-        memcpy(memoriaUsuario + direccion->direccion_fisica, (char *) copia + aux, direccion->tamanio);
+        int copia_tamanio = (direccion->tamanio < tamanioValor - aux) ? direccion->tamanio : tamanioValor - aux;
+        memcpy(memoriaUsuario + direccion->direccion_fisica, (char *) copia + aux, copia_tamanio);
         log_info(LOGGER_MEMORIA, "PID: <%d> - Accion: <ESCRIBIR> - Direccion Fisica: <%d> - Tamaño <%d> \n", pid, direccion->direccion_fisica, direccion->tamanio);
-        aux += direccion->tamanio;
-    }
+        aux += copia_tamanio;
 
-    //t_list *datos_leidos = list_create();
-   // void *mostrar = leer_memoria_pro(direcciones, pid, tamanio_registro, datos_leidos);
-   // char *valor = calloc(tamanio_registro + 1, 1);
-    //memcpy(valor, mostrar, tamanio_registro);
-    //printf("valor leido de manera PRO: %s \n", valor);
-
-    //int valor = *(int *)mostrar;
-    //printf("valor leido de manera PRO: %d \n", valor);
-
-    //mem_hexdump(memoriaUsuario,1024);
-
-    
-
-
-    //LEER DE MEMORIA
-    /*
-    void *resultado =calloc(4,1);
-    int aux2=0;
-    for(int i =0; i < 2; i++){
-        t_direcciones_fisicas *direccion = list_get(direcciones, i);
-        memcpy((char *)resultado+aux2,memoriaUsuario + direccion->direccion_fisica,direccion->tamanio);
-        aux2+=direccion->tamanio;
-    }
-
-    char *resultado_final = calloc(4 + 1, 1); // +1 para el carácter nulo
-    memcpy(resultado_final, resultado, 4);
-    resultado_final[4] = '\0'; // Aseguramos el carácter nulo
-    printf("me llego algo: %s\n", resultado_final);
-    */
-
-
-    /* for (uint32_t i = 0; i < tamanio_registro; i++)
-    {
-        if (valorObtenido[indiceAux])
-        {
-            //printf("Cosa escrita en memoria: %c\n", valorObtenido[indiceAux]);
-            memcpy(memoriaUsuario + dir_fisica + i, &valorObtenido[indiceAux], 1);
-                    indiceAux++;
-
+        // Break si ya se ha copiado todo el valor
+        if (aux >= tamanioValor) {
+            break;
         }
-    } */
+    }
+    //mem_hexdump(memoriaUsuario,256);
 
-    // printf("Cosa a escribir en memoria: %s", valorObtenido);
+    // Liberar la memoria de copia
+    free(copia);
     
-    usleep(RETARDO_RESPUESTA * 1000);
+    pthread_mutex_unlock(&mutex_memoria_usuario);
+        usleep(RETARDO_RESPUESTA * 1000);
 
 }
 
-void *leer_memoria_pro(t_list *direcciones,  uint32_t pid, int tamanio_registro, t_list *datos_leidos)
+
+void *leer_memoria(t_list *direcciones,  uint32_t pid, int tamanio_registro, t_list *datos_leidos)
 {
     void *resultado = calloc(tamanio_registro,1);
 
@@ -608,16 +555,11 @@ void *leer_memoria_pro(t_list *direcciones,  uint32_t pid, int tamanio_registro,
         memcpy((char *)resultado + aux,memoriaUsuario + direccion->direccion_fisica,direccion->tamanio);
         memcpy((char *)resultado_parcial,memoriaUsuario + direccion->direccion_fisica,direccion->tamanio);
         list_add(datos_leidos, resultado_parcial);
-        printf("Valor leido de manera PRO (testeo ADENTRO FOR): %d \n", *(int *)resultado_parcial);
         aux+=direccion->tamanio;
-        //free(resultado_parcial);
-        //resultado_parcial = NULL;
+        
     }
 
-    for(int i = 0; i < list_size(datos_leidos); i++){
-        printf("Valor leido de manera PRO (testeo AFUERA FOR): %d \n", *(int *)list_get(datos_leidos, i));
-    }
-
+    
     void *resultado_final = calloc(tamanio_registro, 1); 
     memcpy(resultado_final, resultado, tamanio_registro);
     usleep(RETARDO_RESPUESTA * 1000);
@@ -625,253 +567,3 @@ void *leer_memoria_pro(t_list *direcciones,  uint32_t pid, int tamanio_registro,
     return resultado_final;
 }
 
-char *leer_memoria(uint32_t dir_fisica, uint32_t tamanio_registro, uint32_t pid)
-{
-    pthread_mutex_lock(&mutex_memoria_usuario);
-
-    // Asignar memoria para un solo byte que contendrá el dato leído
-    char *dato_leido = malloc(4); // Asignamos espacio para un solo byte
-    if (dato_leido == NULL)
-    {
-        perror("Error al asignar memoria para dato_leido");
-        pthread_mutex_unlock(&mutex_memoria_usuario);
-        return NULL;
-    }
-
-    // Leer el dato de la memoria
-    unsigned char valorLeido = *((unsigned char *)memoriaUsuario + dir_fisica);
-    sprintf(dato_leido, "%u", valorLeido);
-    //  Registrar la acción en el log
-    log_info(LOGGER_MEMORIA, "PID: <%d> - Accion: <LEER> - Direccion Fisica: <%d> - Tamaño <%d> \n", pid, dir_fisica, tamanio_registro);
-
-    // Mostrar el dato leído en la consola
-    // printf("Dato leido: %s\n", dato_leido);
-
-    pthread_mutex_unlock(&mutex_memoria_usuario);
-    usleep(RETARDO_RESPUESTA * 1000);
-
-    return dato_leido;
-}
-
-char *leer_memoria_IO(uint32_t dir_fisica, uint32_t tamanio_registro, uint32_t pid)
-{
-    /* char valor_leido; // Cambiar a int
-    int valorTotalaDeLeer = 0; */
-    pthread_mutex_lock(&mutex_memoria_usuario);
-    char *cadena = malloc(tamanio_registro + 1); // Allocate memory dynamically
-    memset(cadena, 0, tamanio_registro + 1);     // Initialize all elements to 0
-    /* for (uint32_t i = 0; i < tamanio_registro; i++)
-    {
-        if (&memoriaUsuario[dir_fisica + i] != 0)
-        {
-            memcpy(&valor_leido, &memoriaUsuario[dir_fisica + i], 1);
-            cadena[i] = valor_leido;
-            //printf("Valor a agregar a cadena: %c \n", valor_leido);
-            valorTotalaDeLeer++;
-            // Assign the character directly
-        }
-    } */
-    memcpy(cadena, memoriaUsuario + dir_fisica, tamanio_registro);
-    cadena[tamanio_registro] = '\0';
-    pthread_mutex_unlock(&mutex_memoria_usuario);
-    log_info(LOGGER_MEMORIA, "PID: <%d> - Accion: <LEER> - Direccion Fisica: <%d> - Tamaño <%d> \n", pid, dir_fisica, tamanio_registro);
-    // printf("Cadena leida: %s \n", cadena);
-    usleep(RETARDO_RESPUESTA * 1000);
-    return cadena;
-}
-
-char *int_to_char(int num)
-{
-    if (num == 0) // Añade este caso especial para cuando num es 0
-    {
-        char *s = (char *)calloc(2, sizeof(char)); // Asigna espacio para '0' y '\0'
-        s[0] = '0';
-        s[1] = '\0';
-        return s;
-    }
-
-    int i = log10(num) + 1;
-    char *s = (char *)calloc(i + 1, sizeof(char)); // Añadir espacio para el carácter nulo
-
-    for (i--; num != 0; i--)
-    {
-        s[i] = (num % 10) + '0';
-        num /= 10;
-    }
-
-    return s;
-
-    /*if (num == 0)
-    {
-        char *s = (char *)calloc(2, sizeof(char)); // Si num es 0, devolver "0"
-        if (s == NULL)
-        {
-            fprintf(stderr, "Error al asignar memoria en int_to_char\n");
-            exit(EXIT_FAILURE); // En caso de fallo de asignación de memoria
-        }
-        s[0] = '0';
-        s[1] = '\0'; // Terminador de cadena
-        return s;
-    }
-
-    // Calcular el tamaño necesario para la cadena
-    int i = log10(abs(num)) + 1;
-    char *s = (char *)calloc(i + 1, sizeof(char)); // +1 para el terminador nulo
-
-    if (s == NULL)
-    {
-        fprintf(stderr, "Error al asignar memoria en int_to_char\n");
-        exit(EXIT_FAILURE); // En caso de fallo de asignación de memoria
-    }
-
-    int negativo = 0; // Variable para manejar números negativos
-    if (num < 0)
-    {
-        negativo = 1;
-        num = -num;
-    }
-
-    // Llenar el arreglo con los digitos de num
-    for (i--; num != 0; i--)
-    {
-        s[i] = (num % 10) + '0';
-        num /= 10;
-    }
-
-    if (negativo)
-    {
-        s[i] = '-';
-    }
-
-    return s;
-    */
-}
-
-char *concatenar_lista_de_cadenas(t_list *lista, int tamanio)
-{
-    // Calcular el tamaño total necesario
-    size_t tam_total = tamanio + 1; // Inicia en 1 para el carácter nulo
-
-    // Asignar memoria para la cadena concatenada
-    char *cadena_concatenada = (char *)calloc(tam_total, sizeof(char));
-    if (cadena_concatenada == NULL)
-    {
-        return NULL; // Manejo de error si la asignación de memoria falla
-    }
-
-    // Inicializar la cadena concatenada como una cadena vacía
-    cadena_concatenada[0] = '\0';
-
-    // Copiar cada cadena de la lista en la cadena concatenada
-    for (int i = 0; i < list_size(lista); i++)
-    {
-        strncat(cadena_concatenada, list_get(lista, i), tam_total - strlen(cadena_concatenada) - 1);
-    }
-
-    // Asegurarse de que la cadena esté terminada con un carácter nulo
-    cadena_concatenada[tam_total - 1] = '\0';
-
-    return cadena_concatenada;
-}
-
-char *decimal_a_binario(int numero)
-{
-    // Array temporal para almacenar los dígitos binarios (máximo 32 bits para un entero)
-    char temp[33];
-    int index = 0;
-
-    // Manejo del caso cuando el número es 0
-    if (numero == 0)
-    {
-        temp[index++] = '0';
-    }
-    else
-    {
-        // Convertir el número decimal a binario
-        while (numero > 0)
-        {
-            temp[index++] = (numero % 2) + '0';
-            numero = numero / 2;
-        }
-    }
-
-    // Añadir el carácter nulo al final de la cadena
-    temp[index] = '\0';
-
-    // Asignar memoria para la cadena final
-    char *binaryNum = (char *)malloc((index + 1) * sizeof(char));
-
-    // Copiar los elementos en orden inverso al array final
-    for (int i = 0; i < index; i++)
-    {
-        binaryNum[i] = temp[index - 1 - i];
-    }
-
-    // Añadir el carácter nulo al final de la cadena
-    binaryNum[index] = '\0';
-
-    return binaryNum;
-}
-
-int binario_a_decimal(int binario)
-{
-    int decimal = 0;
-    int posicion = 0;
-
-    while (binario > 0)
-    {
-        int digito = binario % 10; // Obtiene el último dígito del número binario
-        if (digito == 1)
-        {
-            decimal += pow(2, posicion);
-        }
-        binario /= 10; // Elimina el último dígito del número binario
-        posicion++;
-    }
-
-    return decimal;
-}
-/*
-==5969== Thread 2:
-==5969== Invalid read of size 4
-==5969==    at 0x10DC7A: leer_memoria_pro (utils_memoria.c:617)
-==5969==    by 0x10DAF6: escribir_memoria_mov_out (utils_memoria.c:553)
-==5969==    by 0x10AEDB: procesar_conexion_memoria (comunicaciones.c:176)
-==5969==    by 0x49F0AC2: start_thread (pthread_create.c:442)
-==5969==    by 0x4A81A03: clone (clone.S:100)
-==5969==  Address 0x4b9a490 is 0 bytes inside a block of size 4 free'd
-==5969==    at 0x484B27F: free (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
-==5969==    by 0x10DC46: leer_memoria_pro (utils_memoria.c:612)
-==5969==    by 0x10DAF6: escribir_memoria_mov_out (utils_memoria.c:553)
-==5969==    by 0x10AEDB: procesar_conexion_memoria (comunicaciones.c:176)
-==5969==    by 0x49F0AC2: start_thread (pthread_create.c:442)
-==5969==    by 0x4A81A03: clone (clone.S:100)
-==5969==  Block was alloc'd at
-==5969==    at 0x484DA83: calloc (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
-==5969==    by 0x10DB86: leer_memoria_pro (utils_memoria.c:605)
-==5969==    by 0x10DAF6: escribir_memoria_mov_out (utils_memoria.c:553)
-==5969==    by 0x10AEDB: procesar_conexion_memoria (comunicaciones.c:176)
-==5969==    by 0x49F0AC2: start_thread (pthread_create.c:442)
-==5969==    by 0x4A81A03: clone (clone.S:100)
-==5969== 
-*/
-
-/*
-==6440== Thread 2:
-==6440== Invalid read of size 1
-==6440==    at 0x484ED84: __strlen_sse2 (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
-==6440==    by 0x49D2D30: __vfprintf_internal (vfprintf-internal.c:1517)
-==6440==    by 0x49BC79E: printf (printf.c:33)
-==6440==    by 0x10DB2E: escribir_memoria_mov_out (utils_memoria.c:555)
-==6440==    by 0x10AEE3: procesar_conexion_memoria (comunicaciones.c:176)
-==6440==    by 0x49F0AC2: start_thread (pthread_create.c:442)
-==6440==    by 0x4A81A03: clone (clone.S:100)
-==6440==  Address 0x4b9a6c4 is 0 bytes after a block of size 4 alloc'd
-==6440==    at 0x484DA83: calloc (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
-==6440==    by 0x10DCD6: leer_memoria_pro (utils_memoria.c:620)
-==6440==    by 0x10DB07: escribir_memoria_mov_out (utils_memoria.c:553)
-==6440==    by 0x10AEE3: procesar_conexion_memoria (comunicaciones.c:176)
-==6440==    by 0x49F0AC2: start_thread (pthread_create.c:442)
-==6440==    by 0x4A81A03: clone (clone.S:100)
-==6440== 
-*/
