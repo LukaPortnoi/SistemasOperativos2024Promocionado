@@ -9,6 +9,8 @@ char *PUERTO_MEMORIA;
 char *PATH_BASE_DIALFS;
 int BLOCK_SIZE;
 int BLOCK_COUNT;
+int RETRASO_COMPACTACION;
+
 int fd_io_memoria;
 int fd_io_kernel;
 
@@ -41,6 +43,7 @@ void inicializar_config(char *config_path)
     PATH_BASE_DIALFS = config_get_string_value(CONFIG_INPUT_OUTPUT, "PATH_BASE_DIALFS");
     BLOCK_SIZE = config_get_int_value(CONFIG_INPUT_OUTPUT, "BLOCK_SIZE");
     BLOCK_COUNT = config_get_int_value(CONFIG_INPUT_OUTPUT, "BLOCK_COUNT");
+    RETRASO_COMPACTACION = config_get_int_value(CONFIG_INPUT_OUTPUT, "RETRASO_COMPACTACION");
 }
 
 void iniciar_conexiones()

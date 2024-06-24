@@ -69,12 +69,12 @@ void procesar_dialfs_create(int socket_cliente)
     log_info(LOGGER_INPUT_OUTPUT, "PID: %d - Operacion: IO_FS_CREATE", interfazRecibida->pidPcb);
 
     char metadata_path[256];
-    snprintf(metadata_path, sizeof(metadata_path), "%s/%s", PATH_BASE_DIALFS, interfazRecibida->nombre_archivo);
+    obtener_metadata_path(interfazRecibida, metadata_path, sizeof(metadata_path));
 
     if (access(metadata_path, F_OK) == 0)
     {
         log_error(LOGGER_INPUT_OUTPUT, "PID: %d - Error: El archivo %s ya existe", interfazRecibida->pidPcb, interfazRecibida->nombre_archivo);
-        enviar_create_delete_terminado(socket_cliente, interfazRecibida->pidPcb, interfazRecibida->nombre_interfaz);
+        enviar_dialfs_terminado(socket_cliente, interfazRecibida->pidPcb, interfazRecibida->nombre_interfaz);
         destroyInterfazDialfs(interfazRecibida);
         return;
     }
@@ -85,11 +85,9 @@ void procesar_dialfs_create(int socket_cliente)
     t_config *metadata_config = config_create(metadata_path);
 
     FILE *bitmap_file = fopen(BITMAP_PATH, "r+");
-    FILE *bloques_file = fopen(BLOQUES_PATH, "r+");
 
     size_t bitmap_size = BLOCK_COUNT / 8;
     char *bitmap = mmap(NULL, bitmap_size, PROT_READ | PROT_WRITE, MAP_SHARED, fileno(bitmap_file), 0);
-    char *bloques = mmap(NULL, BLOCK_SIZE * BLOCK_COUNT, PROT_READ | PROT_WRITE, MAP_SHARED, fileno(bloques_file), 0);
 
     uint32_t bloque_inicial = encontrar_bloque_libre();
 
@@ -117,14 +115,12 @@ void procesar_dialfs_create(int socket_cliente)
 
     config_destroy(metadata_config);
     munmap(bitmap, bitmap_size);
-    munmap(bloques, BLOCK_SIZE * BLOCK_COUNT);
     fclose(bitmap_file);
-    fclose(bloques_file);
 
     log_trace(LOGGER_INPUT_OUTPUT, "Durmiendo: %f segundos", (float)TIEMPO_UNIDAD_TRABAJO / 1000);
     usleep(TIEMPO_UNIDAD_TRABAJO * 1000);
 
-    enviar_create_delete_terminado(socket_cliente, interfazRecibida->pidPcb, interfazRecibida->nombre_interfaz);
+    enviar_dialfs_terminado(socket_cliente, interfazRecibida->pidPcb, interfazRecibida->nombre_interfaz);
     destroyInterfazDialfs(interfazRecibida);
 }
 
@@ -141,12 +137,12 @@ void procesar_dialfs_delete(int socket_cliente)
     char *bitmap = mmap(NULL, bitmap_size, PROT_READ | PROT_WRITE, MAP_SHARED, fileno(bitmap_file), 0);
 
     char metadata_path[256];
-    snprintf(metadata_path, sizeof(metadata_path), "%s/%s", PATH_BASE_DIALFS, interfazRecibida->nombre_archivo);
+    obtener_metadata_path(interfazRecibida, metadata_path, sizeof(metadata_path));
 
     if (access(metadata_path, F_OK) != 0)
     {
         log_error(LOGGER_INPUT_OUTPUT, "PID: %d - Error: El archivo a eliminar %s no existe", interfazRecibida->pidPcb, interfazRecibida->nombre_archivo);
-        enviar_create_delete_terminado(socket_cliente, interfazRecibida->pidPcb, interfazRecibida->nombre_interfaz);
+        enviar_dialfs_terminado(socket_cliente, interfazRecibida->pidPcb, interfazRecibida->nombre_interfaz);
         destroyInterfazDialfs(interfazRecibida);
         return;
     }
@@ -169,30 +165,123 @@ void procesar_dialfs_delete(int socket_cliente)
     log_trace(LOGGER_INPUT_OUTPUT, "Durmiendo: %f segundos", (float)TIEMPO_UNIDAD_TRABAJO / 1000);
     usleep(TIEMPO_UNIDAD_TRABAJO * 1000);
 
-    enviar_create_delete_terminado(socket_cliente, interfazRecibida->pidPcb, interfazRecibida->nombre_interfaz);
+    enviar_dialfs_terminado(socket_cliente, interfazRecibida->pidPcb, interfazRecibida->nombre_interfaz);
     destroyInterfazDialfs(interfazRecibida);
 }
 
+/* Compruebo si se esta queriendo achicar el archivo, si es asi,
+se achica marcando como libres los bloques que ya no son necesarios.
+Despues, si se quiere agrandar, busco bloques libres contiguos en donde
+entren los bloques necesarios. Si no se encuentra, se cuenta la cantidad
+de bloques libres en el bitarray, y si hay disponibles pero no contiguos,
+se compacta. Si no, se avisa que no se pudo truncar */
 void procesar_dialfs_truncate(int socket_cliente)
 {
-    /* t_interfaz_dialfs *interfazRecibida = recibir_InterfazDialfs(socket_cliente);
+    t_interfaz_dialfs *interfazRecibida = crearInterfazDialfs();
+    recibir_InterfazDialfs(socket_cliente, interfazRecibida, PEDIDO_IO_FS_TRUNCATE);
     log_info(LOGGER_INPUT_OUTPUT, "PID: %d - Operacion: IO_FS_TRUNCATE", interfazRecibida->pidPcb);
-    log_info(LOGGER_INPUT_OUTPUT, "PID: %d - Truncar archivo: %s - Tamaño: %d", interfazRecibida->pidPcb, interfazRecibida->nombre_archivo, interfazRecibida->tamanio);
- */
+
+    char metadata_path[256];
+    obtener_metadata_path(interfazRecibida, metadata_path, sizeof(metadata_path));
+
+    t_config *metadata_config = config_create(metadata_path);
+
+    FILE *bitmap_file = fopen(BITMAP_PATH, "r+");
+    FILE *bloques_file = fopen(BLOQUES_PATH, "r+");
+
+    size_t bitmap_size = BLOCK_COUNT / 8;
+    char *bitmap = mmap(NULL, bitmap_size, PROT_READ | PROT_WRITE, MAP_SHARED, fileno(bitmap_file), 0);
+    char *bloques = mmap(NULL, BLOCK_SIZE * BLOCK_COUNT, PROT_READ | PROT_WRITE, MAP_SHARED, fileno(bloques_file), 0);
+
+    uint32_t bloque_inicial = obtener_bloque_inicial(metadata_path);
+    uint32_t nuevo_tamanio = interfazRecibida->tamanio;
+
+    uint32_t bloques_necesarios = (nuevo_tamanio + BLOCK_SIZE - 1) / BLOCK_SIZE;
+    uint32_t bloques_ocupados = (obtener_tamanio_archivo(metadata_path) + BLOCK_SIZE - 1) / BLOCK_SIZE;
+
+    if (nuevo_tamanio < bloques_ocupados * BLOCK_SIZE)
+    {
+        // Achicar el archivo
+        for (uint32_t i = bloques_necesarios; i < bloques_ocupados; i++)
+        {
+            int bloque_a_liberar = bloque_inicial + i;
+            int byte_index = bloque_a_liberar / 8;
+            int bit_index = bloque_a_liberar % 8;
+            bitmap[byte_index] &= ~(1 << bit_index);
+            memset(bloques + (bloque_a_liberar * BLOCK_SIZE), 0, BLOCK_SIZE);
+        }
+        actualizar_tamanio_archivo(metadata_config, nuevo_tamanio);
+        config_save(metadata_config);
+        log_info(LOGGER_INPUT_OUTPUT, "PID: %d - Truncar archivo: %s - Tamaño: %d", interfazRecibida->pidPcb, interfazRecibida->nombre_archivo, nuevo_tamanio);
+    }
+    else if (nuevo_tamanio > bloques_ocupados * BLOCK_SIZE)
+    {
+        // Agrandar el archivo
+        uint32_t bloque_libre = encontrar_bloques_libres_contiguos(bloque_inicial, bloques_necesarios);
+
+        if (bloque_libre == -1)
+        {
+            uint32_t bloques_libres = contar_bloques_libres(bitmap);
+            if (bloques_libres >= bloques_necesarios)
+            {
+                compactar_dialfs(interfazRecibida->pidPcb);
+                bloque_libre = encontrar_bloques_libres_contiguos(bloque_inicial, bloques_necesarios);
+            }
+        }
+
+        if (bloque_libre == -1)
+        {
+            log_error(LOGGER_INPUT_OUTPUT, "No hay bloques libres para para truncar el archivo");
+            // Avisarle a kernel que no se pudo truncar el archivo
+            config_destroy(metadata_config);
+            munmap(bitmap, bitmap_size);
+            munmap(bloques, BLOCK_SIZE * BLOCK_COUNT);
+            fclose(bitmap_file);
+            fclose(bloques_file);
+            destroyInterfazDialfs(interfazRecibida);
+            return;
+        }
+        else
+        {
+            for (uint32_t i = 0; i < bloques_necesarios; i++)
+            {
+                int nuevo_bloque = bloque_libre + i;
+                int byte_index = nuevo_bloque / 8;
+                int bit_index = nuevo_bloque % 8;
+                bitmap[byte_index] |= (1 << bit_index);
+            }
+            actualizar_bloque_inicial(metadata_config, bloque_libre);
+            actualizar_tamanio_archivo(metadata_config, nuevo_tamanio);
+            config_save(metadata_config);
+            log_info(LOGGER_INPUT_OUTPUT, "PID: %d - Truncar archivo: %s - Tamaño: %d", interfazRecibida->pidPcb, interfazRecibida->nombre_archivo, nuevo_tamanio);
+        }
+    }
+
+    config_destroy(metadata_config);
+    munmap(bitmap, bitmap_size);
+    munmap(bloques, BLOCK_SIZE * BLOCK_COUNT);
+    fclose(bitmap_file);
+    fclose(bloques_file);
+
+    log_trace(LOGGER_INPUT_OUTPUT, "Durmiendo: %f segundos", (float)TIEMPO_UNIDAD_TRABAJO / 1000);
+    usleep(TIEMPO_UNIDAD_TRABAJO * 1000);
+
+    enviar_dialfs_terminado(socket_cliente, interfazRecibida->pidPcb, interfazRecibida->nombre_interfaz);
+    destroyInterfazDialfs(interfazRecibida);
 }
 
 void procesar_dialfs_write(int socket_cliente)
 {
-    /* t_interfaz_dialfs *interfazRecibida = recibir_InterfazDialfs(socket_cliente);
-    log_info(LOGGER_INPUT_OUTPUT, "PID: %d - Operacion: IO_FS_WRITE", interfazRecibida->pidPcb);
-    log_info(LOGGER_INPUT_OUTPUT, "PID: %d - Escribir archivo: %s - Tamaño a Escribir: %d - Puntero Archivo: %d", interfazRecibida->pidPcb, interfazRecibida->nombre_archivo, interfazRecibida->tamanio, interfazRecibida->puntero_archivo);
- */
+    // t_interfaz_dialfs *interfazRecibida = recibir_InterfazDialfs(socket_cliente);
+    // log_info(LOGGER_INPUT_OUTPUT, "PID: %d - Operacion: IO_FS_WRITE", interfazRecibida->pidPcb);
+    // log_info(LOGGER_INPUT_OUTPUT, "PID: %d - Escribir archivo: %s - Tamaño a Escribir: %d - Puntero Archivo: %d", interfazRecibida->pidPcb, interfazRecibida->nombre_archivo, interfazRecibida->tamanio, interfazRecibida->puntero_archivo);
 }
 
 void procesar_dialfs_read(int socket_cliente)
 {
-    /* t_interfaz_dialfs *interfazRecibida = recibir_InterfazDialfs(socket_cliente);
+    /*
+    t_interfaz_dialfs *interfazRecibida = recibir_InterfazDialfs(socket_cliente);
     log_info(LOGGER_INPUT_OUTPUT, "PID: %d - Operacion: IO_FS_READ", interfazRecibida->pidPcb);
     log_info(LOGGER_INPUT_OUTPUT, "PID: %d - Leer archivo: %s - Tamaño a Leer: %d - Puntero Archivo: %d", interfazRecibida->pidPcb, interfazRecibida->nombre_archivo, interfazRecibida->tamanio, interfazRecibida->puntero_archivo);
- */
+    */
 }

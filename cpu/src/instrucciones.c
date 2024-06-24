@@ -394,7 +394,18 @@ void _io_fs_delete(char *interfaz, char *nombre_archivo, int cliente_socket)
 
 void _io_fs_truncate(char *interfaz, char *nombre_archivo, char *tamanio, int cliente_socket)
 {
-    // enviar_interfaz_IO(pcb_actual, interfaz, 0, cliente_socket, IO_FS_TRUNCATE);
+    uint32_t tamanioTruncar;
+    if (revisar_registro(tamanio))
+    {
+        tamanioTruncar = *(get_registry8(tamanio));
+    }
+    else
+    {
+
+        tamanioTruncar = *(get_registry32(tamanio));
+    }
+
+    enviar_fs_truncate(pcb_actual, interfaz, nombre_archivo, tamanioTruncar, cliente_socket);
 }
 
 void _io_fs_write(char *interfaz, char *nombre_archivo, char *direc_logica, char *tamanio, char *puntero_archivo, int cliente_socket)

@@ -11,7 +11,7 @@ void manejar_archivos_fs()
         bloques_file = fopen(BLOQUES_PATH, "wb+");
         if (bloques_file == NULL)
         {
-            log_error(LOGGER_INPUT_OUTPUT, "Error al crear bloques.dat");
+            log_error(LOGGER_INPUT_OUTPUT, "Error al crear bloques.dat. No existe la carpeta %s", PATH_BASE_DIALFS);
             exit(EXIT_FAILURE);
         }
 
@@ -34,7 +34,7 @@ void manejar_archivos_fs()
         bitmap_file = fopen(BITMAP_PATH, "wb+");
         if (bitmap_file == NULL)
         {
-            log_error(LOGGER_INPUT_OUTPUT, "Error al crear bitmap.dat");
+            log_error(LOGGER_INPUT_OUTPUT, "Error al crear bitmap.dat. No existe la carpeta %s", PATH_BASE_DIALFS);
             exit(EXIT_FAILURE);
         }
 
@@ -88,6 +88,28 @@ void actualizar_tamanio_archivo(t_config *metadata_config, uint32_t tamanio)
     free(tamanio_str);
 }
 
+uint32_t obtener_bloque_inicial(char path[])
+{
+    t_config *metadata_config = iniciar_config(path, "METADATA");
+    uint32_t bloque_inicial = config_get_int_value(metadata_config, "BLOQUE_INICIAL");
+    config_destroy(metadata_config);
+    return bloque_inicial;
+}
+
+uint32_t obtener_tamanio_archivo(char path[])
+{
+    t_config *metadata_config = iniciar_config(path, "METADATA");
+    uint32_t tamanio = config_get_int_value(metadata_config, "TAMANIO");
+    config_destroy(metadata_config);
+    return tamanio;
+}
+
+char *obtener_metadata_path(t_interfaz_dialfs *interfazRecibida, char *metadata_path, size_t size)
+{
+    snprintf(metadata_path, size, "%s/%s", PATH_BASE_DIALFS, interfazRecibida->nombre_archivo);
+    return metadata_path;
+}
+
 uint32_t encontrar_bloque_libre()
 {
     FILE *bitmap_file = fopen(BITMAP_PATH, "r+");
@@ -112,10 +134,84 @@ uint32_t encontrar_bloque_libre()
     return -1;
 }
 
-uint32_t obtener_bloque_inicial(char path[])
+uint32_t encontrar_bloques_libres_contiguos(uint32_t bloque_inicial, uint32_t bloques_necesarios)
 {
-    t_config *metadata_config = iniciar_config(path, "METADATA");
-    uint32_t bloque_inicial = config_get_int_value(metadata_config, "BLOQUE_INICIAL");
-    config_destroy(metadata_config);
-    return bloque_inicial;
+    FILE *bitmap_file = fopen(BITMAP_PATH, "r+");
+    size_t bitmap_size = BLOCK_COUNT / 8;
+    char *bitmap = mmap(NULL, bitmap_size, PROT_READ | PROT_WRITE, MAP_SHARED, fileno(bitmap_file), 0);
+
+    uint32_t contador = 0;
+
+    // Verificar desde bloque_inicial y hacia adelante
+    for (uint32_t i = bloque_inicial; i < BLOCK_COUNT; i++)
+    {
+        int byte_index = i / 8;
+        int bit_index = i % 8;
+        if (!(bitmap[byte_index] & (1 << bit_index)))
+        {
+            contador++;
+            if (contador == bloques_necesarios)
+            {
+                fclose(bitmap_file);
+                munmap(bitmap, bitmap_size);
+                return bloque_inicial; // Devolver el bloque_inicial si hay suficientes bloques libres contiguos
+            }
+        }
+        else
+        {
+            contador = 0;
+        }
+    }
+
+    // Si no encontró suficientes bloques libres contiguos desde bloque_inicial, buscar desde el inicio
+    contador = 0;
+    for (uint32_t i = 0; i < BLOCK_COUNT; i++)
+    {
+        int byte_index = i / 8;
+        int bit_index = i % 8;
+        if (!(bitmap[byte_index] & (1 << bit_index)))
+        {
+            contador++;
+            if (contador == bloques_necesarios)
+            {
+                fclose(bitmap_file);
+                munmap(bitmap, bitmap_size);
+                return i - bloques_necesarios + 1;
+            }
+        }
+        else
+        {
+            contador = 0;
+        }
+    }
+
+    fclose(bitmap_file);
+    munmap(bitmap, bitmap_size);
+    return -1;
+}
+
+uint32_t contar_bloques_libres(char *bitmap)
+{
+    uint32_t contador = 0;
+    for (uint32_t i = 0; i < BLOCK_COUNT; i++)
+    {
+        int byte_index = i / 8;
+        int bit_index = i % 8;
+        if (!(bitmap[byte_index] & (1 << bit_index)))
+        {
+            contador++;
+        }
+    }
+    return contador;
+}
+
+void compactar_dialfs(uint32_t pid)
+{
+    log_info(LOGGER_INPUT_OUTPUT, "PID: %d - Inicio Compactación.", pid);
+
+    // Implementación pendiente
+
+    log_trace(LOGGER_INPUT_OUTPUT, "Esperando: %f segundos", (float)RETRASO_COMPACTACION / 1000);
+    usleep(RETRASO_COMPACTACION * 1000);
+    log_info(LOGGER_INPUT_OUTPUT, "PID: %d - Fin Compactación.", pid);
 }

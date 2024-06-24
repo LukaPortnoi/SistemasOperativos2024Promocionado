@@ -232,6 +232,10 @@ void recibir_pcb_CPU(t_pcb *pcb_recibido, int fd_cpu)
         recibir_pcb_fs_create_delete(pcb_recibido, fd_cpu, &nombre_interfaz, &nombre_archivo, &instruccion_de_IO_a_ejecutar); 
         break;
 
+    case FS_TRUNCATE:
+        recibir_pcb_fs_truncate(pcb_recibido, fd_cpu, &nombre_interfaz, &nombre_archivo, &tamanio_truncar, &instruccion_de_IO_a_ejecutar);
+        break;
+
     default:
         log_error(LOGGER_KERNEL, "No se pudo recibir el pcb");
         break;
@@ -762,6 +766,7 @@ void ejecutar_intruccion_io(t_pcb *pcb_recibido)
     {
         log_error(LOGGER_KERNEL, "No se encontro la interfaz %s", nombre_interfaz);
         pcb_recibido->contexto_ejecucion->motivo_finalizacion = INVALID_INTERFACE;
+        free(nombre_interfaz);
         finalizar_proceso(pcb_recibido);
     }
 }
@@ -786,60 +791,6 @@ void bloquear_procesosIO(t_pcb *pcbAbloquear, t_interfaz_recibida *interfaz_a_ut
     squeue_push(interfaz_a_utilizar->cola_procesos_bloqueados, pcbAbloquear);
 }
 
-void recibir_pcb_fs_create_delete(t_pcb *pcb, int socket, char **nombre_interfaz, char **nombre_archivo, nombre_instruccion *instruccion)
-{
-    t_paquete *paquete = recibir_paquete(socket);
-    deserializar_pcb_fs_create_delete(pcb, paquete->buffer, nombre_interfaz, nombre_archivo, instruccion);
-    eliminar_paquete(paquete);
-}
-
-void deserializar_pcb_fs_create_delete(t_pcb *pcb, t_buffer *buffer, char **nombre_interfaz, char **nombre_archivo, nombre_instruccion *instruccion)
-{
-    uint32_t long_nombre_interfaz;
-    uint32_t long_nombre_archivo;
-    void *stream = buffer->stream;
-    int desplazamiento = 0;
-
-    memcpy(&(pcb->pid), stream + desplazamiento, sizeof(uint32_t));
-    desplazamiento += sizeof(uint32_t);
-
-    memcpy(&(pcb->estado), stream + desplazamiento, sizeof(t_estado_proceso));
-    desplazamiento += sizeof(t_estado_proceso);
-
-    memcpy(&(pcb->quantum), stream + desplazamiento, sizeof(uint32_t));
-    desplazamiento += sizeof(uint32_t);
-
-    memcpy(&(pcb->tiempo_q), stream + desplazamiento, sizeof(uint64_t));
-    desplazamiento += sizeof(uint64_t);
-
-    memcpy(pcb->contexto_ejecucion->registros, stream + desplazamiento, sizeof(t_registros));
-    desplazamiento += sizeof(t_registros);
-
-    memcpy(&(pcb->contexto_ejecucion->motivo_desalojo), stream + desplazamiento, sizeof(t_motivo_desalojo));
-    desplazamiento += sizeof(t_motivo_desalojo);
-
-    memcpy(&(pcb->contexto_ejecucion->motivo_finalizacion), stream + desplazamiento, sizeof(t_motivo_finalizacion));
-    desplazamiento += sizeof(t_motivo_finalizacion);
-
-    memcpy(&long_nombre_interfaz, stream + desplazamiento, sizeof(uint32_t));
-    desplazamiento += sizeof(uint32_t);
-
-    *nombre_interfaz = malloc(long_nombre_interfaz);
-
-    memcpy(*nombre_interfaz, stream + desplazamiento, long_nombre_interfaz);
-    desplazamiento += long_nombre_interfaz;
-
-    memcpy(&long_nombre_archivo, stream + desplazamiento, sizeof(uint32_t));
-    desplazamiento += sizeof(uint32_t);
-
-    *nombre_archivo = malloc(long_nombre_archivo);
-
-    memcpy(*nombre_archivo, stream + desplazamiento, long_nombre_archivo);
-    desplazamiento += long_nombre_archivo;
-
-    memcpy(instruccion, stream + desplazamiento, sizeof(nombre_instruccion));
-}
-
 void enviar_InterfazDialFS(int socket, uint32_t pid, char *nombre_interfaz, nombre_instruccion instruccion)
 {
     switch (instruccion)
@@ -851,11 +802,11 @@ void enviar_InterfazDialFS(int socket, uint32_t pid, char *nombre_interfaz, nomb
     case IO_FS_DELETE:
         enviar_interfaz_dialFS_create_delete(socket, nombre_archivo, pid, nombre_interfaz, instruccion);
         break;
-    /*
-    case IO_FS_TRUNCATE:
-        enviar_interfaz_dialFS_truncate(socket, nombre_archivo, pid, nombre_interfaz);
-        break;
     
+    case IO_FS_TRUNCATE:
+        enviar_interfaz_dialFS_truncate(socket, nombre_archivo, pid, nombre_interfaz, tamanio_truncar);
+        break;
+    /*
     case IO_FS_WRITE:
         enviar_interfaz_dialFS_write(socket, nombre_archivo, pid, nombre_interfaz);
         break;

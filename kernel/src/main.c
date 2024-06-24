@@ -41,6 +41,7 @@ char *nombre_archivo;
 char *direccion_logica_fs;
 char *direccion_fisica_fs;
 uint32_t tamanio_fs;
+uint32_t tamanio_truncar;
 
 t_pcb *pcb_ejecutandose;
 t_pcb *pcb_a_finalizar = NULL;

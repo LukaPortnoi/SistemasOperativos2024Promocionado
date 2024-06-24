@@ -133,7 +133,7 @@ static void procesar_conexion_kernel(void *void_args)
 
 		case FINALIZACION_INTERFAZ_DIALFS:
 			log_trace(logger, "Finalizacion de instruccion de interfaz");
-			t_interfaz_dialfs *interfazRecibidaIOdialfs = recibir_InterfazDialfs_iO_create_delete(cliente_socket);
+			t_interfaz_dialfs *interfazRecibidaIOdialfs = recibir_InterfazDialfs_terminada(cliente_socket);
 
 			if (pcb_a_finalizar == NULL)
 			{
