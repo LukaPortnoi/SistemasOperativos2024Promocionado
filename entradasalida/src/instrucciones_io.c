@@ -116,10 +116,7 @@ void procesar_dialfs_create(int socket_cliente)
     config_destroy(metadata_config);
     munmap(bitmap, bitmap_size);
     fclose(bitmap_file);
-
-    log_trace(LOGGER_INPUT_OUTPUT, "Durmiendo: %f segundos", (float)TIEMPO_UNIDAD_TRABAJO / 1000);
     usleep(TIEMPO_UNIDAD_TRABAJO * 1000);
-
     enviar_dialfs_terminado(socket_cliente, interfazRecibida->pidPcb, interfazRecibida->nombre_interfaz);
     destroyInterfazDialfs(interfazRecibida);
 }
@@ -131,7 +128,6 @@ void procesar_dialfs_delete(int socket_cliente)
     log_info(LOGGER_INPUT_OUTPUT, "PID: %d - Operacion: IO_FS_DELETE", interfazRecibida->pidPcb);
 
     FILE *bitmap_file = fopen(BITMAP_PATH, "r+");
-    FILE *bloques_file = fopen(BLOQUES_PATH, "r+");
 
     size_t bitmap_size = BLOCK_COUNT / 8;
     char *bitmap = mmap(NULL, bitmap_size, PROT_READ | PROT_WRITE, MAP_SHARED, fileno(bitmap_file), 0);
@@ -160,11 +156,7 @@ void procesar_dialfs_delete(int socket_cliente)
 
     munmap(bitmap, bitmap_size);
     fclose(bitmap_file);
-    fclose(bloques_file);
-
-    log_trace(LOGGER_INPUT_OUTPUT, "Durmiendo: %f segundos", (float)TIEMPO_UNIDAD_TRABAJO / 1000);
     usleep(TIEMPO_UNIDAD_TRABAJO * 1000);
-
     enviar_dialfs_terminado(socket_cliente, interfazRecibida->pidPcb, interfazRecibida->nombre_interfaz);
     destroyInterfazDialfs(interfazRecibida);
 }
@@ -232,7 +224,7 @@ void procesar_dialfs_truncate(int socket_cliente)
         if (bloque_libre == -1)
         {
             log_error(LOGGER_INPUT_OUTPUT, "No hay bloques libres para para truncar el archivo");
-            // Avisarle a kernel que no se pudo truncar el archivo
+            // TODO Avisarle a kernel que no se pudo truncar el archivo
             config_destroy(metadata_config);
             munmap(bitmap, bitmap_size);
             munmap(bloques, BLOCK_SIZE * BLOCK_COUNT);
@@ -263,25 +255,60 @@ void procesar_dialfs_truncate(int socket_cliente)
     fclose(bitmap_file);
     fclose(bloques_file);
 
-    log_trace(LOGGER_INPUT_OUTPUT, "Durmiendo: %f segundos", (float)TIEMPO_UNIDAD_TRABAJO / 1000);
     usleep(TIEMPO_UNIDAD_TRABAJO * 1000);
-
     enviar_dialfs_terminado(socket_cliente, interfazRecibida->pidPcb, interfazRecibida->nombre_interfaz);
     destroyInterfazDialfs(interfazRecibida);
 }
 
 void procesar_dialfs_write(int socket_cliente)
 {
-    // t_interfaz_dialfs *interfazRecibida = recibir_InterfazDialfs(socket_cliente);
-    // log_info(LOGGER_INPUT_OUTPUT, "PID: %d - Operacion: IO_FS_WRITE", interfazRecibida->pidPcb);
-    // log_info(LOGGER_INPUT_OUTPUT, "PID: %d - Escribir archivo: %s - Tamaño a Escribir: %d - Puntero Archivo: %d", interfazRecibida->pidPcb, interfazRecibida->nombre_archivo, interfazRecibida->tamanio, interfazRecibida->puntero_archivo);
+    t_interfaz_dialfs *interfazRecibida = crearInterfazDialfs();
+    recibir_InterfazDialfs(socket_cliente, interfazRecibida, PEDIDO_IO_FS_WRITE);
+    log_info(LOGGER_INPUT_OUTPUT, "PID: %d - Operacion: IO_FS_WRITE", interfazRecibida->pidPcb);
+
+    char metadata_path[256];
+    obtener_metadata_path(interfazRecibida, metadata_path, sizeof(metadata_path));
+
+    FILE *bloques_file = fopen(BLOQUES_PATH, "r+");
+    char *bloques = mmap(NULL, BLOCK_SIZE * BLOCK_COUNT, PROT_READ | PROT_WRITE, MAP_SHARED, fileno(bloques_file), 0);
+
+    enviar_direcciones_stdout(fd_io_memoria, interfazRecibida->direcciones, interfazRecibida->pidPcb);
+    char *datoRecibido = recibir_dato(fd_io_memoria, LOGGER_INPUT_OUTPUT);
+    log_debug(LOGGER_INPUT_OUTPUT, "Información leída: %s", datoRecibido);
+    escribir_dato_archivo(datoRecibido, interfazRecibida->puntero_archivo, bloques, obtener_bloque_inicial(metadata_path));
+
+    log_info(LOGGER_INPUT_OUTPUT, "PID: %d - Escribir archivo: %s - Tamaño a Escribir: %d - Puntero Archivo: %s", interfazRecibida->pidPcb, interfazRecibida->nombre_archivo, interfazRecibida->tamanio, interfazRecibida->puntero_archivo);
+
+    munmap(bloques, BLOCK_SIZE * BLOCK_COUNT);
+    fclose(bloques_file);
+
+    usleep(TIEMPO_UNIDAD_TRABAJO * 1000);
+    enviar_dialfs_terminado(socket_cliente, interfazRecibida->pidPcb, interfazRecibida->nombre_interfaz);
+    destroyInterfazDialfs(interfazRecibida);
 }
 
 void procesar_dialfs_read(int socket_cliente)
 {
-    /*
-    t_interfaz_dialfs *interfazRecibida = recibir_InterfazDialfs(socket_cliente);
+    t_interfaz_dialfs *interfazRecibida = crearInterfazDialfs();
+    recibir_InterfazDialfs(socket_cliente, interfazRecibida, PEDIDO_IO_FS_READ);
     log_info(LOGGER_INPUT_OUTPUT, "PID: %d - Operacion: IO_FS_READ", interfazRecibida->pidPcb);
-    log_info(LOGGER_INPUT_OUTPUT, "PID: %d - Leer archivo: %s - Tamaño a Leer: %d - Puntero Archivo: %d", interfazRecibida->pidPcb, interfazRecibida->nombre_archivo, interfazRecibida->tamanio, interfazRecibida->puntero_archivo);
-    */
+
+    char metadata_path[256];
+    obtener_metadata_path(interfazRecibida, metadata_path, sizeof(metadata_path));
+
+    FILE *bloques_file = fopen(BLOQUES_PATH, "r+");
+    char *bloques = mmap(NULL, BLOCK_SIZE * BLOCK_COUNT, PROT_READ | PROT_WRITE, MAP_SHARED, fileno(bloques_file), 0);
+
+    char *dato_a_enviar = leer_dato_archivo(interfazRecibida->tamanio, interfazRecibida->puntero_archivo, bloques, obtener_bloque_inicial(metadata_path));
+    log_debug(LOGGER_INPUT_OUTPUT, "Información leída: %s", dato_a_enviar);
+    enviar_dato_stdin(fd_io_memoria, interfazRecibida->direcciones, dato_a_enviar, interfazRecibida->pidPcb);
+
+    log_info(LOGGER_INPUT_OUTPUT, "PID: %d - Leer archivo: %s - Tamaño a Leer: %d - Puntero Archivo: %s", interfazRecibida->pidPcb, interfazRecibida->nombre_archivo, interfazRecibida->tamanio, interfazRecibida->puntero_archivo);
+
+    munmap(bloques, BLOCK_SIZE * BLOCK_COUNT);
+    fclose(bloques_file);
+
+    usleep(TIEMPO_UNIDAD_TRABAJO * 1000);
+    enviar_dialfs_terminado(socket_cliente, interfazRecibida->pidPcb, interfazRecibida->nombre_interfaz);
+    destroyInterfazDialfs(interfazRecibida);
 }

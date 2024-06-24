@@ -84,7 +84,8 @@ extern char *nombre_archivo;
 extern char *direccion_logica_fs;
 extern char *direccion_fisica_fs;
 extern uint32_t tamanio_fs;
-extern uint32_t tamanio_truncar;
+extern uint32_t tamanio_fs_recibir;
+extern char *puntero_fs;
 
 extern t_pcb *pcb_ejecutandose;
 extern t_pcb *pcb_a_finalizar;

@@ -41,7 +41,8 @@ char *nombre_archivo;
 char *direccion_logica_fs;
 char *direccion_fisica_fs;
 uint32_t tamanio_fs;
-uint32_t tamanio_truncar;
+uint32_t tamanio_fs_recibir;
+char *puntero_fs;
 
 t_pcb *pcb_ejecutandose;
 t_pcb *pcb_a_finalizar = NULL;
@@ -98,7 +99,8 @@ void iniciar_conexiones()
 
 void escuchar_kernel()
 {
-	while (server_escuchar(LOGGER_KERNEL, "KERNEL", fd_kernel));
+	while (server_escuchar(LOGGER_KERNEL, "KERNEL", fd_kernel))
+		;
 }
 
 void finalizar_kernel()

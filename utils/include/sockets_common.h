@@ -57,7 +57,8 @@ typedef enum
     RESIZE_OK,
     FS_CREATE_DELETE,
     FINALIZACION_INTERFAZ_DIALFS,
-    FS_TRUNCATE
+    FS_TRUNCATE,
+    FS_WRITE_READ
 } op_cod;
 
 #endif // SOCKETS_COMMON_H_

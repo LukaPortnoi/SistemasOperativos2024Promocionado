@@ -46,7 +46,9 @@ typedef struct
     char *nombre_interfaz;
     char *nombre_archivo;
     uint32_t tamanio;
-    uint32_t unidades_de_trabajo;
+    uint32_t unidades_de_trabajo;       //remplazar unidades de trabajo por una lista de direcciones fisicas
+    t_list *direcciones;
+    char *puntero_archivo;
 } t_interfaz_dialfs;
 
 // dialfs
@@ -61,33 +63,45 @@ void serializar_fs_create_delete(t_paquete* paquete, t_pcb* pcb, char* interfaz,
 void enviar_fs_truncate(t_pcb *pcb, char *interfaz, char *nombre_archivo, uint32_t tamanio, int socket);
 void serializar_fs_truncate(t_paquete *paquete, t_pcb *pcb, char *interfaz, char *nombre_archivo, uint32_t tamanio);
 
+void enviar_interfaz_fs_write_read(t_pcb *pcb, char *interfaz, char *nombre_archivo, t_list *direcciones, uint32_t tamanioEscribir, char *puntero_archivo, int socket, nombre_instruccion instruccion);
+void serializar_interfaz_fs_write_read(t_paquete *paquete, t_pcb *pcb, char *interfaz, char *nombre_archivo, t_list *direcciones, uint32_t tamanioEscribir, char *puntero_archivo, nombre_instruccion instruccion);
+
 //EN KERNEL DE CPU
 void recibir_pcb_fs_create_delete(t_pcb *pcb, int socket, char **nombre_interfaz, char **nombre_archivo, nombre_instruccion *instruccion);
 void deserializar_pcb_fs_create_delete(t_pcb *pcb, t_buffer *buffer, char **nombre_interfaz, char **nombre_archivo, nombre_instruccion *instruccion);
 
-void recibir_pcb_fs_truncate(t_pcb *pcb, int socket_cliente, char **nombre_interfaz, char **nombre_archivo, uint32_t *tamanio_truncar, nombre_instruccion *instruccion);
-void deserializar_pcb_fs_truncate(t_pcb *pcb, t_buffer *buffer, char **nombre_interfaz, char **nombre_archivo, uint32_t *tamanio_truncar, nombre_instruccion *instruccion);
+void recibir_pcb_fs_truncate(t_pcb *pcb, int socket_cliente, char **nombre_interfaz, char **nombre_archivo, uint32_t *tamanio_fs_recibir, nombre_instruccion *instruccion);
+void deserializar_pcb_fs_truncate(t_pcb *pcb, t_buffer *buffer, char **nombre_interfaz, char **nombre_archivo, uint32_t *tamanio_fs_recibir, nombre_instruccion *instruccion);
+
+void recibir_pcb_fs_write_read(t_pcb *pcb, int socket_cliente, char **nombre_interfaz, char **nombre_archivo, t_list *direcciones, uint32_t *tamanio_fs_recibir, char **puntero_fs, nombre_instruccion *instruccion);
+void deserializar_pcb_fs_write_read(t_pcb *pcb, t_buffer *buffer, char **nombre_interfaz, char **nombre_archivo, t_list *direcciones, uint32_t *tamanio_fs_recibir, char **puntero_fs, nombre_instruccion *instruccion);
 
 //EN KERNEL A IO
 void enviar_interfaz_dialFS_create_delete(int socket, char *nombre_archivo, uint32_t pid, char *nombre_interfaz, nombre_instruccion instruccion);
 void serializar_interfaz_dialFS_create_delete(t_paquete *paquete, char *nombre_archivo, uint32_t pid, char *nombre_interfaz);
 
-void enviar_interfaz_dialFS_truncate(int socket, char *nombre_archivo, uint32_t pid, char *nombre_interfaz, uint32_t tamanio_truncar);
-void serializar_interfaz_dialFS_truncate(t_paquete *paquete, char *nombre_archivo, uint32_t pid, char *nombre_interfaz, uint32_t tamanio_truncar);
+void enviar_interfaz_dialFS_truncate(int socket, char *nombre_archivo, uint32_t pid, char *nombre_interfaz, uint32_t tamanio_fs_recibir);
+void serializar_interfaz_dialFS_truncate(t_paquete *paquete, char *nombre_archivo, uint32_t pid, char *nombre_interfaz, uint32_t tamanio_fs_recibir);
 
+void enviar_interfaz_dialFS_write_read(int socket, char *nombre_archivo, uint32_t pid, char *nombre_interfaz, uint32_t tamanio_fs_recibir, t_list *direcciones_fisicas, char *puntero_fs, nombre_instruccion instruccion);
+void serializar_interfaz_dialFS_write_read(t_paquete *paquete, char *nombre_archivo, uint32_t pid, char *nombre_interfaz, uint32_t tamanio_fs_recibir, t_list *direcciones_fisicas, char *puntero_fs);
 
 //EN KERNEL DE IO
 t_interfaz_dialfs *recibir_InterfazDialfs_terminada(int socket);
 void deserializar_InterfazDialfs_terminada(t_buffer *buffer, t_interfaz_dialfs *interfaz);
 
 t_interfaz_dialfs *recibir_InterfazDialfs_iO_truncate(int socket);
-void deserializar_interfaz_dialfs_truncate(t_buffer *buffer, t_interfaz_dialfs *interfaz);
+
 
 //EN IO DE KERNEL
 t_interfaz_dialfs *crearInterfazDialfs();
 void recibir_InterfazDialfs(int socket, t_interfaz_dialfs *interfaz, op_cod codigo_operacion);
+
 void deserializar_InterfazDialfs(t_buffer *buffer, t_interfaz_dialfs *interfaz, op_cod codigo_operacion);
+
 void deserializar_interfaz_dialfs_create_delete(t_buffer *buffer, t_interfaz_dialfs *interfaz);
+void deserializar_interfaz_dialfs_truncate(t_buffer *buffer, t_interfaz_dialfs *interfaz);
+void deserializar_interfaz_dialfs_write_read(t_buffer *buffer, t_interfaz_dialfs *interfaz);
 
 //EN IO A KERNEL
 void enviar_dialfs_terminado(int socket, uint32_t pid, char *nombre_interfaz);

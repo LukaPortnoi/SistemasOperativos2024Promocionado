@@ -410,12 +410,60 @@ void _io_fs_truncate(char *interfaz, char *nombre_archivo, char *tamanio, int cl
 
 void _io_fs_write(char *interfaz, char *nombre_archivo, char *direc_logica, char *tamanio, char *puntero_archivo, int cliente_socket)
 {
-    // enviar_interfaz_IO(pcb_actual, interfaz, 0, cliente_socket, IO_FS_WRITE);
+    uint32_t direccionLogica;
+
+    if (revisar_registro(direc_logica))
+    {
+        direccionLogica = *(get_registry8(direc_logica));
+    }
+    else
+    {
+        direccionLogica = *(get_registry32(direc_logica));
+    }
+
+    uint32_t tamanioEscribir;
+
+    if (revisar_registro(tamanio))
+    {
+        tamanioEscribir = *(get_registry8(tamanio));
+    }
+    else
+    {
+        tamanioEscribir = *(get_registry32(tamanio));
+    }
+
+    t_list *direcciones = traducir_direccion(pcb_actual->pid, direccionLogica, TAM_PAGINA, tamanioEscribir);    // FIJARSE BIEN
+
+    enviar_interfaz_fs_write_read(pcb_actual, interfaz, nombre_archivo, direcciones, tamanioEscribir, puntero_archivo, cliente_socket, IO_FS_WRITE);
 }
 
 void _io_fs_read(char *interfaz, char *nombre_archivo, char *direc_logica, char *tamanio, char *puntero_archivo, int cliente_socket)
 {
-    // enviar_interfaz_IO(pcb_actual, interfaz, 0, cliente_socket, IO_FS_READ);
+    uint32_t direccionLogica;
+
+    if (revisar_registro(direc_logica))
+    {
+        direccionLogica = *(get_registry8(direc_logica));
+    }
+    else
+    {
+        direccionLogica = *(get_registry32(direc_logica));
+    }
+
+    uint32_t tamanioLeer;
+
+    if (revisar_registro(tamanio))
+    {
+        tamanioLeer = *(get_registry8(tamanio));
+    }
+    else
+    {
+        tamanioLeer = *(get_registry32(tamanio));
+    }
+
+    t_list *direcciones = traducir_direccion(pcb_actual->pid, direccionLogica, TAM_PAGINA, tamanioLeer);    // FIJARSE BIEN
+
+    enviar_interfaz_fs_write_read(pcb_actual, interfaz, nombre_archivo, direcciones, tamanioLeer, puntero_archivo, cliente_socket, IO_FS_READ);
 }
 
 // ENVIOS

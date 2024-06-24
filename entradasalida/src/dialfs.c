@@ -211,7 +211,41 @@ void compactar_dialfs(uint32_t pid)
 
     // Implementación pendiente
 
-    log_trace(LOGGER_INPUT_OUTPUT, "Esperando: %f segundos", (float)RETRASO_COMPACTACION / 1000);
     usleep(RETRASO_COMPACTACION * 1000);
     log_info(LOGGER_INPUT_OUTPUT, "PID: %d - Fin Compactación.", pid);
+}
+
+void escribir_dato_archivo(char *datoRecibido, char *puntero_archivo, char *bloques, uint32_t bloque_inicial)
+{
+    uint32_t offset_inicial = atoi(puntero_archivo);
+    uint32_t posicion_actual = bloque_inicial * BLOCK_SIZE + offset_inicial;
+    size_t len_dato = strlen(datoRecibido);
+
+    while (len_dato > 0)
+    {
+        uint32_t bloque_actual = posicion_actual / BLOCK_SIZE;
+        uint32_t offset_en_bloque = posicion_actual % BLOCK_SIZE;
+        uint32_t espacio_disponible = BLOCK_SIZE - offset_en_bloque;
+
+        size_t a_copiar = (len_dato < espacio_disponible) ? len_dato : espacio_disponible;
+
+        memcpy(bloques + posicion_actual, datoRecibido, a_copiar);
+
+        posicion_actual += a_copiar;
+        datoRecibido += a_copiar;
+        len_dato -= a_copiar;
+    }
+}
+
+char *leer_dato_archivo(uint32_t tamanio, char *puntero_archivo, char *bloques, uint32_t bloque_inicial)
+{
+    uint32_t offset_inicial = atoi(puntero_archivo);
+    uint32_t posicion_inicial = (BLOCK_SIZE * bloque_inicial) + offset_inicial;
+    char *dato_leido = (char *)malloc(tamanio + 1);
+
+    memcpy(dato_leido, bloques + posicion_inicial, tamanio);
+
+    dato_leido[tamanio] = '\0';
+
+    return dato_leido;
 }

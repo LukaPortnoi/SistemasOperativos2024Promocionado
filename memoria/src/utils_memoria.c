@@ -530,18 +530,6 @@ void deserializar_datos_copystring(t_paquete *paquete, t_list *Lista_direcciones
 void escribir_memoria(uint32_t dir_fisica, uint32_t tamanio_registro, char *valorObtenido, uint32_t pid) // Revisar char* en valorObtenido
 {
     pthread_mutex_lock(&mutex_memoria_usuario);
-    /* for (uint32_t i = 0; i < tamanio_registro; i++)
-    {
-        if (valorObtenido[indiceAux])
-        {
-            //printf("Cosa escrita en memoria: %c\n", valorObtenido[indiceAux]);
-            memcpy(memoriaUsuario + dir_fisica + i, &valorObtenido[indiceAux], 1);
-                    indiceAux++;
-
-        }
-    } */
-
-    // printf("Cosa a escribir en memoria: %s", valorObtenido);
     memcpy(memoriaUsuario + dir_fisica, valorObtenido, tamanio_registro);
     pthread_mutex_unlock(&mutex_memoria_usuario);
     log_info(LOGGER_MEMORIA, "PID: <%d> - Accion: <ESCRIBIR> - Direccion Fisica: <%d> - Tamaño <%d> \n", pid, dir_fisica, tamanio_registro);

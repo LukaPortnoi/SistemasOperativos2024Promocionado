@@ -11,6 +11,8 @@
 #include <signal.h>
 #include <fcntl.h>
 #include <sys/stat.h>
+#include <pthread.h>
+#include <semaphore.h>
 
 #include <commons/log.h>
 #include <commons/string.h>

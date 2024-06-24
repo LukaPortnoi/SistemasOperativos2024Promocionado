@@ -156,7 +156,7 @@ static void procesar_conexion_kernel(void *void_args)
 			free(interfazRecibidaIOdialfs->nombre_interfaz);
 			free(interfazRecibidaIOdialfs);
 			break;
-		
+
 		// ---------------
 		// -- ERRORES --
 		// ---------------

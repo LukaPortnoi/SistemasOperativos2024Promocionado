@@ -13,5 +13,7 @@ uint32_t encontrar_bloque_libre();
 uint32_t encontrar_bloques_libres_contiguos(uint32_t bloque_inicial, uint32_t bloques_necesarios);
 uint32_t contar_bloques_libres(char *bitmap);
 void compactar_dialfs(uint32_t pid);
+void escribir_dato_archivo(char *datoRecibido, char *puntero_archivo, char *bloques, uint32_t bloque_inicial);
+char *leer_dato_archivo(uint32_t tamanio, char *puntero_archivo, char *bloques, uint32_t bloque_inicial);
 
 #endif // DIAlFS_H_

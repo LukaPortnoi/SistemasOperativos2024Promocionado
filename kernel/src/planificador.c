@@ -229,13 +229,16 @@ void recibir_pcb_CPU(t_pcb *pcb_recibido, int fd_cpu)
         break;
 
     case FS_CREATE_DELETE:
-        recibir_pcb_fs_create_delete(pcb_recibido, fd_cpu, &nombre_interfaz, &nombre_archivo, &instruccion_de_IO_a_ejecutar); 
+        recibir_pcb_fs_create_delete(pcb_recibido, fd_cpu, &nombre_interfaz, &nombre_archivo, &instruccion_de_IO_a_ejecutar);
         break;
 
     case FS_TRUNCATE:
-        recibir_pcb_fs_truncate(pcb_recibido, fd_cpu, &nombre_interfaz, &nombre_archivo, &tamanio_truncar, &instruccion_de_IO_a_ejecutar);
+        recibir_pcb_fs_truncate(pcb_recibido, fd_cpu, &nombre_interfaz, &nombre_archivo, &tamanio_fs_recibir, &instruccion_de_IO_a_ejecutar);
         break;
 
+    case FS_WRITE_READ:
+        recibir_pcb_fs_write_read(pcb_recibido, fd_cpu, &nombre_interfaz, &nombre_archivo, direcciones_fisicas, &tamanio_fs_recibir, &puntero_fs, &instruccion_de_IO_a_ejecutar);
+        break;
     default:
         log_error(LOGGER_KERNEL, "No se pudo recibir el pcb");
         break;
@@ -747,8 +750,10 @@ void ejecutar_intruccion_io(t_pcb *pcb_recibido)
             {
                 bloquear_procesosIO(pcb_recibido, interfaz_a_utilizar);
                 enviar_InterfazDialFS(interfaz_a_utilizar->socket_interfaz_recibida, pcb_recibido->pid, interfaz_a_utilizar->nombre_interfaz_recibida, instruccion_de_IO_a_ejecutar);
+                list_clean_and_destroy_elements(direcciones_fisicas, free);
                 free(nombre_interfaz);
                 free(nombre_archivo);
+                free(puntero_fs);
             }
             else
             {
@@ -798,22 +803,22 @@ void enviar_InterfazDialFS(int socket, uint32_t pid, char *nombre_interfaz, nomb
     case IO_FS_CREATE:
         enviar_interfaz_dialFS_create_delete(socket, nombre_archivo, pid, nombre_interfaz, instruccion);
         break;
-    
+
     case IO_FS_DELETE:
         enviar_interfaz_dialFS_create_delete(socket, nombre_archivo, pid, nombre_interfaz, instruccion);
         break;
-    
+
     case IO_FS_TRUNCATE:
-        enviar_interfaz_dialFS_truncate(socket, nombre_archivo, pid, nombre_interfaz, tamanio_truncar);
+        enviar_interfaz_dialFS_truncate(socket, nombre_archivo, pid, nombre_interfaz, tamanio_fs_recibir);
         break;
-    /*
+
     case IO_FS_WRITE:
-        enviar_interfaz_dialFS_write(socket, nombre_archivo, pid, nombre_interfaz);
+        enviar_interfaz_dialFS_write_read(socket, nombre_archivo, pid, nombre_interfaz, tamanio_fs_recibir, direcciones_fisicas, puntero_fs, instruccion);
         break;
 
     case IO_FS_READ:
-        enviar_interfaz_dialFS_read(socket, nombre_archivo, pid, nombre_interfaz);
-        break;*/
+        enviar_interfaz_dialFS_write_read(socket, nombre_archivo, pid, nombre_interfaz, tamanio_fs_recibir, direcciones_fisicas, puntero_fs, instruccion);
+        break;
 
     default:
         log_error(LOGGER_KERNEL, "Instruccion %s no reconocida", nombre_instruccion_to_string(instruccion));
