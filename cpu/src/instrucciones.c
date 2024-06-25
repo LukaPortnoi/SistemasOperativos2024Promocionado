@@ -435,6 +435,7 @@ void _io_fs_write(char *interfaz, char *nombre_archivo, char *direc_logica, char
     t_list *direcciones = traducir_direccion(pcb_actual->pid, direccionLogica, TAM_PAGINA, tamanioEscribir);    // FIJARSE BIEN
 
     enviar_interfaz_fs_write_read(pcb_actual, interfaz, nombre_archivo, direcciones, tamanioEscribir, puntero_archivo, cliente_socket, IO_FS_WRITE);
+    list_destroy_and_destroy_elements(direcciones, free);
 }
 
 void _io_fs_read(char *interfaz, char *nombre_archivo, char *direc_logica, char *tamanio, char *puntero_archivo, int cliente_socket)
@@ -464,6 +465,7 @@ void _io_fs_read(char *interfaz, char *nombre_archivo, char *direc_logica, char 
     t_list *direcciones = traducir_direccion(pcb_actual->pid, direccionLogica, TAM_PAGINA, tamanioLeer);    // FIJARSE BIEN
 
     enviar_interfaz_fs_write_read(pcb_actual, interfaz, nombre_archivo, direcciones, tamanioLeer, puntero_archivo, cliente_socket, IO_FS_READ);
+    list_destroy_and_destroy_elements(direcciones, free);
 }
 
 // ENVIOS
