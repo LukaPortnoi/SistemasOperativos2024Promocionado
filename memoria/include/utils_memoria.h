@@ -39,7 +39,7 @@ void *leer_memoria(t_list *direcciones,  uint32_t pid, int tamanio_registro, t_l
 // mov in y mov out
 void recibir_mov_in_cpu(int socket_cliente, t_list *lista_direcciones, uint32_t *pid);
 void deserializar_datos_mov_in(t_paquete *paquete, t_list *lista_direcciones, uint32_t *pid);
-void recibir_mov_out_cpu(t_list *lista_direcciones, uint32_t *valorObtenido, int cliente_socket, uint32_t *pid);
-void deserializar_datos_mov_out(t_paquete *paquete, t_list *lista_direcciones, uint32_t *valorObtenido, uint32_t *pid);
+void recibir_mov_out_cpu(t_list *lista_direcciones, void **valorObtenido, int cliente_socket, uint32_t *pid, bool *es8bits);
+void deserializar_datos_mov_out(t_paquete *paquete, t_list *lista_datos, void **valorObtenido, uint32_t *pid, bool *es8bits);
 
 #endif // UTILS_MEMORIA_H

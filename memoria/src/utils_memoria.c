@@ -353,22 +353,24 @@ void iniciar_semaforos()
     pthread_mutex_init(&mutex_comunicacion_procesos, NULL);
 }
 
-void recibir_mov_out_cpu(t_list *lista_direcciones, uint32_t *valorObtenido, int cliente_socket, uint32_t *pid)
+void recibir_mov_out_cpu(t_list *lista_direcciones, void **valorObtenido, int cliente_socket, uint32_t *pid,bool *es8bits)
 {
     t_paquete *paquete = recibir_paquete(cliente_socket);
-    deserializar_datos_mov_out(paquete, lista_direcciones, valorObtenido, pid);
+    deserializar_datos_mov_out(paquete, lista_direcciones, valorObtenido, pid,es8bits );
     // printf("Valor dir_fisica recv: %ls \n", direccion_fisica);
     // printf("Valor tamanio_registro recv: %ls \n", tamanio_registro);
     // printf("Valor valorObtenido recv: %ls \n", valorObtenido);
     eliminar_paquete(paquete);
 }
 
-void deserializar_datos_mov_out(t_paquete *paquete, t_list *lista_datos, uint32_t *valorObtenido, uint32_t *pid)
+void deserializar_datos_mov_out(t_paquete *paquete, t_list *lista_datos, void **valorObtenido, uint32_t *pid, bool *es8bits)
 {
     int desplazamiento = 0;
-    size_t num_elementos = (paquete->buffer->size - sizeof(uint32_t) - sizeof(uint32_t)) / (2 * sizeof(uint32_t));
+    
+    // Calculamos el número de elementos esperados en la lista
+    size_t num_elementos = (paquete->buffer->size - sizeof(uint32_t) - sizeof(uint8_t)) / (2 * sizeof(uint32_t));
 
-    // Iteramos sobre el buffer y deserializamos cada elemento
+    // Iteramos sobre el buffer y deserializamos cada elemento en lista_datos
     for (size_t i = 0; i < num_elementos; i++)
     {
         t_direcciones_fisicas *dato = malloc(sizeof(t_direcciones_fisicas));
@@ -380,10 +382,31 @@ void deserializar_datos_mov_out(t_paquete *paquete, t_list *lista_datos, uint32_
         list_add(lista_datos, dato);
     }
 
-    memcpy(valorObtenido, paquete->buffer->stream + desplazamiento, sizeof(uint32_t));
-    desplazamiento += sizeof(uint32_t);
+    // Recuperamos el indicador de 8 bits del buffer
+    uint8_t indicador_8bits;
+    memcpy(&indicador_8bits, paquete->buffer->stream + desplazamiento, sizeof(uint8_t));
+    desplazamiento += sizeof(uint8_t);
 
+    // Asignamos el valor a es8bits
+    *es8bits = (indicador_8bits == 1);
+
+    // Determinamos el tamaño y tipo de valorObtenido
+    if (*es8bits)
+    {
+        *valorObtenido = malloc(sizeof(uint8_t));
+        memcpy(*valorObtenido, paquete->buffer->stream + desplazamiento, sizeof(uint8_t));
+        desplazamiento += sizeof(uint8_t);
+    }
+    else
+    {
+        *valorObtenido = malloc(sizeof(uint32_t));
+        memcpy(*valorObtenido, paquete->buffer->stream + desplazamiento, sizeof(uint32_t));
+        desplazamiento += sizeof(uint32_t);
+    }
+
+    // Recuperamos el PID del buffer
     memcpy(pid, paquete->buffer->stream + desplazamiento, sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
 }
 
 void recibir_mov_in_cpu(int socket_cliente, t_list *lista_direcciones, uint32_t *pid)
@@ -544,24 +567,37 @@ void escribir_memoria(t_list *direcciones, void* valor_obtenido, uint32_t pid, i
 }
 
 
-void *leer_memoria(t_list *direcciones,  uint32_t pid, int tamanio_registro, t_list *datos_leidos)
+void *leer_memoria(t_list *direcciones, uint32_t pid, int tamanio_registro, t_list *datos_leidos)
 {
-    void *resultado = calloc(tamanio_registro,1);
+    void *resultado = calloc(tamanio_registro, 1); // Resultado final a retornar
 
     int aux = 0;
-    for(int i = 0; i < list_size(direcciones); i++){
-        void *resultado_parcial = calloc(tamanio_registro,1);
+
+    for (int i = 0; i < list_size(direcciones); i++) {
+        void *resultado_parcial = calloc(tamanio_registro, 1); // Resultado parcial por cada dirección
         t_direcciones_fisicas *direccion = list_get(direcciones, i);
-        memcpy((char *)resultado + aux,memoriaUsuario + direccion->direccion_fisica,direccion->tamanio);
-        memcpy((char *)resultado_parcial,memoriaUsuario + direccion->direccion_fisica,direccion->tamanio);
-        list_add(datos_leidos, resultado_parcial);
-        aux+=direccion->tamanio;
-        
+
+        // Verificar que la dirección física sea válida
+        if (direccion->direccion_fisica >= 0 && direccion->direccion_fisica < (uintptr_t)memoriaUsuario) {
+            // Copiar datos desde memoriaUsuario a resultado
+            memcpy((char *) resultado + aux, memoriaUsuario + direccion->direccion_fisica, direccion->tamanio);
+
+            // Copiar datos parciales a resultado_parcial y agregarlo a la lista datos_leidos
+            memcpy((char *) resultado_parcial, memoriaUsuario + direccion->direccion_fisica, direccion->tamanio);
+            list_add(datos_leidos, resultado_parcial);
+        }
+
+        aux += direccion->tamanio;
     }
 
-    
-    void *resultado_final = calloc(tamanio_registro, 1); 
+    // Crear una copia final de resultado para retornar
+    void *resultado_final = calloc(tamanio_registro, 1);
     memcpy(resultado_final, resultado, tamanio_registro);
+
+    // Liberar la memoria asignada para resultado
+    free(resultado);
+
+    // Esperar un tiempo de RETARDO_RESPUESTA antes de retornar
     usleep(RETARDO_RESPUESTA * 1000);
 
     return resultado_final;

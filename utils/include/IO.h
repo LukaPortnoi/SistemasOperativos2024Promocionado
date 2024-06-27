@@ -105,7 +105,7 @@ void serializar_dato_leido(t_paquete *paquete, char *dato);
 
 
 // MOV IN XD
-void enviar_dato_movIn(int socket, t_list *lista, uint32_t valor);
-void serializar_datos_leidos(t_paquete *paquete, t_list *lista, uint32_t valor);
+void enviar_dato_movIn(int socket, t_list *lista, void *valor, t_list *listaDirecciones, int tamanio);
+void serializar_datos_leidos(t_paquete *paquete, t_list *lista, void *valor, t_list *direccionesFisicas,  int tamanio);
 
 #endif // IO_H_

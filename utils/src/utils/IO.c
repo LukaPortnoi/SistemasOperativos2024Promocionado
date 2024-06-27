@@ -1006,11 +1006,11 @@ void deserializar_direcciones_de_stdout(t_paquete *paquete, t_list *lista_datos,
     memcpy(pid, paquete->buffer->stream + desplazamiento, sizeof(uint32_t));
 }
 
-void enviar_dato_movIn(int socket, t_list *lista, uint32_t valor)
+void enviar_dato_movIn(int socket, t_list *lista, void  *valor, t_list *direccionesFisicas, int tamanio)
 {
     t_paquete *paquete = crear_paquete_con_codigo_de_operacion(RESPUESTA_DATO_MOVIN);
     // serializar_dato_leido(paquete, dato, tamanio);
-    serializar_datos_leidos(paquete, lista, valor);
+    serializar_datos_leidos(paquete, lista, valor, direccionesFisicas, tamanio);
     enviar_paquete(paquete, socket);
     eliminar_paquete(paquete);
 }
@@ -1049,22 +1049,28 @@ void serializar_dato_leido(t_paquete *paquete, char *dato)
 }
 
 
-void serializar_datos_leidos(t_paquete *paquete, t_list *lista, uint32_t valor)
+void serializar_datos_leidos(t_paquete *paquete, t_list *lista, void *valor, t_list *direccionesFisicas, int tamanio)
 {
     uint32_t tamanioLista = list_size(lista);
 
-    // Si la lista está vacía, solo serializar el valor adicional
+    // Calcular tamaño total del paquete
     uint32_t sizeTotal = sizeof(uint32_t); // Para almacenar el tamaño de la lista
-    if (tamanioLista > 0)
-    {
-        sizeTotal += tamanioLista * sizeof(uint32_t); // Cada entero en la lista
+    for (int i = 0; i < tamanioLista; i++) {
+        t_direcciones_fisicas *direccion = list_get(direccionesFisicas, i);
+        sizeTotal += direccion->tamanio; // Sumar el tamaño de cada elemento
     }
     
-    // Incluir espacio para el valor adicional
-    sizeTotal += sizeof(uint32_t);
-
+    uint32_t tamanioVoid = 0;
+    if (tamanio == 1){
+        sizeTotal += sizeof(uint8_t);
+        tamanioVoid =  sizeof(uint8_t);// Para almacenar el valor adicional
+    }else{
+        sizeTotal += sizeof(uint32_t); // Para almacenar el valor adicional
+        tamanioVoid =  sizeof(uint32_t);
+    }
+    // Asignar memoria para el stream del paquete
     paquete->buffer->size = sizeTotal;
-    paquete->buffer->stream = malloc(paquete->buffer->size);
+    paquete->buffer->stream = malloc(sizeTotal);
     if (paquete->buffer->stream == NULL)
     {
         perror("Error al asignar memoria para paquete->buffer->stream");
@@ -1077,23 +1083,26 @@ void serializar_datos_leidos(t_paquete *paquete, t_list *lista, uint32_t valor)
     memcpy(paquete->buffer->stream + desplazamiento, &tamanioLista, sizeof(uint32_t));
     desplazamiento += sizeof(uint32_t);
 
-    // Solo serializar la lista si no está vacía
-    if (tamanioLista > 0)
+    // Serializar cada elemento de la lista principal
+    for (int i = 0; i < tamanioLista; i++)
     {
-        // Iterar sobre cada elemento de la lista
-        for (int i = 0; i < tamanioLista; i++)
-        {
-            uint32_t dato = *(uint32_t *)list_get(lista, i);
+        void *dato = list_get(lista, i);
+        t_direcciones_fisicas *direccion = list_get(direccionesFisicas, i);
 
-            // Serializar cada dato en el stream
-            memcpy(paquete->buffer->stream + desplazamiento, &dato, sizeof(uint32_t));
-            desplazamiento += sizeof(uint32_t);
+        // Verificar que el tamaño coincida
+        if (direccion == NULL || direccion->tamanio == 0) {
+            // Manejo de error o advertencia si la dirección no está correctamente inicializada
+            // Dependiendo de la lógica de tu aplicación
         }
+
+        // Copiar el dato al stream
+        memcpy(paquete->buffer->stream + desplazamiento, dato, direccion->tamanio);
+        desplazamiento += direccion->tamanio;
     }
 
     // Serializar el valor adicional al final del stream
-    memcpy(paquete->buffer->stream + desplazamiento, &valor, sizeof(uint32_t));
-    desplazamiento += sizeof(uint32_t);
+    memcpy(paquete->buffer->stream + desplazamiento, valor, tamanioVoid);
+    desplazamiento += tamanioVoid;
 }
 
 char *recibir_dato_stdout(int socket_cliente)

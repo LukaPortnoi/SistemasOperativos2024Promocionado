@@ -116,25 +116,16 @@ static void procesar_conexion_memoria(void *void_args)
 				// free(direccionAmostrar);
 			}
 
-			void *mostrar = leer_memoria(direcciones_fisicas_mov_in, pidMovIn, tamanio_registro, lista_datos_leidos_mov_in);
-			uint32_t valor = *(uint32_t *)mostrar;
+			void *mostrar = malloc(tamanio_registro);
+			mostrar = leer_memoria(direcciones_fisicas_mov_in, pidMovIn, tamanio_registro, lista_datos_leidos_mov_in);
+			//uint32_t valor = *(uint32_t *)mostrar;
 			printf("tamanio listAAAAA %d \n", list_size(lista_datos_leidos_mov_in) );
 
-			if (valor == 0 || valor ==NULL)
-			{
-				valor = 0;
-			}
-			if ( list_size(lista_datos_leidos_mov_in) <1)
-			{
-				for (int i = 0; i < list_size(direcciones_fisicas_mov_in); i++)
-				{
-					list_add(direcciones_fisicas_mov_in,0);
-				}
-			}
+		
 			
 			
 
-			enviar_dato_movIn(cliente_socket, lista_datos_leidos_mov_in, valor);
+			enviar_dato_movIn(cliente_socket, lista_datos_leidos_mov_in, mostrar, direcciones_fisicas_mov_in, tamanio_registro);
 			list_clean_and_destroy_elements(direcciones_fisicas_mov_in, free);
 			list_clean_and_destroy_elements(lista_datos_leidos_mov_in, free);
 			free(mostrar);
@@ -142,9 +133,17 @@ static void procesar_conexion_memoria(void *void_args)
 
 		case PEDIDO_MOV_OUT: // me pasa por parametro un uint32_t y tengo que guardarlo en el marco que me dice
 			t_list *direcciones_fisicas_mov_out = list_create();
-			uint32_t valor_obtenido_mov_out;
+			void *valor_obtenido_mov_out;
 			uint32_t pidMovOut;
-			recibir_mov_out_cpu(direcciones_fisicas_mov_out, &valor_obtenido_mov_out, cliente_socket, &pidMovOut);
+			bool es8bits = false;
+			recibir_mov_out_cpu(direcciones_fisicas_mov_out, &valor_obtenido_mov_out, cliente_socket, &pidMovOut, &es8bits);
+			if (es8bits) {
+				uint8_t valor_obtenido_8bits = *((uint8_t *) valor_obtenido_mov_out);
+				printf("Valor obtenido (8 bits): %u\n", valor_obtenido_8bits);
+			} else {
+				uint32_t valor_obtenido_32bits = *((uint32_t *) valor_obtenido_mov_out);
+				printf("Valor obtenido (32 bits): %u\n", valor_obtenido_32bits);
+			}
 			int tamanioTotal = 0;
 			for (int i = 0; i < list_size(direcciones_fisicas_mov_out); i++)
 			{
@@ -153,7 +152,7 @@ static void procesar_conexion_memoria(void *void_args)
 				// free(direccionAmostrar);
 			}
 
-			escribir_memoria(direcciones_fisicas_mov_out, &valor_obtenido_mov_out, pidMovOut, tamanioTotal);
+			escribir_memoria(direcciones_fisicas_mov_out, valor_obtenido_mov_out, pidMovOut, tamanioTotal);
 
 			list_destroy_and_destroy_elements(direcciones_fisicas_mov_out, free);
 

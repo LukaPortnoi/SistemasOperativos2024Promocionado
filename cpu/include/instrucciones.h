@@ -27,13 +27,13 @@ char *recibir_valor_mov_in_memoria(int socket);
 char *deserializar_valor_mov_in_memoria(t_buffer *buffer);
 void enviar_valor_mov_in_cpu(t_list *Lista_direccionesFisica, int socket, uint32_t pid);
 void serializar_datos_mov_in(t_paquete *paquete, t_list *lista_direcciones, uint32_t pid);
-void serializar_datos_mov_out(t_paquete *paquete, t_list *Lista_direccionesFisica, uint32_t valorObtenido , uint32_t pid);
-void enviar_valor_mov_out_cpu(t_list *Lista_direccionesFisica, uint32_t valorObtenido, int socket, uint32_t pid);
+void serializar_datos_mov_out(t_paquete *paquete, t_list *Lista_direccionesFisica, void *valorObtenido, uint32_t pid, bool es8bits);
+void enviar_valor_mov_out_cpu(t_list *Lista_direccionesFisica, void *valorObtenido, int socket, uint32_t pid, bool es8bits);
 void enviar_datos_copy_string(t_list *Lista_direccionesFisica_escritura, t_list *Lista_direccionesFisica_lectura, uint32_t tamanio, int socket, uint32_t pid);
 void serializar_datos_copy_string(t_paquete *paquete, t_list *Lista_direccionesFisica_escritura, t_list *Lista_direccionesFisica_lectura, uint32_t tamanio , uint32_t pid);
-t_list *recibir_dato_de_memoria_movIn(int socket, t_log *logger, uint32_t *valor);
-t_list *deserializar_dato_movIN(t_paquete *paquete, uint32_t *valor);
-t_list *recibir_dato_movIN(int socket_cliente, uint32_t *valor);
+t_list *recibir_dato_de_memoria_movIn(int socket, t_log *logger, void **datoObtenido, t_list *Lista_direccionesFisica, int tamanio);
+t_list *deserializar_dato_movIN(t_paquete *paquete, void **datoObtenido, t_list *direccionesFisicas, int tamanio);
+t_list *recibir_dato_movIN(int socket_cliente, void  **datoObtenido, t_list *Lista_direccionesFisica, int tamanio);
 
 
 // UTILS
