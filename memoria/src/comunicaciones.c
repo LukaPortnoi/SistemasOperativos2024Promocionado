@@ -38,6 +38,7 @@ static void procesar_conexion_memoria(void *void_args)
 			break;
 
 		case FINALIZAR_PROCESO:
+			mem_hexdump(memoriaUsuario, TAM_MEMORIA);
 			uint32_t pid_a_finalizar;
 			recibir_finalizar_proceso(&pid_a_finalizar, cliente_socket);
 			proceso_memoria = obtener_proceso_pid(pid_a_finalizar);
@@ -51,6 +52,7 @@ static void procesar_conexion_memoria(void *void_args)
 				liberar_estructura_proceso_memoria(proceso_memoria);
 				break;
 			}
+			
 
 		// -------------------
 		// -- CPU - MEMORIA --
@@ -119,7 +121,6 @@ static void procesar_conexion_memoria(void *void_args)
 			void *mostrar = malloc(tamanio_registro);
 			mostrar = leer_memoria(direcciones_fisicas_mov_in, pidMovIn, tamanio_registro, lista_datos_leidos_mov_in);
 			//uint32_t valor = *(uint32_t *)mostrar;
-			printf("tamanio listAAAAA %d \n", list_size(lista_datos_leidos_mov_in) );
 
 		
 			
@@ -131,19 +132,22 @@ static void procesar_conexion_memoria(void *void_args)
 			free(mostrar);
 			break;
 
-		case PEDIDO_MOV_OUT: // me pasa por parametro un uint32_t y tengo que guardarlo en el marco que me dice
+		case PEDIDO_MOV_OUT:
+			 // me pasa por parametro un uint32_t y tengo que guardarlo en el marco que me dice
+
 			t_list *direcciones_fisicas_mov_out = list_create();
 			void *valor_obtenido_mov_out;
 			uint32_t pidMovOut;
 			bool es8bits = false;
 			recibir_mov_out_cpu(direcciones_fisicas_mov_out, &valor_obtenido_mov_out, cliente_socket, &pidMovOut, &es8bits);
+			/* 
 			if (es8bits) {
 				uint8_t valor_obtenido_8bits = *((uint8_t *) valor_obtenido_mov_out);
-				printf("Valor obtenido (8 bits): %u\n", valor_obtenido_8bits);
+				printf("Valor obtenido de 8 bits: %d\n", valor_obtenido_8bits);
 			} else {
 				uint32_t valor_obtenido_32bits = *((uint32_t *) valor_obtenido_mov_out);
-				printf("Valor obtenido (32 bits): %u\n", valor_obtenido_32bits);
-			}
+				printf("Valor obtenido de 32 bits: %d\n", valor_obtenido_32bits);
+			} */
 			int tamanioTotal = 0;
 			for (int i = 0; i < list_size(direcciones_fisicas_mov_out); i++)
 			{
@@ -192,7 +196,6 @@ static void procesar_conexion_memoria(void *void_args)
 				tamanioTotal_stdin += direccionAmostrar->tamanio;
 				// free(direccionAmostrar);
 			}
-			printf("Dato obtenido %s \n", dato_obtenido_stdin);
 			int longitud_DATO = strlen(dato_obtenido_stdin);
 
 			escribir_memoria(direcciones_fisicas_a_escribir, dato_obtenido_stdin, pidStdin, longitud_DATO);

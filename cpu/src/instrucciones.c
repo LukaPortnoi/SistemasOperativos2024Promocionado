@@ -44,34 +44,41 @@ void _mov_in(char *registro, char *direc_logica, int socket)
 
     if (revisar_registro(registro))
     {
-        //*(get_registry8(registro)) = datoint;
 		uint8_t valor_obtenido_8bits = *((uint8_t *) datoObtenido);
-        printf("Valor obtenido (8 bits): %u\n", valor_obtenido_8bits);
         *(get_registry8(registro)) = valor_obtenido_8bits;
         registro_final = *(get_registry8(registro));
     }
     else
     {
-        // *(get_registry32(registro)) = datoint;
         uint32_t valor_obtenido_32bits = *((uint32_t *) datoObtenido);
-		printf("Valor obtenido (32 bits): %u\n", valor_obtenido_32bits);
         *(get_registry32(registro)) = valor_obtenido_32bits;
         registro_final = *(get_registry32(registro));
     }
 
-    printf("Registro Obtenido %d \n", registro_final);
+    //printf("Registro Obtenido %d \n", registro_final);
     // mem_hexdump(datoObtenido, strlen(datoObtenido));
 
-    /*for (int i = 0; i < list_size(Lista_direccionesFisica); i++)
+    for (int i = 0; i < list_size(Lista_direccionesFisica); i++)
     {
         t_direcciones_fisicas *direccionAmostrar = list_get(Lista_direccionesFisica, i);
-        uint32_t dato2 = *(uint32_t *)list_get(datosRecibidos, i);
+        void *datoRecibido = list_get(datosRecibidos, i);
+        
+        int dato8 =0;
+        int dato32 = 0;
+        if (tamanio_registro == 1)
+        {
+             memcpy(&dato8, datoRecibido, direccionAmostrar->tamanio);
+            log_info(LOGGER_CPU, "PID: %d - Acción: LEER - Dirección Física: %d - Valor: %d", pcb_actual->pid, direccionAmostrar->direccion_fisica, dato8);
 
-        log_info(LOGGER_CPU, "PID: %d - Acción: LEER - Dirección Física: %d - Valor: %d", pcb_actual->pid, direccionAmostrar->direccion_fisica, dato2);
+        }else{
+             memcpy(&dato32, datoRecibido, direccionAmostrar->tamanio);
+            log_info(LOGGER_CPU, "PID: %d - Acción: LEER - Dirección Física: %d - Valor: %d", pcb_actual->pid, direccionAmostrar->direccion_fisica, dato32);
+
+        }
+
         // free(dato2);
-    }*/
+    }
 
-    // printf("Registro Obtenido %d \n", registroFina);
     list_destroy_and_destroy_elements(datosRecibidos, free); // FIJARSE BIEN
     list_destroy_and_destroy_elements(Lista_direccionesFisica, free); // FIJARSE BIEN
 }
@@ -96,20 +103,22 @@ void _mov_out(char *direc_logica, char *registro, int socket)
     if (revisar_registro(registro))
     {
         uint8_t valorObtenido8 = *(get_registry8(registro));
-        valorObtenido = &valorObtenido8;  
+        valorObtenido=malloc(sizeof(uint8_t));
+        memcpy(valorObtenido, &valorObtenido8, sizeof(uint8_t));
+        //valorObtenido = &valorObtenido8;  
          es8bits = true;  
     }
     else
     {
         uint32_t valorObtenido32 = *(get_registry32(registro));
-        valorObtenido = &valorObtenido32; 
+        valorObtenido=malloc(sizeof(uint32_t));
+        memcpy(valorObtenido, &valorObtenido32, sizeof(uint32_t));
+        //valorObtenido = &valorObtenido32; 
         es8bits = false;  
    
     }
 
-    // printf("Valor a escribir antes de serializarlor y enviarlo MOV_OUT: %d \n", valorObtenido);
     uint32_t tamanio_registro = obtener_tamanio_registro(registro);
-    // printf("Tamanio registro antes de serializarlor y enviarlo MOV_OUT: %d \n", tamanio_registro);
     t_list *Lista_direccionesFisica = traducir_direccion(pcb_actual->pid, direccionLogica32, TAM_PAGINA, tamanio_registro);
 
     enviar_valor_mov_out_cpu(Lista_direccionesFisica, valorObtenido, socket, pcb_actual->pid, es8bits);
@@ -117,12 +126,13 @@ void _mov_out(char *direc_logica, char *registro, int socket)
     for (int i = 0; i < list_size(Lista_direccionesFisica); i++)
     {
         t_direcciones_fisicas *direccionAmostrar = list_get(Lista_direccionesFisica, i);
-        // int *valor_parcial_a_pasar = malloc(4);
-        // memset(valor_parcial_a_pasar, 0, 4);
-        // memcpy(valor_parcial_a_pasar, &valorObtenido, direccionAmostrar->tamanio);
-        if (i == 0)
+        
+        if (i == 0 && direccionAmostrar->tamanio == 1)
         {
-            //log_info(LOGGER_CPU, "PID: %d - Acción: ESCRIBIR - Dirección Física: %d - Valor: %d", pcb_actual->pid, direccionAmostrar->direccion_fisica, valorObtenido);
+            log_info(LOGGER_CPU, "PID: %d - Acción: ESCRIBIR - Dirección Física: %d - Valor: %d", pcb_actual->pid, direccionAmostrar->direccion_fisica,*(uint8_t *)valorObtenido);
+        }
+        else{
+            log_info(LOGGER_CPU, "PID: %d - Acción: ESCRIBIR - Dirección Física: %d - Valor: %d", pcb_actual->pid, direccionAmostrar->direccion_fisica,*(uint32_t *)valorObtenido);
         }
     }
 
@@ -820,6 +830,7 @@ t_list *deserializar_dato_movIN(t_paquete *paquete, void **datoObtenido, t_list 
         // Agregar el dato deserializado a la lista
         list_add(lista_deserializada, dato_ptr);
     }
+
 
     // Deserializar el valor adicional al final del stream
     if (tamanio ==1){

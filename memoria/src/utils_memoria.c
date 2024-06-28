@@ -560,7 +560,7 @@ void escribir_memoria(t_list *direcciones, void* valor_obtenido, uint32_t pid, i
 
     // Liberar la memoria de copia
     free(copia);
-    
+
     pthread_mutex_unlock(&mutex_memoria_usuario);
         usleep(RETARDO_RESPUESTA * 1000);
 
@@ -569,6 +569,8 @@ void escribir_memoria(t_list *direcciones, void* valor_obtenido, uint32_t pid, i
 
 void *leer_memoria(t_list *direcciones, uint32_t pid, int tamanio_registro, t_list *datos_leidos)
 {
+    pthread_mutex_lock(&mutex_memoria_usuario);
+
     void *resultado = calloc(tamanio_registro, 1); // Resultado final a retornar
 
     int aux = 0;
@@ -596,6 +598,7 @@ void *leer_memoria(t_list *direcciones, uint32_t pid, int tamanio_registro, t_li
 
     // Liberar la memoria asignada para resultado
     free(resultado);
+    pthread_mutex_unlock(&mutex_memoria_usuario);
 
     // Esperar un tiempo de RETARDO_RESPUESTA antes de retornar
     usleep(RETARDO_RESPUESTA * 1000);
