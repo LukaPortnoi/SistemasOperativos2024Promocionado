@@ -370,9 +370,13 @@ void enviar_direccion_fisica_memoria(uint32_t direccion_fisica)
 uint32_t recibir_marco_memoria(int fd_cpu_memoria)
 {
     op_cod cop;
-    uint32_t marcoRecibido;
+    uint32_t marcoRecibido = -1;
 
-    recv(fd_cpu_memoria, &cop, sizeof(op_cod), 0);
+    if(recv(fd_cpu_memoria, &cop, sizeof(op_cod), 0)!= sizeof(op_cod)){
+        exit(EXIT_FAILURE);
+    }
+
+    
     switch (cop)
     {
     case ENVIAR_MARCO:

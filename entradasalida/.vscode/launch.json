@@ -36,3 +36,4 @@
 //./bin/entradasalida ./cfgs/TECLADO.config
 // EJECUTAR_SCRIPT /scripts_kernel/PRUEBA_IO
 // INICIAR_PROCESO /scripts_memoria/MEMORIA_2
+// INICIAR_PROCESO /script_io_stdin_stdout_1

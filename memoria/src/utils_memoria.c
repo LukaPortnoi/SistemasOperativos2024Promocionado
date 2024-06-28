@@ -373,22 +373,24 @@ void iniciar_semaforos()
     pthread_mutex_init(&mutex_comunicacion_procesos, NULL);
 }
 
-void recibir_mov_out_cpu(t_list *lista_direcciones, uint32_t *valorObtenido, int cliente_socket, uint32_t *pid)
+void recibir_mov_out_cpu(t_list *lista_direcciones, void **valorObtenido, int cliente_socket, uint32_t *pid,bool *es8bits)
 {
     t_paquete *paquete = recibir_paquete(cliente_socket);
-    deserializar_datos_mov_out(paquete, lista_direcciones, valorObtenido, pid);
+    deserializar_datos_mov_out(paquete, lista_direcciones, valorObtenido, pid,es8bits );
     // printf("Valor dir_fisica recv: %ls \n", direccion_fisica);
     // printf("Valor tamanio_registro recv: %ls \n", tamanio_registro);
     // printf("Valor valorObtenido recv: %ls \n", valorObtenido);
     eliminar_paquete(paquete);
 }
 
-void deserializar_datos_mov_out(t_paquete *paquete, t_list *lista_datos, uint32_t *valorObtenido, uint32_t *pid)
+void deserializar_datos_mov_out(t_paquete *paquete, t_list *lista_datos, void **valorObtenido, uint32_t *pid, bool *es8bits)
 {
     int desplazamiento = 0;
-    size_t num_elementos = (paquete->buffer->size - sizeof(uint32_t) - sizeof(uint32_t)) / (2 * sizeof(uint32_t));
+    
+    // Calculamos el número de elementos esperados en la lista
+    size_t num_elementos = (paquete->buffer->size - sizeof(uint32_t) - sizeof(uint8_t)) / (2 * sizeof(uint32_t));
 
-    // Iteramos sobre el buffer y deserializamos cada elemento
+    // Iteramos sobre el buffer y deserializamos cada elemento en lista_datos
     for (size_t i = 0; i < num_elementos; i++)
     {
         t_direcciones_fisicas *dato = malloc(sizeof(t_direcciones_fisicas));
@@ -400,10 +402,31 @@ void deserializar_datos_mov_out(t_paquete *paquete, t_list *lista_datos, uint32_
         list_add(lista_datos, dato);
     }
 
-    memcpy(valorObtenido, paquete->buffer->stream + desplazamiento, sizeof(uint32_t));
-    desplazamiento += sizeof(uint32_t);
+    // Recuperamos el indicador de 8 bits del buffer
+    uint8_t indicador_8bits;
+    memcpy(&indicador_8bits, paquete->buffer->stream + desplazamiento, sizeof(uint8_t));
+    desplazamiento += sizeof(uint8_t);
 
+    // Asignamos el valor a es8bits
+    *es8bits = (indicador_8bits == 1);
+
+    // Determinamos el tamaño y tipo de valorObtenido
+    if (*es8bits)
+    {
+        *valorObtenido = malloc(sizeof(uint8_t));
+        memcpy(*valorObtenido, paquete->buffer->stream + desplazamiento, sizeof(uint8_t));
+        desplazamiento += sizeof(uint8_t);
+    }
+    else
+    {
+        *valorObtenido = malloc(sizeof(uint32_t));
+        memcpy(*valorObtenido, paquete->buffer->stream + desplazamiento, sizeof(uint32_t));
+        desplazamiento += sizeof(uint32_t);
+    }
+
+    // Recuperamos el PID del buffer
     memcpy(pid, paquete->buffer->stream + desplazamiento, sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
 }
 
 void recibir_mov_in_cpu(int socket_cliente, t_list *lista_direcciones, uint32_t *pid)
@@ -527,243 +550,79 @@ void deserializar_datos_copystring(t_paquete *paquete, t_list *Lista_direcciones
     memcpy(pid, paquete->buffer->stream + desplazamiento, sizeof(uint32_t));
 }
 
-void escribir_memoria(uint32_t dir_fisica, uint32_t tamanio_registro, char *valorObtenido, uint32_t pid) // Revisar char* en valorObtenido
-{
-    pthread_mutex_lock(&mutex_memoria_usuario);
-    memcpy(memoriaUsuario + dir_fisica, valorObtenido, tamanio_registro);
-    pthread_mutex_unlock(&mutex_memoria_usuario);
-    log_info(LOGGER_MEMORIA, "PID: <%d> - Accion: <ESCRIBIR> - Direccion Fisica: <%d> - Tamaño <%d> \n", pid, dir_fisica, tamanio_registro);
-    usleep(RETARDO_RESPUESTA * 1000);
-}
 
-void escribir_memoria_mov_out(uint32_t dir_fisica, uint32_t tamanio_registro, char *valorObtenido, uint32_t pid)
+
+void escribir_memoria(t_list *direcciones, void* valor_obtenido, uint32_t pid, int tamanio_registro)
 {
     pthread_mutex_lock(&mutex_memoria_usuario);
 
-    unsigned char valorConvertido = (unsigned char)atoi(valorObtenido);
+    int tamanioValor = tamanio_registro; // Utilizar el tamaño real pasado como parámetro
+    void *copia = calloc(tamanioValor, 1);
+    
+    // Copiar los datos de valor_obtenido
+    memcpy(copia, valor_obtenido, tamanioValor);
 
-    // printf("Cosa a escribir en memoria: %u\n", valorConvertido);
-    *((unsigned char *)memoriaUsuario + dir_fisica) = valorConvertido;
+    int aux = 0;
+    for (int i = 0; i < list_size(direcciones); i++)
+    {
+        t_direcciones_fisicas *direccion = list_get(direcciones, i);
+        int copia_tamanio = (direccion->tamanio < tamanioValor - aux) ? direccion->tamanio : tamanioValor - aux;
+        memcpy(memoriaUsuario + direccion->direccion_fisica, (char *) copia + aux, copia_tamanio);
+        log_info(LOGGER_MEMORIA, "PID: <%d> - Accion: <ESCRIBIR> - Direccion Fisica: <%d> - Tamaño <%d> \n", pid, direccion->direccion_fisica, direccion->tamanio);
+        aux += copia_tamanio;
 
-    // Verificar que el valor se escribió correctamente
-    unsigned char valorLeido = *((unsigned char *)memoriaUsuario + dir_fisica);
-    if (valorLeido == valorConvertido)
-    {
-        // printf("Valor escrito correctamente en la posición %u: %u\n", dir_fisica, valorLeido);
+        // Break si ya se ha copiado todo el valor
+        if (aux >= tamanioValor) {
+            break;
+        }
     }
-    else
-    {
-        // printf("Error al escribir el valor en la posición %u. Valor esperado: %u, valor leído: %u\n", dir_fisica, valorConvertido, valorLeido);
-    }
+    //mem_hexdump(memoriaUsuario,256);
+
+    // Liberar la memoria de copia
+    free(copia);
 
     pthread_mutex_unlock(&mutex_memoria_usuario);
-    log_info(LOGGER_MEMORIA, "PID: <%d> - Accion: <ESCRIBIR> - Direccion Fisica: <%d> - Tamaño <%d> \n", pid, dir_fisica, tamanio_registro);
-    usleep(RETARDO_RESPUESTA * 1000);
+        usleep(RETARDO_RESPUESTA * 1000);
+
 }
 
-char *leer_memoria(uint32_t dir_fisica, uint32_t tamanio_registro, uint32_t pid)
+
+void *leer_memoria(t_list *direcciones, uint32_t pid, int tamanio_registro, t_list *datos_leidos)
 {
     pthread_mutex_lock(&mutex_memoria_usuario);
 
-    // Asignar memoria para un solo byte que contendrá el dato leído
-    char *dato_leido = malloc(4); // Asignamos espacio para un solo byte
-    if (dato_leido == NULL)
-    {
-        perror("Error al asignar memoria para dato_leido");
-        pthread_mutex_unlock(&mutex_memoria_usuario);
-        return NULL;
+    void *resultado = calloc(tamanio_registro, 1); // Resultado final a retornar
+
+    int aux = 0;
+
+    for (int i = 0; i < list_size(direcciones); i++) {
+        void *resultado_parcial = calloc(tamanio_registro, 1); // Resultado parcial por cada dirección
+        t_direcciones_fisicas *direccion = list_get(direcciones, i);
+
+        // Verificar que la dirección física sea válida
+        if (direccion->direccion_fisica >= 0 && direccion->direccion_fisica < (uintptr_t)memoriaUsuario) {
+            // Copiar datos desde memoriaUsuario a resultado
+            memcpy((char *) resultado + aux, memoriaUsuario + direccion->direccion_fisica, direccion->tamanio);
+
+            // Copiar datos parciales a resultado_parcial y agregarlo a la lista datos_leidos
+            memcpy((char *) resultado_parcial, memoriaUsuario + direccion->direccion_fisica, direccion->tamanio);
+            list_add(datos_leidos, resultado_parcial);
+        }
+
+        aux += direccion->tamanio;
     }
 
-    // Leer el dato de la memoria
-    unsigned char valorLeido = *((unsigned char *)memoriaUsuario + dir_fisica);
-    sprintf(dato_leido, "%u", valorLeido);
-    //  Registrar la acción en el log
-    log_info(LOGGER_MEMORIA, "PID: <%d> - Accion: <LEER> - Direccion Fisica: <%d> - Tamaño <%d> \n", pid, dir_fisica, tamanio_registro);
+    // Crear una copia final de resultado para retornar
+    void *resultado_final = calloc(tamanio_registro, 1);
+    memcpy(resultado_final, resultado, tamanio_registro);
 
-    // Mostrar el dato leído en la consola
-    // printf("Dato leido: %s\n", dato_leido);
-
+    // Liberar la memoria asignada para resultado
+    free(resultado);
     pthread_mutex_unlock(&mutex_memoria_usuario);
+
+    // Esperar un tiempo de RETARDO_RESPUESTA antes de retornar
     usleep(RETARDO_RESPUESTA * 1000);
 
-    return dato_leido;
+    return resultado_final;
 }
 
-char *leer_memoria_IO(uint32_t dir_fisica, uint32_t tamanio_registro, uint32_t pid)
-{
-    /* char valor_leido; // Cambiar a int
-    int valorTotalaDeLeer = 0; */
-    pthread_mutex_lock(&mutex_memoria_usuario);
-    char *cadena = malloc(tamanio_registro + 1); // Allocate memory dynamically
-    memset(cadena, 0, tamanio_registro + 1);     // Initialize all elements to 0
-    /* for (uint32_t i = 0; i < tamanio_registro; i++)
-    {
-        if (&memoriaUsuario[dir_fisica + i] != 0)
-        {
-            memcpy(&valor_leido, &memoriaUsuario[dir_fisica + i], 1);
-            cadena[i] = valor_leido;
-            //printf("Valor a agregar a cadena: %c \n", valor_leido);
-            valorTotalaDeLeer++;
-            // Assign the character directly
-        }
-    } */
-    memcpy(cadena, memoriaUsuario + dir_fisica, tamanio_registro);
-    cadena[tamanio_registro] = '\0';
-    pthread_mutex_unlock(&mutex_memoria_usuario);
-    log_info(LOGGER_MEMORIA, "PID: <%d> - Accion: <LEER> - Direccion Fisica: <%d> - Tamaño <%d> \n", pid, dir_fisica, tamanio_registro);
-    // printf("Cadena leida: %s \n", cadena);
-    usleep(RETARDO_RESPUESTA * 1000);
-    return cadena;
-}
-
-char *int_to_char(int num)
-{
-    if (num == 0) // Añade este caso especial para cuando num es 0
-    {
-        char *s = (char *)calloc(2, sizeof(char)); // Asigna espacio para '0' y '\0'
-        s[0] = '0';
-        s[1] = '\0';
-        return s;
-    }
-
-    int i = log10(num) + 1;
-    char *s = (char *)calloc(i + 1, sizeof(char)); // Añadir espacio para el carácter nulo
-
-    for (i--; num != 0; i--)
-    {
-        s[i] = (num % 10) + '0';
-        num /= 10;
-    }
-
-    return s;
-
-    /*if (num == 0)
-    {
-        char *s = (char *)calloc(2, sizeof(char)); // Si num es 0, devolver "0"
-        if (s == NULL)
-        {
-            fprintf(stderr, "Error al asignar memoria en int_to_char\n");
-            exit(EXIT_FAILURE); // En caso de fallo de asignación de memoria
-        }
-        s[0] = '0';
-        s[1] = '\0'; // Terminador de cadena
-        return s;
-    }
-
-    // Calcular el tamaño necesario para la cadena
-    int i = log10(abs(num)) + 1;
-    char *s = (char *)calloc(i + 1, sizeof(char)); // +1 para el terminador nulo
-
-    if (s == NULL)
-    {
-        fprintf(stderr, "Error al asignar memoria en int_to_char\n");
-        exit(EXIT_FAILURE); // En caso de fallo de asignación de memoria
-    }
-
-    int negativo = 0; // Variable para manejar números negativos
-    if (num < 0)
-    {
-        negativo = 1;
-        num = -num;
-    }
-
-    // Llenar el arreglo con los digitos de num
-    for (i--; num != 0; i--)
-    {
-        s[i] = (num % 10) + '0';
-        num /= 10;
-    }
-
-    if (negativo)
-    {
-        s[i] = '-';
-    }
-
-    return s;
-    */
-}
-
-char *concatenar_lista_de_cadenas(t_list *lista, int tamanio)
-{
-    // Calcular el tamaño total necesario
-    size_t tam_total = tamanio + 1; // Inicia en 1 para el carácter nulo
-
-    // Asignar memoria para la cadena concatenada
-    char *cadena_concatenada = (char *)calloc(tam_total, sizeof(char));
-    if (cadena_concatenada == NULL)
-    {
-        return NULL; // Manejo de error si la asignación de memoria falla
-    }
-
-    // Inicializar la cadena concatenada como una cadena vacía
-    cadena_concatenada[0] = '\0';
-
-    // Copiar cada cadena de la lista en la cadena concatenada
-    for (int i = 0; i < list_size(lista); i++)
-    {
-        strncat(cadena_concatenada, list_get(lista, i), tam_total - strlen(cadena_concatenada) - 1);
-    }
-
-    // Asegurarse de que la cadena esté terminada con un carácter nulo
-    cadena_concatenada[tam_total - 1] = '\0';
-
-    return cadena_concatenada;
-}
-
-char *decimal_a_binario(int numero)
-{
-    // Array temporal para almacenar los dígitos binarios (máximo 32 bits para un entero)
-    char temp[33];
-    int index = 0;
-
-    // Manejo del caso cuando el número es 0
-    if (numero == 0)
-    {
-        temp[index++] = '0';
-    }
-    else
-    {
-        // Convertir el número decimal a binario
-        while (numero > 0)
-        {
-            temp[index++] = (numero % 2) + '0';
-            numero = numero / 2;
-        }
-    }
-
-    // Añadir el carácter nulo al final de la cadena
-    temp[index] = '\0';
-
-    // Asignar memoria para la cadena final
-    char *binaryNum = (char *)malloc((index + 1) * sizeof(char));
-
-    // Copiar los elementos en orden inverso al array final
-    for (int i = 0; i < index; i++)
-    {
-        binaryNum[i] = temp[index - 1 - i];
-    }
-
-    // Añadir el carácter nulo al final de la cadena
-    binaryNum[index] = '\0';
-
-    return binaryNum;
-}
-
-int binario_a_decimal(int binario)
-{
-    int decimal = 0;
-    int posicion = 0;
-
-    while (binario > 0)
-    {
-        int digito = binario % 10; // Obtiene el último dígito del número binario
-        if (digito == 1)
-        {
-            decimal += pow(2, posicion);
-        }
-        binario /= 10; // Elimina el último dígito del número binario
-        posicion++;
-    }
-
-    return decimal;
-}

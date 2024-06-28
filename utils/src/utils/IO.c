@@ -1824,11 +1824,11 @@ void deserializar_direcciones_de_stdout(t_paquete *paquete, t_list *lista_datos,
     memcpy(pid, paquete->buffer->stream + desplazamiento, sizeof(uint32_t));
 }
 
-void enviar_dato_movIn(int socket, t_list *lista)
+void enviar_dato_movIn(int socket, t_list *lista, void  *valor, t_list *direccionesFisicas, int tamanio)
 {
     t_paquete *paquete = crear_paquete_con_codigo_de_operacion(RESPUESTA_DATO_MOVIN);
     // serializar_dato_leido(paquete, dato, tamanio);
-    serializar_datos_leidos(paquete, lista);
+    serializar_datos_leidos(paquete, lista, valor, direccionesFisicas, tamanio);
     enviar_paquete(paquete, socket);
     eliminar_paquete(paquete);
 }
@@ -1836,46 +1836,59 @@ void enviar_dato_movIn(int socket, t_list *lista)
 void enviar_dato_leido(int socket, char *dato, int tamanio)
 {
     t_paquete *paquete = crear_paquete_con_codigo_de_operacion(RESPUESTA_DATO_STDOUT);
-    serializar_dato_leido(paquete, dato, tamanio);
+    serializar_dato_leido(paquete, dato);
     enviar_paquete(paquete, socket);
     eliminar_paquete(paquete);
 }
 
-void serializar_dato_leido(t_paquete *paquete, char *dato, int tamanio)
-{
-    uint32_t tamanio_dato = tamanio + 1;
 
+void serializar_dato_leido(t_paquete *paquete, char *dato)
+{
+    // Calcular el tamaño del dato (incluyendo el carácter nulo)
+    uint32_t tamanio_dato = strlen(dato);
+
+    // Asignar memoria para el stream del paquete
     paquete->buffer->size = sizeof(uint32_t) + tamanio_dato;
     paquete->buffer->stream = malloc(paquete->buffer->size);
     if (paquete->buffer->stream == NULL)
     {
-        // Manejo de error si la asignación de memoria falla
+        perror("Error al asignar memoria para paquete->buffer->stream");
         return;
     }
 
     int desplazamiento = 0;
 
+    // Copiar el tamaño del dato al inicio del stream
     memcpy(paquete->buffer->stream + desplazamiento, &tamanio_dato, sizeof(uint32_t));
     desplazamiento += sizeof(uint32_t);
 
+    // Copiar el dato (incluyendo el carácter nulo)
     memcpy(paquete->buffer->stream + desplazamiento, dato, tamanio_dato);
 }
 
-void serializar_datos_leidos(t_paquete *paquete, t_list *lista)
+
+void serializar_datos_leidos(t_paquete *paquete, t_list *lista, void *valor, t_list *direccionesFisicas, int tamanio)
 {
     uint32_t tamanioLista = list_size(lista);
 
-    // Calcular el tamaño total necesario para el buffer
+    // Calcular tamaño total del paquete
     uint32_t sizeTotal = sizeof(uint32_t); // Para almacenar el tamaño de la lista
-    for (int i = 0; i < tamanioLista; i++)
-    {
-        char *dato = list_get(lista, i);
-        uint32_t longitud = strlen(dato) + 1;     // +1 para incluir el carácter nulo
-        sizeTotal += sizeof(uint32_t) + longitud; // Para longitud + datos
+    for (int i = 0; i < tamanioLista; i++) {
+        t_direcciones_fisicas *direccion = list_get(direccionesFisicas, i);
+        sizeTotal += direccion->tamanio; // Sumar el tamaño de cada elemento
     }
-
+    
+    uint32_t tamanioVoid = 0;
+    if (tamanio == 1){
+        sizeTotal += sizeof(uint8_t);
+        tamanioVoid =  sizeof(uint8_t);// Para almacenar el valor adicional
+    }else{
+        sizeTotal += sizeof(uint32_t); // Para almacenar el valor adicional
+        tamanioVoid =  sizeof(uint32_t);
+    }
+    // Asignar memoria para el stream del paquete
     paquete->buffer->size = sizeTotal;
-    paquete->buffer->stream = malloc(paquete->buffer->size);
+    paquete->buffer->stream = malloc(sizeTotal);
     if (paquete->buffer->stream == NULL)
     {
         perror("Error al asignar memoria para paquete->buffer->stream");
@@ -1888,19 +1901,26 @@ void serializar_datos_leidos(t_paquete *paquete, t_list *lista)
     memcpy(paquete->buffer->stream + desplazamiento, &tamanioLista, sizeof(uint32_t));
     desplazamiento += sizeof(uint32_t);
 
-    // Iterar sobre cada elemento de la lista
+    // Serializar cada elemento de la lista principal
     for (int i = 0; i < tamanioLista; i++)
     {
-        char *dato = list_get(lista, i);
+        void *dato = list_get(lista, i);
+        t_direcciones_fisicas *direccion = list_get(direccionesFisicas, i);
 
-        // Serializar cada dato en el stream
-        uint32_t longitud = strlen(dato) + 1; // +1 para incluir el carácter nulo
-        memcpy(paquete->buffer->stream + desplazamiento, &longitud, sizeof(uint32_t));
-        desplazamiento += sizeof(uint32_t);
+        // Verificar que el tamaño coincida
+        if (direccion == NULL || direccion->tamanio == 0) {
+            // Manejo de error o advertencia si la dirección no está correctamente inicializada
+            // Dependiendo de la lógica de tu aplicación
+        }
 
-        memcpy(paquete->buffer->stream + desplazamiento, dato, longitud);
-        desplazamiento += longitud;
+        // Copiar el dato al stream
+        memcpy(paquete->buffer->stream + desplazamiento, dato, direccion->tamanio);
+        desplazamiento += direccion->tamanio;
     }
+
+    // Serializar el valor adicional al final del stream
+    memcpy(paquete->buffer->stream + desplazamiento, valor, tamanioVoid);
+    desplazamiento += tamanioVoid;
 }
 
 char *recibir_dato_stdout(int socket_cliente)
@@ -1915,7 +1935,13 @@ char *recibir_dato_stdout(int socket_cliente)
 char *deserializar_dato_interfaz_STDOUT(t_paquete *paquete)
 {
     int desplazamiento = 0;
-    char *datoObtenido = NULL; // Inicializar el puntero
+    char *datoObtenido = NULL;
+
+    // Validar que el paquete y su buffer no sean NULL
+    if (paquete == NULL || paquete->buffer == NULL || paquete->buffer->stream == NULL) {
+        perror("Paquete o buffer no inicializado correctamente");
+        return NULL;
+    }
 
     // Deserializar el tamaño del dato
     uint32_t tamanio_Dato;
@@ -1923,16 +1949,16 @@ char *deserializar_dato_interfaz_STDOUT(t_paquete *paquete)
     desplazamiento += sizeof(uint32_t);
 
     // Asignar memoria para datoObtenido
-    datoObtenido = malloc(tamanio_Dato);
+    datoObtenido = malloc(tamanio_Dato + 1);  // +1 para el carácter nulo al final
     if (datoObtenido == NULL)
     {
         perror("Error al asignar memoria para datoObtenido");
-        return NULL; // O manejar el error según tu lógica de aplicación
+        return NULL;
     }
 
     // Deserializar el dato
     memcpy(datoObtenido, paquete->buffer->stream + desplazamiento, tamanio_Dato);
-    desplazamiento += tamanio_Dato;
+    datoObtenido[tamanio_Dato] = '\0';  // Agregar el carácter nulo al final
 
     return datoObtenido;
 }
