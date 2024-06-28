@@ -373,10 +373,10 @@ void iniciar_semaforos()
     pthread_mutex_init(&mutex_comunicacion_procesos, NULL);
 }
 
-void recibir_mov_out_cpu(t_list *lista_direcciones, void **valorObtenido, int cliente_socket, uint32_t *pid,bool *es8bits)
+void recibir_mov_out_cpu(t_list *lista_direcciones, void **valorObtenido, int cliente_socket, uint32_t *pid, bool *es8bits)
 {
     t_paquete *paquete = recibir_paquete(cliente_socket);
-    deserializar_datos_mov_out(paquete, lista_direcciones, valorObtenido, pid,es8bits );
+    deserializar_datos_mov_out(paquete, lista_direcciones, valorObtenido, pid, es8bits);
     // printf("Valor dir_fisica recv: %ls \n", direccion_fisica);
     // printf("Valor tamanio_registro recv: %ls \n", tamanio_registro);
     // printf("Valor valorObtenido recv: %ls \n", valorObtenido);
@@ -386,7 +386,7 @@ void recibir_mov_out_cpu(t_list *lista_direcciones, void **valorObtenido, int cl
 void deserializar_datos_mov_out(t_paquete *paquete, t_list *lista_datos, void **valorObtenido, uint32_t *pid, bool *es8bits)
 {
     int desplazamiento = 0;
-    
+
     // Calculamos el número de elementos esperados en la lista
     size_t num_elementos = (paquete->buffer->size - sizeof(uint32_t) - sizeof(uint8_t)) / (2 * sizeof(uint32_t));
 
@@ -550,15 +550,13 @@ void deserializar_datos_copystring(t_paquete *paquete, t_list *Lista_direcciones
     memcpy(pid, paquete->buffer->stream + desplazamiento, sizeof(uint32_t));
 }
 
-
-
-void escribir_memoria(t_list *direcciones, void* valor_obtenido, uint32_t pid, int tamanio_registro)
+void escribir_memoria(t_list *direcciones, void *valor_obtenido, uint32_t pid, int tamanio_registro)
 {
     pthread_mutex_lock(&mutex_memoria_usuario);
 
     int tamanioValor = tamanio_registro; // Utilizar el tamaño real pasado como parámetro
     void *copia = calloc(tamanioValor, 1);
-    
+
     // Copiar los datos de valor_obtenido
     memcpy(copia, valor_obtenido, tamanioValor);
 
@@ -567,25 +565,24 @@ void escribir_memoria(t_list *direcciones, void* valor_obtenido, uint32_t pid, i
     {
         t_direcciones_fisicas *direccion = list_get(direcciones, i);
         int copia_tamanio = (direccion->tamanio < tamanioValor - aux) ? direccion->tamanio : tamanioValor - aux;
-        memcpy(memoriaUsuario + direccion->direccion_fisica, (char *) copia + aux, copia_tamanio);
+        memcpy(memoriaUsuario + direccion->direccion_fisica, (char *)copia + aux, copia_tamanio);
         log_info(LOGGER_MEMORIA, "PID: <%d> - Accion: <ESCRIBIR> - Direccion Fisica: <%d> - Tamaño <%d> \n", pid, direccion->direccion_fisica, direccion->tamanio);
         aux += copia_tamanio;
 
         // Break si ya se ha copiado todo el valor
-        if (aux >= tamanioValor) {
+        if (aux >= tamanioValor)
+        {
             break;
         }
     }
-    //mem_hexdump(memoriaUsuario,256);
+    // mem_hexdump(memoriaUsuario,256);
 
     // Liberar la memoria de copia
     free(copia);
 
     pthread_mutex_unlock(&mutex_memoria_usuario);
-        usleep(RETARDO_RESPUESTA * 1000);
-
+    usleep(RETARDO_RESPUESTA * 1000);
 }
-
 
 void *leer_memoria(t_list *direcciones, uint32_t pid, int tamanio_registro, t_list *datos_leidos)
 {
@@ -595,17 +592,19 @@ void *leer_memoria(t_list *direcciones, uint32_t pid, int tamanio_registro, t_li
 
     int aux = 0;
 
-    for (int i = 0; i < list_size(direcciones); i++) {
+    for (int i = 0; i < list_size(direcciones); i++)
+    {
         void *resultado_parcial = calloc(tamanio_registro, 1); // Resultado parcial por cada dirección
         t_direcciones_fisicas *direccion = list_get(direcciones, i);
 
         // Verificar que la dirección física sea válida
-        if (direccion->direccion_fisica >= 0 && direccion->direccion_fisica < (uintptr_t)memoriaUsuario) {
+        if (direccion->direccion_fisica >= 0 && direccion->direccion_fisica < (uintptr_t)memoriaUsuario)
+        {
             // Copiar datos desde memoriaUsuario a resultado
-            memcpy((char *) resultado + aux, memoriaUsuario + direccion->direccion_fisica, direccion->tamanio);
+            memcpy((char *)resultado + aux, memoriaUsuario + direccion->direccion_fisica, direccion->tamanio);
 
             // Copiar datos parciales a resultado_parcial y agregarlo a la lista datos_leidos
-            memcpy((char *) resultado_parcial, memoriaUsuario + direccion->direccion_fisica, direccion->tamanio);
+            memcpy((char *)resultado_parcial, memoriaUsuario + direccion->direccion_fisica, direccion->tamanio);
             list_add(datos_leidos, resultado_parcial);
         }
 
@@ -625,4 +624,3 @@ void *leer_memoria(t_list *direcciones, uint32_t pid, int tamanio_registro, t_li
 
     return resultado_final;
 }
-
