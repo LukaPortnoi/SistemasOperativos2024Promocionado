@@ -38,7 +38,6 @@ static void procesar_conexion_memoria(void *void_args)
 			break;
 
 		case FINALIZAR_PROCESO:
-			mem_hexdump(memoriaUsuario, TAM_MEMORIA);
 			uint32_t pid_a_finalizar;
 			recibir_finalizar_proceso(&pid_a_finalizar, cliente_socket);
 			proceso_memoria = obtener_proceso_pid(pid_a_finalizar);
@@ -52,7 +51,6 @@ static void procesar_conexion_memoria(void *void_args)
 				liberar_estructura_proceso_memoria(proceso_memoria);
 				break;
 			}
-			
 
 		// -------------------
 		// -- CPU - MEMORIA --
@@ -120,11 +118,7 @@ static void procesar_conexion_memoria(void *void_args)
 
 			void *mostrar = malloc(tamanio_registro);
 			mostrar = leer_memoria(direcciones_fisicas_mov_in, pidMovIn, tamanio_registro, lista_datos_leidos_mov_in);
-			//uint32_t valor = *(uint32_t *)mostrar;
-
-		
-			
-			
+			// uint32_t valor = *(uint32_t *)mostrar;
 
 			enviar_dato_movIn(cliente_socket, lista_datos_leidos_mov_in, mostrar, direcciones_fisicas_mov_in, tamanio_registro);
 			list_clean_and_destroy_elements(direcciones_fisicas_mov_in, free);
@@ -133,14 +127,14 @@ static void procesar_conexion_memoria(void *void_args)
 			break;
 
 		case PEDIDO_MOV_OUT:
-			 // me pasa por parametro un uint32_t y tengo que guardarlo en el marco que me dice
+			// me pasa por parametro un uint32_t y tengo que guardarlo en el marco que me dice
 
 			t_list *direcciones_fisicas_mov_out = list_create();
 			void *valor_obtenido_mov_out;
 			uint32_t pidMovOut;
 			bool es8bits = false;
 			recibir_mov_out_cpu(direcciones_fisicas_mov_out, &valor_obtenido_mov_out, cliente_socket, &pidMovOut, &es8bits);
-			/* 
+			/*
 			if (es8bits) {
 				uint8_t valor_obtenido_8bits = *((uint8_t *) valor_obtenido_mov_out);
 				printf("Valor obtenido de 8 bits: %d\n", valor_obtenido_8bits);
@@ -178,8 +172,6 @@ static void procesar_conexion_memoria(void *void_args)
 			list_clean_and_destroy_elements(direcciones_fisicas_escritura, free);
 			list_clean_and_destroy_elements(direcciones_fisicas_lectura, free);
 			list_clean_and_destroy_elements(lista_aux, free);
-
-			
 
 			break;
 
@@ -219,7 +211,8 @@ static void procesar_conexion_memoria(void *void_args)
 
 			void *valor_leido_stdout = leer_memoria(direcciones_fisicas_a_leer, pidStdout, tamanio_registroTotal_stdout, lista_datos_a_leer);
 			char *valor_stdout = malloc(tamanio_registroTotal_stdout + 1);
-			if (valor_stdout == NULL) {
+			if (valor_stdout == NULL)
+			{
 				perror("Error al asignar memoria para valor_stdout");
 				// Manejo de error
 				break;
@@ -227,7 +220,7 @@ static void procesar_conexion_memoria(void *void_args)
 
 			memcpy(valor_stdout, valor_leido_stdout, tamanio_registroTotal_stdout);
 			valor_stdout[tamanio_registroTotal_stdout] = '\0';
-			
+
 			enviar_dato_leido(cliente_socket, valor_stdout, tamanio_registroTotal_stdout);
 			list_destroy_and_destroy_elements(direcciones_fisicas_a_leer, free);
 			list_destroy_and_destroy_elements(lista_datos_a_leer, free);

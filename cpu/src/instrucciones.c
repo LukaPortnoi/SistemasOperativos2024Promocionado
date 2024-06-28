@@ -36,50 +36,46 @@ void _mov_in(char *registro, char *direc_logica, int socket)
     Lista_direccionesFisica = traducir_direccion(pcb_actual->pid, direccionLogica32, TAM_PAGINA, tamanio_registro);
     // printf("tamanio de la lista de direcciones fisicas: %d \n", list_size(Lista_direccionesFisica));
     enviar_valor_mov_in_cpu(Lista_direccionesFisica, socket, pcb_actual->pid);
-    void *datoObtenido ;
-    
-    datosRecibidos = recibir_dato_de_memoria_movIn(socket, LOGGER_CPU, &datoObtenido, Lista_direccionesFisica, tamanio_registro);
-    uint32_t registro_final = 0;
+    void *datoObtenido;
 
+    datosRecibidos = recibir_dato_de_memoria_movIn(socket, LOGGER_CPU, &datoObtenido, Lista_direccionesFisica, tamanio_registro);
 
     if (revisar_registro(registro))
     {
-		uint8_t valor_obtenido_8bits = *((uint8_t *) datoObtenido);
+        uint8_t valor_obtenido_8bits = *((uint8_t *)datoObtenido);
         *(get_registry8(registro)) = valor_obtenido_8bits;
-        registro_final = *(get_registry8(registro));
     }
     else
     {
-        uint32_t valor_obtenido_32bits = *((uint32_t *) datoObtenido);
+        uint32_t valor_obtenido_32bits = *((uint32_t *)datoObtenido);
         *(get_registry32(registro)) = valor_obtenido_32bits;
-        registro_final = *(get_registry32(registro));
     }
 
-    //printf("Registro Obtenido %d \n", registro_final);
-    // mem_hexdump(datoObtenido, strlen(datoObtenido));
+    // printf("Registro Obtenido %d \n", registro_final);
+    //  mem_hexdump(datoObtenido, strlen(datoObtenido));
 
     for (int i = 0; i < list_size(Lista_direccionesFisica); i++)
     {
         t_direcciones_fisicas *direccionAmostrar = list_get(Lista_direccionesFisica, i);
         void *datoRecibido = list_get(datosRecibidos, i);
-        
-        int dato8 =0;
+
+        int dato8 = 0;
         int dato32 = 0;
         if (tamanio_registro == 1)
         {
-             memcpy(&dato8, datoRecibido, direccionAmostrar->tamanio);
+            memcpy(&dato8, datoRecibido, direccionAmostrar->tamanio);
             log_info(LOGGER_CPU, "PID: %d - Acción: LEER - Dirección Física: %d - Valor: %d", pcb_actual->pid, direccionAmostrar->direccion_fisica, dato8);
-
-        }else{
-             memcpy(&dato32, datoRecibido, direccionAmostrar->tamanio);
+        }
+        else
+        {
+            memcpy(&dato32, datoRecibido, direccionAmostrar->tamanio);
             log_info(LOGGER_CPU, "PID: %d - Acción: LEER - Dirección Física: %d - Valor: %d", pcb_actual->pid, direccionAmostrar->direccion_fisica, dato32);
-
         }
 
         // free(dato2);
     }
 
-    list_destroy_and_destroy_elements(datosRecibidos, free); // FIJARSE BIEN
+    list_destroy_and_destroy_elements(datosRecibidos, free);          // FIJARSE BIEN
     list_destroy_and_destroy_elements(Lista_direccionesFisica, free); // FIJARSE BIEN
 }
 
@@ -88,7 +84,7 @@ void _mov_in(char *registro, char *direc_logica, int socket)
 void _mov_out(char *direc_logica, char *registro, int socket)
 {
     uint32_t direccionLogica32;
-    void* valorObtenido;
+    void *valorObtenido;
     bool es8bits = false;
 
     if (revisar_registro(direc_logica))
@@ -103,19 +99,18 @@ void _mov_out(char *direc_logica, char *registro, int socket)
     if (revisar_registro(registro))
     {
         uint8_t valorObtenido8 = *(get_registry8(registro));
-        valorObtenido=malloc(sizeof(uint8_t));
+        valorObtenido = malloc(sizeof(uint8_t));
         memcpy(valorObtenido, &valorObtenido8, sizeof(uint8_t));
-        //valorObtenido = &valorObtenido8;  
-         es8bits = true;  
+        // valorObtenido = &valorObtenido8;
+        es8bits = true;
     }
     else
     {
         uint32_t valorObtenido32 = *(get_registry32(registro));
-        valorObtenido=malloc(sizeof(uint32_t));
+        valorObtenido = malloc(sizeof(uint32_t));
         memcpy(valorObtenido, &valorObtenido32, sizeof(uint32_t));
-        //valorObtenido = &valorObtenido32; 
-        es8bits = false;  
-   
+        // valorObtenido = &valorObtenido32;
+        es8bits = false;
     }
 
     uint32_t tamanio_registro = obtener_tamanio_registro(registro);
@@ -126,13 +121,14 @@ void _mov_out(char *direc_logica, char *registro, int socket)
     for (int i = 0; i < list_size(Lista_direccionesFisica); i++)
     {
         t_direcciones_fisicas *direccionAmostrar = list_get(Lista_direccionesFisica, i);
-        
+
         if (i == 0 && direccionAmostrar->tamanio == 1)
         {
-            log_info(LOGGER_CPU, "PID: %d - Acción: ESCRIBIR - Dirección Física: %d - Valor: %d", pcb_actual->pid, direccionAmostrar->direccion_fisica,*(uint8_t *)valorObtenido);
+            log_info(LOGGER_CPU, "PID: %d - Acción: ESCRIBIR - Dirección Física: %d - Valor: %d", pcb_actual->pid, direccionAmostrar->direccion_fisica, *(uint8_t *)valorObtenido);
         }
-        else{
-            log_info(LOGGER_CPU, "PID: %d - Acción: ESCRIBIR - Dirección Física: %d - Valor: %d", pcb_actual->pid, direccionAmostrar->direccion_fisica,*(uint32_t *)valorObtenido);
+        else
+        {
+            log_info(LOGGER_CPU, "PID: %d - Acción: ESCRIBIR - Dirección Física: %d - Valor: %d", pcb_actual->pid, direccionAmostrar->direccion_fisica, *(uint32_t *)valorObtenido);
         }
     }
 
@@ -446,7 +442,7 @@ void _io_fs_write(char *interfaz, char *nombre_archivo, char *direc_logica, char
         tamanioEscribir = *(get_registry32(tamanio));
     }
 
-    t_list *direcciones = traducir_direccion(pcb_actual->pid, direccionLogica, TAM_PAGINA, tamanioEscribir);    // FIJARSE BIEN
+    t_list *direcciones = traducir_direccion(pcb_actual->pid, direccionLogica, TAM_PAGINA, tamanioEscribir); // FIJARSE BIEN
 
     enviar_interfaz_fs_write_read(pcb_actual, interfaz, nombre_archivo, direcciones, tamanioEscribir, puntero_archivo, cliente_socket, IO_FS_WRITE);
     list_destroy_and_destroy_elements(direcciones, free);
@@ -476,7 +472,7 @@ void _io_fs_read(char *interfaz, char *nombre_archivo, char *direc_logica, char 
         tamanioLeer = *(get_registry32(tamanio));
     }
 
-    t_list *direcciones = traducir_direccion(pcb_actual->pid, direccionLogica, TAM_PAGINA, tamanioLeer);    // FIJARSE BIEN
+    t_list *direcciones = traducir_direccion(pcb_actual->pid, direccionLogica, TAM_PAGINA, tamanioLeer); // FIJARSE BIEN
 
     enviar_interfaz_fs_write_read(pcb_actual, interfaz, nombre_archivo, direcciones, tamanioLeer, puntero_archivo, cliente_socket, IO_FS_READ);
     list_destroy_and_destroy_elements(direcciones, free);
@@ -777,15 +773,19 @@ void serializar_datos_mov_out(t_paquete *paquete, t_list *Lista_direccionesFisic
     // el indicador de 8 bits, el valor obtenido y el PID.
     paquete->buffer->size = list_size(Lista_direccionesFisica) * 2 * sizeof(uint32_t) + sizeof(uint32_t) + sizeof(uint8_t);
 
-    if (es8bits) {
+    if (es8bits)
+    {
         paquete->buffer->size += sizeof(uint8_t);
-    } else {
+    }
+    else
+    {
         paquete->buffer->size += sizeof(uint32_t);
     }
 
     // Reservamos la memoria para el buffer
     paquete->buffer->stream = malloc(paquete->buffer->size);
-    if (paquete->buffer->stream == NULL) {
+    if (paquete->buffer->stream == NULL)
+    {
         // Manejar el error de memoria no asignada adecuadamente aquí
         return;
     }
@@ -808,10 +808,13 @@ void serializar_datos_mov_out(t_paquete *paquete, t_list *Lista_direccionesFisic
     desplazamiento += sizeof(uint8_t);
 
     // Copiamos el valor de valorObtenido al buffer
-    if (es8bits) {
+    if (es8bits)
+    {
         memcpy(paquete->buffer->stream + desplazamiento, valorObtenido, sizeof(uint8_t));
         desplazamiento += sizeof(uint8_t);
-    } else {
+    }
+    else
+    {
         memcpy(paquete->buffer->stream + desplazamiento, valorObtenido, sizeof(uint32_t));
         desplazamiento += sizeof(uint32_t);
     }
@@ -865,10 +868,10 @@ void serializar_datos_copy_string(t_paquete *paquete, t_list *Lista_direccionesF
     memcpy(paquete->buffer->stream + desplazamiento, &pid, sizeof(uint32_t));
 }
 
-t_list *recibir_dato_movIN(int socket_cliente, void  **datoObtenido, t_list *Lista_direccionesFisica, int tamanio)
+t_list *recibir_dato_movIN(int socket_cliente, void **datoObtenido, t_list *Lista_direccionesFisica, int tamanio)
 {
     t_paquete *paquete = recibir_paquete(socket_cliente);
-    t_list *datosObtenido = deserializar_dato_movIN(paquete, datoObtenido,Lista_direccionesFisica, tamanio);
+    t_list *datosObtenido = deserializar_dato_movIN(paquete, datoObtenido, Lista_direccionesFisica, tamanio);
     eliminar_paquete(paquete);
     return datosObtenido;
 }
@@ -888,7 +891,7 @@ t_list *deserializar_dato_movIN(t_paquete *paquete, void **datoObtenido, t_list 
     for (int i = 0; i < tamanioLista; i++)
     {
         t_direcciones_fisicas *direccion = list_get(direccionesFisicas, i);
-        
+
         // Verificar que el tamaño especificado en la dirección física coincide con el tamaño del dato
         if (direccion->tamanio <= 0)
         {
@@ -916,18 +919,19 @@ t_list *deserializar_dato_movIN(t_paquete *paquete, void **datoObtenido, t_list 
         list_add(lista_deserializada, dato_ptr);
     }
 
-
     // Deserializar el valor adicional al final del stream
-    if (tamanio ==1){
+    if (tamanio == 1)
+    {
         *datoObtenido = malloc(sizeof(uint8_t));
-    memcpy(*datoObtenido, paquete->buffer->stream + desplazamiento, sizeof(uint8_t));
-    desplazamiento += sizeof(uint8_t);
-    }else{
-        *datoObtenido = malloc(sizeof(uint32_t));
-    memcpy(*datoObtenido, paquete->buffer->stream + desplazamiento, sizeof(uint32_t));
-    desplazamiento += sizeof(uint32_t);
+        memcpy(*datoObtenido, paquete->buffer->stream + desplazamiento, sizeof(uint8_t));
+        desplazamiento += sizeof(uint8_t);
     }
-    
+    else
+    {
+        *datoObtenido = malloc(sizeof(uint32_t));
+        memcpy(*datoObtenido, paquete->buffer->stream + desplazamiento, sizeof(uint32_t));
+        desplazamiento += sizeof(uint32_t);
+    }
 
     return lista_deserializada;
 }
