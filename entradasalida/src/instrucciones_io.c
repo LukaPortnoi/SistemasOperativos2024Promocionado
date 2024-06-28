@@ -110,6 +110,8 @@ void procesar_dialfs_create(int socket_cliente)
 
         config_save(metadata_config);
 
+        list_add(ARCHIVOS_EN_FS, crear_archivo(interfazRecibida->nombre_archivo, bloque_inicial, 0));
+
         log_info(LOGGER_INPUT_OUTPUT, "PID: %d - Crear archivo: %s", interfazRecibida->pidPcb, interfazRecibida->nombre_archivo);
     }
 
@@ -144,6 +146,8 @@ void procesar_dialfs_delete(int socket_cliente)
     }
 
     uint32_t bloque_inicial = obtener_bloque_inicial(metadata_path);
+
+    eliminar_archivo_por_nombre(interfazRecibida->nombre_archivo);
 
     log_info(LOGGER_INPUT_OUTPUT, "PID: %d - Eliminar archivo: %s", interfazRecibida->pidPcb, interfazRecibida->nombre_archivo);
 
@@ -204,6 +208,7 @@ void procesar_dialfs_truncate(int socket_cliente)
         }
         actualizar_tamanio_archivo(metadata_config, nuevo_tamanio);
         config_save(metadata_config);
+        actualizar_archivo_en_lista(interfazRecibida->nombre_archivo, bloque_inicial, nuevo_tamanio);
         log_info(LOGGER_INPUT_OUTPUT, "PID: %d - Truncar archivo: %s - Tamaño: %d", interfazRecibida->pidPcb, interfazRecibida->nombre_archivo, nuevo_tamanio);
     }
     else if (nuevo_tamanio > bloques_ocupados * BLOCK_SIZE)
@@ -245,6 +250,7 @@ void procesar_dialfs_truncate(int socket_cliente)
             actualizar_bloque_inicial(metadata_config, bloque_libre);
             actualizar_tamanio_archivo(metadata_config, nuevo_tamanio);
             config_save(metadata_config);
+            actualizar_archivo_en_lista(interfazRecibida->nombre_archivo, bloque_libre, nuevo_tamanio);
             log_info(LOGGER_INPUT_OUTPUT, "PID: %d - Truncar archivo: %s - Tamaño: %d", interfazRecibida->pidPcb, interfazRecibida->nombre_archivo, nuevo_tamanio);
         }
     }

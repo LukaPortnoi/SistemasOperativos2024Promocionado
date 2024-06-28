@@ -3,7 +3,7 @@
 t_archivo *crear_archivo(char *nombre, uint32_t bloque_inicial, uint32_t tamanio)
 {
     t_archivo *archivo = malloc(sizeof(t_archivo));
-    archivo->nombre = nombre;
+    archivo->nombre = strdup(nombre);
     archivo->bloque_inicial = bloque_inicial;
     archivo->tamanio = tamanio;
     return archivo;
@@ -26,6 +26,22 @@ void eliminar_archivo_por_nombre(char *nombre)
     if (archivo != NULL)
     {
         destruir_archivo(archivo);
+    }
+}
+
+void actualizar_archivo_en_lista(char *nombre, uint32_t bloque_inicial, uint32_t tamanio)
+{
+    bool _es_archivo_por_nombre(t_archivo * archivo)
+    {
+        return strcmp(archivo->nombre, nombre) == 0;
+    }
+
+    t_archivo *archivo = list_find(ARCHIVOS_EN_FS, (void *)_es_archivo_por_nombre);
+    
+    if (archivo != NULL)
+    {
+        archivo->bloque_inicial = bloque_inicial;
+        archivo->tamanio = tamanio;
     }
 }
 

@@ -6,10 +6,12 @@
 t_archivo *crear_archivo(char *nombre, uint32_t bloque_inicial, uint32_t tamanio);
 void destruir_archivo(t_archivo *archivo);
 void eliminar_archivo_por_nombre(char *nombre);
+void actualizar_archivo_en_lista(char *nombre, uint32_t bloque_inicial, uint32_t tamanio);
 
 void manejar_archivos_fs();
 void crear_directorio_si_no_existe(const char *path);
 void actualizar_lista_archivos_en_fs();
+
 void actualizar_bloque_inicial(t_config *metadata_config, uint32_t bloque_inicial);
 void actualizar_tamanio_archivo(t_config *metadata_config, uint32_t tamanio);
 uint32_t obtener_bloque_inicial(char path[]);
