@@ -69,7 +69,7 @@ void procesar_dialfs_create(int socket_cliente)
     log_info(LOGGER_INPUT_OUTPUT, "PID: %d - Operacion: IO_FS_CREATE", interfazRecibida->pidPcb);
 
     char metadata_path[256];
-    obtener_metadata_path(interfazRecibida, metadata_path, sizeof(metadata_path));
+    obtener_metadata_path(interfazRecibida->nombre_archivo, metadata_path, sizeof(metadata_path));
 
     if (access(metadata_path, F_OK) == 0)
     {
@@ -133,7 +133,7 @@ void procesar_dialfs_delete(int socket_cliente)
     char *bitmap = mmap(NULL, bitmap_size, PROT_READ | PROT_WRITE, MAP_SHARED, fileno(bitmap_file), 0);
 
     char metadata_path[256];
-    obtener_metadata_path(interfazRecibida, metadata_path, sizeof(metadata_path));
+    obtener_metadata_path(interfazRecibida->nombre_archivo, metadata_path, sizeof(metadata_path));
 
     if (access(metadata_path, F_OK) != 0)
     {
@@ -174,7 +174,7 @@ void procesar_dialfs_truncate(int socket_cliente)
     log_info(LOGGER_INPUT_OUTPUT, "PID: %d - Operacion: IO_FS_TRUNCATE", interfazRecibida->pidPcb);
 
     char metadata_path[256];
-    obtener_metadata_path(interfazRecibida, metadata_path, sizeof(metadata_path));
+    obtener_metadata_path(interfazRecibida->nombre_archivo, metadata_path, sizeof(metadata_path));
 
     t_config *metadata_config = config_create(metadata_path);
 
@@ -209,7 +209,7 @@ void procesar_dialfs_truncate(int socket_cliente)
     else if (nuevo_tamanio > bloques_ocupados * BLOCK_SIZE)
     {
         // Agrandar el archivo
-        uint32_t bloque_libre = encontrar_bloques_libres_contiguos(bloque_inicial, bloques_necesarios);
+        int bloque_libre = encontrar_bloques_libres_contiguos(bloque_inicial, bloques_necesarios);
 
         if (bloque_libre == -1)
         {
@@ -267,7 +267,7 @@ void procesar_dialfs_write(int socket_cliente)
     log_info(LOGGER_INPUT_OUTPUT, "PID: %d - Operacion: IO_FS_WRITE", interfazRecibida->pidPcb);
 
     char metadata_path[256];
-    obtener_metadata_path(interfazRecibida, metadata_path, sizeof(metadata_path));
+    obtener_metadata_path(interfazRecibida->nombre_archivo, metadata_path, sizeof(metadata_path));
 
     FILE *bloques_file = fopen(BLOQUES_PATH, "r+");
     char *bloques = mmap(NULL, BLOCK_SIZE * BLOCK_COUNT, PROT_READ | PROT_WRITE, MAP_SHARED, fileno(bloques_file), 0);
@@ -294,7 +294,7 @@ void procesar_dialfs_read(int socket_cliente)
     log_info(LOGGER_INPUT_OUTPUT, "PID: %d - Operacion: IO_FS_READ", interfazRecibida->pidPcb);
 
     char metadata_path[256];
-    obtener_metadata_path(interfazRecibida, metadata_path, sizeof(metadata_path));
+    obtener_metadata_path(interfazRecibida->nombre_archivo, metadata_path, sizeof(metadata_path));
 
     FILE *bloques_file = fopen(BLOQUES_PATH, "r+");
     char *bloques = mmap(NULL, BLOCK_SIZE * BLOCK_COUNT, PROT_READ | PROT_WRITE, MAP_SHARED, fileno(bloques_file), 0);

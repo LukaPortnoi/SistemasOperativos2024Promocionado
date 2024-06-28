@@ -13,16 +13,26 @@
 #include <sys/stat.h>
 #include <pthread.h>
 #include <semaphore.h>
+#include <dirent.h>
+#include <sys/stat.h>
 
 #include <commons/log.h>
 #include <commons/string.h>
 #include <commons/config.h>
 #include <commons/bitarray.h>
+#include <commons/collections/list.h>
 
 #include "../../utils/include/sockets_server.h"
 #include "../../utils/include/sockets_client.h"
 #include "../../utils/include/sockets_utils.h"
 #include "../../utils/include/IO.h"
+
+typedef struct
+{
+    char *nombre;
+    uint32_t bloque_inicial;
+    uint32_t tamanio;
+} t_archivo;
 
 extern char *TIPO_INTERFAZ;
 extern int TIEMPO_UNIDAD_TRABAJO;
@@ -43,5 +53,6 @@ extern t_config *CONFIG_INPUT_OUTPUT;
 
 extern char BITMAP_PATH[256];
 extern char BLOQUES_PATH[256];
+extern t_list *ARCHIVOS_EN_FS;
 
 #endif /* GESTOR_H_ */

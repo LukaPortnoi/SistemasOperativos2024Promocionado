@@ -1,13 +1,43 @@
 #include "../include/dialfs.h"
 
+t_archivo *crear_archivo(char *nombre, uint32_t bloque_inicial, uint32_t tamanio)
+{
+    t_archivo *archivo = malloc(sizeof(t_archivo));
+    archivo->nombre = nombre;
+    archivo->bloque_inicial = bloque_inicial;
+    archivo->tamanio = tamanio;
+    return archivo;
+}
+
+void destruir_archivo(t_archivo *archivo)
+{
+    free(archivo->nombre);
+    free(archivo);
+}
+
+void eliminar_archivo_por_nombre(char *nombre)
+{
+    bool _es_archivo_por_nombre(t_archivo * archivo)
+    {
+        return strcmp(archivo->nombre, nombre) == 0;
+    }
+
+    t_archivo *archivo = list_remove_by_condition(ARCHIVOS_EN_FS, (void *)_es_archivo_por_nombre);
+    if (archivo != NULL)
+    {
+        destruir_archivo(archivo);
+    }
+}
+
 // Fijarse si existen los archivos bloques.dat y bitmap.dat en el PATH_BASE_DIALFS. Si no existen, crearlos.
 void manejar_archivos_fs()
 {
-    // Verificar y crear bloques.dat si no existe
+    crear_directorio_si_no_existe(PATH_BASE_DIALFS);
+
     FILE *bloques_file = fopen(BLOQUES_PATH, "rb+");
     if (bloques_file == NULL)
     {
-        // El archivo no existe, crearlo
+        // El archivo no existe, se crea
         bloques_file = fopen(BLOQUES_PATH, "wb+");
         if (bloques_file == NULL)
         {
@@ -15,7 +45,6 @@ void manejar_archivos_fs()
             exit(EXIT_FAILURE);
         }
 
-        // Establecer el tamaño del archivo
         if (ftruncate(fileno(bloques_file), BLOCK_SIZE * BLOCK_COUNT) == -1)
         {
             log_error(LOGGER_INPUT_OUTPUT, "Error al establecer el tamaño de bloques.dat");
@@ -26,11 +55,10 @@ void manejar_archivos_fs()
     fclose(bloques_file);
     log_trace(LOGGER_INPUT_OUTPUT, "Archivo bloques.dat verificado/creado con éxito");
 
-    // Verificar y crear bitmap.dat si no existe
     FILE *bitmap_file = fopen(BITMAP_PATH, "rb+");
     if (bitmap_file == NULL)
     {
-        // El archivo no existe, crearlo
+        // El archivo no existe, se crea
         bitmap_file = fopen(BITMAP_PATH, "wb+");
         if (bitmap_file == NULL)
         {
@@ -47,7 +75,6 @@ void manejar_archivos_fs()
             exit(EXIT_FAILURE);
         }
 
-        // Inicializar el bitmap utilizando la librería
         t_bitarray *bitarray = bitarray_create_with_mode(bitmap_data, bitmap_size, LSB_FIRST);
         if (bitarray == NULL)
         {
@@ -72,6 +99,56 @@ void manejar_archivos_fs()
     }
     fclose(bitmap_file);
     log_trace(LOGGER_INPUT_OUTPUT, "Archivo bitmap.dat verificado/creado con éxito");
+}
+
+void crear_directorio_si_no_existe(const char *path)
+{
+    struct stat st = {0};
+    if (stat(path, &st) == -1)
+    {
+        if (mkdir(path, 0700) != 0)
+        {
+            log_error(LOGGER_INPUT_OUTPUT, "Error al crear el directorio %s", path);
+            exit(EXIT_FAILURE);
+        }
+    }
+    log_trace(LOGGER_INPUT_OUTPUT, "Directorio %s verificado/creado con éxito", path);
+}
+
+void actualizar_lista_archivos_en_fs()
+{
+    DIR *dir = opendir(PATH_BASE_DIALFS);
+    if (dir == NULL)
+    {
+        log_error(LOGGER_INPUT_OUTPUT, "Error al abrir el directorio %s", PATH_BASE_DIALFS);
+        exit(EXIT_FAILURE);
+    }
+
+    list_clean_and_destroy_elements(ARCHIVOS_EN_FS, (void (*)(void *))destruir_archivo);
+
+    struct dirent *entry;
+    while ((entry = readdir(dir)) != NULL)
+    {
+        if (entry->d_type == DT_REG)
+        {
+            if (strcmp(entry->d_name, "bloques.dat") == 0 || strcmp(entry->d_name, "bitmap.dat") == 0)
+            {
+                continue;
+            }
+
+            char *nombre_archivo = strdup(entry->d_name);
+            char metadata_path[256];
+            obtener_metadata_path(nombre_archivo, metadata_path, sizeof(metadata_path));
+
+            if (access(metadata_path, F_OK) != -1)
+            {
+                t_archivo *archivo_en_fs = crear_archivo(nombre_archivo, obtener_bloque_inicial(metadata_path), obtener_tamanio_archivo(metadata_path));
+                list_add(ARCHIVOS_EN_FS, archivo_en_fs);
+            }
+        }
+    }
+
+    closedir(dir);
 }
 
 void actualizar_bloque_inicial(t_config *metadata_config, uint32_t bloque_inicial)
@@ -104,13 +181,12 @@ uint32_t obtener_tamanio_archivo(char path[])
     return tamanio;
 }
 
-char *obtener_metadata_path(t_interfaz_dialfs *interfazRecibida, char *metadata_path, size_t size)
+void obtener_metadata_path(char *nombre_archivo, char *metadata_path, size_t size)
 {
-    snprintf(metadata_path, size, "%s/%s", PATH_BASE_DIALFS, interfazRecibida->nombre_archivo);
-    return metadata_path;
+    snprintf(metadata_path, size, "%s/%s", PATH_BASE_DIALFS, nombre_archivo);
 }
 
-uint32_t encontrar_bloque_libre()
+int encontrar_bloque_libre()
 {
     FILE *bitmap_file = fopen(BITMAP_PATH, "r+");
 
@@ -134,7 +210,7 @@ uint32_t encontrar_bloque_libre()
     return -1;
 }
 
-uint32_t encontrar_bloques_libres_contiguos(uint32_t bloque_inicial, uint32_t bloques_necesarios)
+int encontrar_bloques_libres_contiguos(uint32_t bloque_inicial, uint32_t bloques_necesarios)
 {
     FILE *bitmap_file = fopen(BITMAP_PATH, "r+");
     size_t bitmap_size = BLOCK_COUNT / 8;
@@ -223,7 +299,6 @@ void escribir_dato_archivo(char *datoRecibido, char *puntero_archivo, char *bloq
 
     while (len_dato > 0)
     {
-        uint32_t bloque_actual = posicion_actual / BLOCK_SIZE;
         uint32_t offset_en_bloque = posicion_actual % BLOCK_SIZE;
         uint32_t espacio_disponible = BLOCK_SIZE - offset_en_bloque;
 

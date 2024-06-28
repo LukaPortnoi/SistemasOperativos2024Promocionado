@@ -20,6 +20,7 @@ t_interfaz *interfaz_actual;
 
 char BITMAP_PATH[256];
 char BLOQUES_PATH[256];
+t_list *ARCHIVOS_EN_FS;
 
 int main(int argc, char **argv)
 {
@@ -43,11 +44,6 @@ void inicializar_config(char *config_path)
     PATH_BASE_DIALFS = config_get_string_value(CONFIG_INPUT_OUTPUT, "PATH_BASE_DIALFS");
     BLOCK_SIZE = config_get_int_value(CONFIG_INPUT_OUTPUT, "BLOCK_SIZE");
     BLOCK_COUNT = config_get_int_value(CONFIG_INPUT_OUTPUT, "BLOCK_COUNT");
-
-    if (obtener_tipo_interfaz(TIPO_INTERFAZ) == DIALFS)
-    {
-        RETRASO_COMPACTACION = config_get_int_value(CONFIG_INPUT_OUTPUT, "RETRASO_COMPACTACION");
-    }
 }
 
 void iniciar_conexiones()
@@ -71,14 +67,22 @@ void iniciar_io(char *arg)
 
     if (interfaz_actual->tipo_interfaz == DIALFS)
     {
+        RETRASO_COMPACTACION = config_get_int_value(CONFIG_INPUT_OUTPUT, "RETRASO_COMPACTACION");
         snprintf(BITMAP_PATH, sizeof(BITMAP_PATH), "%s/bitmap.dat", PATH_BASE_DIALFS);
         snprintf(BLOQUES_PATH, sizeof(BLOQUES_PATH), "%s/bloques.dat", PATH_BASE_DIALFS);
+        ARCHIVOS_EN_FS = list_create();
         manejar_archivos_fs();
+        actualizar_lista_archivos_en_fs();
+        log_debug(LOGGER_INPUT_OUTPUT, "Tamaño de lista de archivos: %d", list_size(ARCHIVOS_EN_FS));
     }
 }
 
 void finalizar_io()
 {
+    if (interfaz_actual->tipo_interfaz == DIALFS)
+    {
+        list_destroy_and_destroy_elements(ARCHIVOS_EN_FS, (void (*)(void *))destruir_archivo);
+    }
     log_destroy(LOGGER_INPUT_OUTPUT);
     config_destroy(CONFIG_INPUT_OUTPUT);
     liberar_conexion(fd_io_memoria);
