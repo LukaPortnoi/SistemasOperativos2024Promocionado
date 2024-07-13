@@ -7,6 +7,25 @@ void destroyInterfazDialfs(t_interfaz_dialfs *interfaz)
     list_destroy_and_destroy_elements(interfaz->direcciones, free);
     free(interfaz);
 }
+void destroyInterfazStdin(t_interfaz_stdin *interfaz)
+{
+    free(interfaz->nombre_interfaz);
+    list_destroy_and_destroy_elements(interfaz->direccionesFisicas, free);
+    free(interfaz);
+}
+
+void destroyInterfazStdout(t_interfaz_stdout *interfaz)
+{
+    free(interfaz->nombre_interfaz);
+    list_destroy_and_destroy_elements(interfaz->direccionesFisicas, free);
+    free(interfaz);
+}
+
+void destroyInterfazGen(t_interfaz_gen *interfaz)
+{
+    free(interfaz->nombre_interfaz);
+    free(interfaz);
+}
 
 void deserializar_interfaz_dialfs_write_read(t_buffer *buffer, t_interfaz_dialfs *interfaz)
 {
@@ -161,7 +180,7 @@ void deserializar_pcb_fs_write_read(t_pcb *pcb, t_buffer *buffer, char **nombre_
     memcpy(&(pcb->tiempo_q), stream + desplazamiento, sizeof(uint64_t));
     desplazamiento += sizeof(uint64_t);
 
-    memcpy(pcb->contexto_ejecucion->registros, stream + desplazamiento, sizeof(tam_registros));
+    memcpy(pcb->contexto_ejecucion->registros, stream + desplazamiento, tam_registros);
     desplazamiento += tam_registros;
 
     memcpy(&(pcb->contexto_ejecucion->motivo_desalojo), stream + desplazamiento, sizeof(t_motivo_desalojo));
@@ -1112,6 +1131,7 @@ void enviar_InterfazGenericaConCodigoOP(int socket, int unidades_trabajo, uint32
     t_paquete *paquete = crear_paquete_InterfazGenericaCodOp(interfaz, FINALIZACION_INTERFAZ);
     enviar_paquete(paquete, socket);
     eliminar_paquete(paquete);
+    destroyInterfazGen(interfaz);
 }
 
 t_paquete *crear_paquete_InterfazGenericaCodOp(t_interfaz_gen *interfaz, op_cod codigo_operacion)

@@ -133,6 +133,7 @@ void _mov_out(char *direc_logica, char *registro, int socket)
     }
 
     list_destroy_and_destroy_elements(Lista_direccionesFisica, free); // FIJARSE BIEN
+    free(valorObtenido);
 }
 
 // (Registro Destino, Registro Origen): Suma al Registro Destino el

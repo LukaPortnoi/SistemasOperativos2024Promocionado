@@ -53,6 +53,9 @@ typedef struct
 
 // dialfs
 void destroyInterfazDialfs(t_interfaz_dialfs *interfaz);
+void destroyInterfazStdin(t_interfaz_stdin *interfaz);
+void destroyInterfazStdout(t_interfaz_stdout *interfaz);
+void destroyInterfazGen(t_interfaz_gen *interfaz);
 
 // ENVIO RECEPCION CON DIALFS
 

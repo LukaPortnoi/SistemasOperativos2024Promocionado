@@ -5,12 +5,14 @@ void procesar_sleep(int socket_cliente)
     t_interfaz_gen *interfazRecibida = recibir_InterfazGenerica(socket_cliente);
     log_info(LOGGER_INPUT_OUTPUT, "PID: %d - Operacion: IO_GEN_SLEEP", interfazRecibida->pidPcb);
 
-    log_trace(LOGGER_INPUT_OUTPUT, "Durmiendo: %d segundos", interfazRecibida->unidades_de_trabajo);
-    sleep(interfazRecibida->unidades_de_trabajo);
+    uint32_t tiempo = interfazRecibida->unidades_de_trabajo * TIEMPO_UNIDAD_TRABAJO;
+    float tiempo_segundos = tiempo / 1000.0;
+
+    log_trace(LOGGER_INPUT_OUTPUT, "Durmiendo: %.2f segundos", tiempo_segundos);
+    usleep(tiempo);
 
     enviar_InterfazGenericaConCodigoOP(socket_cliente, interfazRecibida->unidades_de_trabajo, interfazRecibida->pidPcb, interfazRecibida->nombre_interfaz);
 
-    free(interfazRecibida->nombre_interfaz);
     free(interfazRecibida);
 }
 
@@ -32,6 +34,7 @@ void procesar_stdin(int socket_cliente)
     free(datoRecibido);
 
     enviar_InterfazStdinConCodigoOPaKernel(socket_cliente, interfazRecibida->direccionesFisicas, interfazRecibida->pidPcb, interfazRecibida->nombre_interfaz);
+    destroyInterfazStdin(interfazRecibida);
 }
 
 char *procesarIngresoUsuario(uint32_t tamanioMaximo)
@@ -58,8 +61,10 @@ void procesar_stdout(int socket_cliente)
 
     char *datoRecibido = recibir_dato(fd_io_memoria, LOGGER_INPUT_OUTPUT);
     log_info(LOGGER_INPUT_OUTPUT, "Información leída: %s", datoRecibido);
+    free(datoRecibido); // NUEVONUEVO
 
     enviar_InterfazStdoutConCodigoOPaKernel(socket_cliente, interfazRecibida->direccionesFisicas, interfazRecibida->pidPcb, interfazRecibida->nombre_interfaz);
+    destroyInterfazStdout(interfazRecibida);
 }
 
 void procesar_dialfs_create(int socket_cliente)

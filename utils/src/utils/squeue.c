@@ -13,6 +13,7 @@ void squeue_destroy(t_squeue *squeue)
 {
     list_destroy(squeue->cola);
     pthread_mutex_destroy(squeue->mutex);
+    free(squeue->mutex);
     free(squeue);
 }
 

@@ -154,6 +154,7 @@ static void procesar_conexion_kernel(void *void_args)
 			}
 
 			free(interfazRecibidaIOdialfs->nombre_interfaz);
+			list_destroy_and_destroy_elements(interfazRecibidaIOdialfs->direcciones, (void *)free);
 			free(interfazRecibidaIOdialfs);
 			break;
 
