@@ -306,7 +306,7 @@ void compactar_dialfs(uint32_t pid)
     usleep(RETRASO_COMPACTACION * 1000);
     log_info(LOGGER_INPUT_OUTPUT, "PID: %d - Fin Compactación.", pid);
 }
-
+ 
 void escribir_dato_archivo(char *datoRecibido, char *puntero_archivo, char *bloques, uint32_t bloque_inicial)
 {
     uint32_t offset_inicial = atoi(puntero_archivo);
