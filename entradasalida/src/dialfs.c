@@ -345,6 +345,9 @@ void compactar_dialfs(uint32_t pid, char *bitmap, char *bloques)
     //Al mismo tiempo que voy obteniendo cada archivo y actualizandole su bloque inicial en la lista de archivos en fs, voy a buscar por su nombre a
     //char metadata_path[256] obtener_metadata_path(interfazRecibida->nombre_archivo, metadata_path, sizeof(metadata_path)); su metadata y actualizarle el bloque inicial con actualizar_bloque_inicial(metadata_config, bloque_inicial);
     actualizar_lista_archivos_compactados();
+
+    usleep(RETRASO_COMPACTACION * 1000);
+    log_info(LOGGER_INPUT_OUTPUT, "PID: %d - Fin Compactación.", pid);
 }
 
 void ordenar_lista_archivos_por_bloque_inicial()
