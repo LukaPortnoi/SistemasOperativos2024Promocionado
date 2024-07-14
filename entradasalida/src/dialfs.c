@@ -297,14 +297,86 @@ uint32_t contar_bloques_libres(char *bitmap)
     return contador;
 }
 
-void compactar_dialfs(uint32_t pid)
+void compactar_dialfs(uint32_t pid, char *bitmap, char *bloques)
 {
     log_info(LOGGER_INPUT_OUTPUT, "PID: %d - Inicio Compactación.", pid);
 
-    // Implementación pendiente
+    // Primero quiero saber el tamaño total que ocupan los archivos en bloques, para esto tengo que recorrer la lista de archivos y sumar sus tamaños
+    uint32_t tamanio_total_archivos = 0;
+    for (int i = 0; i < list_size(ARCHIVOS_EN_FS); i++)
+    {
+        t_archivo *archivo = list_get(ARCHIVOS_EN_FS, i);
+        tamanio_total_archivos += archivo->tamanio;
+    }
 
-    usleep(RETRASO_COMPACTACION * 1000);
-    log_info(LOGGER_INPUT_OUTPUT, "PID: %d - Fin Compactación.", pid);
+    // Ahora voy a ordenar la lista de archivos por bloque_inicial
+
+    ordenar_lista_archivos_por_bloque_inicial();
+
+    // Ya puedo hacer la compactacion con la lista de archivos ordenada, obteniendo de a uno su bloque inicial y tamanio y moviendolo a la posicion 0 de memoria que se va a ir actualizando con cada archivo
+    int espacio_a_mover = 0;
+    for(int i = 0; i < list_size(ARCHIVOS_EN_FS); i++)
+    {
+        t_archivo *archivo = list_get(ARCHIVOS_EN_FS, i);
+        int offset_inicial = archivo->tamanio;
+
+        if (offset_inicial % BLOCK_SIZE != 0)
+        {
+        offset_inicial = ((offset_inicial / BLOCK_SIZE) + 1) * BLOCK_SIZE;
+        }
+
+        memmove(bloques + espacio_a_mover, bloques + archivo->bloque_inicial * BLOCK_SIZE, offset_inicial); //Tambien podria usar memcpy
+        espacio_a_mover += offset_inicial;
+    }
+    
+    // Al finalizar la compactacion, tengo que actualizar el bitmap (ahora tendra todos 1 en tamanio_total_archivos/bloque_size bits)
+
+    // Primero limpio el bitmap
+    memset(bitmap, 0, ((BLOCK_COUNT + 7) / 8));
+    
+    // Luego voy a marcar los bloques ocupados, estos van a ser tamanio_total_archivos / BLOCK_SIZE porque van a estar todos juntos
+    for (int i = 0; i < (tamanio_total_archivos + BLOCK_SIZE - 1) / BLOCK_SIZE; i++)
+    {
+        int byte_index = i / 8;
+        int bit_index = i % 8;
+        bitmap[byte_index] |= (1 << bit_index);
+    }
+    //Luego voy a actualizar la lista de archivos en fs con los nuevos bloques iniciales, el primero tendra el bloque 0, el segundo tendra tamanio del primero, y asi sucesivamente todo esto dividido por el tamanio de un bloque
+    //Al mismo tiempo que voy obteniendo cada archivo y actualizandole su bloque inicial en la lista de archivos en fs, voy a buscar por su nombre a
+    //char metadata_path[256] obtener_metadata_path(interfazRecibida->nombre_archivo, metadata_path, sizeof(metadata_path)); su metadata y actualizarle el bloque inicial con actualizar_bloque_inicial(metadata_config, bloque_inicial);
+    actualizar_lista_archivos_compactados();
+}
+
+void ordenar_lista_archivos_por_bloque_inicial()
+{
+    bool _ordenar_por_bloque_inicial(t_archivo *archivo1, t_archivo *archivo2)
+    {
+    return archivo1->bloque_inicial < archivo2->bloque_inicial;
+    }
+    
+    list_sort(ARCHIVOS_EN_FS, (void *)_ordenar_por_bloque_inicial);
+}
+
+void actualizar_lista_archivos_compactados()
+{
+    int espacio_a_mover = 0;
+    for(int i = 0; i < list_size(ARCHIVOS_EN_FS); i++)
+    {
+        t_archivo *archivo = list_get(ARCHIVOS_EN_FS, i);
+        archivo->bloque_inicial = espacio_a_mover / BLOCK_SIZE;
+        espacio_a_mover += archivo->tamanio;
+
+        if (espacio_a_mover % BLOCK_SIZE != 0) {
+            espacio_a_mover = ((espacio_a_mover / BLOCK_SIZE) + 1) * BLOCK_SIZE;
+        }
+
+        char metadata_path[256];
+        obtener_metadata_path(archivo->nombre, metadata_path, sizeof(metadata_path));
+        t_config *metadata_config = config_create(metadata_path);
+        actualizar_bloque_inicial(metadata_config, archivo->bloque_inicial);
+        config_save(metadata_config);
+        config_destroy(metadata_config);
+    }
 }
  
 void escribir_dato_archivo(char *datoRecibido, char *puntero_archivo, char *bloques, uint32_t bloque_inicial)
