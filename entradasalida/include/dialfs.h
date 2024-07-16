@@ -34,5 +34,6 @@ void escribir_dato_archivo(char *datoRecibido, char *puntero_archivo, char *bloq
 char *leer_dato_archivo(uint32_t tamanio, char *puntero_archivo, char *bloques, uint32_t bloque_inicial);
 
 void imprimir_bitmap();
+uint32_t obtener_bloque_inicial_por_nombre(char *nombre);
 
 #endif // DIAlFS_H_

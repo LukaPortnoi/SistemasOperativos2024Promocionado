@@ -398,13 +398,14 @@ void actualizar_lista_archivos_compactados()
     for (int i = 0; i < list_size(ARCHIVOS_EN_FS); i++)
     {
         t_archivo *archivo = list_get(ARCHIVOS_EN_FS, i);
-        archivo->bloque_inicial = espacio_a_mover / BLOCK_SIZE;
-        espacio_a_mover += archivo->tamanio;
 
         if (espacio_a_mover % BLOCK_SIZE != 0)
         {
             espacio_a_mover = ((espacio_a_mover / BLOCK_SIZE) + 1) * BLOCK_SIZE;
         }
+
+        archivo->bloque_inicial = espacio_a_mover / BLOCK_SIZE;
+        espacio_a_mover += archivo->tamanio;
 
         char metadata_path[256];
         obtener_metadata_path(archivo->nombre, metadata_path, sizeof(metadata_path));
@@ -544,5 +545,22 @@ uint32_t encontrar_bloques_libres_contiguos_top(uint32_t bloque_inicial, uint32_
         }
     }
     free(bitmap_aux);
+    return -1;
+}
+
+//obtener bloque inicial en la lista de archivos en fs
+uint32_t obtener_bloque_inicial_por_nombre(char *nombre)
+{
+    bool _es_archivo_por_nombre(t_archivo * archivo)
+    {
+        return strcmp(archivo->nombre, nombre) == 0;
+    }
+
+    t_archivo *archivo = list_find(ARCHIVOS_EN_FS, (void *)_es_archivo_por_nombre);
+
+    if (archivo != NULL)
+    {
+        return archivo->bloque_inicial;
+    }
     return -1;
 }

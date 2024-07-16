@@ -212,7 +212,7 @@ void procesar_dialfs_truncate(int socket_cliente)
     char *bitmap = mmap(NULL, bitmap_size, PROT_READ | PROT_WRITE, MAP_SHARED, fileno(bitmap_file), 0);
     char *bloques = mmap(NULL, BLOCK_SIZE * BLOCK_COUNT, PROT_READ | PROT_WRITE, MAP_SHARED, fileno(bloques_file), 0);
 
-    uint32_t bloque_inicial = obtener_bloque_inicial(metadata_path);
+    uint32_t bloque_inicial = obtener_bloque_inicial_por_nombre(interfazRecibida->nombre_archivo);
     uint32_t nuevo_tamanio = interfazRecibida->tamanio;
 
     uint32_t bloques_necesarios = (nuevo_tamanio + BLOCK_SIZE - 1) / BLOCK_SIZE;
@@ -238,8 +238,6 @@ void procesar_dialfs_truncate(int socket_cliente)
     }
     else if (nuevo_tamanio > bloques_ocupados * BLOCK_SIZE)
     {
-        // Agrandar el archivo
-        // int primer_bloque_libre_de_los_contiguos = encontrar_bloques_libres_contiguos(bloque_inicial, bloques_necesarios, bitmap);
         uint32_t primer_bloque_libre_de_los_contiguos = encontrar_bloques_libres_contiguos_top(bloque_inicial, bloques_necesarios, bloques_ocupados, bitmap);
 
         if (primer_bloque_libre_de_los_contiguos == -1)
@@ -248,6 +246,7 @@ void procesar_dialfs_truncate(int socket_cliente)
             if (bloques_libres >= bloques_necesarios)
             {
                 compactar_dialfs(interfazRecibida->pidPcb, bloques, bitmap);
+                bloque_inicial = obtener_bloque_inicial_por_nombre(interfazRecibida->nombre_archivo);
                 primer_bloque_libre_de_los_contiguos = encontrar_bloques_libres_contiguos_top(0, bloques_necesarios, bloques_ocupados, bitmap); // Buscar desde el inicio después de compactar
             }
         }
@@ -311,6 +310,7 @@ void procesar_dialfs_truncate(int socket_cliente)
                 bitmap[byte_index] |= (1 << bit_index);
             }
         }
+
         log_warning(LOGGER_INPUT_OUTPUT, "Actualizando metadata, bloque inicial: %d, tamanio: %d", primer_bloque_libre_de_los_contiguos, nuevo_tamanio);
         actualizar_bloque_inicial(metadata_config, primer_bloque_libre_de_los_contiguos);
         actualizar_tamanio_archivo(metadata_config, nuevo_tamanio);
@@ -319,6 +319,8 @@ void procesar_dialfs_truncate(int socket_cliente)
         log_info(LOGGER_INPUT_OUTPUT, "PID: %d - Truncar archivo: %s - Tamaño: %d", interfazRecibida->pidPcb, interfazRecibida->nombre_archivo, nuevo_tamanio);
     }
 
+    msync(bitmap, bitmap_size, MS_SYNC);
+    msync(bloques, BLOCK_SIZE * BLOCK_COUNT, MS_SYNC);
     log_debug(LOGGER_INPUT_OUTPUT, "Despues de truncar:");
     imprimir_bitmap();
 
