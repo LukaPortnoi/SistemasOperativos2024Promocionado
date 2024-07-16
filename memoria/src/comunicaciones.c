@@ -116,8 +116,7 @@ static void procesar_conexion_memoria(void *void_args)
 				// free(direccionAmostrar);
 			}
 
-			
-			void *mostrar = leer_memoria(direcciones_fisicas_mov_in, pidMovIn, tamanio_registro, lista_datos_leidos_mov_in);	//es nuevo
+			void *mostrar = leer_memoria(direcciones_fisicas_mov_in, pidMovIn, tamanio_registro, lista_datos_leidos_mov_in); // es nuevo
 
 			enviar_dato_movIn(cliente_socket, lista_datos_leidos_mov_in, mostrar, direcciones_fisicas_mov_in, tamanio_registro);
 			list_clean_and_destroy_elements(direcciones_fisicas_mov_in, free);
@@ -152,7 +151,7 @@ static void procesar_conexion_memoria(void *void_args)
 			escribir_memoria(direcciones_fisicas_mov_out, valor_obtenido_mov_out, pidMovOut, tamanioTotal);
 
 			list_destroy_and_destroy_elements(direcciones_fisicas_mov_out, free);
-			free(valor_obtenido_mov_out);		//es nuevo
+			free(valor_obtenido_mov_out); // es nuevo
 
 			break;
 
@@ -169,10 +168,10 @@ static void procesar_conexion_memoria(void *void_args)
 			char *valor_copy = (char *)dato_leido_copy;
 			escribir_memoria(direcciones_fisicas_escritura, valor_copy, pidCopyString, tamanio_copy_string);
 
-			list_destroy_and_destroy_elements(direcciones_fisicas_escritura, (void *)free);		//son nuevos
+			list_destroy_and_destroy_elements(direcciones_fisicas_escritura, (void *)free); // son nuevos
 			list_destroy_and_destroy_elements(direcciones_fisicas_lectura, (void *)free);
 			list_destroy_and_destroy_elements(lista_aux, (void *)free);
-			free(dato_leido_copy); //es nuevo
+			free(dato_leido_copy); // es nuevo
 
 			break;
 
@@ -225,8 +224,8 @@ static void procesar_conexion_memoria(void *void_args)
 			enviar_dato_leido(cliente_socket, valor_stdout, tamanio_registroTotal_stdout);
 			list_destroy_and_destroy_elements(direcciones_fisicas_a_leer, free);
 			list_destroy_and_destroy_elements(lista_datos_a_leer, free);
-			free(valor_stdout);		//es nuevo
-			free(valor_leido_stdout); //es nuevo
+			free(valor_stdout);		  // es nuevo
+			free(valor_leido_stdout); // es nuevo
 
 			break;
 		case PEDIDO_MARCO:

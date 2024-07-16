@@ -15,6 +15,7 @@
 #include <semaphore.h>
 #include <dirent.h>
 #include <sys/stat.h>
+#include <math.h>
 
 #include <commons/log.h>
 #include <commons/string.h>

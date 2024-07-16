@@ -753,7 +753,10 @@ void ejecutar_intruccion_io(t_pcb *pcb_recibido)
                 list_clean_and_destroy_elements(direcciones_fisicas, free);
                 free(nombre_interfaz);
                 free(nombre_archivo);
-                free(puntero_fs);
+                if (instruccion_de_IO_a_ejecutar == IO_FS_WRITE || instruccion_de_IO_a_ejecutar == IO_FS_READ)
+                {
+                    free(puntero_fs);
+                }
             }
             else
             {

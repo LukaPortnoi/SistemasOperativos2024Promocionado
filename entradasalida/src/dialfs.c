@@ -37,7 +37,7 @@ void actualizar_archivo_en_lista(char *nombre, uint32_t bloque_inicial, uint32_t
     }
 
     t_archivo *archivo = list_find(ARCHIVOS_EN_FS, (void *)_es_archivo_por_nombre);
-    
+
     if (archivo != NULL)
     {
         archivo->bloque_inicial = bloque_inicial;
@@ -170,6 +170,7 @@ void actualizar_lista_archivos_en_fs()
 void actualizar_bloque_inicial(t_config *metadata_config, uint32_t bloque_inicial)
 {
     char *bloque_inicial_str = string_itoa(bloque_inicial);
+    log_trace(LOGGER_INPUT_OUTPUT, "Actualizando bloque inicial a %s", bloque_inicial_str);
     config_set_value(metadata_config, "BLOQUE_INICIAL", bloque_inicial_str);
     free(bloque_inicial_str);
 }
@@ -195,6 +196,15 @@ uint32_t obtener_tamanio_archivo(char path[])
     uint32_t tamanio = config_get_int_value(metadata_config, "TAMANIO");
     config_destroy(metadata_config);
     return tamanio;
+}
+
+uint32_t obtener_bloques_ocupados(char path[])
+{
+    t_config *metadata_config = iniciar_config(path, "METADATA");
+    uint32_t tamanio = config_get_int_value(metadata_config, "TAMANIO");
+    config_destroy(metadata_config);
+    int bloques_ocupados = (tamanio == 0) ? 1 : (tamanio + BLOCK_SIZE - 1) / BLOCK_SIZE; 
+    return bloques_ocupados;
 }
 
 void obtener_metadata_path(char *nombre_archivo, char *metadata_path, size_t size)
@@ -226,14 +236,9 @@ int encontrar_bloque_libre()
     return -1;
 }
 
-int encontrar_bloques_libres_contiguos(uint32_t bloque_inicial, uint32_t bloques_necesarios)
+int encontrar_bloques_libres_contiguos(uint32_t bloque_inicial, uint32_t bloques_necesarios, char *bitmap)
 {
-    FILE *bitmap_file = fopen(BITMAP_PATH, "r+");
-    size_t bitmap_size = BLOCK_COUNT / 8;
-    char *bitmap = mmap(NULL, bitmap_size, PROT_READ | PROT_WRITE, MAP_SHARED, fileno(bitmap_file), 0);
-
     uint32_t contador = 0;
-
     // Verificar desde bloque_inicial y hacia adelante
     for (uint32_t i = bloque_inicial; i < BLOCK_COUNT; i++)
     {
@@ -244,8 +249,6 @@ int encontrar_bloques_libres_contiguos(uint32_t bloque_inicial, uint32_t bloques
             contador++;
             if (contador == bloques_necesarios)
             {
-                fclose(bitmap_file);
-                munmap(bitmap, bitmap_size);
                 return bloque_inicial; // Devolver el bloque_inicial si hay suficientes bloques libres contiguos
             }
         }
@@ -266,8 +269,6 @@ int encontrar_bloques_libres_contiguos(uint32_t bloque_inicial, uint32_t bloques
             contador++;
             if (contador == bloques_necesarios)
             {
-                fclose(bitmap_file);
-                munmap(bitmap, bitmap_size);
                 return i - bloques_necesarios + 1;
             }
         }
@@ -277,8 +278,6 @@ int encontrar_bloques_libres_contiguos(uint32_t bloque_inicial, uint32_t bloques
         }
     }
 
-    fclose(bitmap_file);
-    munmap(bitmap, bitmap_size);
     return -1;
 }
 
@@ -315,36 +314,69 @@ void compactar_dialfs(uint32_t pid, char *bitmap, char *bloques)
 
     // Ya puedo hacer la compactacion con la lista de archivos ordenada, obteniendo de a uno su bloque inicial y tamanio y moviendolo a la posicion 0 de memoria que se va a ir actualizando con cada archivo
     int espacio_a_mover = 0;
-    for(int i = 0; i < list_size(ARCHIVOS_EN_FS); i++)
+    for (int i = 0; i < list_size(ARCHIVOS_EN_FS); i++)
     {
         t_archivo *archivo = list_get(ARCHIVOS_EN_FS, i);
         int offset_inicial = archivo->tamanio;
 
         if (offset_inicial % BLOCK_SIZE != 0)
         {
-        offset_inicial = ((offset_inicial / BLOCK_SIZE) + 1) * BLOCK_SIZE;
+            offset_inicial = ((offset_inicial / BLOCK_SIZE) + 1) * BLOCK_SIZE;
         }
 
-        memmove(bloques + espacio_a_mover, bloques + archivo->bloque_inicial * BLOCK_SIZE, offset_inicial); //Tambien podria usar memcpy
+        memmove(bloques + espacio_a_mover, bloques + archivo->bloque_inicial * BLOCK_SIZE, offset_inicial); // Tambien podria usar memcpy
         espacio_a_mover += offset_inicial;
     }
-    
+    msync(bloques, BLOCK_SIZE * BLOCK_COUNT, MS_SYNC);
+
     // Al finalizar la compactacion, tengo que actualizar el bitmap (ahora tendra todos 1 en tamanio_total_archivos/bloque_size bits)
 
     // Primero limpio el bitmap
-    memset(bitmap, 0, ((BLOCK_COUNT + 7) / 8));
-    
+    for (int i = 0; i < (BLOCK_COUNT + 7) / 8; i++)
+    {
+        int byte_index = i / 8;
+        int bit_index = i % 8;
+        bitmap[byte_index] &= ~(1 << bit_index);
+    }
+
+    // guardo los datos de mi bitmap mapeado a memoria en el archivo bitmap.dat
+    FILE *bitmap_file = fopen(BITMAP_PATH, "r+");
+    size_t bitmap_size = (BLOCK_COUNT + 7) / 8;
+    char *bitmap_data = mmap(NULL, bitmap_size, PROT_READ | PROT_WRITE, MAP_SHARED, fileno(bitmap_file), 0);
+    memcpy(bitmap_data, bitmap, bitmap_size);
+    msync(bitmap_data, bitmap_size, MS_SYNC);
+    munmap(bitmap_data, bitmap_size);
+    fclose(bitmap_file);
+
     // Luego voy a marcar los bloques ocupados, estos van a ser tamanio_total_archivos / BLOCK_SIZE porque van a estar todos juntos
+    log_trace(LOGGER_INPUT_OUTPUT, "Marcando bloques ocupados esta cantidad de veces %d:", (tamanio_total_archivos + BLOCK_SIZE - 1) / BLOCK_SIZE);
     for (int i = 0; i < (tamanio_total_archivos + BLOCK_SIZE - 1) / BLOCK_SIZE; i++)
     {
         int byte_index = i / 8;
         int bit_index = i % 8;
         bitmap[byte_index] |= (1 << bit_index);
     }
-    //Luego voy a actualizar la lista de archivos en fs con los nuevos bloques iniciales, el primero tendra el bloque 0, el segundo tendra tamanio del primero, y asi sucesivamente todo esto dividido por el tamanio de un bloque
-    //Al mismo tiempo que voy obteniendo cada archivo y actualizandole su bloque inicial en la lista de archivos en fs, voy a buscar por su nombre a
-    //char metadata_path[256] obtener_metadata_path(interfazRecibida->nombre_archivo, metadata_path, sizeof(metadata_path)); su metadata y actualizarle el bloque inicial con actualizar_bloque_inicial(metadata_config, bloque_inicial);
+
+    // guardo los datos de mi bitmap mapeado a memoria en el archivo bitmap.dat
+    bitmap_file = fopen(BITMAP_PATH, "r+");
+    bitmap_size = (BLOCK_COUNT + 7) / 8;
+    bitmap_data = mmap(NULL, bitmap_size, PROT_READ | PROT_WRITE, MAP_SHARED, fileno(bitmap_file), 0);
+    memcpy(bitmap_data, bitmap, bitmap_size);
+    msync(bitmap_data, bitmap_size, MS_SYNC);
+    munmap(bitmap_data, bitmap_size);
+    fclose(bitmap_file);
+
+    // Luego voy a actualizar la lista de archivos en fs con los nuevos bloques iniciales, el primero tendra el bloque 0, el segundo tendra tamanio del primero, y asi sucesivamente todo esto dividido por el tamanio de un bloque
+    // Al mismo tiempo que voy obteniendo cada archivo y actualizandole su bloque inicial en la lista de archivos en fs, voy a buscar por su nombre a
+    // char metadata_path[256] obtener_metadata_path(interfazRecibida->nombre_archivo, metadata_path, sizeof(metadata_path)); su metadata y actualizarle el bloque inicial con actualizar_bloque_inicial(metadata_config, bloque_inicial);
     actualizar_lista_archivos_compactados();
+
+    //mostrar lista de archivos en fs
+    for (int i = 0; i < list_size(ARCHIVOS_EN_FS); i++)
+    {
+        t_archivo *archivo = list_get(ARCHIVOS_EN_FS, i);
+        log_trace(LOGGER_INPUT_OUTPUT, "Archivo: %s - Bloque Inicial: %d - Tamanio: %d", archivo->nombre, archivo->bloque_inicial, archivo->tamanio);
+    }
 
     usleep(RETRASO_COMPACTACION * 1000);
     log_info(LOGGER_INPUT_OUTPUT, "PID: %d - Fin Compactación.", pid);
@@ -352,24 +384,25 @@ void compactar_dialfs(uint32_t pid, char *bitmap, char *bloques)
 
 void ordenar_lista_archivos_por_bloque_inicial()
 {
-    bool _ordenar_por_bloque_inicial(t_archivo *archivo1, t_archivo *archivo2)
+    bool _ordenar_por_bloque_inicial(t_archivo * archivo1, t_archivo * archivo2)
     {
-    return archivo1->bloque_inicial < archivo2->bloque_inicial;
+        return archivo1->bloque_inicial < archivo2->bloque_inicial;
     }
-    
+
     list_sort(ARCHIVOS_EN_FS, (void *)_ordenar_por_bloque_inicial);
 }
 
 void actualizar_lista_archivos_compactados()
 {
     int espacio_a_mover = 0;
-    for(int i = 0; i < list_size(ARCHIVOS_EN_FS); i++)
+    for (int i = 0; i < list_size(ARCHIVOS_EN_FS); i++)
     {
         t_archivo *archivo = list_get(ARCHIVOS_EN_FS, i);
         archivo->bloque_inicial = espacio_a_mover / BLOCK_SIZE;
         espacio_a_mover += archivo->tamanio;
 
-        if (espacio_a_mover % BLOCK_SIZE != 0) {
+        if (espacio_a_mover % BLOCK_SIZE != 0)
+        {
             espacio_a_mover = ((espacio_a_mover / BLOCK_SIZE) + 1) * BLOCK_SIZE;
         }
 
@@ -381,7 +414,7 @@ void actualizar_lista_archivos_compactados()
         config_destroy(metadata_config);
     }
 }
- 
+
 void escribir_dato_archivo(char *datoRecibido, char *puntero_archivo, char *bloques, uint32_t bloque_inicial)
 {
     uint32_t offset_inicial = atoi(puntero_archivo);
@@ -414,4 +447,102 @@ char *leer_dato_archivo(uint32_t tamanio, char *puntero_archivo, char *bloques, 
     dato_leido[tamanio] = '\0';
 
     return dato_leido;
+}
+
+void imprimir_bitmap()
+{
+    FILE *bitmap_file = fopen(BITMAP_PATH, "r");
+    size_t bitmap_size = BLOCK_COUNT / 8;
+    char *bitmap = mmap(NULL, bitmap_size, PROT_READ, MAP_SHARED, fileno(bitmap_file), 0);
+
+    // Crear el bitarray usando bitarray_create_with_mode
+    t_bitarray *bitarray = bitarray_create_with_mode(bitmap, bitmap_size, LSB_FIRST);
+
+    char datos_a_imprimir[BLOCK_COUNT + 500]; // Para el formato "n: b - " (+1 para '\0')
+    int offset = 0;
+
+    for (int i = 0; i < BLOCK_COUNT; i++)
+    {
+        offset += snprintf(datos_a_imprimir + offset, sizeof(datos_a_imprimir) - offset, "%d: %d - ", i, bitarray_test_bit(bitarray, i));
+    }
+
+    // Quitar el último " - " y añadir el carácter nulo
+    if (offset >= 3)
+    {
+        datos_a_imprimir[offset - 3] = '\0';
+    }
+
+    log_trace(LOGGER_INPUT_OUTPUT, "%s", datos_a_imprimir);
+
+    bitarray_destroy(bitarray);
+    fclose(bitmap_file);
+    munmap(bitmap, bitmap_size);
+}
+
+uint32_t encontrar_bloques_libres_contiguos_top(uint32_t bloque_inicial, uint32_t bloques_necesarios, uint32_t bloques_ocupados, char *bitmap)
+{
+    // hay 2 formas de encontrar bloques libres contiguos
+    // 1. Hay bloques bloques_necesarios - bloques_ocupados libres contiguos inmediatamente despues de los bloques ocupados
+    // 2. Hay bloques_necesarios contiguos en todo el bitmap
+
+    // 1.
+    uint32_t contador = 0;
+    uint32_t bloque_inicial_aux = bloque_inicial + bloques_ocupados;
+    // Ponele que mi bloque inicial es 0, tengo 2 bloques ocupados y necesito 3 bloques
+    // Si ocupados tengo 2 y necesarios 3, tengo que buscar (3-2) = 1 bloque libre contiguo
+    uint32_t bloques_libres_necesarios = bloques_necesarios - bloques_ocupados;
+
+    for (uint32_t i = (bloque_inicial_aux + 1); i <= (bloque_inicial_aux + bloques_libres_necesarios); i++)
+    {
+        int byte_index = i / 8;
+        int bit_index = i % 8;
+        if (!(bitmap[byte_index] & (1 << bit_index)))
+        {
+            contador++;
+            if (contador == bloques_libres_necesarios)
+            {
+                log_trace(LOGGER_INPUT_OUTPUT, "Bloques libres contiguos inmediatamente despues de los bloques ocupados: %d", bloque_inicial);
+                return bloque_inicial;
+            }
+        }
+        else
+        {
+            break;
+        }
+    }
+
+    // 2.
+    contador = 0;
+    // primero me voy a armar un bitmap auxiliar
+    char *bitmap_aux = malloc(BLOCK_COUNT / 8);
+    memcpy(bitmap_aux, bitmap, (BLOCK_COUNT / 8));
+    // ahora voy a marcar los bloques ocupados de mi archivo en el bitmap auxiliar como libres
+    for (uint32_t i = bloque_inicial; i < (bloque_inicial + bloques_ocupados); i++)
+    {
+        int byte_index = i / 8;
+        int bit_index = i % 8;
+        bitmap_aux[byte_index] &= ~(1 << bit_index);
+    }
+    // ahora voy a buscar bloques libres contiguos en el bitmap auxiliar
+    for (uint32_t i = 0; i < BLOCK_COUNT; i++)
+    {
+        int byte_index = i / 8;
+        int bit_index = i % 8;
+        if (!(bitmap_aux[byte_index] & (1 << bit_index)))
+        {
+            contador++;
+            if (contador == bloques_necesarios)
+            {
+                free(bitmap_aux);
+                log_trace(LOGGER_INPUT_OUTPUT, "Nueva posicion inicial: %d, ocupando hasta %d", i - bloques_necesarios + 1, i);
+                return i - bloques_necesarios + 1;
+            }
+        }
+        else
+        {
+            contador = 0;
+        }
+    }
+    free(bitmap_aux);
+    return -1;
 }

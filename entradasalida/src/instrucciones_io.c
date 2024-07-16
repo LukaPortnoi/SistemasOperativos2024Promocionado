@@ -110,6 +110,8 @@ void procesar_dialfs_create(int socket_cliente)
         int bit_index = bloque_inicial % 8;
         bitmap[byte_index] |= (1 << bit_index);
 
+        msync(bitmap, bitmap_size, MS_SYNC);
+
         actualizar_bloque_inicial(metadata_config, bloque_inicial);
         actualizar_tamanio_archivo(metadata_config, 0);
 
@@ -156,10 +158,23 @@ void procesar_dialfs_delete(int socket_cliente)
 
     log_info(LOGGER_INPUT_OUTPUT, "PID: %d - Eliminar archivo: %s", interfazRecibida->pidPcb, interfazRecibida->nombre_archivo);
 
-    // Marcar el bloque como libre en el bitmap
-    int byte_index = bloque_inicial / 8;
-    int bit_index = bloque_inicial % 8;
-    bitmap[byte_index] &= ~(1 << bit_index);
+    // marcar todos los bloques del archivo como libres
+    int tamanio_archivo = obtener_tamanio_archivo(metadata_path);
+    int bloques_ocupados = (tamanio_archivo + BLOCK_SIZE - 1) / BLOCK_SIZE;
+    if (bloques_ocupados == 0)
+    {
+        bloques_ocupados = 1;
+    }
+
+    for (uint32_t i = 0; i < bloques_ocupados; i++)
+    {
+        int bloque_a_liberar = bloque_inicial + i;
+        int byte_index = bloque_a_liberar / 8;
+        int bit_index = bloque_a_liberar % 8;
+        bitmap[byte_index] &= ~(1 << bit_index);
+    }
+
+    msync(bitmap, bitmap_size, MS_SYNC);
 
     remove(metadata_path);
 
@@ -182,6 +197,9 @@ void procesar_dialfs_truncate(int socket_cliente)
     recibir_InterfazDialfs(socket_cliente, interfazRecibida, PEDIDO_IO_FS_TRUNCATE);
     log_info(LOGGER_INPUT_OUTPUT, "PID: %d - Operacion: IO_FS_TRUNCATE", interfazRecibida->pidPcb);
 
+    log_debug(LOGGER_INPUT_OUTPUT, "Antes de truncar:");
+    imprimir_bitmap();
+
     char metadata_path[256];
     obtener_metadata_path(interfazRecibida->nombre_archivo, metadata_path, sizeof(metadata_path));
 
@@ -199,6 +217,8 @@ void procesar_dialfs_truncate(int socket_cliente)
 
     uint32_t bloques_necesarios = (nuevo_tamanio + BLOCK_SIZE - 1) / BLOCK_SIZE;
     uint32_t bloques_ocupados = (obtener_tamanio_archivo(metadata_path) + BLOCK_SIZE - 1) / BLOCK_SIZE;
+
+    log_error(LOGGER_INPUT_OUTPUT, "Bloque inicial: %d", bloque_inicial);
 
     if (nuevo_tamanio < bloques_ocupados * BLOCK_SIZE)
     {
@@ -219,22 +239,22 @@ void procesar_dialfs_truncate(int socket_cliente)
     else if (nuevo_tamanio > bloques_ocupados * BLOCK_SIZE)
     {
         // Agrandar el archivo
-        int bloque_libre = encontrar_bloques_libres_contiguos(bloque_inicial, bloques_necesarios);
+        // int primer_bloque_libre_de_los_contiguos = encontrar_bloques_libres_contiguos(bloque_inicial, bloques_necesarios, bitmap);
+        uint32_t primer_bloque_libre_de_los_contiguos = encontrar_bloques_libres_contiguos_top(bloque_inicial, bloques_necesarios, bloques_ocupados, bitmap);
 
-        if (bloque_libre == -1)
+        if (primer_bloque_libre_de_los_contiguos == -1)
         {
             uint32_t bloques_libres = contar_bloques_libres(bitmap);
             if (bloques_libres >= bloques_necesarios)
             {
                 compactar_dialfs(interfazRecibida->pidPcb, bloques, bitmap);
-                bloque_libre = encontrar_bloques_libres_contiguos(bloque_inicial, bloques_necesarios);
+                primer_bloque_libre_de_los_contiguos = encontrar_bloques_libres_contiguos_top(0, bloques_necesarios, bloques_ocupados, bitmap); // Buscar desde el inicio después de compactar
             }
         }
 
-        if (bloque_libre == -1)
+        if (primer_bloque_libre_de_los_contiguos == -1)
         {
-            log_error(LOGGER_INPUT_OUTPUT, "No hay bloques libres para para truncar el archivo");
-            // TODO Avisarle a kernel que no se pudo truncar el archivo
+            log_error(LOGGER_INPUT_OUTPUT, "No hay bloques libres para truncar el archivo");
             config_destroy(metadata_config);
             munmap(bitmap, bitmap_size);
             munmap(bloques, BLOCK_SIZE * BLOCK_COUNT);
@@ -243,22 +263,64 @@ void procesar_dialfs_truncate(int socket_cliente)
             destroyInterfazDialfs(interfazRecibida);
             return;
         }
-        else
+        else if (primer_bloque_libre_de_los_contiguos != bloque_inicial)
         {
+            log_trace(LOGGER_INPUT_OUTPUT, "El archivo se movió de posición inicial a %d", primer_bloque_libre_de_los_contiguos);
+            int bloques_ocupados_aux = 0;
+
+            if (bloques_ocupados == 0)
+            {
+                bloques_ocupados_aux = 1;
+            }
+            else
+            {
+                bloques_ocupados_aux = bloques_ocupados;
+            }
+            log_warning(LOGGER_INPUT_OUTPUT, "Bloques ocupados: %d", bloques_ocupados_aux);
+            // Marcar los bloques originales como libres si el archivo se movió
+            for (uint32_t i = 0; i < bloques_ocupados_aux; i++)
+            {   
+                log_error(LOGGER_INPUT_OUTPUT, "Bloque inicial: %d", bloque_inicial);
+                log_warning(LOGGER_INPUT_OUTPUT, "Liberando bloque %d", bloque_inicial + i);
+                int bloque_a_liberar = bloque_inicial + i;
+                int byte_index = bloque_a_liberar / 8;
+                int bit_index = bloque_a_liberar % 8;
+                bitmap[byte_index] &= ~(1 << bit_index);
+            }
+            log_warning(LOGGER_INPUT_OUTPUT, "Bloques necesarios: %d", bloques_necesarios);
+            // Marcar los bloques nuevos como ocupados
             for (uint32_t i = 0; i < bloques_necesarios; i++)
             {
-                int nuevo_bloque = bloque_libre + i;
+                int nuevo_bloque = primer_bloque_libre_de_los_contiguos + i;
                 int byte_index = nuevo_bloque / 8;
                 int bit_index = nuevo_bloque % 8;
                 bitmap[byte_index] |= (1 << bit_index);
             }
-            actualizar_bloque_inicial(metadata_config, bloque_libre);
-            actualizar_tamanio_archivo(metadata_config, nuevo_tamanio);
-            config_save(metadata_config);
-            actualizar_archivo_en_lista(interfazRecibida->nombre_archivo, bloque_libre, nuevo_tamanio);
-            log_info(LOGGER_INPUT_OUTPUT, "PID: %d - Truncar archivo: %s - Tamaño: %d", interfazRecibida->pidPcb, interfazRecibida->nombre_archivo, nuevo_tamanio);
+
+            // Mover la información a los nuevos bloques a la nueva posicion con memmove
+            memmove(bloques + (primer_bloque_libre_de_los_contiguos * BLOCK_SIZE), bloques + (bloque_inicial * BLOCK_SIZE), bloques_ocupados_aux * BLOCK_SIZE);
         }
+        else if (primer_bloque_libre_de_los_contiguos == bloque_inicial)
+        {
+            log_trace(LOGGER_INPUT_OUTPUT, "El archivo no se movió porque su posición inicial es la misma que la nueva");
+            for (uint32_t i = 0; i < bloques_necesarios; i++)
+            {
+                int nuevo_bloque = primer_bloque_libre_de_los_contiguos + i;
+                int byte_index = nuevo_bloque / 8;
+                int bit_index = nuevo_bloque % 8;
+                bitmap[byte_index] |= (1 << bit_index);
+            }
+        }
+        log_warning(LOGGER_INPUT_OUTPUT, "Actualizando metadata, bloque inicial: %d, tamanio: %d", primer_bloque_libre_de_los_contiguos, nuevo_tamanio);
+        actualizar_bloque_inicial(metadata_config, primer_bloque_libre_de_los_contiguos);
+        actualizar_tamanio_archivo(metadata_config, nuevo_tamanio);
+        config_save(metadata_config);
+        actualizar_archivo_en_lista(interfazRecibida->nombre_archivo, primer_bloque_libre_de_los_contiguos, nuevo_tamanio);
+        log_info(LOGGER_INPUT_OUTPUT, "PID: %d - Truncar archivo: %s - Tamaño: %d", interfazRecibida->pidPcb, interfazRecibida->nombre_archivo, nuevo_tamanio);
     }
+
+    log_debug(LOGGER_INPUT_OUTPUT, "Despues de truncar:");
+    imprimir_bitmap();
 
     config_destroy(metadata_config);
     munmap(bitmap, bitmap_size);
@@ -290,6 +352,7 @@ void procesar_dialfs_write(int socket_cliente)
 
     log_info(LOGGER_INPUT_OUTPUT, "PID: %d - Escribir archivo: %s - Tamaño a Escribir: %d - Puntero Archivo: %s", interfazRecibida->pidPcb, interfazRecibida->nombre_archivo, interfazRecibida->tamanio, interfazRecibida->puntero_archivo);
 
+    msync(bloques, BLOCK_SIZE * BLOCK_COUNT, MS_SYNC);
     munmap(bloques, BLOCK_SIZE * BLOCK_COUNT);
     fclose(bloques_file);
 
@@ -316,6 +379,7 @@ void procesar_dialfs_read(int socket_cliente)
 
     log_info(LOGGER_INPUT_OUTPUT, "PID: %d - Leer archivo: %s - Tamaño a Leer: %d - Puntero Archivo: %s", interfazRecibida->pidPcb, interfazRecibida->nombre_archivo, interfazRecibida->tamanio, interfazRecibida->puntero_archivo);
 
+    msync(bloques, BLOCK_SIZE * BLOCK_COUNT, MS_SYNC);
     munmap(bloques, BLOCK_SIZE * BLOCK_COUNT);
     fclose(bloques_file);
 
