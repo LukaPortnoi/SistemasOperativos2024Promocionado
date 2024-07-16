@@ -163,6 +163,9 @@ static void procesar_conexion_memoria(void *void_args)
 			uint32_t pidCopyString;
 
 			recibir_copystring(cliente_socket, direcciones_fisicas_escritura, direcciones_fisicas_lectura, &tamanio_copy_string, &pidCopyString);
+			//haceme un print de las direcciones de escritura
+			
+
 
 			void *dato_leido_copy = leer_memoria(direcciones_fisicas_lectura, pidMovIn, tamanio_copy_string, lista_aux);
 			char *valor_copy = (char *)dato_leido_copy;

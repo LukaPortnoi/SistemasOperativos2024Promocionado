@@ -154,6 +154,7 @@ t_list *traducir_direccion(uint32_t pid, uint32_t logicalAddress, uint32_t pageS
         // pido marco a memoria enviando la pagina y el pid y me devuelve un marco
         enviar_Pid_Pagina_Memoria(pid, pagina);
         marco = recibir_marco_memoria(fd_cpu_memoria);
+        log_info(LOGGER_CPU, "PID: %d - TLB MISS - Pagina: %d", pid, pagina);
         log_info(LOGGER_CPU, "PID: %d - OBTENER MARCO - Pagina: %d - MARCO: %d", pid, pagina, marco);
         if (CANTIDAD_ENTRADAS_TLB > 0)
         {
@@ -226,7 +227,6 @@ t_list *traducir_direccion(uint32_t pid, uint32_t logicalAddress, uint32_t pageS
                     {
                         // TLB Miss
                         log_info(LOGGER_CPU, "PID: %d - TLB MISS - Pagina: %d", pid, paginaSig);
-
                         // pido marco a memoria enviando la pagina y el pid y me devuelve un marco
                         enviar_Pid_Pagina_Memoria(pid, paginaSig);
                         marco2 = recibir_marco_memoria(fd_cpu_memoria);

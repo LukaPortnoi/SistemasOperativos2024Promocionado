@@ -346,11 +346,16 @@ void procesar_dialfs_write(int socket_cliente)
 
     FILE *bloques_file = fopen(BLOQUES_PATH, "r+");
     char *bloques = mmap(NULL, BLOCK_SIZE * BLOCK_COUNT, PROT_READ | PROT_WRITE, MAP_SHARED, fileno(bloques_file), 0);
-
+    //printeamos las listas que enviamos
+    for (int i = 0; i < list_size(interfazRecibida->direcciones); i++)
+    {
+        t_direcciones_fisicas *direccionAmostrar = list_get(interfazRecibida->direcciones, i);
+        log_debug(LOGGER_INPUT_OUTPUT, "Dirección: %d - Tamaño: %d", direccionAmostrar->direccion_fisica, direccionAmostrar->tamanio);
+    }
     enviar_direcciones_stdout(fd_io_memoria, interfazRecibida->direcciones, interfazRecibida->pidPcb);
     char *datoRecibido = recibir_dato(fd_io_memoria, LOGGER_INPUT_OUTPUT);
     log_debug(LOGGER_INPUT_OUTPUT, "Información leída: %s", datoRecibido);
-    escribir_dato_archivo(datoRecibido, interfazRecibida->puntero_archivo, bloques, obtener_bloque_inicial(metadata_path));
+    escribir_dato_archivo(datoRecibido, interfazRecibida->puntero_archivo, bloques, obtener_bloque_inicial_por_nombre(interfazRecibida->nombre_archivo));
 
     log_info(LOGGER_INPUT_OUTPUT, "PID: %d - Escribir archivo: %s - Tamaño a Escribir: %d - Puntero Archivo: %s", interfazRecibida->pidPcb, interfazRecibida->nombre_archivo, interfazRecibida->tamanio, interfazRecibida->puntero_archivo);
 

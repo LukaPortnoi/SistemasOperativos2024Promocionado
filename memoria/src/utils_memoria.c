@@ -512,32 +512,35 @@ void recibir_copystring(int socket_cliente, t_list *Lista_direccionesFisica_escr
 void deserializar_datos_copystring(t_paquete *paquete, t_list *Lista_direccionesFisica_escritura, t_list *Lista_direccionesFisica_lectura, uint32_t *tamanio, uint32_t *pid)
 {
     int desplazamiento = 0;
-    size_t num_elementos_escritura = (paquete->buffer->size - sizeof(uint32_t) - sizeof(uint32_t)) / (4 * sizeof(uint32_t));
 
-    // Iteramos sobre el buffer y deserializamos cada elemento
-    for (size_t i = 0; i < num_elementos_escritura; i++)
-    {
-        // Asignamos memoria para un t_direcciones_fisicas, que contiene dos uint32_t
+    uint32_t size_escritura;
+    uint32_t size_lectura;
+
+    // Deserializamos el tamaño de la lista de escritura
+    memcpy(&size_escritura, paquete->buffer->stream + desplazamiento, sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
+
+    // Deserializamos la lista de direcciones físicas de escritura
+    for (size_t i = 0; i < size_escritura; i++) {
         t_direcciones_fisicas *dato = malloc(sizeof(t_direcciones_fisicas));
         memcpy(&(dato->direccion_fisica), paquete->buffer->stream + desplazamiento, sizeof(uint32_t));
         desplazamiento += sizeof(uint32_t);
         memcpy(&(dato->tamanio), paquete->buffer->stream + desplazamiento, sizeof(uint32_t));
         desplazamiento += sizeof(uint32_t);
-
         list_add(Lista_direccionesFisica_escritura, dato);
     }
 
-    size_t num_elementos_lectura = (paquete->buffer->size - sizeof(uint32_t) - desplazamiento) / (2 * sizeof(uint32_t));
+    // Deserializamos el tamaño de la lista de lectura
+    memcpy(&size_lectura, paquete->buffer->stream + desplazamiento, sizeof(uint32_t));
+    desplazamiento += sizeof(uint32_t);
 
-    for (size_t i = 0; i < num_elementos_lectura; i++)
-    {
-        // Asignamos memoria para un t_direcciones_fisicas, que contiene dos uint32_t
+    // Deserializamos la lista de direcciones físicas de lectura
+    for (size_t i = 0; i < size_lectura; i++) {
         t_direcciones_fisicas *dato = malloc(sizeof(t_direcciones_fisicas));
         memcpy(&(dato->direccion_fisica), paquete->buffer->stream + desplazamiento, sizeof(uint32_t));
         desplazamiento += sizeof(uint32_t);
         memcpy(&(dato->tamanio), paquete->buffer->stream + desplazamiento, sizeof(uint32_t));
         desplazamiento += sizeof(uint32_t);
-
         list_add(Lista_direccionesFisica_lectura, dato);
     }
 
@@ -575,7 +578,7 @@ void escribir_memoria(t_list *direcciones, void *valor_obtenido, uint32_t pid, i
             break;
         }
     }
-    // mem_hexdump(memoriaUsuario,256);
+    mem_hexdump(memoriaUsuario,256);
 
     // Liberar la memoria de copia
     free(copia);
@@ -606,6 +609,8 @@ void *leer_memoria(t_list *direcciones, uint32_t pid, int tamanio_registro, t_li
             // Copiar datos parciales a resultado_parcial y agregarlo a la lista datos_leidos
             memcpy((char *)resultado_parcial, memoriaUsuario + direccion->direccion_fisica, direccion->tamanio);
             list_add(datos_leidos, resultado_parcial);
+            log_info(LOGGER_MEMORIA, "PID: <%d> - Accion: <LEER> - Direccion Fisica: <%d> - Tamaño <%d> \n", pid, direccion->direccion_fisica, direccion->tamanio);
+
         }
 
         aux += direccion->tamanio;
