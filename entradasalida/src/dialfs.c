@@ -345,17 +345,15 @@ void compactar_dialfs(uint32_t pid)
 
     log_trace(LOGGER_INPUT_OUTPUT, "Limpiando bitmap");
     // Primero limpio el bitmap
-    for (int i = 0; i < (BLOCK_COUNT + 7) / 8; i++)
+    for (int i = 0; i < bitmap_size; i++)
     {
-        int byte_index = i / 8;
-        int bit_index = i % 8;
-        bitmap[byte_index] &= ~(1 << bit_index);
+        bitmap[i] = 0;
     }
 
     // guardo los datos de mi bitmap mapeado a memoria en el archivo bitmap.dat
-    size_t bitmap_size = (BLOCK_COUNT + 7) / 8;
     msync(bitmap, bitmap_size, MS_SYNC);
     imprimir_bitmap();
+    log_trace(LOGGER_INPUT_OUTPUT, "Bitmap limpiado");
 
     // Luego voy a marcar los bloques ocupados, estos van a ser tamanio_total_archivos / BLOCK_SIZE porque van a estar todos juntos
     log_trace(LOGGER_INPUT_OUTPUT, "Marcando bloques ocupados esta cantidad de veces %d:", (tamanio_total_archivos + BLOCK_SIZE - 1) / BLOCK_SIZE);
