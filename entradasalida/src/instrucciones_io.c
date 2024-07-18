@@ -245,7 +245,7 @@ void procesar_dialfs_truncate(int socket_cliente)
             uint32_t bloques_libres = contar_bloques_libres(bitmap);
             if (bloques_libres >= bloques_necesarios)
             {
-                compactar_dialfs(interfazRecibida->pidPcb, bloques, bitmap);
+                compactar_dialfs(interfazRecibida->pidPcb);
                 bloque_inicial = obtener_bloque_inicial_por_nombre(interfazRecibida->nombre_archivo);
                 primer_bloque_libre_de_los_contiguos = encontrar_bloques_libres_contiguos_top(0, bloques_necesarios, bloques_ocupados, bitmap); // Buscar desde el inicio después de compactar
             }

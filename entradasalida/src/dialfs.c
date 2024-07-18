@@ -296,9 +296,16 @@ uint32_t contar_bloques_libres(char *bitmap)
     return contador;
 }
 
-void compactar_dialfs(uint32_t pid, char *bloques, char *bitmap)
+void compactar_dialfs(uint32_t pid)
 {
     log_info(LOGGER_INPUT_OUTPUT, "PID: %d - Inicio Compactación.", pid);
+
+    FILE *bitmap_file = fopen(BITMAP_PATH, "r+");
+    FILE *bloques_file = fopen(BLOQUES_PATH, "r+");
+
+    size_t bitmap_size = BLOCK_COUNT / 8;
+    char *bitmap = mmap(NULL, bitmap_size, PROT_READ | PROT_WRITE, MAP_SHARED, fileno(bitmap_file), 0);
+    char *bloques = mmap(NULL, BLOCK_SIZE * BLOCK_COUNT, PROT_READ | PROT_WRITE, MAP_SHARED, fileno(bloques_file), 0);
 
     // Primero quiero saber el tamaño total que ocupan los archivos en bloques, para esto tengo que recorrer la lista de archivos y sumar sus tamaños
     uint32_t tamanio_total_archivos = 0;
@@ -370,6 +377,10 @@ void compactar_dialfs(uint32_t pid, char *bloques, char *bitmap)
         log_trace(LOGGER_INPUT_OUTPUT, "Archivo: %s - Bloque Inicial: %d - Tamanio: %d", archivo->nombre, archivo->bloque_inicial, archivo->tamanio);
     }
 
+    munmap(bitmap, bitmap_size);
+    munmap(bloques, BLOCK_SIZE * BLOCK_COUNT);
+    fclose(bitmap_file);
+    fclose(bloques_file);
 
     usleep(RETRASO_COMPACTACION * 1000);
     log_info(LOGGER_INPUT_OUTPUT, "PID: %d - Fin Compactación.", pid);
