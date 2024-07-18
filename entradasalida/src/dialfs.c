@@ -311,6 +311,11 @@ void compactar_dialfs(uint32_t pid, char *bitmap, char *bloques)
     // Ahora voy a ordenar la lista de archivos por bloque_inicial
 
     ordenar_lista_archivos_por_bloque_inicial();
+    
+    // Luego voy a actualizar la lista de archivos en fs con los nuevos bloques iniciales, el primero tendra el bloque 0, el segundo tendra tamanio del primero, y asi sucesivamente todo esto dividido por el tamanio de un bloque
+    // Al mismo tiempo que voy obteniendo cada archivo y actualizandole su bloque inicial en la lista de archivos en fs, voy a buscar por su nombre a
+    // char metadata_path[256] obtener_metadata_path(interfazRecibida->nombre_archivo, metadata_path, sizeof(metadata_path)); su metadata y actualizarle el bloque inicial con actualizar_bloque_inicial(metadata_config, bloque_inicial);
+    actualizar_lista_archivos_compactados();
 
     // Ya puedo hacer la compactacion con la lista de archivos ordenada, obteniendo de a uno su bloque inicial y tamanio y moviendolo a la posicion 0 de memoria que se va a ir actualizando con cada archivo
     int espacio_a_mover = 0;
@@ -365,11 +370,6 @@ void compactar_dialfs(uint32_t pid, char *bitmap, char *bloques)
     msync(bitmap_data, bitmap_size, MS_SYNC);
     munmap(bitmap_data, bitmap_size);
     fclose(bitmap_file);
-
-    // Luego voy a actualizar la lista de archivos en fs con los nuevos bloques iniciales, el primero tendra el bloque 0, el segundo tendra tamanio del primero, y asi sucesivamente todo esto dividido por el tamanio de un bloque
-    // Al mismo tiempo que voy obteniendo cada archivo y actualizandole su bloque inicial en la lista de archivos en fs, voy a buscar por su nombre a
-    // char metadata_path[256] obtener_metadata_path(interfazRecibida->nombre_archivo, metadata_path, sizeof(metadata_path)); su metadata y actualizarle el bloque inicial con actualizar_bloque_inicial(metadata_config, bloque_inicial);
-    actualizar_lista_archivos_compactados();
 
     //mostrar lista de archivos en fs
     for (int i = 0; i < list_size(ARCHIVOS_EN_FS); i++)

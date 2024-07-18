@@ -265,6 +265,7 @@ void procesar_dialfs_truncate(int socket_cliente)
         else if (primer_bloque_libre_de_los_contiguos != bloque_inicial)
         {
             log_trace(LOGGER_INPUT_OUTPUT, "El archivo se movió de posición inicial a %d", primer_bloque_libre_de_los_contiguos);
+            log_info(LOGGER_INPUT_OUTPUT, "PID: %d - Inicio Compactación.", interfazRecibida->pidPcb);
             int bloques_ocupados_aux = 0;
 
             if (bloques_ocupados == 0)
@@ -298,6 +299,9 @@ void procesar_dialfs_truncate(int socket_cliente)
 
             // Mover la información a los nuevos bloques a la nueva posicion con memmove
             memmove(bloques + (primer_bloque_libre_de_los_contiguos * BLOCK_SIZE), bloques + (bloque_inicial * BLOCK_SIZE), bloques_ocupados_aux * BLOCK_SIZE);
+
+            usleep(RETRASO_COMPACTACION * 1000);
+            log_info(LOGGER_INPUT_OUTPUT, "PID: %d - Fin Compactación.", interfazRecibida->pidPcb);
         }
         else if (primer_bloque_libre_de_los_contiguos == bloque_inicial)
         {
