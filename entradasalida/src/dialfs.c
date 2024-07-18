@@ -296,7 +296,7 @@ uint32_t contar_bloques_libres(char *bitmap)
     return contador;
 }
 
-void compactar_dialfs(uint32_t pid, char *bitmap, char *bloques)
+void compactar_dialfs(uint32_t pid, char *bloques, char *bitmap)
 {
     log_info(LOGGER_INPUT_OUTPUT, "PID: %d - Inicio Compactación.", pid);
 
@@ -336,6 +336,7 @@ void compactar_dialfs(uint32_t pid, char *bitmap, char *bloques)
 
     // Al finalizar la compactacion, tengo que actualizar el bitmap (ahora tendra todos 1 en tamanio_total_archivos/bloque_size bits)
 
+    log_trace(LOGGER_INPUT_OUTPUT, "Limpiando bitmap");
     // Primero limpio el bitmap
     for (int i = 0; i < (BLOCK_COUNT + 7) / 8; i++)
     {
@@ -345,13 +346,9 @@ void compactar_dialfs(uint32_t pid, char *bitmap, char *bloques)
     }
 
     // guardo los datos de mi bitmap mapeado a memoria en el archivo bitmap.dat
-    FILE *bitmap_file = fopen(BITMAP_PATH, "r+");
     size_t bitmap_size = (BLOCK_COUNT + 7) / 8;
-    char *bitmap_data = mmap(NULL, bitmap_size, PROT_READ | PROT_WRITE, MAP_SHARED, fileno(bitmap_file), 0);
-    memcpy(bitmap_data, bitmap, bitmap_size);
-    msync(bitmap_data, bitmap_size, MS_SYNC);
-    munmap(bitmap_data, bitmap_size);
-    fclose(bitmap_file);
+    msync(bitmap, bitmap_size, MS_SYNC);
+    imprimir_bitmap();
 
     // Luego voy a marcar los bloques ocupados, estos van a ser tamanio_total_archivos / BLOCK_SIZE porque van a estar todos juntos
     log_trace(LOGGER_INPUT_OUTPUT, "Marcando bloques ocupados esta cantidad de veces %d:", (tamanio_total_archivos + BLOCK_SIZE - 1) / BLOCK_SIZE);
@@ -363,13 +360,8 @@ void compactar_dialfs(uint32_t pid, char *bitmap, char *bloques)
     }
 
     // guardo los datos de mi bitmap mapeado a memoria en el archivo bitmap.dat
-    bitmap_file = fopen(BITMAP_PATH, "r+");
-    bitmap_size = (BLOCK_COUNT + 7) / 8;
-    bitmap_data = mmap(NULL, bitmap_size, PROT_READ | PROT_WRITE, MAP_SHARED, fileno(bitmap_file), 0);
-    memcpy(bitmap_data, bitmap, bitmap_size);
-    msync(bitmap_data, bitmap_size, MS_SYNC);
-    munmap(bitmap_data, bitmap_size);
-    fclose(bitmap_file);
+    msync(bitmap, bitmap_size, MS_SYNC);
+    imprimir_bitmap();
 
     //mostrar lista de archivos en fs
     for (int i = 0; i < list_size(ARCHIVOS_EN_FS); i++)
@@ -377,6 +369,7 @@ void compactar_dialfs(uint32_t pid, char *bitmap, char *bloques)
         t_archivo *archivo = list_get(ARCHIVOS_EN_FS, i);
         log_trace(LOGGER_INPUT_OUTPUT, "Archivo: %s - Bloque Inicial: %d - Tamanio: %d", archivo->nombre, archivo->bloque_inicial, archivo->tamanio);
     }
+
 
     usleep(RETRASO_COMPACTACION * 1000);
     log_info(LOGGER_INPUT_OUTPUT, "PID: %d - Fin Compactación.", pid);
