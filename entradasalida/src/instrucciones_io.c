@@ -216,11 +216,16 @@ void procesar_dialfs_truncate(int socket_cliente)
     uint32_t nuevo_tamanio = interfazRecibida->tamanio;
 
     uint32_t bloques_necesarios = (nuevo_tamanio + BLOCK_SIZE - 1) / BLOCK_SIZE;
-    uint32_t bloques_ocupados = (obtener_tamanio_archivo(metadata_path) + BLOCK_SIZE - 1) / BLOCK_SIZE;
+    uint32_t bloques_ocupados = obtener_bloques_ocupados(metadata_path);
+    uint32_t ocupados_truncate = 0;
+    if (bloques_ocupados != 1){
+        ocupados_truncate = bloques_ocupados;
+    }
+    log_debug(LOGGER_INPUT_OUTPUT, "Bloques ocupados: %d", bloques_ocupados);
 
     log_error(LOGGER_INPUT_OUTPUT, "Bloque inicial: %d", bloque_inicial);
 
-    if (nuevo_tamanio < bloques_ocupados * BLOCK_SIZE)
+    if (bloques_necesarios < bloques_ocupados)
     {
         // Achicar el archivo
         for (uint32_t i = bloques_necesarios; i < bloques_ocupados; i++)
@@ -236,14 +241,14 @@ void procesar_dialfs_truncate(int socket_cliente)
         actualizar_archivo_en_lista(interfazRecibida->nombre_archivo, bloque_inicial, nuevo_tamanio);
         log_info(LOGGER_INPUT_OUTPUT, "PID: %d - Truncar archivo: %s - Tamaño: %d", interfazRecibida->pidPcb, interfazRecibida->nombre_archivo, nuevo_tamanio);
     }
-    else if (nuevo_tamanio > bloques_ocupados * BLOCK_SIZE)
+    else if (bloques_necesarios > bloques_ocupados)
     {
-        uint32_t primer_bloque_libre_de_los_contiguos = encontrar_bloques_libres_contiguos_top(bloque_inicial, bloques_necesarios, bloques_ocupados, bitmap);
+        uint32_t primer_bloque_libre_de_los_contiguos = encontrar_bloques_libres_contiguos_top(bloque_inicial, bloques_necesarios, ocupados_truncate, bitmap);
 
         if (primer_bloque_libre_de_los_contiguos == -1)
         {
             uint32_t bloques_libres = contar_bloques_libres(bitmap);
-            if (bloques_libres >= bloques_necesarios)
+            if (bloques_libres + bloques_ocupados >= bloques_necesarios)
             {
                 log_info(LOGGER_INPUT_OUTPUT, "PID: %d - Inicio Compactación.", interfazRecibida->pidPcb);
 
@@ -256,14 +261,16 @@ void procesar_dialfs_truncate(int socket_cliente)
                     tamanio_total_archivos += archivo->tamanio;
                 }
 
-                // Ahora voy a ordenar la lista de archivos por bloque_inicial
+                // Ahora voy a ordenar la lista de archivos por bloque_inicial y al final voy a poner el archivo que quiero truncar para que cuando lo trunque quede al final
 
-                ordenar_lista_archivos_por_bloque_inicial();
+                t_archivo *archivo_a_truncar = ordenar_lista_archivos_por_bloque_inicial(interfazRecibida->nombre_archivo);       //
+                char *info_archivo = malloc(archivo_a_truncar->tamanio);
+                memcpy(info_archivo, bloques + (archivo_a_truncar->bloque_inicial * BLOCK_SIZE), archivo_a_truncar->tamanio);
 
                 // Ya puedo hacer la compactacion con la lista de archivos ordenada, obteniendo de a uno su bloque inicial
                 // y tamanio y moviendolo a la posicion 0 de memoria que se va a ir actualizando con cada archivo
                 int espacio_a_mover = 0;
-                for (int i = 0; i < list_size(ARCHIVOS_EN_FS); i++)
+                for (int i = 0; i < (list_size(ARCHIVOS_EN_FS) - 1); i++)
                 {
                     t_archivo *archivo = list_get(ARCHIVOS_EN_FS, i);
                     int offset_inicial = archivo->tamanio;
@@ -276,6 +283,8 @@ void procesar_dialfs_truncate(int socket_cliente)
                     memmove(bloques + espacio_a_mover, bloques + archivo->bloque_inicial * BLOCK_SIZE, offset_inicial); // Tambien podria usar memcpy
                     espacio_a_mover += offset_inicial;
                 }
+                memmove(bloques + espacio_a_mover, info_archivo, archivo_a_truncar->tamanio);
+                free(info_archivo);
                 msync(bloques, BLOCK_SIZE * BLOCK_COUNT, MS_SYNC);
 
                 // Luego voy a actualizar la lista de archivos en fs con los nuevos bloques iniciales, el primero tendra el bloque 0, el segundo tendra tamanio del primero, y asi sucesivamente todo esto dividido por el tamanio de un bloque
@@ -296,10 +305,12 @@ void procesar_dialfs_truncate(int socket_cliente)
                 msync(bitmap, bitmap_size, MS_SYNC);
                 imprimir_bitmap();
                 log_trace(LOGGER_INPUT_OUTPUT, "Bitmap limpiado");
+                
+                int bloques_fs = (tamanio_total_archivos + BLOCK_SIZE - 1) / BLOCK_SIZE;
 
                 // Luego voy a marcar los bloques ocupados, estos van a ser tamanio_total_archivos / BLOCK_SIZE porque van a estar todos juntos
-                log_trace(LOGGER_INPUT_OUTPUT, "Marcando bloques ocupados esta cantidad de veces %d:", (tamanio_total_archivos + BLOCK_SIZE - 1) / BLOCK_SIZE);
-                for (int i = 0; i < (tamanio_total_archivos + BLOCK_SIZE - 1) / BLOCK_SIZE; i++)
+                log_trace(LOGGER_INPUT_OUTPUT, "Marcando bloques ocupados esta cantidad de veces %d:", bloques_fs);
+                for (int i = 0; i < bloques_fs; i++)
                 {
                     int byte_index = i / 8;
                     int bit_index = i % 8;
@@ -320,8 +331,8 @@ void procesar_dialfs_truncate(int socket_cliente)
                 usleep(RETRASO_COMPACTACION * 1000);
                 log_info(LOGGER_INPUT_OUTPUT, "PID: %d - Fin Compactación.", interfazRecibida->pidPcb);
                 bloque_inicial = obtener_bloque_inicial_por_nombre(interfazRecibida->nombre_archivo);
-                primer_bloque_libre_de_los_contiguos = encontrar_bloques_libres_contiguos_top(0, bloques_necesarios, bloques_ocupados, bitmap); // Buscar desde el inicio después de compactar
-            }
+                primer_bloque_libre_de_los_contiguos = bloque_inicial;
+            }            
         }
 
         if (primer_bloque_libre_de_los_contiguos == -1)
@@ -395,6 +406,11 @@ void procesar_dialfs_truncate(int socket_cliente)
         actualizar_tamanio_archivo(metadata_config, nuevo_tamanio);
         config_save(metadata_config);
         actualizar_archivo_en_lista(interfazRecibida->nombre_archivo, primer_bloque_libre_de_los_contiguos, nuevo_tamanio);
+        log_info(LOGGER_INPUT_OUTPUT, "PID: %d - Truncar archivo: %s - Tamaño: %d", interfazRecibida->pidPcb, interfazRecibida->nombre_archivo, nuevo_tamanio);
+    }else if(bloques_necesarios == bloques_ocupados){
+        actualizar_tamanio_archivo(metadata_config, nuevo_tamanio);
+        config_save(metadata_config);
+        actualizar_archivo_en_lista(interfazRecibida->nombre_archivo, bloque_inicial, nuevo_tamanio);
         log_info(LOGGER_INPUT_OUTPUT, "PID: %d - Truncar archivo: %s - Tamaño: %d", interfazRecibida->pidPcb, interfazRecibida->nombre_archivo, nuevo_tamanio);
     }
 

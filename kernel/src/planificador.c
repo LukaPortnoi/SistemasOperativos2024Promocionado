@@ -62,10 +62,18 @@ void chequear_grado_de_multiprogramacion()
 {
     while (1)
     {
+        int new;
+        sem_getvalue(&semNew, &new);
+        log_trace(LOGGER_KERNEL, "Valor semaforo NEW en su hilo antes WAIT: %d", new);
         sem_wait(&semNew);
+        sem_getvalue(&semNew, &new);
+        log_trace(LOGGER_KERNEL, "Valor semaforo NEW en su hilo: %d", new);
         if (PLANIFICACION_DETENIDA)
         {
             sem_wait(&sem_planificador_largo_plazo);
+            sem_post(&sem_planificador_largo_plazo);
+            sem_post(&semNew);      // ver huuu
+            log_warning(LOGGER_KERNEL, "Planificacion reanudada");
         }
 
         int largo_plazo;
@@ -78,7 +86,20 @@ void chequear_grado_de_multiprogramacion()
             continue;
         }
 
+        int largo_plazo_multi;
+        sem_getvalue(&semMultiprogramacion, &largo_plazo_multi);
+        log_trace(LOGGER_KERNEL, "Valor semaforo multiprogramacion ANTES WAIT: %d", largo_plazo_multi);
+        
         sem_wait(&semMultiprogramacion);
+
+        if (PLANIFICACION_DETENIDA)
+        {
+            sem_post(&semMultiprogramacion);
+            continue;
+        }
+
+        sem_getvalue(&semMultiprogramacion, &largo_plazo_multi);
+        log_trace(LOGGER_KERNEL, "Valor semaforo multiprogramacion: %d", largo_plazo_multi);
 
         int sem_value;
         if (sem_getvalue(&semMultiprogramacion, &sem_value) == 0)
@@ -361,6 +382,7 @@ void iniciar_planificadores()
 {
     int largo_plazo;
     int corto_plazo;
+    int sem_value;
     sem_getvalue(&sem_planificador_largo_plazo, &largo_plazo);
     sem_getvalue(&sem_planificador_corto_plazo, &corto_plazo);
 
@@ -368,14 +390,17 @@ void iniciar_planificadores()
     {
         sem_post(&sem_planificador_largo_plazo);
         sem_post(&sem_planificador_corto_plazo);
+        sem_post(&semNew);
     }
 
     PLANIFICACION_DETENIDA = false;
 
     sem_getvalue(&sem_planificador_largo_plazo, &largo_plazo);
     sem_getvalue(&sem_planificador_corto_plazo, &corto_plazo);
+    sem_getvalue(&semNew, &sem_value);
     log_trace(LOGGER_KERNEL, "Valor semaforo LARGO plazo: %d", largo_plazo);
     log_trace(LOGGER_KERNEL, "Valor semaforo CORTO plazo: %d", corto_plazo);
+    log_trace(LOGGER_KERNEL, "Valor semaforo NEW: %d", sem_value);
 
     log_debug(LOGGER_KERNEL, "Planificacion iniciada");
 }

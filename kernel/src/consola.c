@@ -319,10 +319,29 @@ void iniciar_planificacion()
 
 void cambiar_multiprogramacion(char *grado_multiprogramacion_string)
 {
+  int multiprogramacion_anterior = GRADO_MULTIPROGRAMACION;
   int numero = atoi(grado_multiprogramacion_string);
   GRADO_MULTIPROGRAMACION = numero;
   log_debug(LOGGER_KERNEL, "Grado de multiprogramacion cambiado a: %d", GRADO_MULTIPROGRAMACION);
-  sem_init(&semMultiprogramacion, 0, GRADO_MULTIPROGRAMACION);
+  //sem_init(&semMultiprogramacion, 0, GRADO_MULTIPROGRAMACION);  // HAGO POST NO HAGO SEM INIT
+  if (multiprogramacion_anterior < GRADO_MULTIPROGRAMACION)
+  {
+    for (int i = multiprogramacion_anterior; i < GRADO_MULTIPROGRAMACION; i++)
+    {
+      sem_post(&semMultiprogramacion);
+    }
+  }
+  else
+  {
+    for (int i = GRADO_MULTIPROGRAMACION; i < multiprogramacion_anterior; i++)
+    {
+      sem_wait(&semMultiprogramacion);
+    }
+  }
+
+  int sem_value;
+  sem_getvalue(&semMultiprogramacion, &sem_value);
+  log_debug(LOGGER_KERNEL, "Semáforo de multiprogramación con valor: %d", sem_value);
 }
 
 void mostrar_listado_estados_procesos()

@@ -28,7 +28,7 @@ uint32_t encontrar_bloques_libres_contiguos_top(uint32_t bloque_inicial, uint32_
 uint32_t contar_bloques_libres(char *bitmap);
 
 void compactar_dialfs(uint32_t pid);
-void ordenar_lista_archivos_por_bloque_inicial();
+t_archivo *ordenar_lista_archivos_por_bloque_inicial(char *nombre_archivo);
 void actualizar_lista_archivos_compactados();
 void escribir_dato_archivo(char *datoRecibido, char *puntero_archivo, char *bloques, uint32_t bloque_inicial);
 char *leer_dato_archivo(uint32_t tamanio, char *puntero_archivo, char *bloques, uint32_t bloque_inicial);

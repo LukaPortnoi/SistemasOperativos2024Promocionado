@@ -318,7 +318,7 @@ void compactar_dialfs(uint32_t pid)
 
     // Ahora voy a ordenar la lista de archivos por bloque_inicial
 
-    ordenar_lista_archivos_por_bloque_inicial();
+    //ordenar_lista_archivos_por_bloque_inicial();
     
     // Luego voy a actualizar la lista de archivos en fs con los nuevos bloques iniciales, el primero tendra el bloque 0, el segundo tendra tamanio del primero, y asi sucesivamente todo esto dividido por el tamanio de un bloque
     // Al mismo tiempo que voy obteniendo cada archivo y actualizandole su bloque inicial en la lista de archivos en fs, voy a buscar por su nombre a
@@ -385,14 +385,35 @@ void compactar_dialfs(uint32_t pid)
     log_info(LOGGER_INPUT_OUTPUT, "PID: %d - Fin Compactación.", pid);
 }
 
-void ordenar_lista_archivos_por_bloque_inicial()
+t_archivo *ordenar_lista_archivos_por_bloque_inicial(char *nombre_archivo)
 {
     bool _ordenar_por_bloque_inicial(t_archivo * archivo1, t_archivo * archivo2)
     {
         return archivo1->bloque_inicial < archivo2->bloque_inicial;
     }
 
+    // Ordenar la lista de archivos por bloque inicial
     list_sort(ARCHIVOS_EN_FS, (void *)_ordenar_por_bloque_inicial);
+
+    // Encontrar el archivo especificado por su nombre
+    t_archivo *archivo_a_mover = NULL;
+    for (int i = 0; i < list_size(ARCHIVOS_EN_FS); i++)
+    {
+        t_archivo *archivo = list_get(ARCHIVOS_EN_FS, i);
+        if (strcmp(archivo->nombre, nombre_archivo) == 0)
+        {
+            archivo_a_mover = archivo;
+            list_remove(ARCHIVOS_EN_FS, i);
+            break;
+        }
+    }
+
+    // Agregar el archivo encontrado al final de la lista
+    if (archivo_a_mover != NULL)
+    {
+        list_add(ARCHIVOS_EN_FS, archivo_a_mover);
+    } //tambien tengo que actualizar su bloque inicial en la lista de archivos en fs
+    return archivo_a_mover;
 }
 
 void actualizar_lista_archivos_compactados()
