@@ -245,7 +245,80 @@ void procesar_dialfs_truncate(int socket_cliente)
             uint32_t bloques_libres = contar_bloques_libres(bitmap);
             if (bloques_libres >= bloques_necesarios)
             {
-                compactar_dialfs(interfazRecibida->pidPcb);
+                log_info(LOGGER_INPUT_OUTPUT, "PID: %d - Inicio Compactación.", interfazRecibida->pidPcb);
+
+                // Primero voy a obtener el tamanio total de los archivos en fs
+                
+                uint32_t tamanio_total_archivos = 0;
+                for (int i = 0; i < list_size(ARCHIVOS_EN_FS); i++)
+                {
+                    t_archivo *archivo = list_get(ARCHIVOS_EN_FS, i);
+                    tamanio_total_archivos += archivo->tamanio;
+                }
+
+                // Ahora voy a ordenar la lista de archivos por bloque_inicial
+
+                ordenar_lista_archivos_por_bloque_inicial();
+
+                // Ya puedo hacer la compactacion con la lista de archivos ordenada, obteniendo de a uno su bloque inicial
+                // y tamanio y moviendolo a la posicion 0 de memoria que se va a ir actualizando con cada archivo
+                int espacio_a_mover = 0;
+                for (int i = 0; i < list_size(ARCHIVOS_EN_FS); i++)
+                {
+                    t_archivo *archivo = list_get(ARCHIVOS_EN_FS, i);
+                    int offset_inicial = archivo->tamanio;
+
+                    if (offset_inicial % BLOCK_SIZE != 0)
+                    {
+                        offset_inicial = ((offset_inicial / BLOCK_SIZE) + 1) * BLOCK_SIZE;
+                    }
+
+                    memmove(bloques + espacio_a_mover, bloques + archivo->bloque_inicial * BLOCK_SIZE, offset_inicial); // Tambien podria usar memcpy
+                    espacio_a_mover += offset_inicial;
+                }
+                msync(bloques, BLOCK_SIZE * BLOCK_COUNT, MS_SYNC);
+
+                // Luego voy a actualizar la lista de archivos en fs con los nuevos bloques iniciales, el primero tendra el bloque 0, el segundo tendra tamanio del primero, y asi sucesivamente todo esto dividido por el tamanio de un bloque
+                // Al mismo tiempo que voy obteniendo cada archivo y actualizandole su bloque inicial en la lista de archivos en fs, voy a buscar por su nombre a
+                // char metadata_path[256] obtener_metadata_path(interfazRecibida->nombre_archivo, metadata_path, sizeof(metadata_path)); su metadata y actualizarle el bloque inicial con actualizar_bloque_inicial(metadata_config, bloque_inicial);
+                actualizar_lista_archivos_compactados();
+
+                // Al finalizar la compactacion, tengo que actualizar el bitmap (ahora tendra todos 1 en tamanio_total_archivos/bloque_size bits)
+
+                log_trace(LOGGER_INPUT_OUTPUT, "Limpiando bitmap");
+                // Primero limpio el bitmap
+                for (int i = 0; i < bitmap_size; i++)
+                {
+                    bitmap[i] = 0;
+                }
+
+                // guardo los datos de mi bitmap mapeado a memoria en el archivo bitmap.dat
+                msync(bitmap, bitmap_size, MS_SYNC);
+                imprimir_bitmap();
+                log_trace(LOGGER_INPUT_OUTPUT, "Bitmap limpiado");
+
+                // Luego voy a marcar los bloques ocupados, estos van a ser tamanio_total_archivos / BLOCK_SIZE porque van a estar todos juntos
+                log_trace(LOGGER_INPUT_OUTPUT, "Marcando bloques ocupados esta cantidad de veces %d:", (tamanio_total_archivos + BLOCK_SIZE - 1) / BLOCK_SIZE);
+                for (int i = 0; i < (tamanio_total_archivos + BLOCK_SIZE - 1) / BLOCK_SIZE; i++)
+                {
+                    int byte_index = i / 8;
+                    int bit_index = i % 8;
+                    bitmap[byte_index] |= (1 << bit_index);
+                }
+
+                // guardo los datos de mi bitmap mapeado a memoria en el archivo bitmap.dat
+                msync(bitmap, bitmap_size, MS_SYNC);
+                imprimir_bitmap();
+
+                // mostrar lista de archivos en fs
+                for (int i = 0; i < list_size(ARCHIVOS_EN_FS); i++)
+                {
+                    t_archivo *archivo = list_get(ARCHIVOS_EN_FS, i);
+                    log_trace(LOGGER_INPUT_OUTPUT, "Archivo: %s - Bloque Inicial: %d - Tamanio: %d", archivo->nombre, archivo->bloque_inicial, archivo->tamanio);
+                }
+
+                usleep(RETRASO_COMPACTACION * 1000);
+                log_info(LOGGER_INPUT_OUTPUT, "PID: %d - Fin Compactación.", interfazRecibida->pidPcb);
                 bloque_inicial = obtener_bloque_inicial_por_nombre(interfazRecibida->nombre_archivo);
                 primer_bloque_libre_de_los_contiguos = encontrar_bloques_libres_contiguos_top(0, bloques_necesarios, bloques_ocupados, bitmap); // Buscar desde el inicio después de compactar
             }
@@ -279,7 +352,7 @@ void procesar_dialfs_truncate(int socket_cliente)
             log_warning(LOGGER_INPUT_OUTPUT, "Bloques ocupados: %d", bloques_ocupados_aux);
             // Marcar los bloques originales como libres si el archivo se movió
             for (uint32_t i = 0; i < bloques_ocupados_aux; i++)
-            {   
+            {
                 log_error(LOGGER_INPUT_OUTPUT, "Bloque inicial: %d", bloque_inicial);
                 log_warning(LOGGER_INPUT_OUTPUT, "Liberando bloque %d", bloque_inicial + i);
                 int bloque_a_liberar = bloque_inicial + i;
@@ -299,6 +372,8 @@ void procesar_dialfs_truncate(int socket_cliente)
 
             // Mover la información a los nuevos bloques a la nueva posicion con memmove
             memmove(bloques + (primer_bloque_libre_de_los_contiguos * BLOCK_SIZE), bloques + (bloque_inicial * BLOCK_SIZE), bloques_ocupados_aux * BLOCK_SIZE);
+
+            msync(bloques, BLOCK_SIZE * BLOCK_COUNT, MS_SYNC);
 
             usleep(RETRASO_COMPACTACION * 1000);
             log_info(LOGGER_INPUT_OUTPUT, "PID: %d - Fin Compactación.", interfazRecibida->pidPcb);
@@ -350,7 +425,7 @@ void procesar_dialfs_write(int socket_cliente)
 
     FILE *bloques_file = fopen(BLOQUES_PATH, "r+");
     char *bloques = mmap(NULL, BLOCK_SIZE * BLOCK_COUNT, PROT_READ | PROT_WRITE, MAP_SHARED, fileno(bloques_file), 0);
-    //printeamos las listas que enviamos
+    // printeamos las listas que enviamos
     for (int i = 0; i < list_size(interfazRecibida->direcciones); i++)
     {
         t_direcciones_fisicas *direccionAmostrar = list_get(interfazRecibida->direcciones, i);

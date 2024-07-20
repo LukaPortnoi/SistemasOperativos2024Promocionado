@@ -1,4 +1,5 @@
 #include "../include/dialfs.h"
+#include <commons/memory.h>
 
 t_archivo *crear_archivo(char *nombre, uint32_t bloque_inicial, uint32_t tamanio)
 {

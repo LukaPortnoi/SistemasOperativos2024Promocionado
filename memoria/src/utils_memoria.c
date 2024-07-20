@@ -578,7 +578,7 @@ void escribir_memoria(t_list *direcciones, void *valor_obtenido, uint32_t pid, i
             break;
         }
     }
-    mem_hexdump(memoriaUsuario,256);
+    //mem_hexdump(memoriaUsuario,256);
 
     // Liberar la memoria de copia
     free(copia);
