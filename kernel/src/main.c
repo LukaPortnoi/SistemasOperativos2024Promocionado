@@ -99,8 +99,7 @@ void iniciar_conexiones()
 
 void escuchar_kernel()
 {
-	while (server_escuchar(LOGGER_KERNEL, "KERNEL", fd_kernel))
-		;
+	while (server_escuchar(LOGGER_KERNEL, "KERNEL", fd_kernel));
 }
 
 void finalizar_kernel()
