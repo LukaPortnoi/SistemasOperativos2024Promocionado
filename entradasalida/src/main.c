@@ -140,7 +140,7 @@ char *extraer_nombre_interfaz(char *path)
 
 char *agregar_prefijo_y_extension(const char *nombre_interfaz)
 {
-    const char *prefijo = "./cfgs/";
+    const char *prefijo = "./config/";
     const char *extension = ".config";
 
     // Calcular el nuevo tamaño del string con el prefijo y la extensión añadidos

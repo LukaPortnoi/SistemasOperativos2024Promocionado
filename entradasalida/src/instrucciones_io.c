@@ -223,7 +223,7 @@ void procesar_dialfs_truncate(int socket_cliente)
     }
     log_debug(LOGGER_INPUT_OUTPUT, "Bloques ocupados: %d", bloques_ocupados);
 
-    log_error(LOGGER_INPUT_OUTPUT, "Bloque inicial: %d", bloque_inicial);
+    log_debug(LOGGER_INPUT_OUTPUT, "Bloque inicial: %d", bloque_inicial);
 
     if (bloques_necesarios < bloques_ocupados)
     {
@@ -263,7 +263,7 @@ void procesar_dialfs_truncate(int socket_cliente)
 
                 // Ahora voy a ordenar la lista de archivos por bloque_inicial y al final voy a poner el archivo que quiero truncar para que cuando lo trunque quede al final
 
-                t_archivo *archivo_a_truncar = ordenar_lista_archivos_por_bloque_inicial(interfazRecibida->nombre_archivo);       //
+                t_archivo *archivo_a_truncar = ordenar_lista_archivos_por_bloque_inicial(interfazRecibida->nombre_archivo);       //devuelve el archivo que esta provocando la compactacion
                 char *info_archivo = malloc(archivo_a_truncar->tamanio);
                 memcpy(info_archivo, bloques + (archivo_a_truncar->bloque_inicial * BLOCK_SIZE), archivo_a_truncar->tamanio);
 
@@ -360,18 +360,18 @@ void procesar_dialfs_truncate(int socket_cliente)
             {
                 bloques_ocupados_aux = bloques_ocupados;
             }
-            log_warning(LOGGER_INPUT_OUTPUT, "Bloques ocupados: %d", bloques_ocupados_aux);
+            log_debug(LOGGER_INPUT_OUTPUT, "Bloques ocupados: %d", bloques_ocupados_aux);
             // Marcar los bloques originales como libres si el archivo se movió
             for (uint32_t i = 0; i < bloques_ocupados_aux; i++)
             {
-                log_error(LOGGER_INPUT_OUTPUT, "Bloque inicial: %d", bloque_inicial);
-                log_warning(LOGGER_INPUT_OUTPUT, "Liberando bloque %d", bloque_inicial + i);
+                log_debug(LOGGER_INPUT_OUTPUT, "Bloque inicial: %d", bloque_inicial);
+                log_debug(LOGGER_INPUT_OUTPUT, "Liberando bloque %d", bloque_inicial + i);
                 int bloque_a_liberar = bloque_inicial + i;
                 int byte_index = bloque_a_liberar / 8;
                 int bit_index = bloque_a_liberar % 8;
                 bitmap[byte_index] &= ~(1 << bit_index);
             }
-            log_warning(LOGGER_INPUT_OUTPUT, "Bloques necesarios: %d", bloques_necesarios);
+            log_debug(LOGGER_INPUT_OUTPUT, "Bloques necesarios: %d", bloques_necesarios);
             // Marcar los bloques nuevos como ocupados
             for (uint32_t i = 0; i < bloques_necesarios; i++)
             {
@@ -401,7 +401,7 @@ void procesar_dialfs_truncate(int socket_cliente)
             }
         }
 
-        log_warning(LOGGER_INPUT_OUTPUT, "Actualizando metadata, bloque inicial: %d, tamanio: %d", primer_bloque_libre_de_los_contiguos, nuevo_tamanio);
+        log_debug(LOGGER_INPUT_OUTPUT, "Actualizando metadata, bloque inicial: %d, tamanio: %d", primer_bloque_libre_de_los_contiguos, nuevo_tamanio);
         actualizar_bloque_inicial(metadata_config, primer_bloque_libre_de_los_contiguos);
         actualizar_tamanio_archivo(metadata_config, nuevo_tamanio);
         config_save(metadata_config);
@@ -476,7 +476,7 @@ void procesar_dialfs_read(int socket_cliente)
     char *bloques = mmap(NULL, BLOCK_SIZE * BLOCK_COUNT, PROT_READ | PROT_WRITE, MAP_SHARED, fileno(bloques_file), 0);
 
     char *dato_a_enviar = leer_dato_archivo(interfazRecibida->tamanio, interfazRecibida->puntero_archivo, bloques, obtener_bloque_inicial(metadata_path));
-    log_debug(LOGGER_INPUT_OUTPUT, "Información leída: %s", dato_a_enviar);
+    log_info(LOGGER_INPUT_OUTPUT, "Información leída: %s", dato_a_enviar);
     enviar_dato_stdin(fd_io_memoria, interfazRecibida->direcciones, dato_a_enviar, interfazRecibida->pidPcb);
 
     log_info(LOGGER_INPUT_OUTPUT, "PID: %d - Leer archivo: %s - Tamaño a Leer: %d - Puntero Archivo: %s", interfazRecibida->pidPcb, interfazRecibida->nombre_archivo, interfazRecibida->tamanio, interfazRecibida->puntero_archivo);

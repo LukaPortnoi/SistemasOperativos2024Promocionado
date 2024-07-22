@@ -19,7 +19,6 @@ void _set(char *registro, char *valor)
 void _mov_in(char *registro, char *direc_logica, int socket)
 {
     uint32_t direccionLogica32;
-    t_list *datosRecibidos = list_create();
 
     if (revisar_registro(direc_logica))
     {
@@ -32,13 +31,12 @@ void _mov_in(char *registro, char *direc_logica, int socket)
 
     uint32_t tamanio_registro = obtener_tamanio_registro(registro);
     // printf("Tamanio registro antes de serializarlor y enviarlo MOV_IN: %d \n", tamanio_registro);
-    t_list *Lista_direccionesFisica = list_create();
-    Lista_direccionesFisica = traducir_direccion(pcb_actual->pid, direccionLogica32, TAM_PAGINA, tamanio_registro);
+    t_list *Lista_direccionesFisica = traducir_direccion(pcb_actual->pid, direccionLogica32, TAM_PAGINA, tamanio_registro);
     // printf("tamanio de la lista de direcciones fisicas: %d \n", list_size(Lista_direccionesFisica));
     enviar_valor_mov_in_cpu(Lista_direccionesFisica, socket, pcb_actual->pid);
     void *datoObtenido;
 
-    datosRecibidos = recibir_dato_de_memoria_movIn(socket, LOGGER_CPU, &datoObtenido, Lista_direccionesFisica, tamanio_registro);
+    t_list *datosRecibidos = recibir_dato_de_memoria_movIn(socket, LOGGER_CPU, &datoObtenido, Lista_direccionesFisica, tamanio_registro);
 
     if (revisar_registro(registro))
     {
@@ -74,7 +72,7 @@ void _mov_in(char *registro, char *direc_logica, int socket)
 
         // free(dato2);
     }
-
+    free(datoObtenido);
     list_destroy_and_destroy_elements(datosRecibidos, free);          // FIJARSE BIEN
     list_destroy_and_destroy_elements(Lista_direccionesFisica, free); // FIJARSE BIEN
 }
@@ -176,7 +174,7 @@ void _sum(char *registro_destino, char *registro_origen)
     else
     {
         // Manejo de error si los registros son de tamaños diferentes
-        log_error(LOGGER_CPU, "Error: registros de diferentes tamaños no pueden ser sumados.");
+        log_debug(LOGGER_CPU, "Error: registros de diferentes tamaños no pueden ser sumados.");
     }
 }
 
@@ -220,7 +218,7 @@ void _sub(char *registro_destino, char *registro_origen)
     else
     {
         // Manejo de error si los registros son de tamaños diferentes
-        log_error(LOGGER_CPU, "Error: registros de diferentes tamaños no pueden ser restados.");
+        log_debug(LOGGER_CPU, "Error: registros de diferentes tamaños no pueden ser restados.");
     }
 }
 
@@ -968,7 +966,7 @@ t_list *deserializar_dato_movIN(t_paquete *paquete, void **datoObtenido, t_list 
 t_list *recibir_dato_de_memoria_movIn(int socket, t_log *logger, void **datoObtenido, t_list *Lista_direccionesFisica, int tamanio)
 {
     op_cod cop;
-    t_list *datoRecibido = list_create();
+    t_list *datoRecibido = NULL;
 
     recv(socket, &cop, sizeof(op_cod), 0);
     switch (cop)

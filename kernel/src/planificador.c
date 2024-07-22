@@ -73,7 +73,7 @@ void chequear_grado_de_multiprogramacion()
             sem_wait(&sem_planificador_largo_plazo);
             sem_post(&sem_planificador_largo_plazo);
             sem_post(&semNew);      // ver huuu
-            log_warning(LOGGER_KERNEL, "Planificacion reanudada");
+            log_debug(LOGGER_KERNEL, "Planificacion reanudada");
         }
 
         int largo_plazo;
@@ -82,7 +82,7 @@ void chequear_grado_de_multiprogramacion()
 
         if (list_size(squeue_new->cola) == 0)
         {
-            log_warning(LOGGER_KERNEL, "No hay procesos en NEW");
+            log_debug(LOGGER_KERNEL, "No hay procesos en NEW");
             continue;
         }
 

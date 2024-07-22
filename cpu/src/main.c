@@ -48,7 +48,7 @@ int main()
 void inicializar_config()
 {
     LOGGER_CPU = iniciar_logger("cpu.log", "CPU");
-    CONFIG = iniciar_config("./cpu.config", "CPU");
+    CONFIG = iniciar_config("./config/cpu.config", "CPU");
     IP_MEMORIA = config_get_string_value(CONFIG, "IP_MEMORIA");
     IP_CPU = config_get_string_value(CONFIG, "IP_CPU");
     PUERTO_MEMORIA = config_get_string_value(CONFIG, "PUERTO_MEMORIA");

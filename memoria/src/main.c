@@ -43,7 +43,7 @@ int main(void)
 void inicializar_config()
 {
 	LOGGER_MEMORIA = iniciar_logger("memoria.log", "Servidor Memoria");
-	CONFIG_MEMORIA = iniciar_config("./memoria.config", "MEMORIA");
+	CONFIG_MEMORIA = iniciar_config("./config/memoria.config", "MEMORIA");
 	PUERTO_ESCUCHA_MEMORIA = config_get_string_value(CONFIG_MEMORIA, "PUERTO_ESCUCHA");
 	TAM_MEMORIA = config_get_int_value(CONFIG_MEMORIA, "TAM_MEMORIA");
 	TAM_PAGINA = config_get_int_value(CONFIG_MEMORIA, "TAM_PAGINA");

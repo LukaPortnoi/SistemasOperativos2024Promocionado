@@ -63,7 +63,7 @@ int main()
 void inicializar_config()
 {
 	LOGGER_KERNEL = iniciar_logger("kernel.log", "KERNEL");
-	CONFIG_KERNEL = iniciar_config("./kernel.config", "KERNEL"); // liberar los get_array_value
+	CONFIG_KERNEL = iniciar_config("./config/kernel.config", "KERNEL"); // liberar los get_array_value
 	PUERTO_ESCUCHA = config_get_string_value(CONFIG_KERNEL, "PUERTO_ESCUCHA");
 	IP_MEMORIA = config_get_string_value(CONFIG_KERNEL, "IP_MEMORIA");
 	PUERTO_MEMORIA = config_get_string_value(CONFIG_KERNEL, "PUERTO_MEMORIA");

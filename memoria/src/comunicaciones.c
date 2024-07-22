@@ -119,8 +119,8 @@ static void procesar_conexion_memoria(void *void_args)
 			void *mostrar = leer_memoria(direcciones_fisicas_mov_in, pidMovIn, tamanio_registro, lista_datos_leidos_mov_in); // es nuevo
 
 			enviar_dato_movIn(cliente_socket, lista_datos_leidos_mov_in, mostrar, direcciones_fisicas_mov_in, tamanio_registro);
-			list_clean_and_destroy_elements(direcciones_fisicas_mov_in, free);
-			list_clean_and_destroy_elements(lista_datos_leidos_mov_in, free);
+			list_destroy_and_destroy_elements(direcciones_fisicas_mov_in, free);
+			list_destroy_and_destroy_elements(lista_datos_leidos_mov_in, free);
 			free(mostrar);
 			break;
 
