@@ -45,7 +45,7 @@ int iniciar_servidor(t_log *logger, const char *name, char *ip, char *puerto)
 		return 0;
 	}
 	listen(socket_servidor, SOMAXCONN);
-	log_trace(logger, "Servidor %s escuchando en %s:%s", name, ip, puerto);
+	log_info(logger, "Servidor %s escuchando en %s:%s", name, ip, puerto);
 
 	freeaddrinfo(servinfo);
 	return socket_servidor;

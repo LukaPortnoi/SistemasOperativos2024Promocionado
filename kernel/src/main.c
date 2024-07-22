@@ -49,9 +49,9 @@ t_pcb *pcb_a_finalizar = NULL;
 
 pthread_t hilo_server_kernel;
 
-int main()
+int main(int argc, char **argv)
 {
-	inicializar_config();
+	inicializar_config(argv[1]);
 	iniciar_conexiones();
 	iniciar_colas_y_semaforos();
 	iniciar_planificador_largo_plazo();
@@ -60,10 +60,15 @@ int main()
 	finalizar_kernel();
 }
 
-void inicializar_config()
+void inicializar_config(char *arg)
 {
+	char config_path[256];
+	strcpy(config_path, "./config/");
+	strcat(config_path, arg);
+	strcat(config_path, ".config");
+
 	LOGGER_KERNEL = iniciar_logger("kernel.log", "KERNEL");
-	CONFIG_KERNEL = iniciar_config("./config/kernel.config", "KERNEL"); // liberar los get_array_value
+	CONFIG_KERNEL = iniciar_config(config_path, "KERNEL");
 	PUERTO_ESCUCHA = config_get_string_value(CONFIG_KERNEL, "PUERTO_ESCUCHA");
 	IP_MEMORIA = config_get_string_value(CONFIG_KERNEL, "IP_MEMORIA");
 	PUERTO_MEMORIA = config_get_string_value(CONFIG_KERNEL, "PUERTO_MEMORIA");
