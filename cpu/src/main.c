@@ -24,11 +24,11 @@ pthread_mutex_t mutex_interrupt;
 
 op_cod cod_op;
 
-int main()
+int main(int argc, char **argv)
 {
     signal(SIGINT, manejador_signals);
     signal(SIGSEGV, manejador_signals);
-    inicializar_config();
+    inicializar_config(argv[1]);
     iniciar_semaforos_etc();
     inicializar_tlb();
     pcb_actual = inicializar_pcb();
@@ -39,16 +39,20 @@ int main()
 
     iniciar_conexiones();
 
-    while (server_escuchar(LOGGER_CPU, "CPU_DISPATCH", fd_cpu_dispatch))
-        ;
+    while (server_escuchar(LOGGER_CPU, "CPU_DISPATCH", fd_cpu_dispatch));
 
     finalizar_cpu();
 }
 
-void inicializar_config()
+void inicializar_config(char *arg)
 {
+    char config_path[256];
+	strcpy(config_path, "./config/");
+	strcat(config_path, arg);
+    strcat(config_path, ".config");
+
     LOGGER_CPU = iniciar_logger("cpu.log", "CPU");
-    CONFIG = iniciar_config("./cpu.config", "CPU");
+    CONFIG = iniciar_config(config_path, "CPU");
     IP_MEMORIA = config_get_string_value(CONFIG, "IP_MEMORIA");
     IP_CPU = config_get_string_value(CONFIG, "IP_CPU");
     PUERTO_MEMORIA = config_get_string_value(CONFIG, "PUERTO_MEMORIA");
@@ -86,7 +90,10 @@ void escuchar_interrupt()
 
 void finalizar_cpu()
 {
-    destruir_pcb(pcb_actual);
+    if (pcb_actual != NULL)
+    {
+        destruir_pcb(pcb_actual);
+    }
     log_destroy(LOGGER_CPU);
     config_destroy(CONFIG);
     liberar_conexion(fd_cpu_dispatch);
@@ -107,7 +114,6 @@ void manejador_signals(int signum)
         break;
 
     case SIGINT:
-        log_trace(LOGGER_CPU, "Se recibio la señal SIGINT\n");
         log_trace(LOGGER_CPU, "Se recibió SIGINT, cerrando conexiones y liberando recursos...");
         finalizar_cpu();
         destruir_tlb();

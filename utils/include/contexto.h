@@ -31,11 +31,11 @@ typedef struct
     nombre_instruccion nombre;
     char *parametro1;
     char *parametro2;
-    uint32_t longitud_parametro1;
-    uint32_t longitud_parametro2;
     char *parametro3;
     char *parametro4;
     char *parametro5;
+    uint32_t longitud_parametro1;
+    uint32_t longitud_parametro2;
     uint32_t longitud_parametro4;
     uint32_t longitud_parametro3;
     uint32_t longitud_parametro5;
@@ -70,7 +70,7 @@ typedef enum
 {
     FINALIZACION_SIN_MOTIVO,
     SUCCESS,
-    INVALID_RESOURCE, 
+    INVALID_RESOURCE,
     INVALID_INTERFACE,
     OUT_OF_MEMORY,
     INTERRUPTED_BY_USER

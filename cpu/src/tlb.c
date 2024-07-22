@@ -17,7 +17,6 @@ t_tlb *inicializar_tlb()
     {
         tlb->algoritmo = LRU;
     }
-    log_debug(LOGGER_CPU, "Iniciando TLB");
     return tlb;
 }
 
@@ -155,6 +154,7 @@ t_list *traducir_direccion(uint32_t pid, uint32_t logicalAddress, uint32_t pageS
         // pido marco a memoria enviando la pagina y el pid y me devuelve un marco
         enviar_Pid_Pagina_Memoria(pid, pagina);
         marco = recibir_marco_memoria(fd_cpu_memoria);
+        log_info(LOGGER_CPU, "PID: %d - TLB MISS - Pagina: %d", pid, pagina);
         log_info(LOGGER_CPU, "PID: %d - OBTENER MARCO - Pagina: %d - MARCO: %d", pid, pagina, marco);
         if (CANTIDAD_ENTRADAS_TLB > 0)
         {
@@ -182,12 +182,12 @@ t_list *traducir_direccion(uint32_t pid, uint32_t logicalAddress, uint32_t pageS
     int contadorBreak = 0;
     uint32_t tamanioAux = tamanio_registro - direccion->tamanio;
     uint32_t tamanioAuxTotal = direccion->tamanio;
-
     if (ocupaMasDeUnaPagina)
     {
         while (contador <= cantidadPaginas)
         {
-            t_direcciones_fisicas *direccionEsdiguientes = malloc(sizeof(t_direcciones_fisicas));
+            t_direcciones_fisicas direccionEsdiguientes;
+
             for (int i = 0; i < tamanio_registro; i++)
             {
                 if ((logicalAddress / pageSize != (logicalAddress + i) / pageSize) && contadorBreak == 0 && tamanioAuxTotal != tamanio_registro)
@@ -204,18 +204,22 @@ t_list *traducir_direccion(uint32_t pid, uint32_t logicalAddress, uint32_t pageS
                     {
                         // TLB Hit
                         log_info(LOGGER_CPU, "PID: %d - TLB HIT - Pagina: %d", pid, paginaSig);
-                        direccionEsdiguientes->direccion_fisica = marco2 * pageSize + offset2;
+                        direccionEsdiguientes.direccion_fisica = marco2 * pageSize + offset2;
                         log_info(LOGGER_CPU, "PID: %d - OBTENER MARCO - Pagina: %d - MARCO: %d", pid, paginaSig, marco2);
                         for (int j = 0; j < tamanioAux; j++)
                         {
-                            if (direccionEsdiguientes->direccion_fisica / pageSize == (direccionEsdiguientes->direccion_fisica + j) / pageSize)
+                            if (direccionEsdiguientes.direccion_fisica / pageSize == (direccionEsdiguientes.direccion_fisica + j) / pageSize)
                             {
                                 tamanioAleer2++;
                             }
                         }
-                        direccionEsdiguientes->tamanio = tamanioAleer2;
-                        tamanioAux = tamanioAux - direccionEsdiguientes->tamanio;
-                        list_add(listaDirecciones, direccionEsdiguientes);
+                        direccionEsdiguientes.tamanio = tamanioAleer2;
+                        tamanioAux = tamanioAux - direccionEsdiguientes.tamanio;
+                        
+                        t_direcciones_fisicas *copia = malloc(sizeof(t_direcciones_fisicas));
+                        copia->direccion_fisica = direccionEsdiguientes.direccion_fisica;
+                        copia->tamanio = direccionEsdiguientes.tamanio;
+                        list_add(listaDirecciones, copia);
 
                         contadorBreak++;
                     }
@@ -223,7 +227,6 @@ t_list *traducir_direccion(uint32_t pid, uint32_t logicalAddress, uint32_t pageS
                     {
                         // TLB Miss
                         log_info(LOGGER_CPU, "PID: %d - TLB MISS - Pagina: %d", pid, paginaSig);
-
                         // pido marco a memoria enviando la pagina y el pid y me devuelve un marco
                         enviar_Pid_Pagina_Memoria(pid, paginaSig);
                         marco2 = recibir_marco_memoria(fd_cpu_memoria);
@@ -233,18 +236,22 @@ t_list *traducir_direccion(uint32_t pid, uint32_t logicalAddress, uint32_t pageS
                         {
                             actualizar_TLB(pid, paginaSig, marco2);
                         }
-                        direccionEsdiguientes->direccion_fisica = marco2 * pageSize + offset2;
+                        direccionEsdiguientes.direccion_fisica = marco2 * pageSize + offset2;
                         for (int j = 0; j < tamanioAux; j++)
                         {
-                            if (direccionEsdiguientes->direccion_fisica / pageSize == (direccionEsdiguientes->direccion_fisica + j) / pageSize)
+                            if (direccionEsdiguientes.direccion_fisica / pageSize == (direccionEsdiguientes.direccion_fisica + j) / pageSize)
                             {
                                 tamanioAleer2++;
                             }
                         }
 
-                        direccionEsdiguientes->tamanio = tamanioAleer2;
-                        tamanioAux = tamanioAux - direccionEsdiguientes->tamanio;
-                        list_add(listaDirecciones, direccionEsdiguientes);
+                        direccionEsdiguientes.tamanio = tamanioAleer2;
+                        tamanioAux = tamanioAux - direccionEsdiguientes.tamanio;
+
+                        t_direcciones_fisicas *copia = malloc(sizeof(t_direcciones_fisicas));
+                        copia->direccion_fisica = direccionEsdiguientes.direccion_fisica;
+                        copia->tamanio = direccionEsdiguientes.tamanio;
+                        list_add(listaDirecciones, copia);
 
                         contadorBreak++;
                     }
@@ -257,12 +264,14 @@ t_list *traducir_direccion(uint32_t pid, uint32_t logicalAddress, uint32_t pageS
         }
     }
 
+    // ESTO ES PARA MOSTRAR LAS DIRECCIONES
+    /*
     for (int i = 0; i < list_size(listaDirecciones); i++)
     {
         t_direcciones_fisicas *direccionAmostrar = list_get(listaDirecciones, i);
         // printf("Direccion Fisica: %d\n", direccionAmostrar->direccion_fisica);
         // printf("Tamanio: %d\n", direccionAmostrar->tamanio);
-    }
+    }*/
 
     return listaDirecciones;
 }
@@ -361,9 +370,13 @@ void enviar_direccion_fisica_memoria(uint32_t direccion_fisica)
 uint32_t recibir_marco_memoria(int fd_cpu_memoria)
 {
     op_cod cop;
-    uint32_t marcoRecibido;
+    uint32_t marcoRecibido = -1;
 
-    recv(fd_cpu_memoria, &cop, sizeof(op_cod), 0);
+    if(recv(fd_cpu_memoria, &cop, sizeof(op_cod), 0)!= sizeof(op_cod)){
+        exit(EXIT_FAILURE);
+    }
+
+    
     switch (cop)
     {
     case ENVIAR_MARCO:

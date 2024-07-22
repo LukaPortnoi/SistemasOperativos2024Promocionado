@@ -25,9 +25,9 @@ uint32_t valorTotalaDeLeer;
 t_list *marcosPaginas;
 t_list *procesos_totales;
 
-int main(void)
+int main(int argc, char **argv)
 {
-	inicializar_config();
+	inicializar_config(argv[1]);
 	iniciar_semaforos();
 	iniciar_memoria_usuario();
 
@@ -40,10 +40,15 @@ int main(void)
 	return 0;
 }
 
-void inicializar_config()
+void inicializar_config(char *arg)
 {
+	char config_path[256];
+	strcpy(config_path, "./config/");
+	strcat(config_path, arg);
+	strcat(config_path, ".config");
+
 	LOGGER_MEMORIA = iniciar_logger("memoria.log", "Servidor Memoria");
-	CONFIG_MEMORIA = iniciar_config("./memoria.config", "MEMORIA");
+	CONFIG_MEMORIA = iniciar_config(config_path, "MEMORIA");
 	PUERTO_ESCUCHA_MEMORIA = config_get_string_value(CONFIG_MEMORIA, "PUERTO_ESCUCHA");
 	TAM_MEMORIA = config_get_int_value(CONFIG_MEMORIA, "TAM_MEMORIA");
 	TAM_PAGINA = config_get_int_value(CONFIG_MEMORIA, "TAM_PAGINA");
@@ -62,8 +67,6 @@ void iniciar_memoria_usuario()
 		log_error(LOGGER_MEMORIA, "Error al reservar memoria para el usuario");
 		exit(EXIT_FAILURE);
 	}
-
-	log_debug(LOGGER_MEMORIA, "Memoria reservada para el usuario");
 
 	marcosPaginas = list_create();
 	procesos_totales = list_create();

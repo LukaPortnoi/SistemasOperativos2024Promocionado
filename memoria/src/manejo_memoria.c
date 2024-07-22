@@ -19,12 +19,7 @@ void liberar_estructura_proceso_memoria(t_proceso_memoria *proceso_memoria)
     list_destroy(proceso_memoria->tabla_paginas);
 
     // Liberar elementos de la lista de instrucciones
-    while (proceso_memoria->instrucciones->elements_count > 0)
-    {
-        // Suponiendo que los elementos son punteros que han sido asignados dinámicamente
-        free(list_remove(proceso_memoria->instrucciones, 0));
-    }
-    list_destroy(proceso_memoria->instrucciones);
+    list_destroy_and_destroy_elements(proceso_memoria->instrucciones, (void *)liberar_instruccion);
 
     // tambien deberia eliminarlo de la lista de procesos totales
     bool _buscar_proceso(void *element)
@@ -36,7 +31,16 @@ void liberar_estructura_proceso_memoria(t_proceso_memoria *proceso_memoria)
 
     free(proceso_memoria->path);
     free(proceso_memoria);
-    log_debug(LOGGER_MEMORIA, "Proceso liberado");
+}
+
+void liberar_instruccion(t_instruccion *instruccion)
+{
+    free(instruccion->parametro1);
+    free(instruccion->parametro2);
+    free(instruccion->parametro3);
+    free(instruccion->parametro4);
+    free(instruccion->parametro5);
+    free(instruccion);
 }
 
 /*RESIZE (Tamaño): Solicitará a la Memoria ajustar el tamaño

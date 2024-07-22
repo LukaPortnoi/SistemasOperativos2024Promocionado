@@ -9,6 +9,8 @@ char *PUERTO_MEMORIA;
 char *PATH_BASE_DIALFS;
 int BLOCK_SIZE;
 int BLOCK_COUNT;
+int RETRASO_COMPACTACION;
+
 int fd_io_memoria;
 int fd_io_kernel;
 
@@ -16,23 +18,16 @@ t_log *LOGGER_INPUT_OUTPUT;
 t_config *CONFIG_INPUT_OUTPUT;
 t_interfaz *interfaz_actual;
 
+char BITMAP_PATH[256];
+char BLOQUES_PATH[256];
+t_list *ARCHIVOS_EN_FS;
+
 int main(int argc, char **argv)
 {
     signal(SIGINT, manejador_signals);
-    char *config_path = agregar_prefijo_y_extension(argv[1]);
-    inicializar_config(config_path);
-    char *nombre_interfaz = extraer_nombre_interfaz(config_path);
-    eliminar_extension(nombre_interfaz);
-    interfaz_actual = malloc(sizeof(t_interfaz));                           // creamos la interfaz actual
-    interfaz_actual->tamanio_nombre_interfaz = strlen(nombre_interfaz) + 1; // argv[1] es el nombre de la interfaz
-    interfaz_actual->nombre_interfaz = nombre_interfaz;                     // asignamos el nombre de la interfaz
-    log_debug(LOGGER_INPUT_OUTPUT, "Iniciando la interfaz %s de tipo %s", nombre_interfaz, TIPO_INTERFAZ);
-
-    asignar_tipo_interfaz(TIPO_INTERFAZ);
-
+    iniciar_io(argv[1]);
     iniciar_conexiones();
-    procesar_conexion_IO(fd_io_kernel, LOGGER_INPUT_OUTPUT);
-
+    procesar_conexion_IO(fd_io_kernel);
     finalizar_io();
 }
 
@@ -61,8 +56,33 @@ void iniciar_conexiones()
     enviar_datos_interfaz(interfaz_actual, fd_io_kernel, CONEXION_INTERFAZ);
 }
 
+void iniciar_io(char *arg)
+{
+    char *config_path = agregar_prefijo_y_extension(arg);
+    inicializar_config(config_path);
+    char *nombre_interfaz = extraer_nombre_interfaz(config_path);
+    eliminar_extension(nombre_interfaz);
+    interfaz_actual = crear_interfaz(nombre_interfaz, obtener_tipo_interfaz(TIPO_INTERFAZ));
+    log_debug(LOGGER_INPUT_OUTPUT, "Interfaz %s - %s iniciada", interfaz_actual->nombre_interfaz, TIPO_INTERFAZ);
+
+    if (interfaz_actual->tipo_interfaz == DIALFS)
+    {
+        RETRASO_COMPACTACION = config_get_int_value(CONFIG_INPUT_OUTPUT, "RETRASO_COMPACTACION");
+        snprintf(BITMAP_PATH, sizeof(BITMAP_PATH), "%s/bitmap.dat", PATH_BASE_DIALFS);
+        snprintf(BLOQUES_PATH, sizeof(BLOQUES_PATH), "%s/bloques.dat", PATH_BASE_DIALFS);
+        ARCHIVOS_EN_FS = list_create();
+        manejar_archivos_fs();
+        actualizar_lista_archivos_en_fs();
+        log_debug(LOGGER_INPUT_OUTPUT, "Tamaño de lista de archivos: %d", list_size(ARCHIVOS_EN_FS));
+    }
+}
+
 void finalizar_io()
 {
+    if (interfaz_actual->tipo_interfaz == DIALFS)
+    {
+        list_destroy_and_destroy_elements(ARCHIVOS_EN_FS, (void (*)(void *))destruir_archivo);
+    }
     log_destroy(LOGGER_INPUT_OUTPUT);
     config_destroy(CONFIG_INPUT_OUTPUT);
     liberar_conexion(fd_io_memoria);
@@ -82,7 +102,6 @@ void manejador_signals(int signum)
         break;
 
     case SIGINT:
-        log_trace(LOGGER_INPUT_OUTPUT, "Se recibio la señal SIGINT\n");
         log_trace(LOGGER_INPUT_OUTPUT, "Se recibió SIGINT, cerrando conexiones y liberando recursos...");
         enviar_datos_interfaz(interfaz_actual, fd_io_kernel, DESCONEXION_INTERFAZ);
         finalizar_io();
@@ -121,7 +140,7 @@ char *extraer_nombre_interfaz(char *path)
 
 char *agregar_prefijo_y_extension(const char *nombre_interfaz)
 {
-    const char *prefijo = "./cfgs/";
+    const char *prefijo = "./config/";
     const char *extension = ".config";
 
     // Calcular el nuevo tamaño del string con el prefijo y la extensión añadidos
@@ -129,7 +148,7 @@ char *agregar_prefijo_y_extension(const char *nombre_interfaz)
     char *new_path = malloc(new_size);
     if (new_path == NULL)
     {
-        fprintf(stderr, "Error de memoria.\n");
+        log_error(LOGGER_INPUT_OUTPUT, "Error de memoria al agregar prefijo y extensión al nombre de la interfaz");
         exit(1); // Terminar el programa si no hay suficiente memoria
     }
 
@@ -141,26 +160,27 @@ char *agregar_prefijo_y_extension(const char *nombre_interfaz)
     return new_path;
 }
 
-void asignar_tipo_interfaz(const char *t_interfaz)
+t_tipo_interfaz obtener_tipo_interfaz(const char *t_interfaz)
 {
     if (strcmp(t_interfaz, "GENERICA") == 0)
     {
-        interfaz_actual->tipo_interfaz = GENERICA;
+        return GENERICA;
     }
     else if (strcmp(t_interfaz, "STDIN") == 0)
     {
-        interfaz_actual->tipo_interfaz = STDIN;
+        return STDIN;
     }
     else if (strcmp(t_interfaz, "STDOUT") == 0)
     {
-        interfaz_actual->tipo_interfaz = STDOUT;
+        return STDOUT;
     }
     else if (strcmp(t_interfaz, "DIALFS") == 0)
     {
-        interfaz_actual->tipo_interfaz = DIALFS;
+        return DIALFS;
     }
     else
     {
         log_error(LOGGER_INPUT_OUTPUT, "Tipo de interfaz no reconocido");
+        return -1;
     }
 }

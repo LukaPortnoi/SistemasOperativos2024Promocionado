@@ -28,18 +28,18 @@ void enviar_marco(int socket, uint32_t marco);
 void serializar_marco(t_paquete *paquete, uint32_t marco);
 void enviar_valor_mov_in_memoria(char *valor, int socket);
 void serializar_valor_leido_mov_in(t_paquete *paquete, char *valor);
-void recibir_copystring(int socket_cliente, t_list *Lista_direccionesFisica_escritura, t_list *Lista_direccionesFisica_lectura, uint32_t *tamanio);
-void deserializar_datos_copystring(t_paquete *paquete, t_list *Lista_direccionesFisica_escritura, t_list *Lista_direccionesFisica_lectura, uint32_t *tamanio);
+void recibir_copystring(int socket_cliente, t_list *Lista_direccionesFisica_escritura, t_list *Lista_direccionesFisica_lectura, uint32_t *tamanio, uint32_t *pid);
+void deserializar_datos_copystring(t_paquete *paquete, t_list *Lista_direccionesFisica_escritura, t_list *Lista_direccionesFisica_lectura, uint32_t *tamanio , uint32_t *pid);
 
-void escribir_memoria(uint32_t dir_fisica, uint32_t tamanio_registro, char *valorObtenido);
-char *leer_memoria(uint32_t dir_fisica, uint32_t tamanio_registro);
-char *int_to_char(int num);
-char *concatenar_lista_de_cadenas(t_list *lista, int tamanio);
+
+void escribir_memoria(t_list *direcciones, void* valor_obtenido, uint32_t pid, int tamanio_registro);
+void *leer_memoria(t_list *direcciones,  uint32_t pid, int tamanio_registro, t_list *datos_leidos);
+
 
 // mov in y mov out
-void recibir_mov_in_cpu(int socket_cliente, t_list *lista_direcciones);
-void deserializar_datos_mov_in(t_paquete *paquete, t_list *lista_direcciones);
-void recibir_mov_out_cpu(t_list *lista_direcciones, uint32_t *valorObtenido, int cliente_socket);
-void deserializar_datos_mov_out(t_paquete *paquete, t_list *lista_direcciones, uint32_t *valorObtenido);
+void recibir_mov_in_cpu(int socket_cliente, t_list *lista_direcciones, uint32_t *pid);
+void deserializar_datos_mov_in(t_paquete *paquete, t_list *lista_direcciones, uint32_t *pid);
+void recibir_mov_out_cpu(t_list *lista_direcciones, void **valorObtenido, int cliente_socket, uint32_t *pid, bool *es8bits);
+void deserializar_datos_mov_out(t_paquete *paquete, t_list *lista_datos, void **valorObtenido, uint32_t *pid, bool *es8bits);
 
 #endif // UTILS_MEMORIA_H

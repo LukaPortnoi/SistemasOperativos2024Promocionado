@@ -6,7 +6,7 @@
 #include "./utils_cpu.h"
 #include "./tlb.h"
 
-void inicializar_config(void);
+void inicializar_config(char *arg);
 void iniciar_conexiones(void);
 void escuchar_interrupt(void);
 void manejador_signals(int signum);

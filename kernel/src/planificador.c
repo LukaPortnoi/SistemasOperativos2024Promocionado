@@ -37,7 +37,6 @@ int sem_value;
 void iniciar_planificador_largo_plazo()
 {
     pthread_t hilo_largo_plazo;
-    log_debug(LOGGER_KERNEL, "Inicia Planificador Largo Plazo");
     pthread_create(&hilo_largo_plazo, NULL, (void *)chequear_grado_de_multiprogramacion, NULL);
     pthread_detach(hilo_largo_plazo);
 }
@@ -63,10 +62,18 @@ void chequear_grado_de_multiprogramacion()
 {
     while (1)
     {
+        int new;
+        sem_getvalue(&semNew, &new);
+        log_trace(LOGGER_KERNEL, "Valor semaforo NEW en su hilo antes WAIT: %d", new);
         sem_wait(&semNew);
+        sem_getvalue(&semNew, &new);
+        log_trace(LOGGER_KERNEL, "Valor semaforo NEW en su hilo: %d", new);
         if (PLANIFICACION_DETENIDA)
         {
             sem_wait(&sem_planificador_largo_plazo);
+            sem_post(&sem_planificador_largo_plazo);
+            sem_post(&semNew);      // ver huuu
+            log_debug(LOGGER_KERNEL, "Planificacion reanudada");
         }
 
         int largo_plazo;
@@ -75,11 +82,24 @@ void chequear_grado_de_multiprogramacion()
 
         if (list_size(squeue_new->cola) == 0)
         {
-            log_warning(LOGGER_KERNEL, "No hay procesos en NEW");
+            log_debug(LOGGER_KERNEL, "No hay procesos en NEW");
             continue;
         }
 
+        int largo_plazo_multi;
+        sem_getvalue(&semMultiprogramacion, &largo_plazo_multi);
+        log_trace(LOGGER_KERNEL, "Valor semaforo multiprogramacion ANTES WAIT: %d", largo_plazo_multi);
+        
         sem_wait(&semMultiprogramacion);
+
+        if (PLANIFICACION_DETENIDA)
+        {
+            sem_post(&semMultiprogramacion);
+            continue;
+        }
+
+        sem_getvalue(&semMultiprogramacion, &largo_plazo_multi);
+        log_trace(LOGGER_KERNEL, "Valor semaforo multiprogramacion: %d", largo_plazo_multi);
 
         int sem_value;
         if (sem_getvalue(&semMultiprogramacion, &sem_value) == 0)
@@ -126,9 +146,7 @@ void serializar_inicializar_proceso(t_paquete *paquete, int pid_nuevo, char *pat
 // PLANIFICADOR CORTO PLAZO
 void iniciar_planificador_corto_plazo()
 {
-    log_debug(LOGGER_KERNEL, "Inicia Planificador Corto Plazo");
     pthread_t hilo_corto_plazo;
-
     pthread_create(&hilo_corto_plazo, NULL, (void *)planificar_PCB_cortoPlazo, NULL);
     pthread_detach(hilo_corto_plazo);
 }
@@ -161,6 +179,7 @@ void planificar_PCB_cortoPlazo()
         }
 
         ejecutar_PCB(pcb);
+        pcb_ejecutandose = NULL;
     }
 }
 
@@ -223,19 +242,24 @@ void recibir_pcb_CPU(t_pcb *pcb_recibido, int fd_cpu)
         break;
 
     case ENVIAR_INTERFAZ_STDIN:
-        recibir_pcb_para_interfaz_stdin(pcb_recibido, fd_cpu, &nombre_interfaz, direcciones_fisicas, &instruccion_de_IO_a_ejecutar);
+        recibir_pcb_para_interfaz_in_out(pcb_recibido, fd_cpu, &nombre_interfaz, direcciones_fisicas, &instruccion_de_IO_a_ejecutar);
         break;
 
     case ENVIAR_INTERFAZ_STDOUT:
-        recibir_pcb_para_interfaz_stdin(pcb_recibido, fd_cpu, &nombre_interfaz, direcciones_fisicas, &instruccion_de_IO_a_ejecutar);
-        for (int i = 0; i < list_size(direcciones_fisicas); i++)
-        {
-            t_direcciones_fisicas *direccionAmostrar = list_get(direcciones_fisicas, i);
-            //printf("Direccion Fisica %d recibida: %d\n", i, direccionAmostrar->direccion_fisica);
-            //printf("Tamanio %d recibido: %d\n", i, direccionAmostrar->tamanio);
-        }
+        recibir_pcb_para_interfaz_in_out(pcb_recibido, fd_cpu, &nombre_interfaz, direcciones_fisicas, &instruccion_de_IO_a_ejecutar);
         break;
 
+    case FS_CREATE_DELETE:
+        recibir_pcb_fs_create_delete(pcb_recibido, fd_cpu, &nombre_interfaz, &nombre_archivo, &instruccion_de_IO_a_ejecutar);
+        break;
+
+    case FS_TRUNCATE:
+        recibir_pcb_fs_truncate(pcb_recibido, fd_cpu, &nombre_interfaz, &nombre_archivo, &tamanio_fs_recibir, &instruccion_de_IO_a_ejecutar);
+        break;
+
+    case FS_WRITE_READ:
+        recibir_pcb_fs_write_read(pcb_recibido, fd_cpu, &nombre_interfaz, &nombre_archivo, direcciones_fisicas, &tamanio_fs_recibir, &puntero_fs, &instruccion_de_IO_a_ejecutar);
+        break;
     default:
         log_error(LOGGER_KERNEL, "No se pudo recibir el pcb");
         break;
@@ -290,17 +314,11 @@ void desalojo_cpu(t_pcb *pcb, pthread_t hilo_quantum_id)
     case INTERRUPCION_FINALIZACION:
         pcb->contexto_ejecucion->motivo_finalizacion = INTERRUPTED_BY_USER;
         finalizar_proceso(pcb);
-
-        if (sem_getvalue(&semMultiprogramacion, &sem_value) == 0)
-        {
-            log_trace(LOGGER_KERNEL, "Se libera un espacio de multiprogramacion, semaforo: %d", sem_value);
-        }
         break;
     case INTERRUPCION_OUT_OF_MEMORY:
         log_debug(LOGGER_KERNEL, "PID: %d - Desalojado por OUT OF MEMORY", pcb->pid);
         finalizar_proceso(pcb);
         break;
-
     default:
         log_error(LOGGER_KERNEL, "PID: %d - Desalojado por motivo desconocido", pcb->pid);
         break;
@@ -364,6 +382,7 @@ void iniciar_planificadores()
 {
     int largo_plazo;
     int corto_plazo;
+    int sem_value;
     sem_getvalue(&sem_planificador_largo_plazo, &largo_plazo);
     sem_getvalue(&sem_planificador_corto_plazo, &corto_plazo);
 
@@ -371,14 +390,17 @@ void iniciar_planificadores()
     {
         sem_post(&sem_planificador_largo_plazo);
         sem_post(&sem_planificador_corto_plazo);
+        sem_post(&semNew);
     }
 
     PLANIFICACION_DETENIDA = false;
 
     sem_getvalue(&sem_planificador_largo_plazo, &largo_plazo);
     sem_getvalue(&sem_planificador_corto_plazo, &corto_plazo);
+    sem_getvalue(&semNew, &sem_value);
     log_trace(LOGGER_KERNEL, "Valor semaforo LARGO plazo: %d", largo_plazo);
     log_trace(LOGGER_KERNEL, "Valor semaforo CORTO plazo: %d", corto_plazo);
+    log_trace(LOGGER_KERNEL, "Valor semaforo NEW: %d", sem_value);
 
     log_debug(LOGGER_KERNEL, "Planificacion iniciada");
 }
@@ -434,12 +456,10 @@ void inicializar_recursos()
 uint32_t asignar_pid()
 {
     uint32_t valor_pid;
-
     pthread_mutex_lock(&mutex_pid);
     valor_pid = PID_GLOBAL;
     PID_GLOBAL++;
     pthread_mutex_unlock(&mutex_pid);
-
     return valor_pid;
 }
 
@@ -461,16 +481,41 @@ void proceso_listo(t_pcb *pcb, bool es_ready_plus)
     if (es_ready_plus)
     {
         squeue_push(squeue_readyPlus, pcb);
-        log_info(LOGGER_KERNEL, "Cola Ready Plus:");
-        mostrar_procesos_en_squeue(squeue_readyPlus, LOGGER_KERNEL);
+        loguear_cola(squeue_readyPlus, "Ready Prioridad");
     }
     else
     {
         squeue_push(squeue_ready, pcb);
-        log_info(LOGGER_KERNEL, "Cola Ready:");
-        mostrar_procesos_en_squeue(squeue_ready, LOGGER_KERNEL);
+        loguear_cola(squeue_ready, "Ready");
     }
     sem_post(&semReady);
+}
+
+void loguear_cola(t_squeue *squeue, const char *mensaje)
+{
+    pthread_mutex_lock(squeue->mutex);
+
+    char log_message[1024];
+    snprintf(log_message, sizeof(log_message), "Cola %s: [", mensaje);
+
+    int list_size_ready = list_size(squeue->cola);
+    for (int i = 0; i < list_size_ready; i++)
+    {
+        t_pcb *proceso = list_get(squeue->cola, i);
+        char pid_str[12];
+        snprintf(pid_str, sizeof(pid_str), "%d", proceso->pid);
+
+        strcat(log_message, pid_str);
+        if (i < list_size_ready - 1)
+        {
+            strcat(log_message, ", ");
+        }
+    }
+
+    strcat(log_message, "]");
+    pthread_mutex_unlock(squeue->mutex);
+
+    log_info(LOGGER_KERNEL, "%s", log_message);
 }
 
 void finalizar_proceso(t_pcb *pcb)
@@ -479,7 +524,6 @@ void finalizar_proceso(t_pcb *pcb)
     cambiar_estado_pcb(pcb, FINALIZADO);
     squeue_push(squeue_exit, pcb);
     liberar_recursos(pcb);
-    log_warning(LOGGER_KERNEL, "PID ENVIANDO A FINALIZAR: %d", pcb->pid);
     liberar_estructuras_memoria(pcb->pid);
     sem_post(&semMultiprogramacion);
     if (sem_getvalue(&semMultiprogramacion, &sem_value) == 0)
@@ -588,7 +632,6 @@ void manejar_recurso(t_pcb *pcb, char *recurso)
     log_trace(LOGGER_KERNEL, "PID %d - Recurso %s - Instruccion %s", pcb->pid, recurso_a_utilizar->nombre_recurso, nombre_instruccion_to_string(INSTRUCCION_RECURSO_A_USAR));
     if (recurso_a_utilizar)
     {
-
         if (pcb->recursos_asignados == NULL)
         {
             log_error(LOGGER_KERNEL, "PID %d - Recursos asignados no inicializados", pcb->pid);
@@ -686,6 +729,7 @@ void ejecutar_intruccion_io(t_pcb *pcb_recibido)
             {
                 bloquear_procesosIO(pcb_recibido, interfaz_a_utilizar);
                 enviar_InterfazGenerica(interfaz_a_utilizar->socket_interfaz_recibida, unidades_de_trabajo, pcb_recibido->pid, interfaz_a_utilizar->nombre_interfaz_recibida);
+                free(nombre_interfaz);
             }
             else
             {
@@ -700,7 +744,7 @@ void ejecutar_intruccion_io(t_pcb *pcb_recibido)
                 bloquear_procesosIO(pcb_recibido, interfaz_a_utilizar);
                 enviar_InterfazStdin(interfaz_a_utilizar->socket_interfaz_recibida, direcciones_fisicas, pcb_recibido->pid, interfaz_a_utilizar->nombre_interfaz_recibida);
                 list_clean_and_destroy_elements(direcciones_fisicas, free);
-                // Enviar interfaz STDIN
+                free(nombre_interfaz);
             }
             else
             {
@@ -715,8 +759,7 @@ void ejecutar_intruccion_io(t_pcb *pcb_recibido)
                 bloquear_procesosIO(pcb_recibido, interfaz_a_utilizar);
                 enviar_InterfazStdout(interfaz_a_utilizar->socket_interfaz_recibida, direcciones_fisicas, pcb_recibido->pid, interfaz_a_utilizar->nombre_interfaz_recibida);
                 list_clean_and_destroy_elements(direcciones_fisicas, free);
-
-                // Enviar interfaz STDOUT
+                free(nombre_interfaz);
             }
             else
             {
@@ -730,9 +773,15 @@ void ejecutar_intruccion_io(t_pcb *pcb_recibido)
                 instruccion_de_IO_a_ejecutar == IO_FS_TRUNCATE || instruccion_de_IO_a_ejecutar == IO_FS_WRITE ||
                 instruccion_de_IO_a_ejecutar == IO_FS_READ)
             {
-                bloquear_proceso(pcb_recibido, interfaz_a_utilizar->nombre_interfaz_recibida);
-                squeue_push(interfaz_a_utilizar->cola_procesos_bloqueados, pcb_recibido);
-                // Enviar interfaz DIALFS
+                bloquear_procesosIO(pcb_recibido, interfaz_a_utilizar);
+                enviar_InterfazDialFS(interfaz_a_utilizar->socket_interfaz_recibida, pcb_recibido->pid, interfaz_a_utilizar->nombre_interfaz_recibida, instruccion_de_IO_a_ejecutar);
+                list_clean_and_destroy_elements(direcciones_fisicas, free);
+                free(nombre_interfaz);
+                free(nombre_archivo);
+                if (instruccion_de_IO_a_ejecutar == IO_FS_WRITE || instruccion_de_IO_a_ejecutar == IO_FS_READ)
+                {
+                    free(puntero_fs);
+                }
             }
             else
             {
@@ -750,6 +799,7 @@ void ejecutar_intruccion_io(t_pcb *pcb_recibido)
     {
         log_error(LOGGER_KERNEL, "No se encontro la interfaz %s", nombre_interfaz);
         pcb_recibido->contexto_ejecucion->motivo_finalizacion = INVALID_INTERFACE;
+        free(nombre_interfaz);
         finalizar_proceso(pcb_recibido);
     }
 }
@@ -772,4 +822,34 @@ void bloquear_procesosIO(t_pcb *pcbAbloquear, t_interfaz_recibida *interfaz_a_ut
 {
     bloquear_proceso(pcbAbloquear, interfaz_a_utilizar->nombre_interfaz_recibida);
     squeue_push(interfaz_a_utilizar->cola_procesos_bloqueados, pcbAbloquear);
+}
+
+void enviar_InterfazDialFS(int socket, uint32_t pid, char *nombre_interfaz, nombre_instruccion instruccion)
+{
+    switch (instruccion)
+    {
+    case IO_FS_CREATE:
+        enviar_interfaz_dialFS_create_delete(socket, nombre_archivo, pid, nombre_interfaz, instruccion);
+        break;
+
+    case IO_FS_DELETE:
+        enviar_interfaz_dialFS_create_delete(socket, nombre_archivo, pid, nombre_interfaz, instruccion);
+        break;
+
+    case IO_FS_TRUNCATE:
+        enviar_interfaz_dialFS_truncate(socket, nombre_archivo, pid, nombre_interfaz, tamanio_fs_recibir);
+        break;
+
+    case IO_FS_WRITE:
+        enviar_interfaz_dialFS_write_read(socket, nombre_archivo, pid, nombre_interfaz, tamanio_fs_recibir, direcciones_fisicas, puntero_fs, instruccion);
+        break;
+
+    case IO_FS_READ:
+        enviar_interfaz_dialFS_write_read(socket, nombre_archivo, pid, nombre_interfaz, tamanio_fs_recibir, direcciones_fisicas, puntero_fs, instruccion);
+        break;
+
+    default:
+        log_error(LOGGER_KERNEL, "Instruccion %s no reconocida", nombre_instruccion_to_string(instruccion));
+        break;
+    }
 }

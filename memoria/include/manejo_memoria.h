@@ -5,6 +5,7 @@
 
 void iniciar_estructura_proceso_memoria(t_proceso_memoria *proceso_memoria);
 void liberar_estructura_proceso_memoria(t_proceso_memoria *proceso_memoria);
+void liberar_instruccion(t_instruccion *instruccion);
 
 op_cod resize_proceso_memoria(t_proceso_memoria *proceso_memoria, uint32_t tamanio);
 op_cod aumentar_tamanio_proceso_memoria(t_proceso_memoria *proceso_memoria, uint32_t tamanio);

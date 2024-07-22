@@ -3,7 +3,7 @@
 t_log *iniciar_logger(char *file_name, char *name)
 {
 	t_log *nuevo_logger;
-	nuevo_logger = log_create(file_name, name, 1, LOG_LEVEL_TRACE);
+	nuevo_logger = log_create(file_name, name, 1, LOG_LEVEL_INFO); // LOG_LEVEL_TRACE
 	if (nuevo_logger == NULL)
 	{
 		printf("No se pudo crear el logger %s\n", name);

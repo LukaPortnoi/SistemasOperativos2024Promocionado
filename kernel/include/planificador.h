@@ -33,6 +33,7 @@ void inicializar_recursos();
 uint32_t asignar_pid(void);
 void cambiar_estado_pcb(t_pcb *pcb, t_estado_proceso estado);
 void proceso_listo(t_pcb *pcb, bool es_ready_plus);
+void loguear_cola(t_squeue *squeue, const char *mensaje);
 void finalizar_proceso(t_pcb *pcb);
 void liberar_estructuras_memoria(uint32_t pid);
 void bloquear_proceso(t_pcb *pcb, char *motivo);
@@ -52,4 +53,6 @@ void bloquear_procesosIO(t_pcb *pcbAbloquear, t_interfaz_recibida *interfaz_a_ut
 void ejecutar_intruccion_io(t_pcb *pcb_recibido);
 t_interfaz_recibida *buscar_interfaz_por_nombre(char *nombre_interfaz);
 
+// ENVIOS FYLE SYSTEM
+void enviar_InterfazDialFS(int socket, uint32_t pid, char *nombre_interfaz, nombre_instruccion instruccion);
 #endif // PLANIFICADOR_H_

@@ -83,25 +83,38 @@ void agregar_a_paquete(t_paquete *paquete, void *valor, int tamanio)
 
 void enviar_paquete(t_paquete *paquete, int socket_cliente)
 {
-	void *a_enviar = malloc(paquete->buffer->size + sizeof(op_cod) + sizeof(int));
-	int offset = 0;
+    // Calcular el tamaño total del mensaje a enviar
+    size_t total_size = sizeof(op_cod) + sizeof(int) + paquete->buffer->size;
 
-	memcpy(a_enviar + offset, &(paquete->codigo_operacion), sizeof(op_cod));
-	offset += sizeof(op_cod);
-	// printf("Codigo de operacion ENVIADO: %d\n", paquete->codigo_operacion);
+    // Asignar memoria para el buffer que se va a enviar
+    void *a_enviar = malloc(total_size);
+    if (a_enviar == NULL) {
+        perror("Error al asignar memoria para a_enviar");
+        return;
+    }
 
-	memcpy(a_enviar + offset, &(paquete->buffer->size), sizeof(int));
-	offset += sizeof(int);
-	// printf("Tamaño del buffer ENVIADO: %d\n", paquete->buffer->size);
+    int offset = 0;
 
-	memcpy(a_enviar + offset, paquete->buffer->stream, paquete->buffer->size);
+    // Copiar el código de operación al inicio del buffer
+    memcpy(a_enviar + offset, &(paquete->codigo_operacion), sizeof(op_cod));
+    offset += sizeof(op_cod);
 
-	if (send(socket_cliente, a_enviar, paquete->buffer->size + sizeof(op_cod) + sizeof(int), 0) == -1)
-	{
-		free(a_enviar);
-	}
+    // Copiar el tamaño del buffer después del código de operación
+    memcpy(a_enviar + offset, &(paquete->buffer->size), sizeof(int));
+    offset += sizeof(int);
 
-	free(a_enviar);
+    // Copiar el stream de datos al final del buffer
+    memcpy(a_enviar + offset, paquete->buffer->stream, paquete->buffer->size);
+
+    // Enviar el buffer a través del socket
+    ssize_t bytes_enviados = send(socket_cliente, a_enviar, total_size, 0);
+    if (bytes_enviados == -1)
+    {
+        perror("Error al enviar datos");
+    }
+
+    // Liberar la memoria asignada para a_enviar
+    free(a_enviar);
 }
 
 void eliminar_paquete(t_paquete *paquete)
