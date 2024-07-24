@@ -286,25 +286,25 @@ void _resize(char *tamanioAReasignar)
 void _copy_string(char *tamanio, int socket_cliente) 
 {
     uint32_t direc_logica_escritura = *(get_registry32("DI"));
-    log_warning(LOGGER_CPU, "Direccion logica escritura: %d", direc_logica_escritura);
+    log_debug(LOGGER_CPU, "Direccion logica escritura: %d", direc_logica_escritura);
     uint32_t direc_logica_lectura = *(get_registry32("SI"));
-    log_warning(LOGGER_CPU, "Direccion logica lectura: %d", direc_logica_lectura);
+    log_debug(LOGGER_CPU, "Direccion logica lectura: %d", direc_logica_lectura);
     uint32_t tamanio_string = str_to_uint32(tamanio);
-    log_warning(LOGGER_CPU, "Tamanio string: %d", tamanio_string);
+    log_debug(LOGGER_CPU, "Tamanio string: %d", tamanio_string);
 
     t_list *lista_direccionesFisica_lectura = traducir_direccion(pcb_actual->pid, direc_logica_lectura, TAM_PAGINA, tamanio_string);
     //printeamos las direcciones fisicas a leer
     for (int i = 0; i < list_size(lista_direccionesFisica_lectura); i++)
     {
         t_direcciones_fisicas *direccionAmostrar = list_get(lista_direccionesFisica_lectura, i);
-        log_warning(LOGGER_CPU, "Dirección Física: %d", direccionAmostrar->direccion_fisica);
+        log_debug(LOGGER_CPU, "Dirección Física: %d", direccionAmostrar->direccion_fisica);
     }
     t_list *lista_direccionesFisica_escritura = traducir_direccion(pcb_actual->pid, direc_logica_escritura, TAM_PAGINA, tamanio_string);
     //printeamos las direcciones fisicas a escribir
     for (int i = 0; i < list_size(lista_direccionesFisica_escritura); i++)
     {
         t_direcciones_fisicas *direccionAmostrar = list_get(lista_direccionesFisica_escritura, i);
-        log_warning(LOGGER_CPU, "Dirección Física: %d", direccionAmostrar->direccion_fisica);
+        log_debug(LOGGER_CPU, "Dirección Física: %d", direccionAmostrar->direccion_fisica);
     }
     enviar_datos_copy_string(lista_direccionesFisica_escritura, lista_direccionesFisica_lectura, tamanio_string, socket_cliente, pcb_actual->pid);
     list_destroy_and_destroy_elements(lista_direccionesFisica_lectura, free);   
