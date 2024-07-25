@@ -63,7 +63,7 @@ void iniciar_io(char *arg)
     char *nombre_interfaz = extraer_nombre_interfaz(config_path);
     eliminar_extension(nombre_interfaz);
     interfaz_actual = crear_interfaz(nombre_interfaz, obtener_tipo_interfaz(TIPO_INTERFAZ));
-    log_debug(LOGGER_INPUT_OUTPUT, "Interfaz %s - %s iniciada", interfaz_actual->nombre_interfaz, TIPO_INTERFAZ);
+    log_info(LOGGER_INPUT_OUTPUT, "Interfaz %s - %s iniciada", interfaz_actual->nombre_interfaz, TIPO_INTERFAZ);
 
     if (interfaz_actual->tipo_interfaz == DIALFS)
     {
